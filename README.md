@@ -155,7 +155,7 @@ gen_poly_matrix creates erasure codes for:
    ```
 
 ### Examining the Polynomial matrix with erasure_code_perf
-You can see a simple example of a Polynomial matrix by running "build perfs", and then executing erasure_code/erasure_code_perf. By default, you will see a Polynomial matrix of dimension 10 by 4. By adding the argument -p 2, you can see the two parity version of a Polynomial matrix. It is not the same as RAID6 as described in The Mathematics of RAID6 by Peter Anvin.
+You can see a simple example of a Polynomial matrix by running "make perfs", and then executing erasure_code/erasure_code_perf. By default, you will see a Polynomial matrix of dimension 10 by 4. By adding the argument -p 2, you can see the two parity version of a Polynomial matrix. It is not the same as RAID6 as described in The Mathematics of RAID6 by Peter Anvin.
 
 ### Unknown Error Detection and Correction example using Polynomial Codes
 
