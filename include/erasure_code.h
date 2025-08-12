@@ -107,6 +107,31 @@ ec_init_tables_base(int k, int rows, unsigned char *a, unsigned char *gftbls);
 void
 ec_encode_data(int len, int k, int rows, unsigned char *gftbls, unsigned char **data,
                unsigned char **coding);
+/**
+ * @brief Generate syndromes on blocks of data, runs appropriate version.
+ *
+ * Given a list of source data blocks, generate one or multiple blocks of
+ * syndrome data as specified by a matrix of GF(2^8) coefficients. When given a
+ * suitable set of coefficients, this function will perform the fast generation
+ * of syndromes for Reed-Solomon type polynomial codes.
+ *
+ * This function determines what instruction sets are enabled and
+ * selects the appropriate version at runtime.
+ *
+ * @param len    Length of each block of data (vector) of source or dest data.
+ * @param k      The number of vector sources or rows in the generator matrix
+ * 		 for coding.
+ * @param rows   The number of output vectors to concurrently encode/decode.
+ * @param gftbls Pointer to array of input tables generated from coding
+ * 		 coefficients in ec_init_tables(). Must be of size 32*k*rows
+ * @param data   Array of pointers to source input buffers.
+ * @param coding Array of pointers to coded output buffers.
+ * @returns none
+ */
+
+int
+ec_decode_data(int len, int k, int rows, unsigned char *gftbls, unsigned char **data,
+               unsigned char **coding);
 
 /**
  * @brief Generate or decode erasure codes on blocks of data, runs baseline version.
