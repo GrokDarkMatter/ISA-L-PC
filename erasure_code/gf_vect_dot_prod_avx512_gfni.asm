@@ -185,9 +185,9 @@ section .text
 
 	; Save non-zero parity and exit
 %if %0 == 1
-	vmovdqu8 [dest1 + pos]{%%KMASK}, xp1
+	vmovdqu8 [dest1]{%%KMASK}, xp1
 %else
-	XSTR	[dest1 + pos], xp1
+	XSTR	[dest1], xp1
 %endif
 	jmp		.exit
 %%sndOK:

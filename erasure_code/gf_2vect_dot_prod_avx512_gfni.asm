@@ -260,8 +260,6 @@ func(gf_2vect_syndrome_avx512_gfni)
 
 	xor	pos, pos
 	shl	vec, 3		;vec *= 8. Make vec_i count by 8
-	mov	dest2, [dest1 + 8]
-	mov	dest1, [dest1]
 
 	cmp	len, 64
         jl      .len_lt_64
