@@ -148,6 +148,47 @@ section .text
 %endif
 %endmacro
 
+;;
+;; Decodes 64 bytes of all "k" sources into 64 bytes (single parity disk)
+;;
+%macro DECODE_64B 0-1
+%define %%KMASK %1
+
+	vpxorq	xp1, xp1, xp1
+	mov	tmp, mul_array
+	xor	vec_i, vec_i
+
+%%next_vect:
+	mov	ptr, [src + vec_i]
+%if %0 == 1
+	vmovdqu8 x0{%%KMASK}, [ptr + pos]	;Get next source vector (less than 64 bytes)
+%else
+	XLDR	x0, [ptr + pos]		;Get next source vector (64 bytes)
+%endif
+	add	vec_i, 8
+
+        vbroadcastf32x2 xgft1, [tmp]
+	add	tmp, 8
+
+        GF_MUL_XOR EVEX, x0, xgft1, xgft1, xp1
+
+	cmp	vec_i, vec
+	jl	%%next_vect
+
+	; Check to see if parity is zero
+	vptestmq    k2, xp1, xp1
+	ktestb		k2, k2
+	jz			%%sndOK
+	; Save non-zero parity and exit
+%if %0 == 1
+	vmovdqu8 [dest1 + pos]{%%KMASK}, xp1
+%else
+	XSTR	[dest1 + pos], xp1
+%endif
+	jmp		.exit
+%%sndOK:
+%endmacro
+
 align 16
 mk_global gf_vect_dot_prod_avx512_gfni, function
 func(gf_vect_dot_prod_avx512_gfni)
@@ -177,6 +218,42 @@ func(gf_vect_dot_prod_avx512_gfni)
         kmovq   k1, tmp
 
         ENCODE_64B k1
+
+.exit:
+        vzeroupper
+
+	FUNC_RESTORE
+	ret
+
+align 16
+mk_global gf_vect_syndrome_avx512_gfni, function
+func(gf_vect_syndrome_avx512_gfni)
+	FUNC_SAVE
+	xor	pos, pos
+	shl	vec, 3		;vec *= 8. Make vec_i count by 8
+
+	cmp	len, 64
+        jl      .len_lt_64
+
+.loop64:
+
+        DECODE_64B
+
+	add	pos, 64			;Loop on 64 bytes at a time
+        sub     len, 64
+	cmp	len, 64
+	jge	.loop64
+
+.len_lt_64:
+        cmp     len, 0
+        jle     .exit
+
+        xor     tmp, tmp
+        bts     tmp, len
+        dec     tmp
+        kmovq   k1, tmp
+
+        DECODE_64B k1
 
 .exit:
         vzeroupper
