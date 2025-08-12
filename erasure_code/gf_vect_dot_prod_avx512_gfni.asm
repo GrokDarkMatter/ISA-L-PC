@@ -179,6 +179,10 @@ section .text
 	vptestmq    k2, xp1, xp1
 	ktestb		k2, k2
 	jz			%%sndOK
+
+	; Set up syndrome destination pointers
+	mov	dest1, [src + vec_i]
+
 	; Save non-zero parity and exit
 %if %0 == 1
 	vmovdqu8 [dest1 + pos]{%%KMASK}, xp1

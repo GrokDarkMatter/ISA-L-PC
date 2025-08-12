@@ -288,25 +288,29 @@ section .text
 	vptestmq    k2, x0, x0
 	ktestb		k2, k2
 	jz			%%sndOK
-	; Save non-zero parity and exit
 
-        mov     ptr, [dest1]			;reuse ptr
-        mov     tmp, [dest1 + 5*8]		;reuse tmp
+	; Set up syndrome destination pointers
+	mov	ptr, [src + vec_i] ;            ; reuse ptr as dest1
+	mov	dest2, [src + vec_i + 8]
+	mov	dest3, [src + vec_i + 2*8]
+	mov	dest4, [src + vec_i + 3*8]
+	mov dest5, [src + vec_i + 4*8]
+	mov tmp,   [src + vec_i + 5*8]      ; Reuse tmp as dest 6]
 
 %if %0 == 1
-	vmovdqu8 [dest2 + pos]{%%KMASK}, xp2
-	vmovdqu8 [dest3 + pos]{%%KMASK}, xp3
-	vmovdqu8 [dest4 + pos]{%%KMASK}, xp4
-	vmovdqu8 [dest5 + pos]{%%KMASK}, xp5
-	vmovdqu8 [ptr + pos]{%%KMASK}, xp1 ; dest 1
-	vmovdqu8 [tmp + pos]{%%KMASK}, xp6 ; dest 6
+	vmovdqu8 [dest2]{%%KMASK}, xp2
+	vmovdqu8 [dest3]{%%KMASK}, xp3
+	vmovdqu8 [dest4]{%%KMASK}, xp4
+	vmovdqu8 [dest5]{%%KMASK}, xp5
+	vmovdqu8 [ptr]  {%%KMASK}, xp1 ; dest 1
+	vmovdqu8 [tmp]  {%%KMASK}, xp6 ; dest 6
 %else
-	XSTR	[dest2 + pos], xp2
-	XSTR	[dest3 + pos], xp3
-	XSTR	[dest4 + pos], xp4
-	XSTR	[dest5 + pos], xp5
-	XSTR	[ptr + pos], xp1 ; dest 1
-	XSTR	[tmp + pos], xp6 ; dest 6
+	XSTR	[dest2], xp2
+	XSTR	[dest3], xp3
+	XSTR	[dest4], xp4
+	XSTR	[dest5], xp5
+	XSTR	[ptr],   xp1 ; dest 1
+	XSTR	[tmp],   xp6 ; dest 6
 %endif
 	jmp		.exit
 %%sndOK:
@@ -368,10 +372,6 @@ func(gf_6vect_syndrome_avx512_gfni)
 	mov	vskip5, vec
 	imul	vskip5, 5*8
 	shl	vec, 3		;vec *= 8. Make vec_i count by 8
-	mov	dest2, [dest1 + 8]
-	mov	dest3, [dest1 + 2*8]
-	mov	dest4, [dest1 + 3*8]
-	mov	dest5, [dest1 + 4*8]      ;dest1 and dest6 are calculated later
 
 	cmp	len, 64
         jl      .len_lt_64
@@ -400,7 +400,6 @@ func(gf_6vect_syndrome_avx512_gfni)
         vzeroupper
 
 	FUNC_RESTORE
-	xor	rax, rax
 	ret
 
 endproc_frame

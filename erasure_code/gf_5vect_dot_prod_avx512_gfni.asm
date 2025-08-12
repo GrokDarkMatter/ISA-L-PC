@@ -268,23 +268,27 @@ section .text
 	vptestmq    k2, x0, x0
 	ktestb		k2, k2
 	jz			%%sndOK
+
+	; Set up syndrome destination pointers
+	mov	dest2, [src + vec_i + 8]
+	mov	dest3, [src + vec_i + 2*8]
+	mov	dest4, [src + vec_i + 3*8]
+	mov	dest5, [src + vec_i + 4*8]
+	mov	dest1, [src + vec_i]
 	; Save non-zero parity and exit
 
-        mov     ptr, [dest1]			;reuse ptr
-        mov     tmp, [dest1 + 5*8]		;reuse tmp
-
 %if %0 == 1
-	vmovdqu8 [dest1 + pos]{%%KMASK}, xp1
-	vmovdqu8 [dest2 + pos]{%%KMASK}, xp2
-	vmovdqu8 [dest3 + pos]{%%KMASK}, xp3
-	vmovdqu8 [dest4 + pos]{%%KMASK}, xp4
-	vmovdqu8 [dest5 + pos]{%%KMASK}, xp5
+	vmovdqu8 [dest1]{%%KMASK}, xp1
+	vmovdqu8 [dest2]{%%KMASK}, xp2
+	vmovdqu8 [dest3]{%%KMASK}, xp3
+	vmovdqu8 [dest4]{%%KMASK}, xp4
+	vmovdqu8 [dest5]{%%KMASK}, xp5
 %else
-	XSTR	[dest1 + pos], xp1
-	XSTR	[dest2 + pos], xp2
-	XSTR	[dest3 + pos], xp3
-	XSTR	[dest4 + pos], xp4
-	XSTR	[dest5 + pos], xp5
+	XSTR	[dest1], xp1
+	XSTR	[dest2], xp2
+	XSTR	[dest3], xp3
+	XSTR	[dest4], xp4
+	XSTR	[dest5], xp5
 %endif
 	jmp		.exit
 %%sndOK:
@@ -344,11 +348,6 @@ func(gf_5vect_syndrome_avx512_gfni)
 	mov	vskip3, vec
 	imul	vskip3, 8*3
 	shl	vec, 3		;vec *= 8. Make vec_i count by 8
-	mov	dest2, [dest1 + 8]
-	mov	dest3, [dest1 + 2*8]
-	mov	dest4, [dest1 + 3*8]
-	mov	dest5, [dest1 + 4*8]
-	mov	dest1, [dest1]
 
 	cmp	len, 64
         jl      .len_lt_64
@@ -378,7 +377,6 @@ func(gf_5vect_syndrome_avx512_gfni)
         vzeroupper
 
 	FUNC_RESTORE
-	xor	rax, rax 
 	ret
 
 endproc_frame

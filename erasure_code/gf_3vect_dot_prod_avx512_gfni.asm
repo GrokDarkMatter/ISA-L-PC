@@ -216,16 +216,21 @@ section .text
 	vptestmq    k2, x0, x0
 	ktestb		k2, k2
 	jz			%%sndOK
+
+	; Set up syndrome destination pointers
+	mov	dest2, [src + vec_i + 8]
+	mov	dest3, [src + vec_i + 2*8]
+	mov	dest1, [src + vec_i]
 	; Save non-zero parity and exit
 
 %if %0 == 1
-	vmovdqu8 [dest1 + pos]{%%KMASK}, xp1
-	vmovdqu8 [dest2 + pos]{%%KMASK}, xp2
-	vmovdqu8 [dest3 + pos]{%%KMASK}, xp3
+	vmovdqu8 [dest1]{%%KMASK}, xp1
+	vmovdqu8 [dest2]{%%KMASK}, xp2
+	vmovdqu8 [dest3]{%%KMASK}, xp3
 %else
-	XSTR	[dest1 + pos], xp1
-	XSTR	[dest2 + pos], xp2
-	XSTR	[dest3 + pos], xp3
+	XSTR	[dest1], xp1
+	XSTR	[dest2], xp2
+	XSTR	[dest3], xp3
 %endif
 	jmp		.exit
 %%sndOK:
@@ -241,7 +246,6 @@ func(gf_3vect_dot_prod_avx512_gfni)
 	mov	dest2, [dest1 + 8]
 	mov	dest3, [dest1 + 2*8]
 	mov	dest1, [dest1]
-
 	cmp	len, 64
         jl      .len_lt_64
 
@@ -278,9 +282,7 @@ func(gf_3vect_syndrome_avx512_gfni)
 
 	xor	pos, pos
 	shl	vec, 3		;vec *= 8. Make vec_i count by 8
-	mov	dest2, [dest1 + 8]
-	mov	dest3, [dest1 + 2*8]
-	mov	dest1, [dest1]
+
 
 	cmp	len, 64
         jl      .len_lt_64
@@ -309,7 +311,6 @@ func(gf_3vect_syndrome_avx512_gfni)
         vzeroupper
 
 	FUNC_RESTORE
-	xor	rax, rax
 	ret
 
 endproc_frame

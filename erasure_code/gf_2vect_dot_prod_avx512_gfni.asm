@@ -198,13 +198,17 @@ section .text
 	vptestmq    k2, x0, x0
 	ktestb		k2, k2
 	jz			%%sndOK
+	; Set up syndrome destination pointers
+	mov	dest2, [src + vec_i + 8]
+	mov	dest1, [src + vec_i]
+
 	; Save non-zero parity and exit
 %if %0 == 1
-	vmovdqu8 [dest1 + pos]{%%KMASK}, xp1
-	vmovdqu8 [dest2 + pos]{%%KMASK}, xp2
+	vmovdqu8 [dest1]{%%KMASK}, xp1
+	vmovdqu8 [dest2]{%%KMASK}, xp2
 %else
-	XSTR	[dest1 + pos], xp1
-	XSTR	[dest2 + pos], xp2
+	XSTR	[dest1], xp1
+	XSTR	[dest2], xp2
 %endif
 	jmp		.exit
 %%sndOK:
@@ -286,7 +290,6 @@ func(gf_2vect_syndrome_avx512_gfni)
         vzeroupper
 
 	FUNC_RESTORE
-	xor	rax, rax
 	ret
 
 endproc_frame
