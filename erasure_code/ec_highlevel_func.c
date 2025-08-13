@@ -28,7 +28,10 @@
 **********************************************************************/
 #include <limits.h>
 #include "erasure_code.h"
+#include <immintrin.h>
+#include <x86intrin.h>
 #include "ec_base.h" /* for GF tables */
+#include <stdio.h> /* exclude for production */
 
 #if __x86_64__ || __i386__ || _M_X64 || _M_IX86
 void
@@ -269,8 +272,29 @@ gf_5vect_dot_prod_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 extern void
 gf_6vect_dot_prod_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
                               unsigned char **coding);
+extern int
+gf_vect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        int offSet);
+extern int
+gf_2vect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        int offSet);
+extern int
+gf_3vect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        int offSet);
+extern int
+gf_4vect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        int offSet);
+extern int
+gf_5vect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        int offSet);
+extern int
+gf_6vect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        int offSet);
+extern int
+gf_nvect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        int offSet);
 
-extern void
+        extern void
 gf_vect_mad_avx512_gfni(int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
                         unsigned char *dest);
 extern void
@@ -324,6 +348,127 @@ ec_init_tables_gfni(int k, int rows, unsigned char *a, unsigned char *g_tbls)
         for (i = 0; i < rows; i++)
                 for (j = 0; j < k; j++)
                         *(g64++) = gf_table_gfni[*a++];
+}
+
+extern int
+gf_nvect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        int offSet)
+{
+      return len ;
+}
+
+void pc_correct_AVX512_gfni ( int newPos, int k, int p, unsigned char ** data,
+        int * retry, int totRows, int curRow )
+{
+        __m512i ldata ;
+        __mmask64 mask1 ;
+        unsigned long long offSet ;
+        unsigned char eVal, eLoc, synDromes [ 254 ] ;
+
+        *( retry ) ++ ;
+
+        ldata = _mm512_load_si512( data[k] ) ;
+        mask1 = _mm512_test_epi8_mask ( ldata, ldata ) ;
+        offSet = _tzcnt_u64 ( mask1 ) ;
+        printf ( "k = %d Offset = %lld\n", k, offSet ) ;
+
+        for ( eLoc = 0 ; eLoc < p ; eLoc ++ )
+        {
+                synDromes [ eLoc ] = data [ k - eLoc - 1 + p ] [ offSet ] ;
+                printf ( "Syndromes [%d]=%d\n", eLoc, synDromes [ eLoc ] ) ;
+        }
+        eVal = synDromes [ 0 ] ;
+        eLoc = synDromes [ 1 ] ;
+        eLoc = gf_mul ( eLoc, gf_inv ( eVal ) ) ;
+        eLoc = gflog_base [ eLoc ] ;
+        if ( eLoc == 255 )
+        {
+                eLoc = 0 ;
+        }
+        printf ( "Error = %d Symbol location = %d Bufpos = %lld\n", eVal, eLoc , newPos + offSet ) ;
+
+        // Correct the error
+        if ( eLoc < k )
+        {
+                data [ k - eLoc - 1 ] [ newPos + offSet ] ^= eVal ;
+        }
+
+        return ;
+}
+
+#define MAX_PC_RETRY 256
+
+int
+ec_decode_data_avx512_gfni(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data)
+{
+        int newPos = 0, retry = 0, totRows = rows ;
+
+        if (rows > 6)
+        {
+                newPos = gf_nvect_syndrome_avx512_gfni ( len, k, g_tbls, data, 0 ) ;
+                while ( ( newPos < len ) && ( retry < MAX_PC_RETRY ) )
+                {
+                        pc_correct_AVX512_gfni ( newPos, k, rows, data, &retry, totRows, 0 ) ;
+                        len -= newPos ;
+                        newPos = gf_nvect_syndrome_avx512_gfni ( len, k, g_tbls, data, newPos ) ;
+                }
+                return ( newPos ) ;
+        }
+
+        switch (rows)
+        {
+        case 6:
+                newPos = gf_6vect_syndrome_avx512_gfni(len, k, g_tbls, data, newPos) ;
+                while ( ( newPos < len ) && ( retry < MAX_PC_RETRY ) )
+                {
+                        pc_correct_AVX512_gfni ( newPos, k, rows, data, &retry, totRows, 0 ) ;
+                        len -= newPos ;
+                        newPos = gf_6vect_syndrome_avx512_gfni(len, k, g_tbls, data, newPos) ;
+                }
+        case 5:
+                newPos = gf_5vect_syndrome_avx512_gfni(len, k, g_tbls, data, 0);
+                while ( ( newPos < len ) && ( retry < MAX_PC_RETRY ) )
+                {
+                        pc_correct_AVX512_gfni ( newPos, k, rows, data, &retry, totRows, 0 ) ;
+                        len -= newPos ;
+                        newPos = gf_5vect_syndrome_avx512_gfni(len, k, g_tbls, data, newPos);
+                }
+                break;
+        case 4:
+                newPos = gf_4vect_syndrome_avx512_gfni(len, k, g_tbls, data, 0);
+                while ( ( newPos < len ) && ( retry < MAX_PC_RETRY ) )
+                {
+                        pc_correct_AVX512_gfni ( newPos, k, rows, data, &retry, totRows, newPos ) ;
+                        len -= newPos ;
+                        newPos = gf_4vect_syndrome_avx512_gfni(len, k, g_tbls, data, 0);
+                }
+                break;
+        case 3:
+                newPos = gf_3vect_syndrome_avx512_gfni(len, k, g_tbls, data, 0);
+                while ( ( newPos < len ) && ( retry < MAX_PC_RETRY ) )
+                {
+                        pc_correct_AVX512_gfni ( newPos, k, rows, data, &retry, totRows, 0 ) ;
+                        len -= newPos ;
+                        newPos = gf_3vect_syndrome_avx512_gfni(len, k, g_tbls, data, 0);
+                }
+                break;
+        case 2:
+                newPos = gf_2vect_syndrome_avx512_gfni(len, k, g_tbls, data, 0);
+                while ( ( newPos < len ) && ( retry < MAX_PC_RETRY ) )
+                {
+                        pc_correct_AVX512_gfni ( newPos, k, rows, data, &retry, totRows, 0 ) ;
+                        len -= newPos ;
+                        newPos = gf_2vect_syndrome_avx512_gfni(len, k, g_tbls, data, newPos);
+                }
+                break;
+        case 1:
+                newPos = len ;
+                break;
+        case 0:
+        default:
+                break;
+        }
+        return ( newPos ) ;
 }
 
 void
