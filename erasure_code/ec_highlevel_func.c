@@ -396,7 +396,7 @@ void pc_correct_AVX512_gfni ( int newPos, int k, int p, unsigned char ** data,
         return ;
 }
 
-#define MAX_PC_RETRY 256
+#define MAX_PC_RETRY 5
 
 int
 ec_decode_data_avx512_gfni(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data)
