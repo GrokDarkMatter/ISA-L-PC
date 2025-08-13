@@ -366,7 +366,8 @@ mk_global gf_6vect_syndrome_avx512_gfni, function
 func(gf_6vect_syndrome_avx512_gfni)
 	FUNC_SAVE
 
-	xor	pos, pos
+	;xor	pos, pos
+	mov		pos, arg4
 	mov	vskip3, vec
 	imul	vskip3, 3*8
 	mov	vskip5, vec

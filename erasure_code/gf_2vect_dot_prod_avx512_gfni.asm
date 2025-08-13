@@ -258,7 +258,8 @@ mk_global gf_2vect_syndrome_avx512_gfni, function
 func(gf_2vect_syndrome_avx512_gfni)
 	FUNC_SAVE
 
-	xor	pos, pos
+	;xor	pos, pos
+	mov		pos, arg4
 	shl	vec, 3		;vec *= 8. Make vec_i count by 8
 
 	cmp	len, 64
