@@ -411,6 +411,11 @@ main(int argc, char *argv[])
                                 goto exit ;
                         }
                 }
+                // Start decode test
+                ec_encode_perf(m, k, a, g_tbls, buffs, &start);
+                printf("polynomial_code_decode" TEST_TYPE_STR ": ");
+                perf_print(start, (long long) (TEST_LEN(m)) * (m));
+
                 // Zero out extra tables to avoid seg fault
                 memset ( &buffs [ m ], 0, p * sizeof (u8*)) ;
         }

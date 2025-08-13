@@ -292,7 +292,7 @@ gf_6vect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
         int offSet);
 extern int
 gf_nvect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
-        int offSet);
+        int offSet, int synCount);
 
         extern void
 gf_vect_mad_avx512_gfni(int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
@@ -352,8 +352,41 @@ ec_init_tables_gfni(int k, int rows, unsigned char *a, unsigned char *g_tbls)
 
 extern int
 gf_nvect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
-        int offSet)
+        int offSet, int synCount)
 {
+        int curSym, curRow, curPos = 0 ;
+        unsigned char * cur_g ;
+        __m512i result, aff_vec ;
+        __m512i parity [ 32 ] ;
+
+        while ( curPos < len )
+        {
+                // Initialize affine table pointer
+                cur_g = g_tbls ;
+
+                // Zero result
+                result = _mm512_setzero_si512() ;
+
+                for ( curSym = 0 ; curSym < synCount ; curSym ++ )
+                {
+                        _mm512_store_si512((__m512i *)&parity [ curSym ], result);
+
+                }
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
+                {
+                        __m512i data_vec = _mm512_load_si512((__m512i *)data[0]);
+                        for ( curRow = 0 ; curRow < synCount ; curRow ++ ) 
+                        {
+                                aff_vec = _mm512_broadcast_i64x2(*(__m128i *)cur_g);
+                                result = _mm512_gf2p8affine_epi64_epi8(data_vec, aff_vec, 0);
+                                _mm512_xor_si512 ( result, parity [ curRow ] ) ;
+                                _mm512_store_si512((__m512i *)&parity [ curSym ], result);
+                        }
+                        cur_g += 8 ;
+                }
+                curPos += 64 ;
+                _mm512_store_si512((__m512i *)data[0], result);
+        }
       return len ;
 }
 
@@ -405,12 +438,12 @@ ec_decode_data_avx512_gfni(int len, int k, int rows, unsigned char *g_tbls, unsi
 
         if (rows > 6)
         {
-                newPos = gf_nvect_syndrome_avx512_gfni ( len, k, g_tbls, data, 0 ) ;
+                newPos = gf_nvect_syndrome_avx512_gfni ( len, k, g_tbls, data, 0, rows ) ;
                 while ( ( newPos < len ) && ( retry < MAX_PC_RETRY ) )
                 {
                         pc_correct_AVX512_gfni ( newPos, k, rows, data, &retry, totRows, 0 ) ;
                         len -= newPos ;
-                        newPos = gf_nvect_syndrome_avx512_gfni ( len, k, g_tbls, data, newPos ) ;
+                        newPos = gf_nvect_syndrome_avx512_gfni ( len, k, g_tbls, data, newPos, rows ) ;
                 }
                 return ( newPos ) ;
         }
