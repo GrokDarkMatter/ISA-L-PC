@@ -424,12 +424,11 @@ void pc_correct_AVX512_gfni ( int newPos, int k, int p, unsigned char ** data,
         ldata = _mm512_load_si512( data[k] ) ;
         mask1 = _mm512_test_epi8_mask ( ldata, ldata ) ;
         offSet = _tzcnt_u64 ( mask1 ) ;
-        printf ( "k = %d Offset = %lld\n", k, offSet ) ;
+        //printf ( "k = %d Offset = %lld\n", k, offSet ) ;
 
         for ( eLoc = 0 ; eLoc < p ; eLoc ++ )
         {
                 synDromes [ eLoc ] = data [ k - eLoc - 1 + p ] [ offSet ] ;
-                printf ( "Syndromes [%d]=%d\n", eLoc, synDromes [ eLoc ] ) ;
         }
         eVal = synDromes [ 0 ] ;
         eLoc = synDromes [ 1 ] ;
@@ -439,7 +438,7 @@ void pc_correct_AVX512_gfni ( int newPos, int k, int p, unsigned char ** data,
         {
                 eLoc = 0 ;
         }
-        printf ( "Error = %d Symbol location = %d Bufpos = %lld\n", eVal, eLoc , newPos + offSet ) ;
+        //printf ( "Error = %d Symbol location = %d Bufpos = %lld\n", eVal, eLoc , newPos + offSet ) ;
 
         // Correct the error
         if ( eLoc < k )
