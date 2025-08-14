@@ -477,6 +477,7 @@ ec_decode_data_avx512_gfni(int len, int k, int rows, unsigned char *g_tbls, unsi
                         len -= newPos ;
                         newPos = gf_6vect_syndrome_avx512_gfni(len, k, g_tbls, data, newPos) ;
                 }
+                break ;
         case 5:
                 newPos = gf_5vect_syndrome_avx512_gfni(len, k, g_tbls, data, newPos ) ;
                 while ( ( newPos < len ) && ( ++retry < MAX_PC_RETRY ) )
