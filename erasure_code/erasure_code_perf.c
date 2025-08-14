@@ -337,15 +337,15 @@ main(int argc, char *argv[])
         if ( pc == 1 )
         {
                 // Make random data
-                for (i = 0; i < k; i++)
+                for (i = 0; i < k+p; i++)
                         for (j = 0; j < TEST_LEN(m); j++)
                                 buffs[i][j] = rand();
+                                //buffs [ i ] [ j ] = 0 ;
 
-                // First encode data with polynomial matrix
+                                // First encode data with polynomial matrix
                 gf_gen_poly_matrix ( a, m, k ) ;
                 ec_init_tables ( k, p, &a[k*k], g_tbls ) ;
                 ec_encode_data ( TEST_LEN(m), k, p, g_tbls, buffs, &buffs [ k ] ) ;
-                printf ( "Encode done\n" ) ;
 
                 // Verify syndromes produce zero - start with reversed Vandermonde
                 gf_gen_rsr_matrix(a , m + p, m ) ;
@@ -356,11 +356,10 @@ main(int argc, char *argv[])
                 // Combine the original codeword with syndrome buffers
                 memcpy ( &buffs [ m ], temp_buffs, p * sizeof (u8*)) ;
 
-                epos = 999 ;
+                epos = 0 ;
                 // If you inject an error here it will appear in the syndromes
                 buffs [ m - pp - 1 ] [ epos ] ^= pe ;
 
-                printf ( "Ready to decode\n" ) ;
                 // Generate the syndromes and display
                 retVal = ec_decode_data( TEST_LEN(m), m, p, g_tbls, buffs, &buffs[m]);
 
@@ -385,6 +384,12 @@ main(int argc, char *argv[])
                         }
                 }
 
+                // Start decode test
+                BENCHMARK(&start, BENCHMARK_TIME,
+                ec_decode_data(TEST_LEN(m), m, p, g_tbls, buffs, 0));
+                printf("polynomial_code_decode" TEST_TYPE_STR ": ");
+                perf_print(start, (long long) (TEST_LEN(m)) * (m));
+
                 // Compute error value and location
                 if ( pe & ( p > 1 ) )
                 {
@@ -398,6 +403,7 @@ main(int argc, char *argv[])
                                 eLoc = 0 ;
                         }
                         printf ( "Error value = %d Error location = %d\n", eVal, eLoc ) ;
+
                         // Check for correct decoding
                         if ( ( eVal == pe ) && ( eLoc == pp ) )
                         {
@@ -411,11 +417,6 @@ main(int argc, char *argv[])
                                 goto exit ;
                         }
                 }
-                // Start decode test
-                ec_encode_perf(m, k, a, g_tbls, buffs, &start);
-                printf("polynomial_code_decode" TEST_TYPE_STR ": ");
-                perf_print(start, (long long) (TEST_LEN(m)) * (m));
-
                 // Zero out extra tables to avoid seg fault
                 memset ( &buffs [ m ], 0, p * sizeof (u8*)) ;
         }
