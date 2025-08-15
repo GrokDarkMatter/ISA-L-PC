@@ -156,7 +156,7 @@ int
 main(int argc, char *argv[])
 {
         int i, j, m, k, p, nerrs, check, pc, pe, pp, ret = -1;
-        u8 eVal, eLoc ;
+        u8 eOld ;
         void *buf;
         u8 *temp_buffs[TEST_SOURCES] = { NULL };
         u8 *buffs[TEST_SOURCES] = { NULL };
@@ -355,32 +355,35 @@ main(int argc, char *argv[])
 
                 // Combine the original codeword with syndrome buffers
                 memcpy ( &buffs [ m ], temp_buffs, p * sizeof (u8*)) ;
+                memset ( temp_buffs, 0, p * sizeof (u8*)) ;
 
                 epos = 0 ;
                 // If you inject an error here it will appear in the syndromes
+                eOld = buffs [ m - pp - 1 ] [ epos ] ;
                 buffs [ m - pp - 1 ] [ epos ] ^= pe ;
 
                 // Generate the syndromes and display
                 retVal = ec_decode_data( TEST_LEN(m), m, p, g_tbls, buffs, &buffs[m]);
 
-                printf ( "Expected %d got %d\n", TEST_LEN(m), retVal ) ;
+                printf ( "Syndrome Decoder Len = %d Processed = %d\n", TEST_LEN(m), retVal ) ;
 
                 // If error injection is zero, syndomes should be zero
-                if ( pe == 0 )
+                if ( eOld != buffs [ m - pp - 1 ] [ epos ] )
                 {
-                        printf ( "Buffs [%d] syndrome decoding (should be zero)\n", m ) ;
-                }
-                else
-                {
-                        printf ( "Error Syndromes (should not be zero)\n" ) ;
+                        printf ( "Error NOT corrected successfully, expected %2x got %2x\n",
+                        ( 0xff & eOld ), ( 0xff & buffs [ p - pp - 1 ] [ epos ] ) ) ;
                 }
 
-                //Dump the syndromes
-                for ( i = m ; i < m + p ; i ++ )
+                //Dump the syndromes if decoding stopped before end
+                if ( pe & ( p > 1 ) )
                 {
-                        if ( buffs [ i ] )
+                        printf ( "Syndromes\n" ) ;
+                        for ( i = m ; i < m + p ; i ++ )
                         {
-                                dump_u8xu8 ( buffs [ i ], 1, 64 ) ;
+                                if ( buffs [ i ] )
+                                {
+                                        dump_u8xu8 ( buffs [ i ], 1, 16 ) ;
+                                }
                         }
                 }
 
@@ -390,35 +393,6 @@ main(int argc, char *argv[])
                 printf("polynomial_code_decode" TEST_TYPE_STR ": ");
                 perf_print(start, (long long) (TEST_LEN(m)) * (m));
 
-                // Compute error value and location
-                if ( pe & ( p > 1 ) )
-                {
-                        // Data value is in LSB, computed as parity
-                        eVal = buffs [ m + p - 1 ] [ epos % 64 ] ;
-                        // Divide parity data value by next row
-                        eLoc = gf_mul ( buffs [ m + p - 2 ] [ epos % 64 ], gf_inv ( eVal ) ) ;
-                        eLoc = gflog_base [ eLoc ] ;
-                        if ( eLoc == 255 )
-                        {
-                                eLoc = 0 ;
-                        }
-                        printf ( "Error value = %d Error location = %d\n", eVal, eLoc ) ;
-
-                        // Check for correct decoding
-                        if ( ( eVal == pe ) && ( eLoc == pp ) )
-                        {
-                                printf ( "Error value specified (%d) and position (%d) decoded correctly\n", eVal, eLoc ) ;
-                        }
-                        else
-                        {
-                                printf ( "Error value specified (%d) and position (%d) decoded incorrectly\n", eVal, eLoc ) ;
-                                // Zero out extra tables to avoid seg fault
-                                memset ( &buffs [ m ], 0, p * sizeof (u8*)) ;
-                                goto exit ;
-                        }
-                }
-                // Zero out extra tables to avoid seg fault
-                memset ( &buffs [ m ], 0, p * sizeof (u8*)) ;
         }
 
         printf("done all: Pass\n");

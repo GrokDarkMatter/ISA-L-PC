@@ -324,9 +324,9 @@ func(gf_6vect_dot_prod_avx512_gfni)
 	xor	pos, pos
 	mov	vskip3, vec
 	imul	vskip3, 3*8
-	mov	vskip5, vec
+	mov		vskip5, vec
 	imul	vskip5, 5*8
-	shl	vec, 3		;vec *= 8. Make vec_i count by 8
+	shl		vec, 3		;vec *= 8. Make vec_i count by 8
 	mov	dest2, [dest1 + 8]
 	mov	dest3, [dest1 + 2*8]
 	mov	dest4, [dest1 + 3*8]
@@ -367,9 +367,9 @@ func(gf_6vect_syndrome_avx512_gfni)
 	FUNC_SAVE
 
 	mov		pos, arg4
-	mov	vskip3, vec
+	mov		vskip3, vec
 	imul	vskip3, 3*8
-	mov	vskip5, vec
+	mov		vskip5, vec
 	imul	vskip5, 5*8
 	shl	vec, 3		;vec *= 8. Make vec_i count by 8
 
