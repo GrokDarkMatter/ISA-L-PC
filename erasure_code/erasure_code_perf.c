@@ -403,7 +403,7 @@ main(int argc, char *argv[])
                         ( 0xff & eOld ), ( 0xff & buffs [ p - pp - 1 ] [ epos ] ) ) ;
                 }
 
-                //Dump the syndromes if decoding stopped before end
+                // Dump the syndromes if decoding stopped before end
                 if ( pe & ( p > 1 ) )
                 {
                         printf ( "Syndromes\n" ) ;
@@ -417,8 +417,8 @@ main(int argc, char *argv[])
                 }
 
                 // Start decode test
-                BENCHMARK(&start, BENCHMARK_TIME,
-                ec_decode_data(TEST_LEN(m), m, p, g_tbls, buffs, 0));
+                //BENCHMARK(&start, BENCHMARK_TIME,
+                //ec_encode_data(TEST_LEN(m), m, p, g_tbls, buffs, 0));
                 printf("polynomial_code_decode" TEST_TYPE_STR ": ");
                 perf_print(start, (long long) (TEST_LEN(m)) * (m));
 

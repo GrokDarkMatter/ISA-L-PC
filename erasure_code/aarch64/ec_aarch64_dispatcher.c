@@ -106,6 +106,23 @@ DEFINE_INTERFACE_DISPATCHER(ec_encode_data)
         return ec_encode_data_base;
 }
 
+DEFINE_INTERFACE_DISPATCHER(ec_decode_data)
+{
+#if defined(__linux__)
+        unsigned long auxval = getauxval(AT_HWCAP);
+
+        if (auxval & HWCAP_SVE)
+                return ec_encode_data_sve;
+        if (auxval & HWCAP_ASIMD)
+                return ec_encode_data_neon;
+#elif defined(__APPLE__)
+        if (sysctlEnabled(SYSCTL_SVE_KEY))
+                return ec_encode_data_sve;
+        return ec_encode_data_neon;
+#endif
+        return ec_encode_data_base;
+}
+
 DEFINE_INTERFACE_DISPATCHER(ec_encode_data_update)
 {
 #if defined(__linux__)
