@@ -44,6 +44,8 @@ extern void
 ec_encode_data_sve(int, int, int, unsigned char *, unsigned char **, unsigned char **coding);
 extern void
 ec_encode_data_neon(int, int, int, unsigned char *, unsigned char **, unsigned char **);
+extern void
+ec_decode_data_neon(int, int, int, unsigned char *, unsigned char **, unsigned char **);
 
 extern void
 ec_encode_data_update_sve(int, int, int, int, unsigned char *, unsigned char *, unsigned char **);
@@ -114,11 +116,11 @@ DEFINE_INTERFACE_DISPATCHER(ec_decode_data)
         if (auxval & HWCAP_SVE)
                 return ec_encode_data_sve;
         if (auxval & HWCAP_ASIMD)
-                return ec_encode_data_neon;
+                return ec_decode_data_neon;
 #elif defined(__APPLE__)
         if (sysctlEnabled(SYSCTL_SVE_KEY))
                 return ec_encode_data_sve;
-        return ec_encode_data_neon;
+        return ec_decode_data_neon;
 #endif
         return ec_encode_data_base;
 }
