@@ -76,7 +76,7 @@ SPDX-License-Identifier: BSD-3-Clause
 #endif
 
 #define MMAX TEST_SOURCES
-#define KMAX (TEST_SOURCES-32) // Maximum data buffer count, excluding parity
+#define KMAX TEST_SOURCES // Maximum data buffer count, excluding parity
 
 #define BAD_MATRIX -1
 
@@ -125,8 +125,29 @@ ec_decode_perf(int m, int k, u8 *a, u8 *g_tbls, u8 **buffs, u8 *src_in_err, u8 *
                int nerrs, u8 **temp_buffs, struct perf *start)
 {
         int i, j, r;
-        u8 b[MMAX * KMAX], c[MMAX * KMAX], d[MMAX * KMAX];
+        u8 *b, *c, *d;
         u8 *recov[TEST_SOURCES];
+        b = c = d = 0 ;
+
+        // Allocate work buffers
+        b=malloc(MMAX * KMAX) ;
+        if ( b == NULL )
+        {
+                printf("Error allocating b\n") ;
+                goto exit;
+        }
+        c=malloc(MMAX * KMAX) ;
+        if ( c == NULL )
+        {
+                printf("Error allocating c\n") ;
+                goto exit;
+        }
+        d=malloc(MMAX * KMAX) ;
+        if ( d == NULL )
+        {
+                printf("Error allocating d\n") ;
+                goto exit;
+        }
 
         // Construct b by removing error rows
         for (i = 0, r = 0; i < k; i++, r++) {
@@ -148,6 +169,10 @@ ec_decode_perf(int m, int k, u8 *a, u8 *g_tbls, u8 **buffs, u8 *src_in_err, u8 *
         ec_init_tables(k, nerrs, c, g_tbls);
         BENCHMARK(start, BENCHMARK_TIME,
                   ec_encode_data(TEST_LEN(m), k, nerrs, g_tbls, recov, temp_buffs));
+exit:
+        free(d);
+        free(c);
+        free(b);
 
         return 0;
 }
@@ -160,7 +185,7 @@ main(int argc, char *argv[])
         void *buf;
         u8 *temp_buffs[TEST_SOURCES] = { NULL };
         u8 *buffs[TEST_SOURCES] = { NULL };
-        u8 a[MMAX * KMAX];
+        u8 *a ;
         u8 *g_tbls=0, src_in_err[TEST_SOURCES];
         u8 src_err_list[TEST_SOURCES] ;
         int retVal, epos ;
@@ -253,6 +278,13 @@ main(int argc, char *argv[])
                 err_list[i++] = next_err;
         }
 
+        a = malloc ( MMAX * ( KMAX*2 ) ) ;
+        if ( a == NULL )
+        {
+                printf("Error allocating a\n") ;
+                goto exit;
+        }
+
         printf("Testing with %u data buffers and %u parity buffers (num errors = %u, in [ ", k, p,
                nerrs);
         for (i = 0; i < nerrs; i++)
@@ -340,9 +372,8 @@ main(int argc, char *argv[])
                 for (i = 0; i < k+p; i++)
                         for (j = 0; j < TEST_LEN(m); j++)
                                 buffs[i][j] = rand();
-                                //buffs [ i ] [ j ] = 0 ;
 
-                                // First encode data with polynomial matrix
+                // First encode data with polynomial matrix
                 gf_gen_poly_matrix ( a, m, k ) ;
                 ec_init_tables ( k, p, &a[k*k], g_tbls ) ;
                 ec_encode_data ( TEST_LEN(m), k, p, g_tbls, buffs, &buffs [ k ] ) ;
@@ -400,6 +431,7 @@ main(int argc, char *argv[])
         ret = 0;
 
 exit:
+        free ( a ) ;
         free(err_list);
         for (i = 0; i < TEST_SOURCES; i++) {
                 aligned_free(buffs[i]);
