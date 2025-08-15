@@ -196,7 +196,7 @@ main(int argc, char *argv[])
         p = 4;
         nerrs = 4;
         pc = 1 ;
-        pe = 1 ;
+        pe = 0 ;
         pp = 1 ;
 
         /* Parse arguments */
@@ -248,9 +248,7 @@ main(int argc, char *argv[])
                 return -1;
         }
 
-        if (nerrs > p) {
-                nerrs = p ;
-        }
+        nerrs = p ;
 
         m = k + p;
 
@@ -336,8 +334,8 @@ main(int argc, char *argv[])
         {
                 // Build the polynomial matrix
                 gf_gen_poly_matrix(a, m, k ) ;
-                printf ( "Poly Matrix\n" ) ;
-                dump_u8xu8( a, m, k ) ;
+                //printf ( "Poly Matrix\n" ) ;
+                //dump_u8xu8( a, m, k ) ;
         }
 
         // Start encode test
