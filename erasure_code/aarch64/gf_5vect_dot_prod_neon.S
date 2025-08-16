@@ -32,8 +32,10 @@
 .text
 
 .global cdecl(gf_5vect_dot_prod_neon)
+.global cdecl(gf_5vect_syndrome_neon)
 #ifndef __APPLE__
 .type gf_5vect_dot_prod_neon, %function
+.type gf_5vect_syndrome_neon, %function
 #endif
 
 /* arguments */
@@ -480,5 +482,326 @@ cdecl(gf_5vect_dot_prod_neon):
 	ret
 
 .return_fail:
+	mov	w_ret, #1
+	ret
+
+cdecl(gf_5vect_syndrome_neon):
+	/* less than 16 bytes, return_fail */
+	cmp	x_len, #16
+	blt	.return_fail
+
+	mov	x_pos, #0
+	lsl	x_vec, x_vec, #3
+	ldr	x_dest1, [x_dest, #8*0]
+	ldr	x_dest2, [x_dest, #8*1]
+	ldr	x_dest3, [x_dest, #8*2]
+	ldr	x_dest4, [x_dest, #8*3]
+	ldr	x_dest5, [x_dest, #8*4]
+
+.Mloop64_init:
+	/* less than 64 bytes, goto Lloop16_init */
+	cmp	x_len, #64
+	blt	.Mloop16_init
+
+	/* save d8 ~ d15 to stack */
+	sub	sp, sp, #64
+	stp	d8, d9, [sp]
+	stp	d10, d11, [sp, #16]
+	stp	d12, d13, [sp, #32]
+	stp	d14, d15, [sp, #48]
+
+	sub	x_len, x_len, #64
+
+.Mloop64:
+	movi	v_p1_0.16b, #0
+	movi	v_p1_1.16b, #0
+	movi	v_p1_2.16b, #0
+	movi	v_p1_3.16b, #0
+	movi	v_p2_0.16b, #0
+	movi	v_p2_1.16b, #0
+	movi	v_p2_2.16b, #0
+	movi	v_p2_3.16b, #0
+	movi	v_p3_0.16b, #0
+	movi	v_p3_1.16b, #0
+	movi	v_p3_2.16b, #0
+	movi	v_p3_3.16b, #0
+	movi	v_p4_0.16b, #0
+	movi	v_p4_1.16b, #0
+	movi	v_p4_2.16b, #0
+	movi	v_p4_3.16b, #0
+	movi	v_p5_0.16b, #0
+	movi	v_p5_1.16b, #0
+	movi	v_p5_2.16b, #0
+	movi	v_p5_3.16b, #0
+	mov	x_vec_i, #0
+
+.Mloop64_vects:
+	ldr	x_ptr, [x_src, x_vec_i]
+	add	x_ptr, x_ptr, x_pos
+
+	ldr	q_data_0, [x_ptr], #16
+	ldr	q_data_1, [x_ptr], #16
+	ldr	q_data_2, [x_ptr], #16
+	ldr	q_data_3, [x_ptr], #16
+	prfm	pldl2keep, [x_ptr]
+
+	movi	v_mask0f.16b, #0x0f
+	and	v_data_0_lo.16b, v_data_0.16b, v_mask0f.16b
+	and	v_data_1_lo.16b, v_data_1.16b, v_mask0f.16b
+	and	v_data_2_lo.16b, v_data_2.16b, v_mask0f.16b
+	and	v_data_3_lo.16b, v_data_3.16b, v_mask0f.16b
+	ushr	v_data_0_hi.16b, v_data_0.16b, #4
+	ushr	v_data_1_hi.16b, v_data_1.16b, #4
+	ushr	v_data_2_hi.16b, v_data_2.16b, #4
+	ushr	v_data_3_hi.16b, v_data_3.16b, #4
+
+	/* v_p1_x */
+	add	x_tmp, x_tbl, x_vec_i, lsl #2
+	add	x_vec_i, x_vec_i, #8
+	ldp	q_gft_lo, q_gft_hi, [x_tmp]
+	prfm	pldl3keep, [x_tmp, #32]
+	add	x_tmp, x_tmp, x_vec, lsl #2
+
+	tbl	v_tmp_lo.16b, {v_gft_lo.16b}, v_data_0_lo.16b
+	tbl	v_tmp_hi.16b, {v_gft_hi.16b}, v_data_0_hi.16b
+	eor	v_p1_0.16b, v_tmp_lo.16b, v_p1_0.16b
+	eor	v_p1_0.16b, v_p1_0.16b, v_tmp_hi.16b
+
+	tbl	v_tmp_lo.16b, {v_gft_lo.16b}, v_data_1_lo.16b
+	tbl	v_tmp_hi.16b, {v_gft_hi.16b}, v_data_1_hi.16b
+	eor	v_p1_1.16b, v_tmp_lo.16b, v_p1_1.16b
+	eor	v_p1_1.16b, v_p1_1.16b, v_tmp_hi.16b
+
+	tbl	v_tmp_lo.16b, {v_gft_lo.16b}, v_data_2_lo.16b
+	tbl	v_tmp_hi.16b, {v_gft_hi.16b}, v_data_2_hi.16b
+	eor	v_p1_2.16b, v_tmp_lo.16b, v_p1_2.16b
+	eor	v_p1_2.16b, v_p1_2.16b, v_tmp_hi.16b
+
+	tbl	v_tmp_lo.16b, {v_gft_lo.16b}, v_data_3_lo.16b
+	tbl	v_tmp_hi.16b, {v_gft_hi.16b}, v_data_3_hi.16b
+	eor	v_p1_3.16b, v_tmp_lo.16b, v_p1_3.16b
+	eor	v_p1_3.16b, v_p1_3.16b, v_tmp_hi.16b
+
+	/* v_p2_x */
+	ldp	q_gft_lo, q_gft_hi, [x_tmp]
+	prfm	pldl3keep, [x_tmp, #32]
+	add	x_tmp, x_tmp, x_vec, lsl #2
+
+	tbl	v_tmp_lo.16b, {v_gft_lo.16b}, v_data_0_lo.16b
+	tbl	v_tmp_hi.16b, {v_gft_hi.16b}, v_data_0_hi.16b
+	eor	v_p2_0.16b, v_tmp_lo.16b, v_p2_0.16b
+	eor	v_p2_0.16b, v_p2_0.16b, v_tmp_hi.16b
+
+	tbl	v_tmp_lo.16b, {v_gft_lo.16b}, v_data_1_lo.16b
+	tbl	v_tmp_hi.16b, {v_gft_hi.16b}, v_data_1_hi.16b
+	eor	v_p2_1.16b, v_tmp_lo.16b, v_p2_1.16b
+	eor	v_p2_1.16b, v_p2_1.16b, v_tmp_hi.16b
+
+	tbl	v_tmp_lo.16b, {v_gft_lo.16b}, v_data_2_lo.16b
+	tbl	v_tmp_hi.16b, {v_gft_hi.16b}, v_data_2_hi.16b
+	eor	v_p2_2.16b, v_tmp_lo.16b, v_p2_2.16b
+	eor	v_p2_2.16b, v_p2_2.16b, v_tmp_hi.16b
+
+	tbl	v_tmp_lo.16b, {v_gft_lo.16b}, v_data_3_lo.16b
+	tbl	v_tmp_hi.16b, {v_gft_hi.16b}, v_data_3_hi.16b
+	eor	v_p2_3.16b, v_tmp_lo.16b, v_p2_3.16b
+	eor	v_p2_3.16b, v_p2_3.16b, v_tmp_hi.16b
+
+	/* v_p3_x */
+	ldp	q_gft_lo, q_gft_hi, [x_tmp]
+	prfm	pldl3keep, [x_tmp, #32]
+	add	x_tmp, x_tmp, x_vec, lsl #2
+
+	tbl	v_tmp_lo.16b, {v_gft_lo.16b}, v_data_0_lo.16b
+	tbl	v_tmp_hi.16b, {v_gft_hi.16b}, v_data_0_hi.16b
+	eor	v_p3_0.16b, v_tmp_lo.16b, v_p3_0.16b
+	eor	v_p3_0.16b, v_p3_0.16b, v_tmp_hi.16b
+
+	tbl	v_tmp_lo.16b, {v_gft_lo.16b}, v_data_1_lo.16b
+	tbl	v_tmp_hi.16b, {v_gft_hi.16b}, v_data_1_hi.16b
+	eor	v_p3_1.16b, v_tmp_lo.16b, v_p3_1.16b
+	eor	v_p3_1.16b, v_p3_1.16b, v_tmp_hi.16b
+
+	tbl	v_tmp_lo.16b, {v_gft_lo.16b}, v_data_2_lo.16b
+	tbl	v_tmp_hi.16b, {v_gft_hi.16b}, v_data_2_hi.16b
+	eor	v_p3_2.16b, v_tmp_lo.16b, v_p3_2.16b
+	eor	v_p3_2.16b, v_p3_2.16b, v_tmp_hi.16b
+
+	tbl	v_tmp_lo.16b, {v_gft_lo.16b}, v_data_3_lo.16b
+	tbl	v_tmp_hi.16b, {v_gft_hi.16b}, v_data_3_hi.16b
+	eor	v_p3_3.16b, v_tmp_lo.16b, v_p3_3.16b
+	eor	v_p3_3.16b, v_p3_3.16b, v_tmp_hi.16b
+
+	/* v_p4_x */
+	ldp	q_gft_lo, q_gft_hi, [x_tmp]
+	prfm	pldl3keep, [x_tmp, #32]
+	add	x_tmp, x_tmp, x_vec, lsl #2
+
+	tbl	v_tmp_lo.16b, {v_gft_lo.16b}, v_data_0_lo.16b
+	tbl	v_tmp_hi.16b, {v_gft_hi.16b}, v_data_0_hi.16b
+	eor	v_p4_0.16b, v_tmp_lo.16b, v_p4_0.16b
+	eor	v_p4_0.16b, v_p4_0.16b, v_tmp_hi.16b
+
+	tbl	v_tmp_lo.16b, {v_gft_lo.16b}, v_data_1_lo.16b
+	tbl	v_tmp_hi.16b, {v_gft_hi.16b}, v_data_1_hi.16b
+	eor	v_p4_1.16b, v_tmp_lo.16b, v_p4_1.16b
+	eor	v_p4_1.16b, v_p4_1.16b, v_tmp_hi.16b
+
+	tbl	v_tmp_lo.16b, {v_gft_lo.16b}, v_data_2_lo.16b
+	tbl	v_tmp_hi.16b, {v_gft_hi.16b}, v_data_2_hi.16b
+	eor	v_p4_2.16b, v_tmp_lo.16b, v_p4_2.16b
+	eor	v_p4_2.16b, v_p4_2.16b, v_tmp_hi.16b
+
+	tbl	v_tmp_lo.16b, {v_gft_lo.16b}, v_data_3_lo.16b
+	tbl	v_tmp_hi.16b, {v_gft_hi.16b}, v_data_3_hi.16b
+	eor	v_p4_3.16b, v_tmp_lo.16b, v_p4_3.16b
+	eor	v_p4_3.16b, v_p4_3.16b, v_tmp_hi.16b
+
+	/* v_p5_x */
+	ldp	q_gft_lo, q_gft_hi, [x_tmp]
+	prfm	pldl3keep, [x_tmp, #32]
+
+	tbl	v_tmp_lo.16b, {v_gft_lo.16b}, v_data_0_lo.16b
+	tbl	v_tmp_hi.16b, {v_gft_hi.16b}, v_data_0_hi.16b
+	eor	v_p5_0.16b, v_tmp_lo.16b, v_p5_0.16b
+	eor	v_p5_0.16b, v_p5_0.16b, v_tmp_hi.16b
+
+	tbl	v_tmp_lo.16b, {v_gft_lo.16b}, v_data_1_lo.16b
+	tbl	v_tmp_hi.16b, {v_gft_hi.16b}, v_data_1_hi.16b
+	eor	v_p5_1.16b, v_tmp_lo.16b, v_p5_1.16b
+	eor	v_p5_1.16b, v_p5_1.16b, v_tmp_hi.16b
+
+	tbl	v_tmp_lo.16b, {v_gft_lo.16b}, v_data_2_lo.16b
+	tbl	v_tmp_hi.16b, {v_gft_hi.16b}, v_data_2_hi.16b
+	eor	v_p5_2.16b, v_tmp_lo.16b, v_p5_2.16b
+	eor	v_p5_2.16b, v_p5_2.16b, v_tmp_hi.16b
+
+	tbl	v_tmp_lo.16b, {v_gft_lo.16b}, v_data_3_lo.16b
+	tbl	v_tmp_hi.16b, {v_gft_hi.16b}, v_data_3_hi.16b
+	eor	v_p5_3.16b, v_tmp_lo.16b, v_p5_3.16b
+	eor	v_p5_3.16b, v_p5_3.16b, v_tmp_hi.16b
+
+	cmp	x_vec_i, x_vec
+	blt	.Mloop64_vects
+
+.Mloop64_vects_end:
+	add	x_ptr, x_dest1, x_pos
+	stp	q_p1_0, q_p1_1, [x_ptr], #32
+	stp	q_p1_2, q_p1_3, [x_ptr]
+
+	add	x_ptr, x_dest2, x_pos
+	stp	q_p2_0, q_p2_1, [x_ptr], #32
+	stp	q_p2_2, q_p2_3, [x_ptr]
+
+	add	x_ptr, x_dest3, x_pos
+	stp	q_p3_0, q_p3_1, [x_ptr], #32
+	stp	q_p3_2, q_p3_3, [x_ptr]
+
+	add	x_ptr, x_dest4, x_pos
+	stp	q_p4_0, q_p4_1, [x_ptr], #32
+	stp	q_p4_2, q_p4_3, [x_ptr]
+
+	add	x_ptr, x_dest5, x_pos
+	stp	q_p5_0, q_p5_1, [x_ptr], #32
+	stp	q_p5_2, q_p5_3, [x_ptr]
+
+	add	x_pos, x_pos, #64
+	cmp	x_pos, x_len
+	ble	.Mloop64
+
+.Mloop64_end:
+	/* restore d8 ~ d15 */
+	ldp	d8,  d9,  [sp]
+	ldp	d10, d11, [sp, #16]
+	ldp	d12, d13, [sp, #32]
+	ldp	d14, d15, [sp, #48]
+	add	sp, sp, #64
+
+	add	x_len, x_len, #64
+	cmp	x_pos, x_len
+	beq	.Mreturn_pass
+
+.Mloop16_init:
+	sub	x_len, x_len, #16
+	cmp	x_pos, x_len
+	bgt	.Mlessthan16_init
+
+.Mloop16:
+	movi	v_p1_0.16b, #0
+	movi	v_p2_0.16b, #0
+	movi	v_p3_0.16b, #0
+	movi	v_p4_0.16b, #0
+	movi	v_p5_0.16b, #0
+	mov	x_vec_i, #0
+
+.Mloop16_vects:
+	ldr	x_ptr, [x_src, x_vec_i]
+	ldr	q_data, [x_ptr, x_pos]
+
+	movi	v_mask0f.16b, #0x0f
+	and	v_data_lo.16b, v_data.16b, v_mask0f.16b
+	ushr	v_data_hi.16b, v_data.16b, #4
+
+	add	x_tmp, x_tbl, x_vec_i, lsl #2
+	add	x_vec_i, x_vec_i, #8
+	ldp	q_gft1_lo, q_gft1_hi, [x_tmp]
+	add	x_tmp, x_tmp, x_vec, lsl #2
+	ldp	q_gft2_lo, q_gft2_hi, [x_tmp]
+	add	x_tmp, x_tmp, x_vec, lsl #2
+	ldp	q_gft3_lo, q_gft3_hi, [x_tmp]
+	add	x_tmp, x_tmp, x_vec, lsl #2
+	ldp	q_gft4_lo, q_gft4_hi, [x_tmp]
+	add	x_tmp, x_tmp, x_vec, lsl #2
+	ldp	q_gft5_lo, q_gft5_hi, [x_tmp]
+
+	tbl	v_gft1_lo.16b, {v_gft1_lo.16b}, v_data_lo.16b
+	tbl	v_gft1_hi.16b, {v_gft1_hi.16b}, v_data_hi.16b
+	tbl	v_gft2_lo.16b, {v_gft2_lo.16b}, v_data_lo.16b
+	tbl	v_gft2_hi.16b, {v_gft2_hi.16b}, v_data_hi.16b
+	tbl	v_gft3_lo.16b, {v_gft3_lo.16b}, v_data_lo.16b
+	tbl	v_gft3_hi.16b, {v_gft3_hi.16b}, v_data_hi.16b
+	tbl	v_gft4_lo.16b, {v_gft4_lo.16b}, v_data_lo.16b
+	tbl	v_gft4_hi.16b, {v_gft4_hi.16b}, v_data_hi.16b
+	tbl	v_gft5_lo.16b, {v_gft5_lo.16b}, v_data_lo.16b
+	tbl	v_gft5_hi.16b, {v_gft5_hi.16b}, v_data_hi.16b
+
+	eor	v_p1_0.16b, v_gft1_hi.16b, v_p1_0.16b
+	eor	v_p1_0.16b, v_p1_0.16b, v_gft1_lo.16b
+	eor	v_p2_0.16b, v_gft2_hi.16b, v_p2_0.16b
+	eor	v_p2_0.16b, v_p2_0.16b, v_gft2_lo.16b
+	eor	v_p3_0.16b, v_gft3_hi.16b, v_p3_0.16b
+	eor	v_p3_0.16b, v_p3_0.16b, v_gft3_lo.16b
+	eor	v_p4_0.16b, v_gft4_hi.16b, v_p4_0.16b
+	eor	v_p4_0.16b, v_p4_0.16b, v_gft4_lo.16b
+	eor	v_p5_0.16b, v_gft5_hi.16b, v_p5_0.16b
+	eor	v_p5_0.16b, v_p5_0.16b, v_gft5_lo.16b
+
+	cmp	x_vec_i, x_vec
+	bne	.Mloop16_vects
+
+.Mloop16_vects_end:
+	str	q_p1_0, [x_dest1, x_pos]
+	str	q_p2_0, [x_dest2, x_pos]
+	str	q_p3_0, [x_dest3, x_pos]
+	str	q_p4_0, [x_dest4, x_pos]
+	str	q_p5_0, [x_dest5, x_pos]
+	add	x_pos, x_pos, #16
+	cmp	x_pos, x_len
+	ble	.Mloop16
+
+.Mloop16_end:
+	sub	x_tmp, x_pos, x_len
+	cmp	x_tmp, #16
+	beq	.Mreturn_pass
+
+.Mlessthan16_init:
+	mov	x_pos, x_len
+	b	.Mloop16
+
+.Mreturn_pass:
+	mov	w_ret, #0
+	ret
+
+.Mreturn_fail:
 	mov	w_ret, #1
 	ret

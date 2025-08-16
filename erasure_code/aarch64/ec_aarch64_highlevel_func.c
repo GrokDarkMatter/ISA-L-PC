@@ -27,6 +27,7 @@
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **********************************************************************/
 #include "erasure_code.h"
+#include <arm_neon.h>
 
 /*external function*/
 extern void
@@ -44,6 +45,9 @@ gf_4vect_dot_prod_neon(int len, int vlen, unsigned char *gftbls, unsigned char *
 extern void
 gf_5vect_dot_prod_neon(int len, int vlen, unsigned char *gftbls, unsigned char **src,
                        unsigned char **dest);
+extern void
+gf_5vect_syndrome_neon(int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                      unsigned char **dest);
 extern void
 gf_vect_mad_neon(int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
                  unsigned char *dest);
@@ -101,6 +105,79 @@ ec_encode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsigned ch
         }
 }
 
+int gf_nvect_syndrome_neon(int len, int k, unsigned char *g_tbls,
+  unsigned char **data, int offSet, int synCount)
+{
+        int curSym, curRow, curPos = 0; // Loop counters
+        unsigned char *cur_g; // Affine table pointer
+        uint8x16_t result, data_vec; // Working registers
+        uint8x16_t parity[32]; // Parity registers
+
+
+        // Loop through all the bytes, 16 at a time (NEON processes 128 bits)
+        for (curPos = 0; curPos < len; curPos += 16)
+        {
+                // Initialize affine table pointer
+                cur_g = g_tbls;
+
+                // Initialize the parities
+                result = vdupq_n_u8(0);
+                for (curSym = 0; curSym < synCount; curSym++)
+                {
+                        parity[curSym] = result;
+                }
+
+                // Loop for each symbol
+                for (curSym = 0; curSym < k; curSym++)
+                {
+                        // Load data for current symbol (unaligned load)
+                        data_vec = vld1q_u8(data[curSym] + curPos);
+
+                        for (curRow = 0; curRow < synCount; curRow++)
+                        {
+                                // Load 8-byte affine table entry
+                                //uint8x8_t aff_table = vld1_u8(cur_g + (curRow * 8 * k));
+                                // Replicate affine table across 16 bytes
+                                //aff_vec = vcombine_u8(aff_table, aff_table);
+                                // Compute the result of the data multiplied by the affine
+                                //result = gf2p8affine_neon(data_vec, aff_table);
+                                // Add in the current parity row
+                                result = veorq_u8(result, parity[curRow]);
+                                // Save back to parity
+                                parity[curRow] = result;
+                        }
+                        // Move affine table forward by one entry
+                        cur_g += 8;
+                }
+
+                // Check for non-zero parity
+                result = vorrq_u8(parity[0], parity[1]);
+                for (curSym = 2; curSym < synCount; curSym++) 
+                {
+                        result = vorrq_u8(result, parity[curSym]);
+                }
+
+                // Test if result is non-zero
+                 //uint8x16_t mask = vceqq_u8(result, vdupq_n_u8(0));
+                uint32x4_t vec32 = vreinterpretq_u32_u8(result); // Reinterpret as uint32x4_t
+                //return vmaxvq_u32(vec32) == 0; // Returns 1 if all zeros, 0 otherwise
+                //mask = vmvnq_u8(mask); // Invert: non-zero bytes -> 0xFF
+                //uint16x8_t mask16 = vmovn_high_u16(vmovn_u16(mask), mask);
+                //bitmask = vgetq_lane_u16(mask16, 0);
+
+                if (vmaxvq_u32(vec32) == 0)
+                {
+                        // Store non-zero parities to output
+                        for (curSym = 0; curSym < synCount; curSym++)
+                        {
+                                vst1q_u8(data[curSym + k] + curPos, parity[curSym]);
+                        }
+                        return curPos;
+                }
+        }
+        return curPos;
+}
+
 void
 ec_decode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
                     unsigned char **coding)
@@ -111,7 +188,7 @@ ec_decode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsigned ch
         }
 
         while (rows > 5) {
-                gf_5vect_dot_prod_neon(len, k, g_tbls, data, &data [ k ]);
+                gf_5vect_syndrome_neon(len, k, g_tbls, data, &data [ k ]);
                 g_tbls += 5 * k * 32;
                 coding += 5;
                 rows -= 5;
