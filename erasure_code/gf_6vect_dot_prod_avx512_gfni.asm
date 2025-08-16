@@ -109,6 +109,7 @@
 	mov	[rsp + 7*16 + 7*8], rbx
 	end_prolog
 	mov	arg4, arg(4)
+	mov arg5, arg(5)
  %endmacro
 
  %macro FUNC_RESTORE 0
@@ -289,14 +290,8 @@ section .text
 	ktestb		k2, k2
 	jz			%%sndOK
 
-	; Set up syndrome destination pointers
-	mov	ptr, [src + vec_i] ;            ; reuse ptr as dest1
-	mov	dest2, [src + vec_i + 8]
-	mov	dest3, [src + vec_i + 2*8]
-	mov	dest4, [src + vec_i + 3*8]
-	mov dest5, [src + vec_i + 4*8]
-	mov tmp,   [src + vec_i + 5*8]      ; Reuse tmp as dest 6]
-
+        mov     ptr, [dest1]			;reuse ptr
+        mov     tmp, [dest1 + 5*8]		;reuse tmp
 %if %0 == 1
 	vmovdqu8 [dest2]{%%KMASK}, xp2
 	vmovdqu8 [dest3]{%%KMASK}, xp3
@@ -366,12 +361,16 @@ mk_global gf_6vect_syndrome_avx512_gfni, function
 func(gf_6vect_syndrome_avx512_gfni)
 	FUNC_SAVE
 
-	mov		pos, arg4
+	mov		pos, arg5
 	mov		vskip3, vec
 	imul	vskip3, 3*8
 	mov		vskip5, vec
 	imul	vskip5, 5*8
 	shl	vec, 3		;vec *= 8. Make vec_i count by 8
+	mov	dest2, [dest1 + 8]
+	mov	dest3, [dest1 + 2*8]
+	mov	dest4, [dest1 + 3*8]
+	mov	dest5, [dest1 + 4*8]      ;dest1 and dest6 are calculated later
 
 	cmp	len, 64
         jl      .len_lt_64

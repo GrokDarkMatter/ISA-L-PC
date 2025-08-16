@@ -83,6 +83,7 @@
 	mov	[rsp + 1*16 + 3*8], r15
 	end_prolog
 	mov	arg4, arg(4)
+	mov arg5, arg(5)
  %endmacro
 
  %macro FUNC_RESTORE 0
@@ -217,10 +218,6 @@ section .text
 	ktestb		k2, k2
 	jz			%%sndOK
 
-	; Set up syndrome destination pointers
-	mov	dest2, [src + vec_i + 8]
-	mov	dest3, [src + vec_i + 2*8]
-	mov	dest1, [src + vec_i]
 	; Save non-zero parity and exit
 
 %if %0 == 1
@@ -281,10 +278,12 @@ func(gf_3vect_syndrome_avx512_gfni)
 	FUNC_SAVE
 
 	;xor	pos, pos
-	mov		pos, arg4
+	mov		pos, arg5
 	shl	vec, 3		;vec *= 8. Make vec_i count by 8
 
-
+	mov	dest2, [dest1 + 8]
+	mov	dest3, [dest1 + 2*8]
+	mov	dest1, [dest1]
 	cmp	len, 64
         jl      .len_lt_64
 
