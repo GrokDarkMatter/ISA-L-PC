@@ -264,6 +264,12 @@ main(int argc, char *argv[])
                 return -1;
         }
 
+        if ( nerrs > k )
+        {
+                printf ( "Number of errors (%d) must not be greater than k (%d)\n", nerrs, k ) ;
+                return -1 ;
+        }
+
         srand(TEST_SEED);
 
         for (i = 0; i < nerrs;) {
@@ -386,7 +392,7 @@ main(int argc, char *argv[])
                 memcpy ( &buffs [ m ], temp_buffs, p * sizeof (u8*)) ;
                 memset ( temp_buffs, 0, p * sizeof (u8*)) ;
 
-                epos = 0 ;
+                epos = 3 ;
                 // If you inject an error here it will appear in the syndromes
                 eOld = buffs [ m - pp - 1 ] [ epos ] ;
                 buffs [ m - pp - 1 ] [ epos ] ^= pe ;
@@ -406,12 +412,16 @@ main(int argc, char *argv[])
                 // Dump the syndromes if decoding stopped before end
                 if ( pe & ( p > 1 ) )
                 {
-                        printf ( "Syndromes\n" ) ;
+                        printf ( "Syndromes p=%d\n", p ) ;
                         for ( i = m ; i < m + p ; i ++ )
                         {
                                 if ( buffs [ i ] )
                                 {
                                         dump_u8xu8 ( buffs [ i ], 1, 16 ) ;
+                                }
+                                else
+                                {
+                                        printf ( "Buffs %d = 0\n", i ) ;
                                 }
                         }
                 }
