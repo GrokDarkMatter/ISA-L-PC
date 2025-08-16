@@ -273,25 +273,25 @@ gf_6vect_dot_prod_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                               unsigned char **coding);
 extern int
 gf_vect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
-        int offSet);
+        unsigned char ** dest, int offSet);
 extern int
 gf_2vect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
-        int offSet);
+        unsigned char ** dest, int offSet);
 extern int
 gf_3vect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
-        int offSet);
+        unsigned char ** dest, int offSet);
 extern int
 gf_4vect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
-        int offSet);
+        unsigned char ** dest, int offSet);
 extern int
 gf_5vect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
-        int offSet);
+        unsigned char ** dest, int offSet);
 extern int
 gf_6vect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
-        int offSet);
+        unsigned char ** dest, int offSet);
 extern int
 gf_nvect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
-        int offSet, int synCount);
+        unsigned char ** dest, int offSet, int syncount);
 
         extern void
 gf_vect_mad_avx512_gfni(int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
@@ -351,7 +351,7 @@ ec_init_tables_gfni(int k, int rows, unsigned char *a, unsigned char *g_tbls)
 
 extern int
 gf_nvect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
-        int offSet, int synCount)
+        unsigned char ** dest, int offSet, int synCount)
 {
         int curSym, curRow, curPos = 0 ;              // Loop counters
         unsigned char * cur_g ;                       // Affine table pointer
@@ -392,7 +392,6 @@ gf_nvect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         // Move affine table forward by one entry
                         cur_g += 8 ;
                 }
-
 
                 // Now check for zero
                 result = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
@@ -451,71 +450,80 @@ void pc_correct_AVX512_gfni ( int newPos, int k, int p, unsigned char ** data )
 #define MAX_PC_RETRY 2
 
 int
-ec_decode_data_avx512_gfni(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data)
+ec_decode_data_avx512_gfni(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
+        unsigned char **dest)
 {
         int newPos = 0, retry = 0 ;
 
         if (rows > 6)
         {
-                newPos = gf_nvect_syndrome_avx512_gfni ( len, k, g_tbls, data, newPos, rows ) ;
-                while ( ( newPos < len ) && ( ++retry < MAX_PC_RETRY ) )
-                {
-                        pc_correct_AVX512_gfni ( newPos, k, rows, data ) ;
-                        len -= newPos ;
-                        newPos = gf_nvect_syndrome_avx512_gfni ( len, k, g_tbls, data, newPos, rows ) ;
-                }
+//                newPos = gf_nvect_syndrome_avx512_gfni ( len, k, g_tbls, data, newPos, rows ) ;
+//                while ( ( newPos < len ) && ( ++retry < MAX_PC_RETRY ) )
+//                {
+//                        pc_correct_AVX512_gfni ( newPos, k, rows, data ) ;
+//                        len -= newPos ;
+//                        newPos = gf_nvect_syndrome_avx512_gfni ( len, k, g_tbls, data, newPos, rows ) ;
+//                }
                 return ( newPos ) ;
         }
 
         switch (rows)
         {
         case 6:
-                newPos = gf_6vect_syndrome_avx512_gfni(len, k, g_tbls, data, newPos ) ;
+                newPos = gf_6vect_syndrome_avx512_gfni(len, k, g_tbls, data, dest, newPos ) ;
                 while ( ( newPos < len ) && ( ++retry < MAX_PC_RETRY ) )
                 {
                         pc_correct_AVX512_gfni ( newPos, k, rows, data ) ;
                         len -= newPos ;
-                        newPos = gf_6vect_syndrome_avx512_gfni(len, k, g_tbls, data, newPos) ;
+                        newPos = gf_6vect_syndrome_avx512_gfni(len, k, g_tbls, data, dest, newPos) ;
                 }
                 break ;
         case 5:
-                newPos = gf_5vect_syndrome_avx512_gfni(len, k, g_tbls, data, newPos ) ;
+                newPos = gf_5vect_syndrome_avx512_gfni(len, k, g_tbls, data, dest, newPos ) ;
                 while ( ( newPos < len ) && ( ++retry < MAX_PC_RETRY ) )
                 {
                         pc_correct_AVX512_gfni ( newPos, k, rows, data ) ;
                         len -= newPos ;
-                        newPos = gf_5vect_syndrome_avx512_gfni(len, k, g_tbls, data, newPos ) ;
+                        newPos = gf_5vect_syndrome_avx512_gfni(len, k, g_tbls, data, dest, newPos ) ;
                 }
                 break;
         case 4:
-                newPos = gf_4vect_syndrome_avx512_gfni(len, k, g_tbls, data, newPos ) ;
+                newPos = gf_4vect_syndrome_avx512_gfni(len-64, k, g_tbls, data, dest, newPos ) ;
                 while ( ( newPos < len ) && ( ++retry < MAX_PC_RETRY ) )
                 {
                         pc_correct_AVX512_gfni ( newPos, k, rows, data ) ;
                         len -= newPos ;
-                        newPos = gf_4vect_syndrome_avx512_gfni(len, k, g_tbls, data, newPos);
+                        newPos = gf_4vect_syndrome_avx512_gfni(len, k, g_tbls, data, 
+                                dest, newPos);
                 }
                 break;
         case 3:
-                newPos = gf_3vect_syndrome_avx512_gfni(len, k, g_tbls, data, newPos ) ;
+                newPos = gf_3vect_syndrome_avx512_gfni(len, k, g_tbls, data, dest, newPos ) ;
                 while ( ( newPos < len ) && ( ++retry < MAX_PC_RETRY ) )
                 {
                         pc_correct_AVX512_gfni ( newPos, k, rows, data ) ;
                         len -= newPos ;
-                        newPos = gf_3vect_syndrome_avx512_gfni(len, k, g_tbls, data, newPos ) ;
+                        newPos = gf_3vect_syndrome_avx512_gfni(len, k, g_tbls, data, dest, newPos ) ;
                 }
                 break;
         case 2:
-                newPos = gf_2vect_syndrome_avx512_gfni(len, k, g_tbls, data, newPos ); 
+                newPos = gf_2vect_syndrome_avx512_gfni(len, k, g_tbls, data, dest, newPos ); 
                 while ( ( newPos < len ) && ( ++retry < MAX_PC_RETRY ) )
                 {
                         pc_correct_AVX512_gfni ( newPos, k, rows, data ) ;
                         len -= newPos ;
-                        newPos = gf_2vect_syndrome_avx512_gfni(len, k, g_tbls, data, newPos ) ;
+                        newPos = gf_2vect_syndrome_avx512_gfni(len, k, g_tbls, data, dest, newPos ) ;
                 }
                 break;
         case 1:
-                newPos = len ;
+                newPos = gf_vect_syndrome_avx512_gfni(len, k, g_tbls, data, dest, newPos ); 
+                while ( ( newPos < len ) && ( ++retry < MAX_PC_RETRY ) )
+                {
+                        pc_correct_AVX512_gfni ( newPos, k, rows, data ) ;
+                        len -= newPos ;
+                        newPos = gf_vect_syndrome_avx512_gfni(len, k, g_tbls, data, dest, newPos ) ;
+                }
+                break;
                 break;
         case 0:
         default:
