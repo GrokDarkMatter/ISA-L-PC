@@ -28,6 +28,7 @@
 **********************************************************************/
 #include "erasure_code.h"
 #include <arm_neon.h>
+#include "ec_base.h" // For GF tables
 
 /*external function*/
 extern void
@@ -45,9 +46,9 @@ gf_4vect_dot_prod_neon(int len, int vlen, unsigned char *gftbls, unsigned char *
 extern void
 gf_5vect_dot_prod_neon(int len, int vlen, unsigned char *gftbls, unsigned char **src,
                        unsigned char **dest);
-extern void
+extern int
 gf_5vect_syndrome_neon(int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                      unsigned char **dest);
+                      unsigned char **dest, int newPos);
 extern void
 gf_vect_mad_neon(int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
                  unsigned char *dest);
@@ -104,7 +105,7 @@ ec_encode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsigned ch
                 break;
         }
 }
-
+#ifdef NDEF
 int gf_nvect_syndrome_neon(int len, int k, unsigned char *g_tbls,
   unsigned char **data, int offSet, int synCount)
 {
@@ -177,43 +178,116 @@ int gf_nvect_syndrome_neon(int len, int k, unsigned char *g_tbls,
         }
         return curPos;
 }
+#endif
+int pc_correct ( int newPos, int k, int p, unsigned char ** data, int vLen )
+{
+        int offSet = 0 ;
+        unsigned char eVal, eLoc, synDromes [ 254 ] ;
 
-void
+        // Scan for first non-zero byte in vector
+        while ( data [ k ] [ offSet ] == 0 ) 
+        {
+                offSet ++ ;
+                if ( offSet == vLen )
+                {
+                        printf ( "Zeroes found\n" ) ;
+                        return 1 ;
+                }
+        }
+
+        // Gather up the syndromes
+        for ( eLoc = 0 ; eLoc < p ; eLoc ++ )
+        {
+                synDromes [ eLoc ] = data [ k + p - eLoc - 1 ] [ offSet ] ;
+        }
+
+        // LSB has parity, for single error this equals error value
+        eVal = synDromes [ 0 ] ;
+        // Compute error location is log2(syndrome[1]/syndrome[0])
+        eLoc = synDromes [ 1 ] ;
+        eLoc = gf_mul ( eLoc, gf_inv ( eVal ) ) ;
+        eLoc = gflog_base [ eLoc ] ;
+        // First entry in log table
+        if ( eLoc == 255 )
+        {
+                eLoc = 0 ;
+        }
+        //printf ( "Error = %d Symbol location = %d Bufpos = %d\n", eVal, eLoc , newPos + offSet ) ;
+
+        // Correct the error if it's within bounds
+        if ( eLoc < k )
+        {
+                data [ k - eLoc - 1 ] [ newPos + offSet ] ^= eVal ;
+                return 0 ;
+        }
+
+        return 1 ;
+}
+
+#define MAX_PC_RETRY 1
+
+int
 ec_decode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
                     unsigned char **coding)
 {
+        int newPos = 0, retry = 0, p = rows ;
+        unsigned char ** dest = coding, *g_orig = g_tbls ;
+        
         if (len < 16) {
                 ec_encode_data_base(len, k, rows, g_tbls, data, &data [ k ]);
-                return;
+                return 0;
         }
 
-        while (rows > 5) {
-                gf_5vect_syndrome_neon(len, k, g_tbls, data, &data [ k ]);
-                g_tbls += 5 * k * 32;
-                coding += 5;
-                rows -= 5;
+        while ( ( newPos < len ) && ( retry++ < MAX_PC_RETRY ) )
+        {
+                coding = dest ;
+                rows = p ;
+                g_tbls = g_orig ;
+                while (rows >= 5) 
+                {
+                        newPos = gf_5vect_syndrome_neon(len, k, g_tbls, data, coding, 0);
+                        //gf_5vect_dot_prod_neon(len, k, g_tbls, data, coding);
+                        g_tbls += 5 * k * 8;
+                        coding += 5;
+                        rows -= 5;
+                        if ( rows )
+                        {
+                                newPos = 0 ; // Start at top if more parity
+                        }
+                }
+                switch (rows) {
+                case 5:
+                        gf_5vect_syndrome_neon(len, k, g_tbls, data, coding, 0);
+                        break;
+                case 4:
+                        gf_4vect_dot_prod_neon(len, k, g_tbls, data, coding);
+                        break;
+                case 3:
+                        gf_3vect_dot_prod_neon(len, k, g_tbls, data, coding);
+                        break;
+                case 2:
+                        gf_2vect_dot_prod_neon(len, k, g_tbls, data, coding);
+                        break;
+                case 1:
+                        gf_vect_dot_prod_neon(len, k, g_tbls, data, *coding);
+                        break;
+                case 0:
+                default:
+                        break;
+                }
+                // If premature stop, correct data
+                //printf ( "Newpos = %d\n", newPos ) ;
+                if ( newPos < len )
+                {
+                        if ( pc_correct ( newPos, k, p, data, 64 ) )
+                        {
+                                //printf ( "Ret1\n" ) ;
+                                return ( newPos ) ;
+                        }
+                }
         }
-        switch (rows) {
-        case 5:
-                gf_5vect_dot_prod_neon(len, k, g_tbls, data, &data [ k ]);
-                break;
-        case 4:
-                gf_4vect_dot_prod_neon(len, k, g_tbls, data, &data [ k ]);
-                break;
-        case 3:
-                gf_3vect_dot_prod_neon(len, k, g_tbls, data, &data [ k ]);
-                break;
-        case 2:
-                gf_2vect_dot_prod_neon(len, k, g_tbls, data, &data [ k ]);
-                break;
-        case 1:
-                gf_vect_dot_prod_neon(len, k, g_tbls, data, *&data [ k ]);
-                break;
-        case 0:
-                break;
-        default:
-                break;
-        }
+        //printf ( "Ret2\n" ) ;
+        return ( newPos ) ;
 }
 
 void

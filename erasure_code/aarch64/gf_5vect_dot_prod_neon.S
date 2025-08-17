@@ -364,6 +364,7 @@ cdecl(gf_5vect_dot_prod_neon):
 	blt	.Lloop64_vects
 
 .Lloop64_vects_end:
+
 	add	x_ptr, x_dest1, x_pos
 	stp	q_p1_0, q_p1_1, [x_ptr], #32
 	stp	q_p1_2, q_p1_3, [x_ptr]
@@ -685,26 +686,41 @@ cdecl(gf_5vect_syndrome_neon):
 	blt	.Mloop64_vects
 
 .Mloop64_vects_end:
-	add	x_ptr, x_dest1, x_pos
+
+	// Or the resuls together
+	orr   v_tmp2.16b, v_p1_0.16b, v_p1_1.16b
+	orr   v_tmp2.16b, v_tmp2.16b, v_p1_2.16b
+	orr   v_tmp2.16b, v_tmp2.16b, v_p1_3.16b
+
+    umaxv s1, v_tmp2.4S                   // Find max across V_tmp2 (V1) lanes
+    fmov w8, s1                       // Move result to W8
+    cmp w8, #0                        // Compare W8 with 0 (Z=1 if all lanes are 0)
+    beq mSkip64                       // Branch to mSkip64 if W8 == 0 (all lanes 0)
+
+    // Use condition codes (e.g., BEQ for zero, BNE for non-zero))
+
+	mov x_ptr, x_dest1
 	stp	q_p1_0, q_p1_1, [x_ptr], #32
 	stp	q_p1_2, q_p1_3, [x_ptr]
 
-	add	x_ptr, x_dest2, x_pos
+	mov	x_ptr, x_dest2
 	stp	q_p2_0, q_p2_1, [x_ptr], #32
 	stp	q_p2_2, q_p2_3, [x_ptr]
 
-	add	x_ptr, x_dest3, x_pos
+	mov	x_ptr, x_dest3
 	stp	q_p3_0, q_p3_1, [x_ptr], #32
 	stp	q_p3_2, q_p3_3, [x_ptr]
 
-	add	x_ptr, x_dest4, x_pos
+	mov	x_ptr, x_dest4
 	stp	q_p4_0, q_p4_1, [x_ptr], #32
 	stp	q_p4_2, q_p4_3, [x_ptr]
 
-	add	x_ptr, x_dest5, x_pos
+	mov	x_ptr, x_dest5
 	stp	q_p5_0, q_p5_1, [x_ptr], #32
 	stp	q_p5_2, q_p5_3, [x_ptr]
 
+	b .Mloop64_end
+mSkip64:
 	add	x_pos, x_pos, #64
 	cmp	x_pos, x_len
 	ble	.Mloop64
@@ -780,11 +796,19 @@ cdecl(gf_5vect_syndrome_neon):
 	bne	.Mloop16_vects
 
 .Mloop16_vects_end:
-	str	q_p1_0, [x_dest1, x_pos]
-	str	q_p2_0, [x_dest2, x_pos]
-	str	q_p3_0, [x_dest3, x_pos]
-	str	q_p4_0, [x_dest4, x_pos]
-	str	q_p5_0, [x_dest5, x_pos]
+	// Check for zero
+    umaxv s1, v_p1_0.4S              // Find max across V_tmp2 (V1) lanes
+    fmov w8, s1                       // Move result to W8
+    cmp w8, #0                        // Compare W8 with 0 (Z=1 if all lanes are 0)
+    beq mSkip16                       // Branch to mSkip64 if W8 == 0 (all lanes 0.0)
+
+	str	q_p1_0, [x_dest1]
+	str	q_p2_0, [x_dest2]
+	str	q_p3_0, [x_dest3]
+	str	q_p4_0, [x_dest4]
+	str	q_p5_0, [x_dest5]
+	b   .Mreturn_fail
+mSkip16:
 	add	x_pos, x_pos, #16
 	cmp	x_pos, x_len
 	ble	.Mloop16
@@ -799,9 +823,9 @@ cdecl(gf_5vect_syndrome_neon):
 	b	.Mloop16
 
 .Mreturn_pass:
-	mov	w_ret, #0
+	mov	x0, x_pos
 	ret
 
 .Mreturn_fail:
-	mov	w_ret, #1
+	mov	x0, x_pos
 	ret
