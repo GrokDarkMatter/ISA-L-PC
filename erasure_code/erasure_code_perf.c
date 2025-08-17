@@ -426,9 +426,9 @@ main(int argc, char *argv[])
                         }
                 }
 
-                // Start decode test
+                // Start decode performance test
                 BENCHMARK(&start, BENCHMARK_TIME,
-                ec_decode_data(TEST_LEN(m), m, p, g_tbls, buffs, &buffs[m]));
+                      ec_decode_data(TEST_LEN(m), m, p, g_tbls, buffs, &buffs[m]));
                 printf("polynomial_code_decode" TEST_TYPE_STR ": ");
                 perf_print(start, (long long) (TEST_LEN(m)) * (m));
 

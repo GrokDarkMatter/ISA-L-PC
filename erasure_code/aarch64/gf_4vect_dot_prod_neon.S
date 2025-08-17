@@ -53,6 +53,7 @@ x_vec_i		.req	x5
 x_ptr		.req	x6
 x_pos		.req	x7
 x_tmp		.req	x8
+w_tmp		.req	w8
 x_dest1		.req	x9
 x_tbl1		.req	x10
 x_dest2		.req	x11
@@ -68,6 +69,7 @@ q_mask0f	.req	q0
 v_tmp1_lo	.req	v1
 v_tmp1_hi	.req	v2
 v_tmp1		.req	v3
+s_tmp1		.req	s3
 q_tmp1		.req	q3
 
 v_p1_0		.req	v4
@@ -606,10 +608,10 @@ cdecl(gf_4vect_syndrome_neon):
 	orr   v_tmp1.16b, v_tmp1.16b, v_p1_2.16b
 	orr   v_tmp1.16b, v_tmp1.16b, v_p1_3.16b
 
-    umaxv s3, v_tmp1.4S               // Find max across V_tmp1 (V1) lanes
-    fmov w8, s3                       // Move result to W8
-    cmp w8, #0                        // Compare W8 with 0 (Z=1 if all lanes are 0)
-    beq .mSkip64                      // Branch to mSkip64 if W8 == 0 (all lanes 0)
+    umaxv s_tmp1, v_tmp1.4S               // Find max across V_tmp1 (V1) lanes
+    fmov  w_tmp, s_tmp1                   // Move result to w_tmp
+    cmp   w_tmp, #0                       // Compare w_tmp with 0 (Z=1 if all lanes are 0)
+    beq  .MSkip64                         // Branch to mSkip64 if W8 == 0 (all lanes 0)
 
 	mov	x_ptr, x_dest1
 	stp	q_p1_0, q_p1_1, [x_ptr], #32
@@ -628,7 +630,7 @@ cdecl(gf_4vect_syndrome_neon):
 	stp	q_p4_2, q_p4_3, [x_ptr]
 	b .Mloop64_end
 
-.mSkip64:
+.MSkip64:
 	add	x_pos, x_pos, #64
 	cmp	x_pos, x_len
 	ble	.Mloop64
@@ -701,10 +703,10 @@ cdecl(gf_4vect_syndrome_neon):
 
 .Mloop16_vects_end:
 	// Check for zero
-    umaxv s3, v_p1_0.4S              // Find max across V_tmp2 (V1) lanes
-    fmov w8, s3                       // Move result to W8
-    cmp w8, #0                        // Compare W8 with 0 (Z=1 if all lanes are 0)
-    beq .mSkip16                       // Branch to mSkip64 if W8 == 0 (all lanes 0.0)
+    umaxv s_tmp1, v_tmp1.4S               // Find max across V_tmp1 (V1) lanes
+    fmov  w_tmp, s_tmp1                   // Move result to w_tmp
+    cmp   w_tmp, #0                       // Compare W_tmp with 0 (Z=1 if all lanes are 0)
+    beq .mSkip16                          // Branch to mSkip16 if W8 == 0 (all lanes 0.0)
 
 	str	q_p1_0, [x_dest1]
 	str	q_p2_0, [x_dest2]

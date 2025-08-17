@@ -53,6 +53,7 @@ x_vec_i		.req	x5
 x_ptr		.req	x6
 x_pos		.req	x7
 x_tmp		.req	x8
+w_tmp		.req	w8
 x_tbl1		.req	x9
 x_tbl2		.req	x10
 x_dest1		.req	x11
@@ -74,6 +75,7 @@ q_mask0f	.req	q4
 v_tmp1_lo	.req	v5
 v_tmp1_hi	.req	v6
 v_tmp1		.req	v7
+s_tmp1		.req	s7
 
 v_data_0	.req	v8
 v_data_1	.req	v9
@@ -591,9 +593,9 @@ cdecl(gf_2vect_syndrome_neon):
 	orr   v_tmp1.16b, v_tmp1.16b, v_p1_5.16b
 	orr   v_tmp1.16b, v_tmp1.16b, v_p1_6.16b
 	orr   v_tmp1.16b, v_tmp1.16b, v_p1_7.16b
-    umaxv s3, v_tmp1.4S               // Find max across V_tmp1 (V1) lanes
-    fmov w8, s3                       // Move result to W8
-    cmp w8, #0                        // Compare W8 with 0 (Z=1 if all lanes are 0)
+    umaxv s_tmp1, v_tmp1.4S               // Find max across V_tmp1 (V1) lanes
+    fmov  w_tmp, s_tmp1                   // Move result to w_tmp
+    cmp   w_tmp, #0                       // Compare W_tmp with 0 (Z=1 if all lanes are 0)
     beq .MSkip128                      // Branch to mSkip64 if W8 == 0 (all lanes 0)
 
 	mov	x_ptr, x_dest1
@@ -665,10 +667,10 @@ cdecl(gf_2vect_syndrome_neon):
 
 .Mloop16_vects_end:
 	// Check for zero
-    umaxv s3, v_p1.4S              // Find max across V_tmp2 (V1) lanes
-    fmov w8, s3                       // Move result to W8
-    cmp w8, #0                        // Compare W8 with 0 (Z=1 if all lanes are 0)
-    beq .mSkip16                       // Branch to mSkip64 if W8 == 0 (all lanes 0.0)
+    umaxv s_tmp1, v_tmp1.4S               // Find max across V_tmp1 (V1) lanes
+    fmov  w_tmp, s_tmp1                   // Move result to w_tmp
+    cmp   w_tmp, #0                       // Compare W_tmp with 0 (Z=1 if all lanes are 0)
+    beq .mSkip16                          // Branch to mSkip64 if W8 == 0 (all lanes 0.0)
 
 	str	q_p1, [x_dest1]
 	str	q_p2, [x_dest2]
