@@ -259,7 +259,7 @@ ec_decode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsigned ch
                 {
                         vSize = 64 ;
                         newPos = gf_5vect_syndrome_neon(len, k, g_tbls, data, coding, newPos);
-                        g_tbls += 5 * k * 8;
+                        g_tbls += 5 * k * 32;
                         coding += 5;
                         rows -= 5;
                         if ( rows )
