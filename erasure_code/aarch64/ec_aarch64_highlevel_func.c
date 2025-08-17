@@ -47,6 +47,15 @@ extern void
 gf_5vect_dot_prod_neon(int len, int vlen, unsigned char *gftbls, unsigned char **src,
                        unsigned char **dest);
 extern int
+gf_vect_syndrome_neon(int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                      unsigned char *dest, int newPos);
+extern int
+gf_2vect_syndrome_neon(int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                      unsigned char **dest, int newPos);
+extern int
+gf_3vect_syndrome_neon(int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                      unsigned char **dest, int newPos);
+extern int
 gf_4vect_syndrome_neon(int len, int vlen, unsigned char *gftbls, unsigned char **src,
                       unsigned char **dest, int newPos);
 extern int
@@ -233,7 +242,7 @@ int
 ec_decode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
                     unsigned char **coding)
 {
-        int newPos = 0, retry = 0, p = rows ;
+        int newPos = 0, retry = 0, p = rows, vSize ;
         unsigned char ** dest = coding, *g_orig = g_tbls ;
         
         if (len < 16) {
@@ -248,6 +257,7 @@ ec_decode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsigned ch
                 g_tbls = g_orig ;
                 while (rows >= 5) 
                 {
+                        vSize = 64 ;
                         newPos = gf_5vect_syndrome_neon(len, k, g_tbls, data, coding, newPos);
                         g_tbls += 5 * k * 8;
                         coding += 5;
@@ -259,16 +269,20 @@ ec_decode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsigned ch
                 }
                 switch (rows) {
                 case 4:
+                        vSize = 64 ;
                         newPos = gf_4vect_syndrome_neon(len, k, g_tbls, data, coding, newPos);
                         break;
                 case 3:
-                        gf_3vect_dot_prod_neon(len, k, g_tbls, data, coding);
+                        vSize = 64 ;
+                        newPos = gf_3vect_syndrome_neon(len, k, g_tbls, data, coding, newPos);
                         break;
                 case 2:
-                        gf_2vect_dot_prod_neon(len, k, g_tbls, data, coding);
+                        vSize = 128 ;
+                        newPos = gf_2vect_syndrome_neon(len, k, g_tbls, data, coding, newPos);
                         break;
                 case 1:
-                        gf_vect_dot_prod_neon(len, k, g_tbls, data, *coding);
+                        vSize = 128 ;
+                        newPos = gf_vect_syndrome_neon(len, k, g_tbls, data, *coding, newPos);
                         break;
                 case 0:
                 default:
@@ -278,7 +292,7 @@ ec_decode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsigned ch
                 // If premature stop, correct data
                 if ( newPos < len )
                 {
-                        if ( pc_correct ( newPos, k, p, data, 64 ) )
+                        if ( pc_correct ( newPos, k, p, data, vSize ) )
                         {
                                 return ( newPos ) ;
                         }
