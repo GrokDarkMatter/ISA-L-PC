@@ -202,7 +202,7 @@ int pc_correct ( int newPos, int k, int p, unsigned char ** data, int vLen )
                 offSet ++ ;
                 if ( offSet == vLen )
                 {
-                        printf ( "Zeroes found\n" ) ;
+                        //printf ( "Zeroes found\n" ) ;
                         return 1 ;
                 }
         }
@@ -224,7 +224,7 @@ int pc_correct ( int newPos, int k, int p, unsigned char ** data, int vLen )
         {
                 eLoc = 0 ;
         }
-        printf ( "Error = %d Symbol location = %d Bufpos = %d\n", eVal, eLoc , newPos + offSet ) ;
+        //printf ( "Error = %d Symbol location = %d Bufpos = %d\n", eVal, eLoc , newPos + offSet ) ;
 
         // Correct the error if it's within bounds
         if ( eLoc < k )
