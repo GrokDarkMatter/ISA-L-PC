@@ -1,30 +1,51 @@
 /**************************************************************
-  Copyright (c) 2019 Huawei Technologies Co., Ltd.
 
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions
-  are met:
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in
-      the documentation and/or other materials provided with the
-      distribution.
-    * Neither the name of Huawei Corporation nor the names of its
-      contributors may be used to endorse or promote products derived
-      from this software without specific prior written permission.
+Copyright (c) 2019 Huawei Technologies Co., Ltd.
 
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Copyright (c) 2025 Michael H. Anderson. All rights reserved.
+
+This software includes contributions protected by
+U.S. Patents 11,848,686 and 12,341,532.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted for non-commercial evaluation purposes
+only, provided that the following conditions are met:
+
+Redistributions of source code must retain the above copyright notices,
+patent notices, this list of conditions, and the following disclaimer.
+
+Redistributions in binary form must reproduce the above copyright notices,
+patent notices, this list of conditions, and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+Neither the name of Huawei Corporation, nor Michael H. Anderson, nor the names
+of their contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+Commercial deployment or use of this software requires a separate license
+from the copyright holders and patent owners.
+
+In other words, this code is provided solely for the purposes of
+evaluation and is not licensed or intended to be licensed or used as part of
+or in connection with any commercial or non-commercial use other than evaluation
+of the potential for a license from Michael H. Anderson. Neither Michael H. Anderson
+nor any affiliated person grants any express or implied rights under any patents,
+copyrights, trademarks, or trade secret information. No content may be copied,
+stored, or utilized in any way without express written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restrictions
+
 **********************************************************************/
 #include "erasure_code.h"
 #include <arm_neon.h>

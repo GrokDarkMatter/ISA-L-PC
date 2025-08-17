@@ -1,7 +1,6 @@
 /**********************************************************************
 Copyright (c) 2011-2024 Intel Corporation.
 Copyright (c) 2025 Michael H. Anderson. All rights reserved.
-
 This software includes contributions protected by
 U.S. Patents 11,848,686 and 12,341,532.
 
@@ -21,14 +20,14 @@ of their contributors may be used to endorse or promote products derived from
 this software without specific prior written permission.
 
 Commercial deployment or use of this software requires a separate license
-from the copyright holders and patent owners. 
+from the copyright holders and patent owners.
 
 In other words, this code is provided solely for the purposes of
 evaluation and is not licensed or intended to be licensed or used as part of
 or in connection with any commercial or non-commercial use other than evaluation
 of the potential for a license from Michael H. Anderson. Neither Michael H. Anderson
 nor any affiliated person grants any express or implied rights under any patents,
-copyrights, trademarks, or trade secret information. No content may be copied, 
+copyrights, trademarks, or trade secret information. No content may be copied,
 stored, or utilized in any way without express written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -42,7 +41,7 @@ AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-SPDX-License-Identifier: BSD-3-Clause
+SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restrictions
 **********************************************************************/
 
 #include <stdio.h>
