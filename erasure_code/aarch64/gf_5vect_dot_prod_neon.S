@@ -491,7 +491,7 @@ cdecl(gf_5vect_syndrome_neon):
 	cmp	x_len, #16
 	blt	.return_fail
 
-	mov	x_pos, #0
+	mov	x_pos, x5
 	lsl	x_vec, x_vec, #3
 	ldr	x_dest1, [x_dest, #8*0]
 	ldr	x_dest2, [x_dest, #8*1]
@@ -686,7 +686,6 @@ cdecl(gf_5vect_syndrome_neon):
 	blt	.Mloop64_vects
 
 .Mloop64_vects_end:
-
 	// Or the resuls together
 	orr   v_tmp2.16b, v_p1_0.16b, v_p1_1.16b
 	orr   v_tmp2.16b, v_tmp2.16b, v_p1_2.16b
@@ -695,9 +694,7 @@ cdecl(gf_5vect_syndrome_neon):
     umaxv s1, v_tmp2.4S                   // Find max across V_tmp2 (V1) lanes
     fmov w8, s1                       // Move result to W8
     cmp w8, #0                        // Compare W8 with 0 (Z=1 if all lanes are 0)
-    beq mSkip64                       // Branch to mSkip64 if W8 == 0 (all lanes 0)
-
-    // Use condition codes (e.g., BEQ for zero, BNE for non-zero))
+    beq .mSkip64                       // Branch to mSkip64 if W8 == 0 (all lanes 0)
 
 	mov x_ptr, x_dest1
 	stp	q_p1_0, q_p1_1, [x_ptr], #32
@@ -720,7 +717,7 @@ cdecl(gf_5vect_syndrome_neon):
 	stp	q_p5_2, q_p5_3, [x_ptr]
 
 	b .Mloop64_end
-mSkip64:
+.mSkip64:
 	add	x_pos, x_pos, #64
 	cmp	x_pos, x_len
 	ble	.Mloop64
@@ -797,10 +794,10 @@ mSkip64:
 
 .Mloop16_vects_end:
 	// Check for zero
-    umaxv s1, v_p1_0.4S              // Find max across V_tmp2 (V1) lanes
-    fmov w8, s1                       // Move result to W8
-    cmp w8, #0                        // Compare W8 with 0 (Z=1 if all lanes are 0)
-    beq mSkip16                       // Branch to mSkip64 if W8 == 0 (all lanes 0.0)
+    umaxv s1, v_p1_0.4S              // Find max across v_p1 (V1) lanes
+    fmov w8, s1                      // Move result to W8
+    cmp w8, #0                       // Compare W8 with 0 (Z=1 if all lanes are 0)
+    beq .mSkip16                     // Branch to mSkip64 if W8 == 0 (all lanes 0.0)
 
 	str	q_p1_0, [x_dest1]
 	str	q_p2_0, [x_dest2]
@@ -808,7 +805,7 @@ mSkip64:
 	str	q_p4_0, [x_dest4]
 	str	q_p5_0, [x_dest5]
 	b   .Mreturn_fail
-mSkip16:
+.mSkip16:
 	add	x_pos, x_pos, #16
 	cmp	x_pos, x_len
 	ble	.Mloop16

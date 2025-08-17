@@ -47,6 +47,9 @@ extern void
 gf_5vect_dot_prod_neon(int len, int vlen, unsigned char *gftbls, unsigned char **src,
                        unsigned char **dest);
 extern int
+gf_4vect_syndrome_neon(int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                      unsigned char **dest, int newPos);
+extern int
 gf_5vect_syndrome_neon(int len, int vlen, unsigned char *gftbls, unsigned char **src,
                       unsigned char **dest, int newPos);
 extern void
@@ -212,7 +215,7 @@ int pc_correct ( int newPos, int k, int p, unsigned char ** data, int vLen )
         {
                 eLoc = 0 ;
         }
-        //printf ( "Error = %d Symbol location = %d Bufpos = %d\n", eVal, eLoc , newPos + offSet ) ;
+        printf ( "Error = %d Symbol location = %d Bufpos = %d\n", eVal, eLoc , newPos + offSet ) ;
 
         // Correct the error if it's within bounds
         if ( eLoc < k )
@@ -245,8 +248,7 @@ ec_decode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsigned ch
                 g_tbls = g_orig ;
                 while (rows >= 5) 
                 {
-                        newPos = gf_5vect_syndrome_neon(len, k, g_tbls, data, coding, 0);
-                        //gf_5vect_dot_prod_neon(len, k, g_tbls, data, coding);
+                        newPos = gf_5vect_syndrome_neon(len, k, g_tbls, data, coding, newPos);
                         g_tbls += 5 * k * 8;
                         coding += 5;
                         rows -= 5;
@@ -256,11 +258,8 @@ ec_decode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsigned ch
                         }
                 }
                 switch (rows) {
-                case 5:
-                        gf_5vect_syndrome_neon(len, k, g_tbls, data, coding, 0);
-                        break;
                 case 4:
-                        gf_4vect_dot_prod_neon(len, k, g_tbls, data, coding);
+                        newPos = gf_4vect_syndrome_neon(len, k, g_tbls, data, coding, newPos);
                         break;
                 case 3:
                         gf_3vect_dot_prod_neon(len, k, g_tbls, data, coding);
@@ -275,18 +274,16 @@ ec_decode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsigned ch
                 default:
                         break;
                 }
+                //printf ( "Newpos = %d Retry = %d\n", newPos, retry ) ;
                 // If premature stop, correct data
-                //printf ( "Newpos = %d\n", newPos ) ;
                 if ( newPos < len )
                 {
                         if ( pc_correct ( newPos, k, p, data, 64 ) )
                         {
-                                //printf ( "Ret1\n" ) ;
                                 return ( newPos ) ;
                         }
                 }
         }
-        //printf ( "Ret2\n" ) ;
         return ( newPos ) ;
 }
 
