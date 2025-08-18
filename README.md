@@ -206,4 +206,4 @@ erasure_code_test: 127x8192 done EC tests: Pass
 
 ### Validated Platforms
 
-Build and executables validated on x86 Ubuntu 24.04.2 LTS and ARM Raspberry Pi 5 Debian GNU/Linux 12 (bookworm).
+Build and executables validated on x86 Ubuntu 24.04.2 LTS, ARM Raspberry Pi 5 Debian GNU/Linux 12 (bookworm) and Windows 11/Visual Studio 2022 x64 command line.
