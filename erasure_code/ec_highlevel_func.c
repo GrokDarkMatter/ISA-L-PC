@@ -45,8 +45,8 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 **********************************************************************/
 #include <limits.h>
 #include "erasure_code.h"
-#include <immintrin.h>
-#include <x86intrin.h>
+//#include <immintrin.h>
+//#include <x86intrin.h>
 #include "ec_base.h" /* for GF tables */
 
 #if __x86_64__ || __i386__ || _M_X64 || _M_IX86
@@ -428,8 +428,46 @@ gf_nvect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
         }
         return curPos ;
 }
-#endif
 
+int determine_number_of_errors(unsigned char *syndromes, int rank) {
+    if (rank != 6) {
+        return -1;  // Assuming fixed for t=3, rank=6 (2t syndromes)
+    }
+
+    unsigned char gf s[6];
+    for (int i = 0; i < 6; i++) {
+        s[i] = syndromes[i];
+    }
+
+    // Check for 0 errors
+    int all_zero = 1;
+    for (int i = 0; i < 6; i++) {
+        if (s[i] != 0) {
+            all_zero = 0;
+            break;
+        }
+    }
+    if (all_zero) {
+        return 0;
+    }
+
+    // Compute det for nu=3: matrix [[s1,s2,s3],[s2,s3,s4],[s3,s4,s5]]
+    gf term1 = gf_mul(s[0], gf_add(gf_mul(s[2], s[4]), gf_mul(s[3], s[3])));
+    gf term2 = gf_mul(s[1], gf_add(gf_mul(s[1], s[4]), gf_mul(s[3], s[2])));
+    gf term3 = gf_mul(s[2], gf_add(gf_mul(s[1], s[3]), gf_mul(s[2], s[2])));
+    gf det3 = gf_add(term1, gf_add(term2, term3));
+
+    if (det3 != 0) {
+        return 3;
+    }
+
+    // Compute det for nu=2: s1*s3 + s2*s2
+    gf det2 = gf_add(gf_mul(s[0], s[2]), gf_mul(s[1], s[1]));
+
+    if (det2 != 0) {
+        return 2;
+    }
+#endif
 int pc_correct ( int newPos, int k, int p, unsigned char ** data, int vLen )
 {
         int offSet = 0 ;
