@@ -123,3 +123,6 @@ crc64_rocksoft_refl             @118
 ec_init_tables_base             @119
 isal_zlib_header_init           @120
 crc16_t10dif_copy_base          @121
+ec_decode_data                  @122
+gf_gen_rsr_matrix               @123
+gf_gen_poly_matrix              @124
