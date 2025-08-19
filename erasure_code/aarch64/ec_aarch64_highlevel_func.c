@@ -211,7 +211,7 @@ int gf_nvect_syndrome_neon(int len, int k, unsigned char *g_tbls,
         }
         return curPos;
 }
-#endif
+
 int pc_correct ( int newPos, int k, int p, unsigned char ** data, int vLen )
 {
         int offSet = 0 ;
@@ -258,6 +258,7 @@ int pc_correct ( int newPos, int k, int p, unsigned char ** data, int vLen )
 }
 
 #define MAX_PC_RETRY 1
+#endif
 
 int
 ec_decode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,

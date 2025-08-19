@@ -467,52 +467,11 @@ int determine_number_of_errors(unsigned char *syndromes, int rank) {
     if (det2 != 0) {
         return 2;
     }
-#endif
-int pc_correct ( int newPos, int k, int p, unsigned char ** data, int vLen )
-{
-        int offSet = 0 ;
-        unsigned char eVal, eLoc, synDromes [ 254 ] ;
-
-        // Scan for first non-zero byte in vector
-        while ( data [ k ] [ offSet ] == 0 ) 
-        {
-                offSet ++ ;
-                if ( offSet == vLen )
-                {
-                        return 1 ;
-                }
-        }
-
-        // Gather up the syndromes
-        for ( eLoc = 0 ; eLoc < p ; eLoc ++ )
-        {
-                synDromes [ eLoc ] = data [ k + p - eLoc - 1 ] [ offSet ] ;
-        }
-
-        // LSB has parity, for single error this equals error value
-        eVal = synDromes [ 0 ] ;
-        // Compute error location is log2(syndrome[1]/syndrome[0])
-        eLoc = synDromes [ 1 ] ;
-        eLoc = gf_mul ( eLoc, gf_inv ( eVal ) ) ;
-        eLoc = gflog_base [ eLoc ] ;
-        // First entry in log table
-        if ( eLoc == 255 )
-        {
-                eLoc = 0 ;
-        }
-        //printf ( "Error = %d Symbol location = %d Bufpos = %d\n", eVal, eLoc , newPos + offSet ) ;
-
-        // Correct the error if it's within bounds
-        if ( eLoc < k )
-        {
-                data [ k - eLoc - 1 ] [ newPos + offSet ] ^= eVal ;
-                return 0 ;
-        }
-
-        return 1 ;
 }
-
+#endif
 #define MAX_PC_RETRY 2
+extern int 
+pc_correct ( int newPos, int k, int p, unsigned char ** data, int vLen ) ;
 
 int
 ec_decode_data_avx512_gfni(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,

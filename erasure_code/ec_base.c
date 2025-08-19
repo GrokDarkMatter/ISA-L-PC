@@ -1,7 +1,6 @@
 /**********************************************************************
 Copyright (c) 2011-2024 Intel Corporation.
 Copyright (c) 2025 Michael H. Anderson. All rights reserved.
-
 This software includes contributions protected by
 U.S. Patents 11,848,686 and 12,341,532.
 
@@ -42,8 +41,9 @@ AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-SPDX-License-Identifier: BSD-3-Clause
+SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restrictions
 **********************************************************************/
+
 
 #include <limits.h>
 #include <string.h> // for memset
@@ -467,3 +467,48 @@ gf_vect_mul_base(int len, unsigned char *a, unsigned char *src, unsigned char *d
                 *dest++ = gf_mul(c, *src++);
         return 0;
 }
+
+int pc_correct ( int newPos, int k, int p, unsigned char ** data, int vLen )
+{
+        int offSet = 0 ;
+        unsigned char eVal, eLoc, synDromes [ 254 ] ;
+
+        // Scan for first non-zero byte in vector
+        while ( data [ k ] [ offSet ] == 0 ) 
+        {
+                offSet ++ ;
+                if ( offSet == vLen )
+                {
+                        return 1 ;
+                }
+        }
+
+        // Gather up the syndromes
+        for ( eLoc = 0 ; eLoc < p ; eLoc ++ )
+        {
+                synDromes [ eLoc ] = data [ k + p - eLoc - 1 ] [ offSet ] ;
+        }
+
+        // LSB has parity, for single error this equals error value
+        eVal = synDromes [ 0 ] ;
+        // Compute error location is log2(syndrome[1]/syndrome[0])
+        eLoc = synDromes [ 1 ] ;
+        eLoc = gf_mul ( eLoc, gf_inv ( eVal ) ) ;
+        eLoc = gflog_base [ eLoc ] ;
+        // First entry in log table
+        if ( eLoc == 255 )
+        {
+                eLoc = 0 ;
+        }
+        //printf ( "Error = %d Symbol location = %d Bufpos = %d\n", eVal, eLoc , newPos + offSet ) ;
+
+        // Correct the error if it's within bounds
+        if ( eLoc < k )
+        {
+                data [ k - eLoc - 1 ] [ newPos + offSet ] ^= eVal ;
+                return 0 ;
+        }
+
+        return 1 ;
+}
+
