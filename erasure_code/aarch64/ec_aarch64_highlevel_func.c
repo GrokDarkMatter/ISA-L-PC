@@ -257,8 +257,12 @@ int pc_correct ( int newPos, int k, int p, unsigned char ** data, int vLen )
         return 1 ;
 }
 
-#define MAX_PC_RETRY 1
 #endif
+
+extern int 
+pc_correct ( int newPos, int k, int p, unsigned char ** data, int vLen ) ;
+
+#define MAX_PC_RETRY 1
 
 int
 ec_decode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
