@@ -45,9 +45,23 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 **********************************************************************/
 #include <limits.h>
 #include "erasure_code.h"
-//#include <immintrin.h>
-//#include <x86intrin.h>
+#include <immintrin.h>
+#include <x86intrin.h>
 #include "ec_base.h" /* for GF tables */
+#include <stdio.h>
+void
+dump_u8xu8(unsigned char *s, int k, int m)
+{
+        int i, j;
+        for (i = 0; i < k; i++) {
+                for (j = 0; j < m; j++) {
+                        printf(" %3x", 0xff & s[j + (i * m)]);
+                }
+                printf("\n");
+        }
+        printf("\n");
+}
+
 
 #if __x86_64__ || __i386__ || _M_X64 || _M_IX86
 void
@@ -365,8 +379,7 @@ ec_init_tables_gfni(int k, int rows, unsigned char *a, unsigned char *g_tbls)
                 for (j = 0; j < k; j++)
                         *(g64++) = gf_table_gfni[*a++];
 }
-#ifdef NDEF
-extern int
+int
 gf_nvect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet, int synCount)
 {
@@ -429,6 +442,425 @@ gf_nvect_syndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
         return curPos ;
 }
 
+int
+gf_4vect_isyndrome_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet, int synCount)
+{
+        int curSym, curPos = 0 ;                      // Loop counters
+        unsigned char * cur_g ;                       // Affine table pointer
+        __m512i data_vec ;           // Working registers
+        __m512i parity [ 4 ], aff_vec [ 4 ], result [ 4 ] ; // Parity registers
+        __mmask8 mask ;                               // Mask used to test for zero
+
+        // Loop through all the bytes, 64 at a time
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                // Initialize affine table pointer
+                cur_g = g_tbls ;
+
+                // Initialize the parities
+                parity [ 0 ] = _mm512_setzero_si512() ;
+                parity [ 1 ] = _mm512_setzero_si512() ;
+                parity [ 2 ] = _mm512_setzero_si512() ;
+                parity [ 3 ] = _mm512_setzero_si512() ;
+
+                // Loop for each symbol
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
+                {
+                        // Load data for current symbol
+                        data_vec = _mm512_load_si512( (__m512i *) data [ curSym ] ) ;
+                        aff_vec [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( cur_g + ( 0 * 8 * k ) ) );
+                        aff_vec [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( cur_g + ( 1 * 8 * k ) ) );
+                        aff_vec [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( cur_g + ( 2 * 8 * k ) ) );
+                        aff_vec [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( cur_g + ( 3 * 8 * k ) ) );
+                        result [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, aff_vec [ 0 ], 0) ;
+                        result [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, aff_vec [ 1 ], 0) ;
+                        result [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, aff_vec [ 2 ], 0) ;
+                        result [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, aff_vec [ 3 ], 0) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( result [ 0 ], parity [ 0 ] ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( result [ 1 ], parity [ 1 ] ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( result [ 2 ], parity [ 2 ] ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( result [ 3 ], parity [ 3 ] ) ;
+
+                        // Move affine table forward by one entry
+                        cur_g += 8 ;
+                }
+
+                // Now check for zero
+                result [ 0 ] = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                mask = _mm512_test_epi64_mask ( result [ 0 ], result [ 0 ]) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) data [ 0 + k ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) data [ 1 + k ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) data [ 2 + k ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) data [ 3 + k ], parity [ 3 ] ) ;
+                        return curPos ;
+                }
+        }
+        return curPos ;
+}
+
+int
+gf_4vect_idot_prod_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet, int synCount)
+{
+        int curSym, curPos = 0 ;                      // Loop counters
+        unsigned char * cur_g ;                       // Affine table pointer
+        __m512i data_vec ;           // Working registers
+        __m512i parity [ 4 ], aff_vec [ 4 ], result [ 4 ] ; // Parity registers
+
+        // Loop through all the bytes, 64 at a time
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                // Initialize affine table pointer
+                cur_g = g_tbls ;
+
+                // Initialize the parities
+                parity [ 0 ] = _mm512_setzero_si512() ;
+                parity [ 1 ] = _mm512_setzero_si512() ;
+                parity [ 2 ] = _mm512_setzero_si512() ;
+                parity [ 3 ] = _mm512_setzero_si512() ;
+
+                // Loop for each symbol
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
+                {
+                        // Load data for current symbol
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                        aff_vec [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( cur_g + ( 0 * 8 * k ) ) );
+                        aff_vec [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( cur_g + ( 1 * 8 * k ) ) );
+                        aff_vec [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( cur_g + ( 2 * 8 * k ) ) );
+                        aff_vec [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( cur_g + ( 3 * 8 * k ) ) );
+                        result [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, aff_vec [ 0 ], 0) ;
+                        result [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, aff_vec [ 1 ], 0) ;
+                        result [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, aff_vec [ 2 ], 0) ;
+                        result [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, aff_vec [ 3 ], 0) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( result [ 0 ], parity [ 0 ] ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( result [ 1 ], parity [ 1 ] ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( result [ 2 ], parity [ 2 ] ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( result [ 3 ], parity [ 3 ] ) ;
+
+                        // Move affine table forward by one entry
+                        cur_g += 8 ;
+                }
+
+                // Store result
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+        }
+        return curPos ;
+}
+
+int
+gf_4vect_ilfsr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet, int synCount)
+{
+        int curSym, curPos = 0 ;                         // Loop counters
+        __m512i parity [ 4 ], taps [ 4 ]               ; // Parity registers
+        __m512i data_vec ;                               // Original data
+
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
+
+        // Loop through all the bytes, 64 at a time
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                // Initialize the parities
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
+                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
+                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
+                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
+
+                // Loop for each symbol
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        // Load data for current symbol
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0 )  ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0 )  ) ;
+                        parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
+                }
+
+                // Store result
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+        }
+        return curPos ;
+}
+
+int
+gf_4vect_ipss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet, int synCount)
+{
+        int curSym, curPos = 0 ;                      // Loop counters
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 4 ], taps [ 3 ] ;            // Parity registers
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
+
+        // Loop through all the bytes, 64 at a time
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+                // Initialize the parities
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+
+                // Loop for each symbol
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        // Load data for current symbol
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                        parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
+                        parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 1 ], taps [ 1 ], 0) ;
+                        parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 2 ], taps [ 2 ], 0) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                }
+
+                // Now check for zero
+                mask = _mm512_test_epi64_mask ( parity [ 0 ], parity [ 0 ] ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int
+gf_8vect_idot_prod_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet, int synCount)
+{
+        int curSym, curPos = 0 ;                      // Loop counters
+        unsigned char * cur_g ;                       // Affine table pointer
+        __m512i data_vec ;           // Working registers
+        __m512i parity [ 8 ], aff_vec [ 8 ], result [ 8 ] ; // Parity registers
+
+        // Loop through all the bytes, 64 at a time
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                // Initialize affine table pointer
+                cur_g = g_tbls ;
+
+                // Initialize the parities
+                parity [ 0 ] = _mm512_setzero_si512() ;
+                parity [ 1 ] = _mm512_setzero_si512() ;
+                parity [ 2 ] = _mm512_setzero_si512() ;
+                parity [ 3 ] = _mm512_setzero_si512() ;
+                parity [ 4 ] = _mm512_setzero_si512() ;
+                parity [ 5 ] = _mm512_setzero_si512() ;
+                parity [ 6 ] = _mm512_setzero_si512() ;
+                parity [ 7 ] = _mm512_setzero_si512() ;
+
+                // Loop for each symbol
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
+                {
+                        // Load data for current symbol
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                        aff_vec [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( cur_g + ( 0 * 8 * k ) ) );
+                        aff_vec [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( cur_g + ( 1 * 8 * k ) ) );
+                        aff_vec [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( cur_g + ( 2 * 8 * k ) ) );
+                        aff_vec [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( cur_g + ( 3 * 8 * k ) ) );
+                        aff_vec [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( cur_g + ( 4 * 8 * k ) ) );
+                        aff_vec [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( cur_g + ( 5 * 8 * k ) ) );
+                        aff_vec [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( cur_g + ( 6 * 8 * k ) ) );
+                        aff_vec [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( cur_g + ( 7 * 8 * k ) ) );
+                        result [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, aff_vec [ 0 ], 0) ;
+                        result [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, aff_vec [ 1 ], 0) ;
+                        result [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, aff_vec [ 2 ], 0) ;
+                        result [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, aff_vec [ 3 ], 0) ;
+                        result [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, aff_vec [ 4 ], 0) ;
+                        result [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, aff_vec [ 5 ], 0) ;
+                        result [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, aff_vec [ 6 ], 0) ;
+                        result [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, aff_vec [ 7 ], 0) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( result [ 0 ], parity [ 0 ] ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( result [ 1 ], parity [ 1 ] ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( result [ 2 ], parity [ 2 ] ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( result [ 3 ], parity [ 3 ] ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( result [ 4 ], parity [ 4 ] ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( result [ 5 ], parity [ 5 ] ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( result [ 6 ], parity [ 6 ] ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( result [ 7 ], parity [ 7 ] ) ;
+
+                        // Move affine table forward by one entry
+                        cur_g += 8 ;
+                }
+
+                // Store result
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+        }
+        return curPos ;
+}
+int
+gf_8vect_ilfsr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet, int synCount)
+{
+        int curSym, curPos = 0 ;                      // Loop counters
+        __m512i parity [ 8 ], taps [ 8 ], data_vec ;  // Parity registers
+
+        // Initialize taps
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
+
+        // Loop through all the bytes, 64 at a time
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                // Initialize the parities
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
+                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
+                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
+                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
+                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
+                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
+                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
+                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
+
+                // Loop for each symbol
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        // Load data for current symbol
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0 )  ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0 )  ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0 )  ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0 )  ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0 )  ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0 )  ) ;
+                        parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
+                }
+
+                // Store result
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+        }
+        return curPos ;
+}
+int
+gf_8vect_ipss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet, int synCount)
+
+{
+        int curSym, curPos = 0 ;                      // Loop counters
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 8 ], taps [ 7 ], data_vec ;  // Parity registers
+        
+        // Create the base values for the parallel syndrome sequencer
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
+        
+        // Loop through all the bytes, 64 at a time
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+                // Initialize the parities
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+
+                // Loop for each symbol
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        // Load data for current symbol
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                        parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
+                        parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 1 ], taps [ 1 ], 0) ;
+                        parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 2 ], taps [ 2 ], 0) ;
+                        parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 3 ], taps [ 3 ], 0) ;
+                        parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 4 ], taps [ 4 ], 0) ;
+                        parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 5 ], taps [ 5 ], 0) ;
+                        parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 6 ], taps [ 6 ], 0) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                }
+
+                // Now check for zero
+                mask = _mm512_test_epi64_mask ( parity [ 0 ], parity [ 0 ] ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        // Store result
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return curPos ;
+}
+#ifdef NDEF
 int determine_number_of_errors(unsigned char *syndromes, int rank) {
     if (rank != 6) {
         return -1;  // Assuming fixed for t=3, rank=6 (2t syndromes)

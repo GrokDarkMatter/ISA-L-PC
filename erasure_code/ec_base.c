@@ -468,7 +468,8 @@ gf_vect_mul_base(int len, unsigned char *a, unsigned char *src, unsigned char *d
         return 0;
 }
 
-int pc_correct ( int newPos, int k, int p, unsigned char ** data, int vLen )
+int 
+pc_correct ( int newPos, int k, int p, unsigned char ** data, int vLen )
 {
         int offSet = 0 ;
         unsigned char eVal, eLoc, synDromes [ 254 ] ;
