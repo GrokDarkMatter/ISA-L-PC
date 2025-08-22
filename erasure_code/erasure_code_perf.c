@@ -220,8 +220,8 @@ main(int argc, char *argv[])
         struct perf start;
 
         /* Set default parameters */
-        k = 10;
-        p = 4;
+        k = 12;
+        p = 8;
         nerrs = 4;
         pc = 1 ;
         pp = 1 ;
