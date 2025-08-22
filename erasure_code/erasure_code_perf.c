@@ -72,6 +72,16 @@ extern int gf_8vect_ilfsr_avx512_gfni(int len, int k, unsigned char *g_tbls, uns
 extern int gf_8vect_ipss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet, int synCount) ;
 
+extern int gf_32vect_lfsr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet, int synCount) ;
+
+extern void pc_encode_data_avx512_gfni(int len, int k, int rows, unsigned char *g_tbls, 
+        unsigned char **data, unsigned char **coding) ;
+
+extern void pc_decode_data_avx512_gfni(int len, int k, int rows, unsigned char *g_tbls, 
+        unsigned char **data, unsigned char **coding, int offSet) ;
+
+
 #ifndef GT_L3_CACHE
 #define GT_L3_CACHE 32 * 1024 * 1024 /* some number > last level cache */
 #endif
@@ -200,15 +210,13 @@ exit:
 int
 main(int argc, char *argv[])
 {
-        int i, j, m, k, p, nerrs, check, pc, pe, pp, ret = -1;
-        u8 eOld ;
+        int i, j, m, k, p, nerrs, pc, pp, ret = -1;
         void *buf;
         u8 *temp_buffs[TEST_SOURCES] = { NULL };
         u8 *buffs[TEST_SOURCES] = { NULL };
         u8 *a ;
         u8 *g_tbls=0, src_in_err[TEST_SOURCES];
         u8 src_err_list[TEST_SOURCES] ;
-        int retVal, epos ;
         struct perf start;
 
         /* Set default parameters */
@@ -216,7 +224,6 @@ main(int argc, char *argv[])
         p = 4;
         nerrs = 4;
         pc = 1 ;
-        pe = 0 ;
         pp = 1 ;
 
         /* Parse arguments */
@@ -229,8 +236,6 @@ main(int argc, char *argv[])
                         nerrs = atoi(argv[++i]);
                 } else if (strcmp(argv[i], "-pc") == 0) {
                         pc = atoi(argv[++i]);
-                } else if (strcmp(argv[i], "-pe") == 0) {
-                        pe = atoi(argv[++i]);
                 } else if (strcmp(argv[i], "-pp") == 0) {
                         pp = atoi(argv[++i]);
                 } else if (strcmp(argv[i], "-h") == 0) {
@@ -360,8 +365,8 @@ main(int argc, char *argv[])
         {
                 // Build the polynomial matrix
                 gf_gen_poly_matrix(a, m, k ) ;
-                printf ( "Poly Matrix\n" ) ;
-                dump_u8xu8( a, m, k ) ;
+                //printf ( "Poly Matrix\n" ) ;
+                //dump_u8xu8( a, m, k ) ;
         }
 
         // Start encode test
@@ -369,103 +374,52 @@ main(int argc, char *argv[])
         printf("erasure_code_encode" TEST_TYPE_STR ": k=%d p=%d ", k, p);
         perf_print(start, (long long) (TEST_LEN(m)) * (m));
 
-        // Start decode test
-        //check = ec_decode_perf(m, k, a, g_tbls, buffs, src_in_err, src_err_list, nerrs, temp_buffs,
-        //                       &start);
+        // Make random data
+        for (i = 0; i < k+p; i++)
+                for (j = 0; j < TEST_LEN(m); j++)
+                        //buffs[i][j] = 0;
+                        buffs[i][j] = rand();
+        //memset ( buffs [ k - 1 ], 1, TEST_LEN(m) ) ;
 
-        //if (check == BAD_MATRIX) {
-        //        printf("BAD MATRIX\n");
-        //        ret = check;
-        //        goto exit;
-        //}
+        // First encode data with polynomial matrix
+        gf_gen_poly_matrix ( a, m, k ) ;
+        ec_init_tables ( k, p, &a[k*k], g_tbls ) ;
+        ec_encode_data ( TEST_LEN(m), k, p, g_tbls, buffs, &buffs [ k ] ) ;
 
-        //for (i = 0; i < nerrs; i++) {
-        //        if (0 != memcmp(temp_buffs[i], buffs[src_err_list[i]], TEST_LEN(m))) {
-        //                printf("Fail error recovery (%d, %d, %d) - ", m, k, nerrs);
-        //                goto exit;
-        //        }
-        //}
+        // Test intrinsics lfsr
+        gf_gen_poly ( a, p ) ;
+        ec_init_tables ( p, 1, a, g_tbls ) ;
 
-        //printf("erasure_code_decode" TEST_TYPE_STR ": ");
-        //perf_print(start, (long long) (TEST_LEN(m)) * (k + nerrs));
+        BENCHMARK(&start, BENCHMARK_TIME,
+                pc_encode_data_avx512_gfni( TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs ) ) ;
+        for (i = 0; i < nerrs; i++) {
+                if (0 != memcmp(buffs[k+i], temp_buffs[i], TEST_LEN(m) ) ) {
+                        printf("Fail error recovery1 (%d, %d, %d) - ", m, k, nerrs);
+                        dump_u8xu8 ( buffs [ k ], 1, 16 ) ;
+                        dump_u8xu8 ( temp_buffs [ 0 ], 1, 16 ) ;
+                        goto exit;
+                }
+        }
+        printf("polynomial_code_lss" TEST_TYPE_STR ": k=%d p=%d ", k, p );
+        perf_print(start, (long long) (TEST_LEN(m)) * (m)); 
 
-        // If polynomial test verify syndromes are zero
-        if ( pc == 1 )
+        // Now test parallel syndrome sequencer
+        i = 2 ;
+        for ( j = p - 2 ; j >= 0 ; j -- )
         {
-                // Make random data
-                for (i = 0; i < k+p; i++)
-                        for (j = 0; j < TEST_LEN(m); j++)
-                                //buffs[i][j] = 0;
-                                buffs[i][j] = rand();
-                //memset ( buffs [ k - 1 ], 1, TEST_LEN(m) ) ;
+                a [ j ] = i ;
+                i = gf_mul ( i, 2 ) ;
+        }
+        //printf ( "Vectors for pss\n" ) ;
+        //dump_u8xu8 ( a, 1, p-1 ) ;
+        ec_init_tables ( p - 1, 1, a, g_tbls ) ;
+        //dump_u8xu8 ( g_tbls, p-1, 8 ) ;
+        //buffs [ 0 ] [ 65 ] ^= 1 ;
+        BENCHMARK(&start, BENCHMARK_TIME,
+                pc_decode_data_avx512_gfni( TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 0 ) ) ;
+        printf("polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p );
+        perf_print(start, (long long) (TEST_LEN(m)) * (m));                
 
-                // First encode data with polynomial matrix
-                gf_gen_poly_matrix ( a, m, k ) ;
-                ec_init_tables ( k, p, &a[k*k], g_tbls ) ;
-                ec_encode_data ( TEST_LEN(m), k, p, g_tbls, buffs, &buffs [ k ] ) ;
-
-                // Test intrinsics dot product
-                if ( p == 4 )
-                BENCHMARK(&start, BENCHMARK_TIME,
-                gf_4vect_idot_prod_avx512_gfni  ( TEST_LEN(m), k, g_tbls, buffs, temp_buffs, 0, p ) ) ;
-                else
-                BENCHMARK(&start, BENCHMARK_TIME,
-                gf_8vect_idot_prod_avx512_gfni  ( TEST_LEN(m), k, g_tbls, buffs, temp_buffs, 0, p ) ) ;
-                printf("polynomial_code_idotprod" TEST_TYPE_STR ": k=%d p=%d ", k, p );
-                perf_print(start, (long long) (TEST_LEN(m)) * (m));
-
-                for (i = 0; i < nerrs; i++) {
-                        if (0 != memcmp(buffs[k+i], temp_buffs[i], TEST_LEN(m) ) ) {
-                                printf("Fail error recovery1 (%d, %d, %d) - ", m, k, nerrs);
-                                dump_u8xu8 ( buffs [ k ], 1, 16 ) ;
-                                dump_u8xu8 ( temp_buffs [ 0 ], 1, 16 ) ;
-                                goto exit;
-                        }
-                }
-
-                // Test intrinsics lfsr
-                gf_gen_poly ( a, p ) ;
-                ec_init_tables ( p, 1, a, g_tbls ) ;
-
-                if ( p == 4 )
-                BENCHMARK(&start, BENCHMARK_TIME,
-                      gf_4vect_ilfsr_avx512_gfni(TEST_LEN(m), k, g_tbls, buffs, temp_buffs, 0, p));
-                else
-                BENCHMARK(&start, BENCHMARK_TIME,
-                      gf_8vect_ilfsr_avx512_gfni(TEST_LEN(m), k, g_tbls, buffs, temp_buffs, 0, p));
-
-                printf("polynomial_code_ilfsr" TEST_TYPE_STR ": k=%d p=%d ", k, p );
-                perf_print(start, (long long) (TEST_LEN(m)) * (m));
-                for (i = 0; i < nerrs; i++) {
-                        if (0 != memcmp(buffs[k+i], temp_buffs[i], TEST_LEN(m) ) ) {
-                                printf("Fail error recovery2 (%d, %d, %d) - ", m, k, nerrs);
-                                dump_u8xu8 ( buffs [ k ], 1, 16 ) ;
-                                dump_u8xu8 ( temp_buffs [ 0 ], 1, 16 ) ;
-                                goto exit;
-                        }
-                }
-        
-                // Now test parallel syndrome sequencer
-                i = 2 ;
-                for ( j = p - 2 ; j >= 0 ; j -- )
-                {
-                        a [ j ] = i ;
-                        i = gf_mul ( i, 2 ) ;
-                }
-                //printf ( "Vectors for pss\n" ) ;
-                //dump_u8xu8 ( a, 1, p-1 ) ;
-                ec_init_tables ( p - 1, 1, a, g_tbls ) ;
-                //dump_u8xu8 ( g_tbls, p-1, 8 ) ;
-                //buffs [ 0 ] [ 65 ] ^= 1 ;
-                if ( p == 4 )
-                BENCHMARK(&start, BENCHMARK_TIME,
-                      gf_4vect_ipss_avx512_gfni(TEST_LEN(m), m, g_tbls, buffs, temp_buffs, 0, p));
-                else
-                BENCHMARK(&start, BENCHMARK_TIME,
-                      gf_8vect_ipss_avx512_gfni(TEST_LEN(m), m, g_tbls, buffs, temp_buffs, 0, p));
-                printf("polynomial_code_ipss" TEST_TYPE_STR ": k=%d p=%d ", m, p );
-                perf_print(start, (long long) (TEST_LEN(m)) * (m));                
-       }
         printf("done all: Pass\n");
 
         ret = 0;
