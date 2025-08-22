@@ -52,20 +52,6 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 extern int pc_correct ( int newPos, int k, int rows, unsigned char ** data, int vLen ) ;
 #include "PCLib_AVX512_GFNI.c"
 
-void
-dump_u8xu8(unsigned char *s, int k, int m)
-{
-        int i, j;
-        for (i = 0; i < k; i++) {
-                for (j = 0; j < m; j++) {
-                        printf(" %3x", 0xff & s[j + (i * m)]);
-                }
-                printf("\n");
-        }
-        printf("\n");
-}
-
-
 #if __x86_64__ || __i386__ || _M_X64 || _M_IX86
 void
 ec_encode_data_sse(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
