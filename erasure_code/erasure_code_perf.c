@@ -401,7 +401,14 @@ main(int argc, char *argv[])
                 }
         }
         printf("polynomial_code_lss" TEST_TYPE_STR ": k=%d p=%d ", k, p );
-        perf_print(start, (long long) (TEST_LEN(m)) * (m)); 
+        perf_print(start, (long long) (TEST_LEN(m)) * (m));
+
+        BENCHMARK(&start, BENCHMARK_TIME,
+                ec_encode_data( TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs ) ) ;
+
+        printf("dot_prod_decode" TEST_TYPE_STR ":     k=%d p=%d ", m, p );
+        perf_print(start, (long long) (TEST_LEN(m)) * (m));
+        // Test decoding with dot product
 
         // Now test parallel syndrome sequencer
         i = 2 ;

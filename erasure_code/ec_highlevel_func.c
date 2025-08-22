@@ -46,7 +46,6 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include <limits.h>
 #include "erasure_code.h"
 #include <immintrin.h>
-#include <x86intrin.h>
 #include "ec_base.h" /* for GF tables */
 #include <stdio.h>
 #define MAX_PC_RETRY 2
