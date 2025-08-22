@@ -129,4 +129,4 @@ gf_gen_poly_matrix              @124
 pc_correct                      @125
 pc_decode_data_avx512_gfni      @126
 pc_encode_data_avx512_gfni      @127
-gf_gen_poly_matrix              @128
+gf_gen_poly                     @128
