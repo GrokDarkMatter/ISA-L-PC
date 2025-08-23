@@ -51,6 +51,7 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include "PCLib_AVX2_GFNI.c"
 
 #if __x86_64__ || __i386__ || _M_X64 || _M_IX86
+
 void
 ec_encode_data_sse(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
                    unsigned char **coding)

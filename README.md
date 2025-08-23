@@ -202,6 +202,21 @@ For more complete Erasure Code integrity testing, erasure_code/erasure_code_test
 ```test
 erasure_code/erasure_code_test
 erasure_code_test: 127x8192 done EC tests: Pass
+
+### Typical erasure_code_perf Test Results
+
+Testing with 12 data buffers and 8 parity buffers (num errors = 8, in [ 6 0 7 11 10 1 3 4 ])
+erasure_code_perf: 20x1677696 8
+erasure_code_encode_cold: k=12 p=8 runtime = 3066588 usecs, bandwidth 30232 MB in 3.0666 sec = 9858.54 MB/s
+polynomial_code_ls_cold: k=12 p=8 runtime = 3024831 usecs, bandwidth 42579 MB in 3.0248 sec = 14076.79 MB/s
+dot_prod_decode_cold: k=20 p=8 runtime = 3449346 usecs, bandwidth 18555 MB in 3.4493 sec = 5379.37 MB/s
+polynomial_code_pss_cold: k=20 p=8 runtime = 3059284 usecs, bandwidth 32849 MB in 3.0593 sec = 10737.57 MB/s
+done all: Pass
+
+The first test is encoding with a dot product, my rate was 9858.54 MB. The second test is encoding with an Parallel LFSR Sequencer, my rate was 14076.79. The third test is producing syndromes with a dot product, my rate was 5379.37. The last was producing (and testing) syndromes with a Parallel Syndrome Sequencer, my rate was 10737.57. Quite a substantial increase in performance on my system (my little Acer with AVX512GFNI), I would imagine you would see something similar (only higher).
+
+This code basically replaces all the ISA-L ASM code with Intrinsics in C language, while simultaneously increasing performance. You can see the Intrinsic source code in erasure_code/PCLib_AVX512_GFNI.c
+
 ```
 
 ### Validated Platforms

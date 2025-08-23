@@ -42,6 +42,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restrictions
 **********************************************************************/
+
 #define MAX_PC_RETRY 2
 extern int pc_correct ( int newPos, int k, int rows, unsigned char ** data, int vLen ) ;
 
@@ -53,9 +54,9 @@ int gf_2vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity [ 2 ], taps [ 1 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -89,10 +90,10 @@ int gf_3vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity [ 3 ], taps [ 2 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -130,11 +131,11 @@ int gf_4vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity [ 4 ], taps [ 3 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -176,12 +177,12 @@ int gf_5vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity [ 5 ], taps [ 4 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -227,13 +228,13 @@ int gf_6vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity [ 6 ], taps [ 5 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -283,14 +284,14 @@ int gf_7vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity [ 7 ], taps [ 6 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -344,15 +345,15 @@ int gf_8vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity [ 8 ], taps [ 7 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -410,16 +411,16 @@ int gf_9vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity [ 9 ], taps [ 8 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -481,17 +482,17 @@ int gf_10vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 10 ], taps [ 9 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -557,18 +558,18 @@ int gf_11vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 11 ], taps [ 10 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -638,19 +639,19 @@ int gf_12vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 12 ], taps [ 11 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -724,20 +725,20 @@ int gf_13vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 13 ], taps [ 12 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -815,21 +816,21 @@ int gf_14vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 14 ], taps [ 13 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -911,22 +912,22 @@ int gf_15vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 15 ], taps [ 14 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -1012,23 +1013,23 @@ int gf_16vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 16 ], taps [ 15 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -1118,24 +1119,24 @@ int gf_17vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 17 ], taps [ 16 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -1229,25 +1230,25 @@ int gf_18vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 18 ], taps [ 17 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -1345,26 +1346,26 @@ int gf_19vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 19 ], taps [ 18 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -1466,27 +1467,27 @@ int gf_20vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 20 ], taps [ 19 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -1592,28 +1593,28 @@ int gf_21vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 21 ], taps [ 20 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -1723,29 +1724,29 @@ int gf_22vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 22 ], taps [ 21 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -1859,30 +1860,30 @@ int gf_23vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 23 ], taps [ 22 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
+        taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -2000,31 +2001,31 @@ int gf_24vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 24 ], taps [ 23 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
+        taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
+        taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -2146,32 +2147,32 @@ int gf_25vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 25 ], taps [ 24 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
+        taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
+        taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
+        taps [ 23 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 23 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -2297,33 +2298,33 @@ int gf_26vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 26 ], taps [ 25 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
+        taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
+        taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
+        taps [ 23 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 23 * 8 ) ) ) ;
+        taps [ 24 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 24 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -2453,34 +2454,34 @@ int gf_27vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 27 ], taps [ 26 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
-        taps [ 25 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 25 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
+        taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
+        taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
+        taps [ 23 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 23 * 8 ) ) ) ;
+        taps [ 24 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 24 * 8 ) ) ) ;
+        taps [ 25 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 25 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -2614,35 +2615,35 @@ int gf_28vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 28 ], taps [ 27 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
-        taps [ 25 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 25 * 8 ) ) );
-        taps [ 26 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 26 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
+        taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
+        taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
+        taps [ 23 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 23 * 8 ) ) ) ;
+        taps [ 24 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 24 * 8 ) ) ) ;
+        taps [ 25 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 25 * 8 ) ) ) ;
+        taps [ 26 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 26 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -2780,36 +2781,36 @@ int gf_29vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 29 ], taps [ 28 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
-        taps [ 25 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 25 * 8 ) ) );
-        taps [ 26 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 26 * 8 ) ) );
-        taps [ 27 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 27 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
+        taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
+        taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
+        taps [ 23 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 23 * 8 ) ) ) ;
+        taps [ 24 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 24 * 8 ) ) ) ;
+        taps [ 25 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 25 * 8 ) ) ) ;
+        taps [ 26 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 26 * 8 ) ) ) ;
+        taps [ 27 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 27 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -2951,37 +2952,37 @@ int gf_30vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 30 ], taps [ 29 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
-        taps [ 25 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 25 * 8 ) ) );
-        taps [ 26 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 26 * 8 ) ) );
-        taps [ 27 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 27 * 8 ) ) );
-        taps [ 28 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 28 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
+        taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
+        taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
+        taps [ 23 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 23 * 8 ) ) ) ;
+        taps [ 24 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 24 * 8 ) ) ) ;
+        taps [ 25 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 25 * 8 ) ) ) ;
+        taps [ 26 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 26 * 8 ) ) ) ;
+        taps [ 27 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 27 * 8 ) ) ) ;
+        taps [ 28 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 28 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -3127,38 +3128,38 @@ int gf_31vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 31 ], taps [ 30 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
-        taps [ 25 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 25 * 8 ) ) );
-        taps [ 26 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 26 * 8 ) ) );
-        taps [ 27 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 27 * 8 ) ) );
-        taps [ 28 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 28 * 8 ) ) );
-        taps [ 29 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 29 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
+        taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
+        taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
+        taps [ 23 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 23 * 8 ) ) ) ;
+        taps [ 24 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 24 * 8 ) ) ) ;
+        taps [ 25 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 25 * 8 ) ) ) ;
+        taps [ 26 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 26 * 8 ) ) ) ;
+        taps [ 27 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 27 * 8 ) ) ) ;
+        taps [ 28 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 28 * 8 ) ) ) ;
+        taps [ 29 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 29 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -3308,39 +3309,39 @@ int gf_32vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 32 ], taps [ 31 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
-        taps [ 25 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 25 * 8 ) ) );
-        taps [ 26 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 26 * 8 ) ) );
-        taps [ 27 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 27 * 8 ) ) );
-        taps [ 28 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 28 * 8 ) ) );
-        taps [ 29 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 29 * 8 ) ) );
-        taps [ 30 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 30 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
+        taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
+        taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
+        taps [ 23 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 23 * 8 ) ) ) ;
+        taps [ 24 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 24 * 8 ) ) ) ;
+        taps [ 25 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 25 * 8 ) ) ) ;
+        taps [ 26 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 26 * 8 ) ) ) ;
+        taps [ 27 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 27 * 8 ) ) ) ;
+        taps [ 28 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 28 * 8 ) ) ) ;
+        taps [ 29 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 29 * 8 ) ) ) ;
+        taps [ 30 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 30 * 8 ) ) ) ;
 
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        for ( curPos = offSet ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = data_vec ;
@@ -3494,10 +3495,10 @@ int gf_2vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 2 ], taps [ 2 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -3525,11 +3526,11 @@ int gf_3vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 3 ], taps [ 3 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -3561,12 +3562,12 @@ int gf_4vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 4 ], taps [ 4 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -3602,13 +3603,13 @@ int gf_5vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 5 ], taps [ 5 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -3648,14 +3649,14 @@ int gf_6vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 6 ], taps [ 6 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -3699,15 +3700,15 @@ int gf_7vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 7 ], taps [ 7 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -3755,16 +3756,16 @@ int gf_8vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 8 ], taps [ 8 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -3816,17 +3817,17 @@ int gf_9vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity [ 9 ], taps [ 9 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -3882,18 +3883,18 @@ int gf_10vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 10 ], taps [ 10 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -3953,19 +3954,19 @@ int gf_11vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 11 ], taps [ 11 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -4029,20 +4030,20 @@ int gf_12vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 12 ], taps [ 12 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -4110,21 +4111,21 @@ int gf_13vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 13 ], taps [ 13 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -4196,22 +4197,22 @@ int gf_14vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 14 ], taps [ 14 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -4287,23 +4288,23 @@ int gf_15vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 15 ], taps [ 15 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -4383,24 +4384,24 @@ int gf_16vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 16 ], taps [ 16 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -4484,25 +4485,25 @@ int gf_17vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 17 ], taps [ 17 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -4590,26 +4591,26 @@ int gf_18vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 18 ], taps [ 18 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -4701,27 +4702,27 @@ int gf_19vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 19 ], taps [ 19 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -4817,28 +4818,28 @@ int gf_20vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 20 ], taps [ 20 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -4938,29 +4939,29 @@ int gf_21vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 21 ], taps [ 21 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -5064,30 +5065,30 @@ int gf_22vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 22 ], taps [ 22 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
+        taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -5195,31 +5196,31 @@ int gf_23vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 23 ], taps [ 23 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
+        taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
+        taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -5331,32 +5332,32 @@ int gf_24vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 24 ], taps [ 24 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
+        taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
+        taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
+        taps [ 23 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 23 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -5472,33 +5473,33 @@ int gf_25vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 25 ], taps [ 25 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
+        taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
+        taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
+        taps [ 23 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 23 * 8 ) ) ) ;
+        taps [ 24 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 24 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -5618,34 +5619,34 @@ int gf_26vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 26 ], taps [ 26 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
-        taps [ 25 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 25 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
+        taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
+        taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
+        taps [ 23 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 23 * 8 ) ) ) ;
+        taps [ 24 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 24 * 8 ) ) ) ;
+        taps [ 25 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 25 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -5769,35 +5770,35 @@ int gf_27vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 27 ], taps [ 27 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
-        taps [ 25 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 25 * 8 ) ) );
-        taps [ 26 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 26 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
+        taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
+        taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
+        taps [ 23 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 23 * 8 ) ) ) ;
+        taps [ 24 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 24 * 8 ) ) ) ;
+        taps [ 25 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 25 * 8 ) ) ) ;
+        taps [ 26 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 26 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -5925,36 +5926,36 @@ int gf_28vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 28 ], taps [ 28 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
-        taps [ 25 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 25 * 8 ) ) );
-        taps [ 26 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 26 * 8 ) ) );
-        taps [ 27 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 27 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
+        taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
+        taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
+        taps [ 23 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 23 * 8 ) ) ) ;
+        taps [ 24 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 24 * 8 ) ) ) ;
+        taps [ 25 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 25 * 8 ) ) ) ;
+        taps [ 26 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 26 * 8 ) ) ) ;
+        taps [ 27 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 27 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -6086,37 +6087,37 @@ int gf_29vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 29 ], taps [ 29 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
-        taps [ 25 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 25 * 8 ) ) );
-        taps [ 26 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 26 * 8 ) ) );
-        taps [ 27 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 27 * 8 ) ) );
-        taps [ 28 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 28 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
+        taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
+        taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
+        taps [ 23 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 23 * 8 ) ) ) ;
+        taps [ 24 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 24 * 8 ) ) ) ;
+        taps [ 25 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 25 * 8 ) ) ) ;
+        taps [ 26 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 26 * 8 ) ) ) ;
+        taps [ 27 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 27 * 8 ) ) ) ;
+        taps [ 28 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 28 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -6252,38 +6253,38 @@ int gf_30vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 30 ], taps [ 30 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
-        taps [ 25 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 25 * 8 ) ) );
-        taps [ 26 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 26 * 8 ) ) );
-        taps [ 27 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 27 * 8 ) ) );
-        taps [ 28 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 28 * 8 ) ) );
-        taps [ 29 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 29 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
+        taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
+        taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
+        taps [ 23 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 23 * 8 ) ) ) ;
+        taps [ 24 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 24 * 8 ) ) ) ;
+        taps [ 25 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 25 * 8 ) ) ) ;
+        taps [ 26 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 26 * 8 ) ) ) ;
+        taps [ 27 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 27 * 8 ) ) ) ;
+        taps [ 28 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 28 * 8 ) ) ) ;
+        taps [ 29 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 29 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -6423,39 +6424,39 @@ int gf_31vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 31 ], taps [ 31 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
-        taps [ 25 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 25 * 8 ) ) );
-        taps [ 26 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 26 * 8 ) ) );
-        taps [ 27 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 27 * 8 ) ) );
-        taps [ 28 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 28 * 8 ) ) );
-        taps [ 29 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 29 * 8 ) ) );
-        taps [ 30 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 30 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
+        taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
+        taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
+        taps [ 23 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 23 * 8 ) ) ) ;
+        taps [ 24 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 24 * 8 ) ) ) ;
+        taps [ 25 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 25 * 8 ) ) ) ;
+        taps [ 26 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 26 * 8 ) ) ) ;
+        taps [ 27 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 27 * 8 ) ) ) ;
+        taps [ 28 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 28 * 8 ) ) ) ;
+        taps [ 29 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 29 * 8 ) ) ) ;
+        taps [ 30 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 30 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -6599,40 +6600,40 @@ int gf_32vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         __m256i parity [ 32 ], taps [ 32 ] ;            // Parity registers
         __m256i data_vec ;
 
-        taps [ 0 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
-        taps [ 25 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 25 * 8 ) ) );
-        taps [ 26 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 26 * 8 ) ) );
-        taps [ 27 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 27 * 8 ) ) );
-        taps [ 28 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 28 * 8 ) ) );
-        taps [ 29 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 29 * 8 ) ) );
-        taps [ 30 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 30 * 8 ) ) );
-        taps [ 31 ] = _mm256_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 31 * 8 ) ) );
+        taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
+        taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
+        taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
+        taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
+        taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
+        taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
+        taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
+        taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
+        taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
+        taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
+        taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
+        taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
+        taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
+        taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
+        taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
+        taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
+        taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
+        taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
+        taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
+        taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
+        taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
+        taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
+        taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
+        taps [ 23 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 23 * 8 ) ) ) ;
+        taps [ 24 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 24 * 8 ) ) ) ;
+        taps [ 25 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 25 * 8 ) ) ) ;
+        taps [ 26 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 26 * 8 ) ) ) ;
+        taps [ 27 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 27 * 8 ) ) ) ;
+        taps [ 28 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 28 * 8 ) ) ) ;
+        taps [ 29 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 29 * 8 ) ) ) ;
+        taps [ 30 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 30 * 8 ) ) ) ;
+        taps [ 31 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 31 * 8 ) ) ) ;
 
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        for ( curPos = 0 ; curPos < len ; curPos += 32 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos ] ) ;
                 parity [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
@@ -6914,7 +6915,7 @@ int pc_decode_data_avx2_gfni(int len, int k, int rows, unsigned char *g_tbls, un
                 }
                 if ( newPos < len )
                 {
-                        if ( pc_correct ( newPos, k, rows, data, 64 ) )
+                        if ( pc_correct ( newPos, k, rows, data,32 ) )
                         {
                                 return ( newPos ) ;
                         }
