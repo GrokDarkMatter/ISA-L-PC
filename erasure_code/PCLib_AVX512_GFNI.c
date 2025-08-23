@@ -43,6 +43,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restrictions
 **********************************************************************/
 
+#define MAX_PC_RETRY 2
+extern int pc_correct ( int newPos, int k, int rows, unsigned char ** data, int vLen ) ;
+
 int gf_2vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
