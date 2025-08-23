@@ -224,6 +224,23 @@ The first test is encoding with a dot product, my rate was 9858.54 MB. The secon
 
 This code basically replaces all the ISA-L ASM code with Intrinsics in C language, while simultaneously increasing performance. You can see the Intrinsic source code in erasure_code/PCLib_AVX512_GFNI.c
 
+Here are the results for AVX2-GFNI
+
+Testing with 12 data buffers and 8 parity buffers (num errors = 8, in [ 6 0 7 11 10 1 3 4 ])
+
+erasure_code_perf: 20x1677696 8
+
+erasure_code_encode_cold: k=12 p=8 runtime =    3334102 usecs, bandwidth 15367 MB in 3.3341 sec = 4609.25 MB/s
+
+polynomial_code_pls_cold: k=12 p=8 runtime =    3255882 usecs, bandwidth 20937 MB in 3.2559 sec = 6430.71 MB/s
+
+dot_prod_decode_cold:     k=20 p=8 runtime =    3060958 usecs, bandwidth 8891 MB in 3.0610 sec = 2904.90 MB/s
+
+polynomial_code_pss_cold: k=20 p=8 runtime =    3063989 usecs, bandwidth 18219 MB in 3.0640 sec = 5946.42 MB/s
+
+done all: Pass
+
+
 ### Validated Platforms
 
 Build and executables validated on x86 Ubuntu 24.04.2 LTS, ARM Raspberry Pi 5 Debian GNU/Linux 12 (bookworm) and Windows 11/Visual Studio 2022 x64 command line.
