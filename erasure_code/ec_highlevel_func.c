@@ -48,6 +48,7 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include <immintrin.h>
 #include "ec_base.h" /* for GF tables */
 #include "PCLib_AVX512_GFNI.c"
+#include "PCLib_AVX2_GFNI.c"
 
 #if __x86_64__ || __i386__ || _M_X64 || _M_IX86
 void

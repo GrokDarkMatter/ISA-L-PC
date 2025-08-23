@@ -365,7 +365,7 @@ main(int argc, char *argv[])
                         goto exit;
                 }
         }
-        printf("polynomial_code_ls" TEST_TYPE_STR ":  k=%d p=%d ", k, p );
+        printf("polynomial_code_pls" TEST_TYPE_STR ": k=%d p=%d ", k, p );
         perf_print(start, (long long) (TEST_LEN(m)) * (m));
 
         // Test decoding with dot product
