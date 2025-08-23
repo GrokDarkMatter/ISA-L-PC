@@ -57,6 +57,14 @@ extern void pc_encode_data_avx512_gfni(int len, int k, int rows, unsigned char *
 extern void pc_decode_data_avx512_gfni(int len, int k, int rows, unsigned char *g_tbls, 
         unsigned char **data, unsigned char **coding, int offSet) ;
 
+extern void ec_encode_data_avx2_gfni(int len, int k, int rows, unsigned char *g_tbls, 
+        unsigned char **data, unsigned char **coding) ;
+
+extern void pc_encode_data_avx2_gfni(int len, int k, int rows, unsigned char *g_tbls, 
+        unsigned char **data, unsigned char **coding) ;
+extern void pc_decode_data_avx2_gfni(int len, int k, int rows, unsigned char *g_tbls, 
+        unsigned char **data, unsigned char **coding, int offSet) ;
+
 
 #ifndef GT_L3_CACHE
 #define GT_L3_CACHE 32 * 1024 * 1024 /* some number > last level cache */
@@ -122,7 +130,7 @@ ec_encode_perf(int m, int k, u8 *a, u8 *g_tbls, u8 **buffs, struct perf *start)
 {
         ec_init_tables(k, m - k, &a[k * k], g_tbls);
         BENCHMARK(start, BENCHMARK_TIME,
-                  ec_encode_data(TEST_LEN(m), k, m - k, g_tbls, buffs, &buffs[k]));
+                  ec_encode_data_avx2_gfni(TEST_LEN(m), k, m - k, g_tbls, buffs, &buffs[k]));
 }
 
 int
@@ -349,14 +357,14 @@ main(int argc, char *argv[])
         // First encode data with polynomial matrix
         gf_gen_poly_matrix ( a, m, k ) ;
         ec_init_tables ( k, p, &a[k*k], g_tbls ) ;
-        ec_encode_data ( TEST_LEN(m), k, p, g_tbls, buffs, &buffs [ k ] ) ;
+        ec_encode_data_avx2_gfni( TEST_LEN(m), k, p, g_tbls, buffs, &buffs [ k ] ) ;
 
         // Test intrinsics lfsr
         gf_gen_poly ( a, p ) ;
         ec_init_tables ( p, 1, a, g_tbls ) ;
 
         BENCHMARK(&start, BENCHMARK_TIME,
-                pc_encode_data_avx512_gfni( TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs ) ) ;
+                pc_encode_data_avx2_gfni( TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs ) ) ;
         for (i = 0; i < nerrs; i++) {
                 if (0 != memcmp(buffs[k+i], temp_buffs[i], TEST_LEN(m) ) ) {
                         printf("Fail error recovery1 (%d, %d, %d) - ", m, k, nerrs);
@@ -370,7 +378,7 @@ main(int argc, char *argv[])
 
         // Test decoding with dot product
         BENCHMARK(&start, BENCHMARK_TIME,
-                ec_encode_data( TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs ) ) ;
+                ec_encode_data_avx2_gfni( TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs ) ) ;
 
         printf("dot_prod_decode" TEST_TYPE_STR ":     k=%d p=%d ", m, p );
         perf_print(start, (long long) (TEST_LEN(m)) * (m));
@@ -389,7 +397,7 @@ main(int argc, char *argv[])
         //dump_u8xu8 ( g_tbls, p-1, 8 ) ;
         //buffs [ 0 ] [ 65 ] ^= 1 ;
         BENCHMARK(&start, BENCHMARK_TIME,
-                pc_decode_data_avx512_gfni( TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 0 ) ) ;
+                pc_decode_data_avx2_gfni( TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 0 ) ) ;
         printf("polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p );
         perf_print(start, (long long) (TEST_LEN(m)) * (m));                
 
