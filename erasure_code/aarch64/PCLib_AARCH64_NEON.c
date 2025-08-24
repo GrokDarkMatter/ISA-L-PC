@@ -110,7 +110,7 @@ int gf_3vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 2 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = veorq_u8 ( parity [ 2 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -162,7 +162,7 @@ int gf_4vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 3 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 3 ] = veorq_u8 ( parity [ 3 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -222,7 +222,7 @@ int gf_5vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 4 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 4 ] = veorq_u8 ( parity [ 4 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -290,7 +290,7 @@ int gf_6vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 5 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 5 ] = veorq_u8 ( parity [ 5 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -366,7 +366,7 @@ int gf_7vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 6 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 6 ] = veorq_u8 ( parity [ 6 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -450,7 +450,7 @@ int gf_8vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 7 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 7 ] = veorq_u8 ( parity [ 7 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -542,7 +542,7 @@ int gf_9vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 8 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 8 ] = veorq_u8 ( parity [ 8 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -642,7 +642,7 @@ int gf_10vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 9 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 9 ] = veorq_u8 ( parity [ 9 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -750,7 +750,7 @@ int gf_11vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 10 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 10 ] = veorq_u8 ( parity [ 10 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -866,7 +866,7 @@ int gf_12vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 11 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 11 ] = veorq_u8 ( parity [ 11 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -990,7 +990,7 @@ int gf_13vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 12 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 12 ] = veorq_u8 ( parity [ 12 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -1122,7 +1122,7 @@ int gf_14vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 13 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 13 ] = veorq_u8 ( parity [ 13 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -1262,7 +1262,7 @@ int gf_15vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 14 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 14 ] = veorq_u8 ( parity [ 14 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -1410,7 +1410,7 @@ int gf_16vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 15 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 15 ] = veorq_u8 ( parity [ 15 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -1566,7 +1566,7 @@ int gf_17vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 16 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 16 ] = veorq_u8 ( parity [ 16 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -1730,7 +1730,7 @@ int gf_18vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 17 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 17 ] = veorq_u8 ( parity [ 17 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -1902,7 +1902,7 @@ int gf_19vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 18 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 18 ] = veorq_u8 ( parity [ 18 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -2082,7 +2082,7 @@ int gf_20vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 19 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 19 ] = veorq_u8 ( parity [ 19 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -2270,7 +2270,7 @@ int gf_21vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 20 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 20 ] = veorq_u8 ( parity [ 20 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -2466,7 +2466,7 @@ int gf_22vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 21 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 21 ] = veorq_u8 ( parity [ 21 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -2670,7 +2670,7 @@ int gf_23vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 22 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 22 ] = veorq_u8 ( parity [ 22 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -2882,7 +2882,7 @@ int gf_24vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 23 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 23 ] = veorq_u8 ( parity [ 23 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -3102,7 +3102,7 @@ int gf_25vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 24 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 24 ] = veorq_u8 ( parity [ 24 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -3330,7 +3330,7 @@ int gf_26vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 25 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 25 ] = veorq_u8 ( parity [ 25 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -3566,7 +3566,7 @@ int gf_27vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 26 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 26 ] = veorq_u8 ( parity [ 26 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -3810,7 +3810,7 @@ int gf_28vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 27 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 27 ] = veorq_u8 ( parity [ 27 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -4062,7 +4062,7 @@ int gf_29vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 28 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 28 ] = veorq_u8 ( parity [ 28 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -4322,7 +4322,7 @@ int gf_30vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 29 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 29 ] = veorq_u8 ( parity [ 29 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -4590,7 +4590,7 @@ int gf_31vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 30 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 30 ] = veorq_u8 ( parity [ 30 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
@@ -4866,7 +4866,7 @@ int gf_32vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 {
                         data_vec = vld1q_u8( &data [ curSym ] [ curPos ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        parity [ 31 ] = veorq_u8 ( parity [ 1 ], data_vec ) ;
+                        parity [ 31 ] = veorq_u8 ( parity [ 31 ], data_vec ) ;
                         data_vec = vandq_u8 ( data_vec, mask0f ) ;
 
                         temp = vqtbl1q_u8 ( taps [ 0 ], data_vec ) ;
