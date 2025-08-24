@@ -5046,14 +5046,14 @@ int gf_2vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -5065,7 +5065,7 @@ int gf_2vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -5093,16 +5093,16 @@ int gf_3vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -5117,7 +5117,7 @@ int gf_3vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -5150,18 +5150,18 @@ int gf_4vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -5179,7 +5179,7 @@ int gf_4vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -5217,20 +5217,20 @@ int gf_5vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -5251,7 +5251,7 @@ int gf_5vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -5294,22 +5294,22 @@ int gf_6vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -5333,7 +5333,7 @@ int gf_6vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -5381,24 +5381,24 @@ int gf_7vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -5425,7 +5425,7 @@ int gf_7vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -5478,26 +5478,26 @@ int gf_8vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -5527,7 +5527,7 @@ int gf_8vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -5585,28 +5585,28 @@ int gf_9vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -5639,7 +5639,7 @@ int gf_9vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -5702,30 +5702,30 @@ int gf_10vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -5761,7 +5761,7 @@ int gf_10vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -5829,32 +5829,32 @@ int gf_11vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
         taps  [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) ) ;
-        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ) ;
+        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -5893,7 +5893,7 @@ int gf_11vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -5966,34 +5966,34 @@ int gf_12vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
         taps  [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) ) ;
-        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ) ;
+        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ;
         taps  [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) ) ;
-        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ) ;
+        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -6035,7 +6035,7 @@ int gf_12vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -6113,36 +6113,36 @@ int gf_13vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
         taps  [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) ) ;
-        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ) ;
+        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ;
         taps  [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) ) ;
-        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ) ;
+        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ;
         taps  [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) ) ;
-        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ) ;
+        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -6187,7 +6187,7 @@ int gf_13vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -6270,38 +6270,38 @@ int gf_14vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
         taps  [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) ) ;
-        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ) ;
+        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ;
         taps  [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) ) ;
-        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ) ;
+        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ;
         taps  [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) ) ;
-        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ) ;
+        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ;
         taps  [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) ) ;
-        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ) ;
+        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -6349,7 +6349,7 @@ int gf_14vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -6437,40 +6437,40 @@ int gf_15vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
         taps  [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) ) ;
-        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ) ;
+        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ;
         taps  [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) ) ;
-        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ) ;
+        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ;
         taps  [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) ) ;
-        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ) ;
+        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ;
         taps  [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) ) ;
-        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ) ;
+        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ;
         taps  [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) ) ;
-        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ) ;
+        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -6521,7 +6521,7 @@ int gf_15vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -6614,42 +6614,42 @@ int gf_16vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
         taps  [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) ) ;
-        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ) ;
+        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ;
         taps  [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) ) ;
-        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ) ;
+        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ;
         taps  [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) ) ;
-        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ) ;
+        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ;
         taps  [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) ) ;
-        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ) ;
+        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ;
         taps  [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) ) ;
-        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ) ;
+        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ;
         taps  [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) ) ;
-        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ) ;
+        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -6703,7 +6703,7 @@ int gf_16vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -6801,44 +6801,44 @@ int gf_17vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
         taps  [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) ) ;
-        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ) ;
+        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ;
         taps  [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) ) ;
-        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ) ;
+        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ;
         taps  [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) ) ;
-        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ) ;
+        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ;
         taps  [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) ) ;
-        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ) ;
+        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ;
         taps  [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) ) ;
-        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ) ;
+        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ;
         taps  [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) ) ;
-        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ) ;
+        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ;
         taps  [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) ) ;
-        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ) ;
+        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -6895,7 +6895,7 @@ int gf_17vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -6998,46 +6998,46 @@ int gf_18vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
         taps  [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) ) ;
-        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ) ;
+        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ;
         taps  [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) ) ;
-        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ) ;
+        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ;
         taps  [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) ) ;
-        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ) ;
+        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ;
         taps  [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) ) ;
-        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ) ;
+        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ;
         taps  [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) ) ;
-        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ) ;
+        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ;
         taps  [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) ) ;
-        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ) ;
+        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ;
         taps  [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) ) ;
-        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ) ;
+        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ;
         taps  [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) ) ;
-        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ) ;
+        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -7097,7 +7097,7 @@ int gf_18vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -7205,48 +7205,48 @@ int gf_19vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
         taps  [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) ) ;
-        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ) ;
+        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ;
         taps  [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) ) ;
-        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ) ;
+        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ;
         taps  [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) ) ;
-        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ) ;
+        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ;
         taps  [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) ) ;
-        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ) ;
+        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ;
         taps  [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) ) ;
-        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ) ;
+        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ;
         taps  [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) ) ;
-        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ) ;
+        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ;
         taps  [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) ) ;
-        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ) ;
+        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ;
         taps  [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) ) ;
-        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ) ;
+        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ;
         taps  [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) ) ;
-        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ) ;
+        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -7309,7 +7309,7 @@ int gf_19vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -7422,50 +7422,50 @@ int gf_20vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
         taps  [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) ) ;
-        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ) ;
+        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ;
         taps  [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) ) ;
-        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ) ;
+        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ;
         taps  [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) ) ;
-        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ) ;
+        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ;
         taps  [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) ) ;
-        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ) ;
+        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ;
         taps  [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) ) ;
-        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ) ;
+        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ;
         taps  [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) ) ;
-        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ) ;
+        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ;
         taps  [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) ) ;
-        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ) ;
+        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ;
         taps  [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) ) ;
-        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ) ;
+        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ;
         taps  [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) ) ;
-        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ) ;
+        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ;
         taps  [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) ) ;
-        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ) ;
+        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -7531,7 +7531,7 @@ int gf_20vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -7649,52 +7649,52 @@ int gf_21vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
         taps  [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) ) ;
-        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ) ;
+        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ;
         taps  [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) ) ;
-        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ) ;
+        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ;
         taps  [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) ) ;
-        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ) ;
+        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ;
         taps  [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) ) ;
-        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ) ;
+        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ;
         taps  [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) ) ;
-        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ) ;
+        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ;
         taps  [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) ) ;
-        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ) ;
+        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ;
         taps  [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) ) ;
-        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ) ;
+        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ;
         taps  [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) ) ;
-        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ) ;
+        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ;
         taps  [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) ) ;
-        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ) ;
+        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ;
         taps  [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) ) ;
-        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ) ;
+        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ;
         taps  [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) ) ;
-        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ) ;
+        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -7763,7 +7763,7 @@ int gf_21vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -7886,54 +7886,54 @@ int gf_22vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
         taps  [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) ) ;
-        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ) ;
+        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ;
         taps  [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) ) ;
-        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ) ;
+        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ;
         taps  [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) ) ;
-        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ) ;
+        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ;
         taps  [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) ) ;
-        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ) ;
+        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ;
         taps  [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) ) ;
-        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ) ;
+        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ;
         taps  [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) ) ;
-        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ) ;
+        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ;
         taps  [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) ) ;
-        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ) ;
+        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ;
         taps  [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) ) ;
-        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ) ;
+        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ;
         taps  [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) ) ;
-        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ) ;
+        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ;
         taps  [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) ) ;
-        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ) ;
+        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ;
         taps  [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) ) ;
-        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ) ;
+        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ;
         taps  [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) ) ;
-        tapsh [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) + 16 ) ) ;
+        tapsh [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -8005,7 +8005,7 @@ int gf_22vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -8133,56 +8133,56 @@ int gf_23vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
         taps  [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) ) ;
-        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ) ;
+        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ;
         taps  [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) ) ;
-        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ) ;
+        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ;
         taps  [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) ) ;
-        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ) ;
+        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ;
         taps  [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) ) ;
-        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ) ;
+        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ;
         taps  [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) ) ;
-        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ) ;
+        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ;
         taps  [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) ) ;
-        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ) ;
+        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ;
         taps  [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) ) ;
-        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ) ;
+        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ;
         taps  [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) ) ;
-        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ) ;
+        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ;
         taps  [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) ) ;
-        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ) ;
+        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ;
         taps  [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) ) ;
-        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ) ;
+        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ;
         taps  [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) ) ;
-        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ) ;
+        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ;
         taps  [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) ) ;
-        tapsh [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) + 16 ) ) ;
+        tapsh [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) + 16 ) ;
         taps  [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) ) ;
-        tapsh [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) + 16 ) ) ;
+        tapsh [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -8257,7 +8257,7 @@ int gf_23vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -8390,58 +8390,58 @@ int gf_24vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
         taps  [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) ) ;
-        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ) ;
+        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ;
         taps  [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) ) ;
-        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ) ;
+        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ;
         taps  [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) ) ;
-        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ) ;
+        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ;
         taps  [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) ) ;
-        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ) ;
+        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ;
         taps  [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) ) ;
-        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ) ;
+        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ;
         taps  [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) ) ;
-        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ) ;
+        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ;
         taps  [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) ) ;
-        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ) ;
+        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ;
         taps  [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) ) ;
-        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ) ;
+        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ;
         taps  [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) ) ;
-        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ) ;
+        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ;
         taps  [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) ) ;
-        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ) ;
+        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ;
         taps  [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) ) ;
-        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ) ;
+        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ;
         taps  [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) ) ;
-        tapsh [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) + 16 ) ) ;
+        tapsh [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) + 16 ) ;
         taps  [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) ) ;
-        tapsh [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) + 16 ) ) ;
+        tapsh [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) + 16 ) ;
         taps  [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) ) ;
-        tapsh [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) + 16 ) ) ;
+        tapsh [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -8519,7 +8519,7 @@ int gf_24vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -8657,60 +8657,60 @@ int gf_25vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
         taps  [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) ) ;
-        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ) ;
+        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ;
         taps  [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) ) ;
-        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ) ;
+        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ;
         taps  [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) ) ;
-        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ) ;
+        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ;
         taps  [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) ) ;
-        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ) ;
+        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ;
         taps  [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) ) ;
-        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ) ;
+        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ;
         taps  [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) ) ;
-        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ) ;
+        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ;
         taps  [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) ) ;
-        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ) ;
+        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ;
         taps  [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) ) ;
-        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ) ;
+        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ;
         taps  [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) ) ;
-        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ) ;
+        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ;
         taps  [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) ) ;
-        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ) ;
+        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ;
         taps  [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) ) ;
-        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ) ;
+        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ;
         taps  [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) ) ;
-        tapsh [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) + 16 ) ) ;
+        tapsh [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) + 16 ) ;
         taps  [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) ) ;
-        tapsh [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) + 16 ) ) ;
+        tapsh [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) + 16 ) ;
         taps  [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) ) ;
-        tapsh [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) + 16 ) ) ;
+        tapsh [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) + 16 ) ;
         taps  [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) ) ;
-        tapsh [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) + 16 ) ) ;
+        tapsh [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -8791,7 +8791,7 @@ int gf_25vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -8934,62 +8934,62 @@ int gf_26vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
         taps  [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) ) ;
-        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ) ;
+        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ;
         taps  [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) ) ;
-        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ) ;
+        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ;
         taps  [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) ) ;
-        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ) ;
+        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ;
         taps  [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) ) ;
-        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ) ;
+        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ;
         taps  [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) ) ;
-        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ) ;
+        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ;
         taps  [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) ) ;
-        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ) ;
+        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ;
         taps  [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) ) ;
-        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ) ;
+        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ;
         taps  [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) ) ;
-        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ) ;
+        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ;
         taps  [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) ) ;
-        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ) ;
+        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ;
         taps  [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) ) ;
-        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ) ;
+        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ;
         taps  [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) ) ;
-        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ) ;
+        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ;
         taps  [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) ) ;
-        tapsh [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) + 16 ) ) ;
+        tapsh [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) + 16 ) ;
         taps  [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) ) ;
-        tapsh [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) + 16 ) ) ;
+        tapsh [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) + 16 ) ;
         taps  [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) ) ;
-        tapsh [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) + 16 ) ) ;
+        tapsh [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) + 16 ) ;
         taps  [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) ) ;
-        tapsh [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) + 16 ) ) ;
+        tapsh [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) + 16 ) ;
         taps  [ 25 ] = vld1q_u8( g_tbls + ( 25 * 32 ) ) ;
-        tapsh [ 25 ] = vld1q_u8( g_tbls + ( 25 * 32 ) + 16 ) ) ;
+        tapsh [ 25 ] = vld1q_u8( g_tbls + ( 25 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -9073,7 +9073,7 @@ int gf_26vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -9221,64 +9221,64 @@ int gf_27vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
         taps  [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) ) ;
-        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ) ;
+        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ;
         taps  [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) ) ;
-        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ) ;
+        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ;
         taps  [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) ) ;
-        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ) ;
+        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ;
         taps  [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) ) ;
-        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ) ;
+        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ;
         taps  [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) ) ;
-        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ) ;
+        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ;
         taps  [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) ) ;
-        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ) ;
+        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ;
         taps  [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) ) ;
-        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ) ;
+        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ;
         taps  [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) ) ;
-        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ) ;
+        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ;
         taps  [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) ) ;
-        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ) ;
+        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ;
         taps  [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) ) ;
-        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ) ;
+        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ;
         taps  [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) ) ;
-        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ) ;
+        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ;
         taps  [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) ) ;
-        tapsh [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) + 16 ) ) ;
+        tapsh [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) + 16 ) ;
         taps  [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) ) ;
-        tapsh [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) + 16 ) ) ;
+        tapsh [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) + 16 ) ;
         taps  [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) ) ;
-        tapsh [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) + 16 ) ) ;
+        tapsh [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) + 16 ) ;
         taps  [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) ) ;
-        tapsh [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) + 16 ) ) ;
+        tapsh [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) + 16 ) ;
         taps  [ 25 ] = vld1q_u8( g_tbls + ( 25 * 32 ) ) ;
-        tapsh [ 25 ] = vld1q_u8( g_tbls + ( 25 * 32 ) + 16 ) ) ;
+        tapsh [ 25 ] = vld1q_u8( g_tbls + ( 25 * 32 ) + 16 ) ;
         taps  [ 26 ] = vld1q_u8( g_tbls + ( 26 * 32 ) ) ;
-        tapsh [ 26 ] = vld1q_u8( g_tbls + ( 26 * 32 ) + 16 ) ) ;
+        tapsh [ 26 ] = vld1q_u8( g_tbls + ( 26 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -9365,7 +9365,7 @@ int gf_27vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -9518,66 +9518,66 @@ int gf_28vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
         taps  [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) ) ;
-        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ) ;
+        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ;
         taps  [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) ) ;
-        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ) ;
+        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ;
         taps  [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) ) ;
-        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ) ;
+        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ;
         taps  [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) ) ;
-        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ) ;
+        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ;
         taps  [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) ) ;
-        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ) ;
+        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ;
         taps  [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) ) ;
-        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ) ;
+        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ;
         taps  [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) ) ;
-        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ) ;
+        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ;
         taps  [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) ) ;
-        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ) ;
+        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ;
         taps  [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) ) ;
-        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ) ;
+        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ;
         taps  [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) ) ;
-        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ) ;
+        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ;
         taps  [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) ) ;
-        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ) ;
+        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ;
         taps  [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) ) ;
-        tapsh [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) + 16 ) ) ;
+        tapsh [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) + 16 ) ;
         taps  [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) ) ;
-        tapsh [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) + 16 ) ) ;
+        tapsh [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) + 16 ) ;
         taps  [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) ) ;
-        tapsh [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) + 16 ) ) ;
+        tapsh [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) + 16 ) ;
         taps  [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) ) ;
-        tapsh [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) + 16 ) ) ;
+        tapsh [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) + 16 ) ;
         taps  [ 25 ] = vld1q_u8( g_tbls + ( 25 * 32 ) ) ;
-        tapsh [ 25 ] = vld1q_u8( g_tbls + ( 25 * 32 ) + 16 ) ) ;
+        tapsh [ 25 ] = vld1q_u8( g_tbls + ( 25 * 32 ) + 16 ) ;
         taps  [ 26 ] = vld1q_u8( g_tbls + ( 26 * 32 ) ) ;
-        tapsh [ 26 ] = vld1q_u8( g_tbls + ( 26 * 32 ) + 16 ) ) ;
+        tapsh [ 26 ] = vld1q_u8( g_tbls + ( 26 * 32 ) + 16 ) ;
         taps  [ 27 ] = vld1q_u8( g_tbls + ( 27 * 32 ) ) ;
-        tapsh [ 27 ] = vld1q_u8( g_tbls + ( 27 * 32 ) + 16 ) ) ;
+        tapsh [ 27 ] = vld1q_u8( g_tbls + ( 27 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -9667,7 +9667,7 @@ int gf_28vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -9825,68 +9825,68 @@ int gf_29vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
         taps  [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) ) ;
-        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ) ;
+        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ;
         taps  [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) ) ;
-        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ) ;
+        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ;
         taps  [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) ) ;
-        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ) ;
+        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ;
         taps  [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) ) ;
-        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ) ;
+        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ;
         taps  [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) ) ;
-        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ) ;
+        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ;
         taps  [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) ) ;
-        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ) ;
+        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ;
         taps  [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) ) ;
-        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ) ;
+        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ;
         taps  [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) ) ;
-        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ) ;
+        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ;
         taps  [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) ) ;
-        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ) ;
+        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ;
         taps  [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) ) ;
-        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ) ;
+        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ;
         taps  [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) ) ;
-        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ) ;
+        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ;
         taps  [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) ) ;
-        tapsh [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) + 16 ) ) ;
+        tapsh [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) + 16 ) ;
         taps  [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) ) ;
-        tapsh [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) + 16 ) ) ;
+        tapsh [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) + 16 ) ;
         taps  [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) ) ;
-        tapsh [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) + 16 ) ) ;
+        tapsh [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) + 16 ) ;
         taps  [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) ) ;
-        tapsh [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) + 16 ) ) ;
+        tapsh [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) + 16 ) ;
         taps  [ 25 ] = vld1q_u8( g_tbls + ( 25 * 32 ) ) ;
-        tapsh [ 25 ] = vld1q_u8( g_tbls + ( 25 * 32 ) + 16 ) ) ;
+        tapsh [ 25 ] = vld1q_u8( g_tbls + ( 25 * 32 ) + 16 ) ;
         taps  [ 26 ] = vld1q_u8( g_tbls + ( 26 * 32 ) ) ;
-        tapsh [ 26 ] = vld1q_u8( g_tbls + ( 26 * 32 ) + 16 ) ) ;
+        tapsh [ 26 ] = vld1q_u8( g_tbls + ( 26 * 32 ) + 16 ) ;
         taps  [ 27 ] = vld1q_u8( g_tbls + ( 27 * 32 ) ) ;
-        tapsh [ 27 ] = vld1q_u8( g_tbls + ( 27 * 32 ) + 16 ) ) ;
+        tapsh [ 27 ] = vld1q_u8( g_tbls + ( 27 * 32 ) + 16 ) ;
         taps  [ 28 ] = vld1q_u8( g_tbls + ( 28 * 32 ) ) ;
-        tapsh [ 28 ] = vld1q_u8( g_tbls + ( 28 * 32 ) + 16 ) ) ;
+        tapsh [ 28 ] = vld1q_u8( g_tbls + ( 28 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -9979,7 +9979,7 @@ int gf_29vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -10142,70 +10142,70 @@ int gf_30vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
         taps  [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) ) ;
-        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ) ;
+        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ;
         taps  [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) ) ;
-        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ) ;
+        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ;
         taps  [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) ) ;
-        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ) ;
+        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ;
         taps  [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) ) ;
-        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ) ;
+        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ;
         taps  [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) ) ;
-        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ) ;
+        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ;
         taps  [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) ) ;
-        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ) ;
+        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ;
         taps  [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) ) ;
-        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ) ;
+        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ;
         taps  [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) ) ;
-        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ) ;
+        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ;
         taps  [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) ) ;
-        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ) ;
+        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ;
         taps  [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) ) ;
-        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ) ;
+        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ;
         taps  [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) ) ;
-        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ) ;
+        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ;
         taps  [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) ) ;
-        tapsh [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) + 16 ) ) ;
+        tapsh [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) + 16 ) ;
         taps  [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) ) ;
-        tapsh [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) + 16 ) ) ;
+        tapsh [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) + 16 ) ;
         taps  [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) ) ;
-        tapsh [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) + 16 ) ) ;
+        tapsh [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) + 16 ) ;
         taps  [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) ) ;
-        tapsh [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) + 16 ) ) ;
+        tapsh [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) + 16 ) ;
         taps  [ 25 ] = vld1q_u8( g_tbls + ( 25 * 32 ) ) ;
-        tapsh [ 25 ] = vld1q_u8( g_tbls + ( 25 * 32 ) + 16 ) ) ;
+        tapsh [ 25 ] = vld1q_u8( g_tbls + ( 25 * 32 ) + 16 ) ;
         taps  [ 26 ] = vld1q_u8( g_tbls + ( 26 * 32 ) ) ;
-        tapsh [ 26 ] = vld1q_u8( g_tbls + ( 26 * 32 ) + 16 ) ) ;
+        tapsh [ 26 ] = vld1q_u8( g_tbls + ( 26 * 32 ) + 16 ) ;
         taps  [ 27 ] = vld1q_u8( g_tbls + ( 27 * 32 ) ) ;
-        tapsh [ 27 ] = vld1q_u8( g_tbls + ( 27 * 32 ) + 16 ) ) ;
+        tapsh [ 27 ] = vld1q_u8( g_tbls + ( 27 * 32 ) + 16 ) ;
         taps  [ 28 ] = vld1q_u8( g_tbls + ( 28 * 32 ) ) ;
-        tapsh [ 28 ] = vld1q_u8( g_tbls + ( 28 * 32 ) + 16 ) ) ;
+        tapsh [ 28 ] = vld1q_u8( g_tbls + ( 28 * 32 ) + 16 ) ;
         taps  [ 29 ] = vld1q_u8( g_tbls + ( 29 * 32 ) ) ;
-        tapsh [ 29 ] = vld1q_u8( g_tbls + ( 29 * 32 ) + 16 ) ) ;
+        tapsh [ 29 ] = vld1q_u8( g_tbls + ( 29 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -10301,7 +10301,7 @@ int gf_30vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -10469,72 +10469,72 @@ int gf_31vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
         taps  [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) ) ;
-        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ) ;
+        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ;
         taps  [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) ) ;
-        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ) ;
+        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ;
         taps  [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) ) ;
-        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ) ;
+        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ;
         taps  [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) ) ;
-        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ) ;
+        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ;
         taps  [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) ) ;
-        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ) ;
+        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ;
         taps  [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) ) ;
-        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ) ;
+        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ;
         taps  [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) ) ;
-        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ) ;
+        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ;
         taps  [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) ) ;
-        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ) ;
+        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ;
         taps  [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) ) ;
-        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ) ;
+        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ;
         taps  [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) ) ;
-        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ) ;
+        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ;
         taps  [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) ) ;
-        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ) ;
+        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ;
         taps  [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) ) ;
-        tapsh [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) + 16 ) ) ;
+        tapsh [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) + 16 ) ;
         taps  [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) ) ;
-        tapsh [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) + 16 ) ) ;
+        tapsh [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) + 16 ) ;
         taps  [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) ) ;
-        tapsh [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) + 16 ) ) ;
+        tapsh [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) + 16 ) ;
         taps  [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) ) ;
-        tapsh [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) + 16 ) ) ;
+        tapsh [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) + 16 ) ;
         taps  [ 25 ] = vld1q_u8( g_tbls + ( 25 * 32 ) ) ;
-        tapsh [ 25 ] = vld1q_u8( g_tbls + ( 25 * 32 ) + 16 ) ) ;
+        tapsh [ 25 ] = vld1q_u8( g_tbls + ( 25 * 32 ) + 16 ) ;
         taps  [ 26 ] = vld1q_u8( g_tbls + ( 26 * 32 ) ) ;
-        tapsh [ 26 ] = vld1q_u8( g_tbls + ( 26 * 32 ) + 16 ) ) ;
+        tapsh [ 26 ] = vld1q_u8( g_tbls + ( 26 * 32 ) + 16 ) ;
         taps  [ 27 ] = vld1q_u8( g_tbls + ( 27 * 32 ) ) ;
-        tapsh [ 27 ] = vld1q_u8( g_tbls + ( 27 * 32 ) + 16 ) ) ;
+        tapsh [ 27 ] = vld1q_u8( g_tbls + ( 27 * 32 ) + 16 ) ;
         taps  [ 28 ] = vld1q_u8( g_tbls + ( 28 * 32 ) ) ;
-        tapsh [ 28 ] = vld1q_u8( g_tbls + ( 28 * 32 ) + 16 ) ) ;
+        tapsh [ 28 ] = vld1q_u8( g_tbls + ( 28 * 32 ) + 16 ) ;
         taps  [ 29 ] = vld1q_u8( g_tbls + ( 29 * 32 ) ) ;
-        tapsh [ 29 ] = vld1q_u8( g_tbls + ( 29 * 32 ) + 16 ) ) ;
+        tapsh [ 29 ] = vld1q_u8( g_tbls + ( 29 * 32 ) + 16 ) ;
         taps  [ 30 ] = vld1q_u8( g_tbls + ( 30 * 32 ) ) ;
-        tapsh [ 30 ] = vld1q_u8( g_tbls + ( 30 * 32 ) + 16 ) ) ;
+        tapsh [ 30 ] = vld1q_u8( g_tbls + ( 30 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -10633,7 +10633,7 @@ int gf_31vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -10806,74 +10806,74 @@ int gf_32vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
         uint8x16_t mask0f = vmovq_n_u8 (0x0f) ;
 
         taps  [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) ) ;
-        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ) ;
+        tapsh [ 0 ] = vld1q_u8( g_tbls + ( 0 * 32 ) + 16 ) ;
         taps  [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) ) ;
-        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ) ;
+        tapsh [ 1 ] = vld1q_u8( g_tbls + ( 1 * 32 ) + 16 ) ;
         taps  [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) ) ;
-        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ) ;
+        tapsh [ 2 ] = vld1q_u8( g_tbls + ( 2 * 32 ) + 16 ) ;
         taps  [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) ) ;
-        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ) ;
+        tapsh [ 3 ] = vld1q_u8( g_tbls + ( 3 * 32 ) + 16 ) ;
         taps  [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) ) ;
-        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ) ;
+        tapsh [ 4 ] = vld1q_u8( g_tbls + ( 4 * 32 ) + 16 ) ;
         taps  [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) ) ;
-        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ) ;
+        tapsh [ 5 ] = vld1q_u8( g_tbls + ( 5 * 32 ) + 16 ) ;
         taps  [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) ) ;
-        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ) ;
+        tapsh [ 6 ] = vld1q_u8( g_tbls + ( 6 * 32 ) + 16 ) ;
         taps  [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) ) ;
-        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ) ;
+        tapsh [ 7 ] = vld1q_u8( g_tbls + ( 7 * 32 ) + 16 ) ;
         taps  [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) ) ;
-        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ) ;
+        tapsh [ 8 ] = vld1q_u8( g_tbls + ( 8 * 32 ) + 16 ) ;
         taps  [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) ) ;
-        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ) ;
+        tapsh [ 9 ] = vld1q_u8( g_tbls + ( 9 * 32 ) + 16 ) ;
         taps  [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) ) ;
-        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ) ;
+        tapsh [ 10 ] = vld1q_u8( g_tbls + ( 10 * 32 ) + 16 ) ;
         taps  [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) ) ;
-        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ) ;
+        tapsh [ 11 ] = vld1q_u8( g_tbls + ( 11 * 32 ) + 16 ) ;
         taps  [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) ) ;
-        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ) ;
+        tapsh [ 12 ] = vld1q_u8( g_tbls + ( 12 * 32 ) + 16 ) ;
         taps  [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) ) ;
-        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ) ;
+        tapsh [ 13 ] = vld1q_u8( g_tbls + ( 13 * 32 ) + 16 ) ;
         taps  [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) ) ;
-        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ) ;
+        tapsh [ 14 ] = vld1q_u8( g_tbls + ( 14 * 32 ) + 16 ) ;
         taps  [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) ) ;
-        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ) ;
+        tapsh [ 15 ] = vld1q_u8( g_tbls + ( 15 * 32 ) + 16 ) ;
         taps  [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) ) ;
-        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ) ;
+        tapsh [ 16 ] = vld1q_u8( g_tbls + ( 16 * 32 ) + 16 ) ;
         taps  [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) ) ;
-        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ) ;
+        tapsh [ 17 ] = vld1q_u8( g_tbls + ( 17 * 32 ) + 16 ) ;
         taps  [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) ) ;
-        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ) ;
+        tapsh [ 18 ] = vld1q_u8( g_tbls + ( 18 * 32 ) + 16 ) ;
         taps  [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) ) ;
-        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ) ;
+        tapsh [ 19 ] = vld1q_u8( g_tbls + ( 19 * 32 ) + 16 ) ;
         taps  [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) ) ;
-        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ) ;
+        tapsh [ 20 ] = vld1q_u8( g_tbls + ( 20 * 32 ) + 16 ) ;
         taps  [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) ) ;
-        tapsh [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) + 16 ) ) ;
+        tapsh [ 21 ] = vld1q_u8( g_tbls + ( 21 * 32 ) + 16 ) ;
         taps  [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) ) ;
-        tapsh [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) + 16 ) ) ;
+        tapsh [ 22 ] = vld1q_u8( g_tbls + ( 22 * 32 ) + 16 ) ;
         taps  [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) ) ;
-        tapsh [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) + 16 ) ) ;
+        tapsh [ 23 ] = vld1q_u8( g_tbls + ( 23 * 32 ) + 16 ) ;
         taps  [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) ) ;
-        tapsh [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) + 16 ) ) ;
+        tapsh [ 24 ] = vld1q_u8( g_tbls + ( 24 * 32 ) + 16 ) ;
         taps  [ 25 ] = vld1q_u8( g_tbls + ( 25 * 32 ) ) ;
-        tapsh [ 25 ] = vld1q_u8( g_tbls + ( 25 * 32 ) + 16 ) ) ;
+        tapsh [ 25 ] = vld1q_u8( g_tbls + ( 25 * 32 ) + 16 ) ;
         taps  [ 26 ] = vld1q_u8( g_tbls + ( 26 * 32 ) ) ;
-        tapsh [ 26 ] = vld1q_u8( g_tbls + ( 26 * 32 ) + 16 ) ) ;
+        tapsh [ 26 ] = vld1q_u8( g_tbls + ( 26 * 32 ) + 16 ) ;
         taps  [ 27 ] = vld1q_u8( g_tbls + ( 27 * 32 ) ) ;
-        tapsh [ 27 ] = vld1q_u8( g_tbls + ( 27 * 32 ) + 16 ) ) ;
+        tapsh [ 27 ] = vld1q_u8( g_tbls + ( 27 * 32 ) + 16 ) ;
         taps  [ 28 ] = vld1q_u8( g_tbls + ( 28 * 32 ) ) ;
-        tapsh [ 28 ] = vld1q_u8( g_tbls + ( 28 * 32 ) + 16 ) ) ;
+        tapsh [ 28 ] = vld1q_u8( g_tbls + ( 28 * 32 ) + 16 ) ;
         taps  [ 29 ] = vld1q_u8( g_tbls + ( 29 * 32 ) ) ;
-        tapsh [ 29 ] = vld1q_u8( g_tbls + ( 29 * 32 ) + 16 ) ) ;
+        tapsh [ 29 ] = vld1q_u8( g_tbls + ( 29 * 32 ) + 16 ) ;
         taps  [ 30 ] = vld1q_u8( g_tbls + ( 30 * 32 ) ) ;
-        tapsh [ 30 ] = vld1q_u8( g_tbls + ( 30 * 32 ) + 16 ) ) ;
+        tapsh [ 30 ] = vld1q_u8( g_tbls + ( 30 * 32 ) + 16 ) ;
         taps  [ 31 ] = vld1q_u8( g_tbls + ( 31 * 32 ) ) ;
-        tapsh [ 31 ] = vld1q_u8( g_tbls + ( 31 * 32 ) + 16 ) ) ;
+        tapsh [ 31 ] = vld1q_u8( g_tbls + ( 31 * 32 ) + 16 ) ;
 
         for ( curPos = 0 ; curPos < len ; curPos += 16 )
         {
                 data_vec =  vldlq_u8( &data [ 0 ] [ curPos ] ) ;
-                data_vech = vlshrq_n_u8 ( data_vec, 4 ) ;
+                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                 data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                 parity [ 0 ] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
                 temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
@@ -10975,7 +10975,7 @@ int gf_32vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         data_vec  = vld1q_u8(&data[curSym][curPos]);
-                        data_vec  = veorq_ui ( data_vec, parity [ 0 ] ) ;
+                        data_vec  = veorq_u8 ( data_vec, parity [ 0 ] ) ;
                         data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
                         data_vec  = vandq_u8 ( data_vec, mask0f ) ;
                         temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
@@ -11148,67 +11148,67 @@ void pc_encode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsign
         unsigned char **coding)
 {
         switch (rows) {
-        case 2: gf_2vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 2: gf_2vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 3: gf_3vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 3: gf_3vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 4: gf_4vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 4: gf_4vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 5: gf_5vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 5: gf_5vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 6: gf_6vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 6: gf_6vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 7: gf_7vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 7: gf_7vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 8: gf_8vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 8: gf_8vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 9: gf_9vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 9: gf_9vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 10: gf_10vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 10: gf_10vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 11: gf_11vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 11: gf_11vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 12: gf_12vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 12: gf_12vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 13: gf_13vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 13: gf_13vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 14: gf_14vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 14: gf_14vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 15: gf_15vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 15: gf_15vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 16: gf_16vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 16: gf_16vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 17: gf_17vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 17: gf_17vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 18: gf_18vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 18: gf_18vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 19: gf_19vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 19: gf_19vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 20: gf_20vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 20: gf_20vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 21: gf_21vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 21: gf_21vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 22: gf_22vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 22: gf_22vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 23: gf_23vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 23: gf_23vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 24: gf_24vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 24: gf_24vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 25: gf_25vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 25: gf_25vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 26: gf_26vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 26: gf_26vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 27: gf_27vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 27: gf_27vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 28: gf_28vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 28: gf_28vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 29: gf_29vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 29: gf_29vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 30: gf_30vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 30: gf_30vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 31: gf_31vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 31: gf_31vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
-        case 32: gf_32vect_pls_avx2_neon(len, k, g_tbls, data, coding);
+        case 32: gf_32vect_pls_neon(len, k, g_tbls, data, coding);
                  break ;
         }
 }
