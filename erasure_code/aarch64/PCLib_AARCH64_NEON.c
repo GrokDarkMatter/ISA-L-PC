@@ -76,7 +76,7 @@ int gf_2vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -124,7 +124,7 @@ int gf_3vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -180,7 +180,7 @@ int gf_4vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -244,7 +244,7 @@ int gf_5vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -316,7 +316,7 @@ int gf_6vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -396,7 +396,7 @@ int gf_7vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -484,7 +484,7 @@ int gf_8vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -580,7 +580,7 @@ int gf_9vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -684,7 +684,7 @@ int gf_10vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -796,7 +796,7 @@ int gf_11vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -916,7 +916,7 @@ int gf_12vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -1044,7 +1044,7 @@ int gf_13vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -1180,7 +1180,7 @@ int gf_14vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -1324,7 +1324,7 @@ int gf_15vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -1476,7 +1476,7 @@ int gf_16vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -1636,7 +1636,7 @@ int gf_17vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -1804,7 +1804,7 @@ int gf_18vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -1980,7 +1980,7 @@ int gf_19vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -2164,7 +2164,7 @@ int gf_20vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -2356,7 +2356,7 @@ int gf_21vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -2556,7 +2556,7 @@ int gf_22vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -2764,7 +2764,7 @@ int gf_23vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -2980,7 +2980,7 @@ int gf_24vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -3204,7 +3204,7 @@ int gf_25vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -3436,7 +3436,7 @@ int gf_26vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -3676,7 +3676,7 @@ int gf_27vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -3924,7 +3924,7 @@ int gf_28vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -4180,7 +4180,7 @@ int gf_29vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -4444,7 +4444,7 @@ int gf_30vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -4716,7 +4716,7 @@ int gf_31vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
@@ -4996,7 +4996,7 @@ int gf_32vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                 }
 
                 uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if ( vmaxvq_u32 ( tmp ) == 0 )
+                if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
                         vst1q_u8 ( &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
                         vst1q_u8 ( &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
