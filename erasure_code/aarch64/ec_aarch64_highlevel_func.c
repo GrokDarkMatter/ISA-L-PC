@@ -53,7 +53,7 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 
 #include <arm_neon.h>
 
-int gf_2vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data, unsigned char **dest, int offSet)
+int gf_2vect_pss_neoni(int len, int k, unsigned char *g_tbls, unsigned char **data, unsigned char **dest, int offSet)
 {
         int curSym, curPos = 0; // Loop counters
         uint8x16_t parity[2], taps [ 1 ], tapsh [ 1 ], temp; // Parity and tap vectors
@@ -98,7 +98,7 @@ int gf_2vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
 return curPos;
 }
 
-int gf_2vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data, unsigned char **dest, int offSet)
+int gf_2vect_pls_neoni(int len, int k, unsigned char *g_tbls, unsigned char **data, unsigned char **dest, int offSet)
 {
         int curSym, curPos = 0; // Loop counters
         uint8x16_t parity[2], taps [ 2 ], tapsh [ 2 ], temp; // Parity and tap vectors
