@@ -5812,7 +5812,7 @@ int gf_32vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 }
 
 
-int gf_2vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_2vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -5856,7 +5856,7 @@ int gf_2vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
-int gf_3vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_3vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -5909,7 +5909,7 @@ int gf_3vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
-int gf_4vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_4vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -5971,7 +5971,7 @@ int gf_4vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
-int gf_5vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_5vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -6042,7 +6042,7 @@ int gf_5vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
-int gf_6vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_6vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -6122,7 +6122,7 @@ int gf_6vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
-int gf_7vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_7vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -6211,7 +6211,7 @@ int gf_7vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
-int gf_8vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_8vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -6309,7 +6309,7 @@ int gf_8vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
-int gf_9vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_9vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -6416,7 +6416,7 @@ int gf_9vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
-int gf_10vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_10vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -6532,7 +6532,7 @@ int gf_10vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         return ( curPos ) ;
 }
 
-int gf_11vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_11vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -6657,7 +6657,7 @@ int gf_11vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         return ( curPos ) ;
 }
 
-int gf_12vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_12vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -6791,7 +6791,7 @@ int gf_12vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         return ( curPos ) ;
 }
 
-int gf_13vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_13vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -6934,7 +6934,7 @@ int gf_13vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         return ( curPos ) ;
 }
 
-int gf_14vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_14vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -7086,7 +7086,7 @@ int gf_14vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         return ( curPos ) ;
 }
 
-int gf_15vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_15vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -7247,7 +7247,7 @@ int gf_15vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         return ( curPos ) ;
 }
 
-int gf_16vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_16vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -7417,7 +7417,7 @@ int gf_16vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         return ( curPos ) ;
 }
 
-int gf_17vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_17vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -7596,7 +7596,7 @@ int gf_17vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         return ( curPos ) ;
 }
 
-int gf_18vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_18vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -7784,7 +7784,7 @@ int gf_18vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         return ( curPos ) ;
 }
 
-int gf_19vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_19vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -7981,7 +7981,7 @@ int gf_19vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         return ( curPos ) ;
 }
 
-int gf_20vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_20vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -8187,7 +8187,7 @@ int gf_20vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         return ( curPos ) ;
 }
 
-int gf_21vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_21vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -8402,7 +8402,7 @@ int gf_21vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         return ( curPos ) ;
 }
 
-int gf_22vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_22vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -8626,7 +8626,7 @@ int gf_22vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         return ( curPos ) ;
 }
 
-int gf_23vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_23vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -8859,7 +8859,7 @@ int gf_23vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         return ( curPos ) ;
 }
 
-int gf_24vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_24vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -9101,7 +9101,7 @@ int gf_24vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         return ( curPos ) ;
 }
 
-int gf_25vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_25vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -9352,7 +9352,7 @@ int gf_25vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         return ( curPos ) ;
 }
 
-int gf_26vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_26vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -9612,7 +9612,7 @@ int gf_26vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         return ( curPos ) ;
 }
 
-int gf_27vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_27vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -9881,7 +9881,7 @@ int gf_27vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         return ( curPos ) ;
 }
 
-int gf_28vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_28vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -10159,7 +10159,7 @@ int gf_28vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         return ( curPos ) ;
 }
 
-int gf_29vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_29vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -10446,7 +10446,7 @@ int gf_29vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         return ( curPos ) ;
 }
 
-int gf_30vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_30vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -10742,7 +10742,7 @@ int gf_30vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         return ( curPos ) ;
 }
 
-int gf_31vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_31vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -11047,7 +11047,7 @@ int gf_31vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
         return ( curPos ) ;
 }
 
-int gf_32vect_lfsr_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int gf_32vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos = 0 ;
@@ -11365,67 +11365,67 @@ void pc_encode_data_avx2_gfni(int len, int k, int rows, unsigned char *g_tbls, u
         unsigned char **coding)
 {
         switch (rows) {
-        case 2: gf_2vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 2: gf_2vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 3: gf_3vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 3: gf_3vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 4: gf_4vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 4: gf_4vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 5: gf_5vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 5: gf_5vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 6: gf_6vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 6: gf_6vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 7: gf_7vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 7: gf_7vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 8: gf_8vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 8: gf_8vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 9: gf_9vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 9: gf_9vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 10: gf_10vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 10: gf_10vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 11: gf_11vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 11: gf_11vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 12: gf_12vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 12: gf_12vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 13: gf_13vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 13: gf_13vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 14: gf_14vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 14: gf_14vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 15: gf_15vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 15: gf_15vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 16: gf_16vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 16: gf_16vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 17: gf_17vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 17: gf_17vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 18: gf_18vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 18: gf_18vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 19: gf_19vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 19: gf_19vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 20: gf_20vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 20: gf_20vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 21: gf_21vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 21: gf_21vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 22: gf_22vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 22: gf_22vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 23: gf_23vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 23: gf_23vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 24: gf_24vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 24: gf_24vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 25: gf_25vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 25: gf_25vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 26: gf_26vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 26: gf_26vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 27: gf_27vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 27: gf_27vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 28: gf_28vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 28: gf_28vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 29: gf_29vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 29: gf_29vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 30: gf_30vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 30: gf_30vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 31: gf_31vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 31: gf_31vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
-        case 32: gf_32vect_lfsr_avx2_gfni(len, k, g_tbls, data, coding);
+        case 32: gf_32vect_pls_avx2_gfni(len, k, g_tbls, data, coding);
                  break ;
         }
 }
