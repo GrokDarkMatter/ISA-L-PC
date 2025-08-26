@@ -53,105 +53,6 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 
 #include <arm_neon.h>
 
-int gf_2vect_pss_neoni(int len, int k, unsigned char *g_tbls, unsigned char **data, unsigned char **dest, int offSet)
-{
-        int curSym, curPos = 0; // Loop counters
-        uint8x16_t parity[2], taps [ 1 ], tapsh [ 1 ], temp; // Parity and tap vectors
-        uint8x16_t data_vec, data_vech;
-        uint8x16_t mask0f = vmovq_n_u8(0x0f) ;
-
-        // Load the multiplication table for the first tap (assuming 8-bit GF(2^8) table)
-        tapsh [ 0 ] = vld1q_u8(g_tbls + ( 0 * 16 ) ); // Load 16 bytes of the multiplication table
-        taps  [ 0 ] = vld1q_u8(g_tbls + ( 1 * 16 ) ); // Load 16 bytes of the multiplication table
-
-        for (curPos = offSet; curPos < len; curPos += 16) 
-        {
-                // Load data and initialize parity
-                data_vec = vld1q_u8(&data[0][curPos]);
-                parity[0] = data_vec;
-                parity[1] = data_vec;
-
-                for (curSym = 1; curSym < k; curSym++) 
-                {
-                        // Load data, update parity, then MSBs
-                        data_vec = vld1q_u8(&data[curSym][curPos]);
-                        parity[1] = veorq_u8(parity[1], data_vec);
-                        // Split the data into two 4 bit chunks
-                        data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        data_vec = vandq_u8 ( data_vec, mask0f ) ;
-                        // Perform GF(2^8) multiplication using tbl (table lookup)
-                        temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
-                        parity [ 0 ] = veorq_u8 ( parity[0], temp ) ;
-                        temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
-                        parity [ 0 ] = veorq_u8 ( parity[0], temp ) ;
-                }
-                uint32x4_t tmp = vreinterpretq_u32_u8( parity [ 0 ] ) ;
-                if (vmaxvq_u32(tmp == 0))
-                {       // If not all zeros
-                        // Store results to dest
-                        vst1q_u8(&dest[0][0], parity[0]);
-                        vst1q_u8(&dest[1][0], parity[1]);
-                        return curPos;
-                }
-        }
-
-return curPos;
-}
-
-int gf_2vect_pls_neoni(int len, int k, unsigned char *g_tbls, unsigned char **data, unsigned char **dest, int offSet)
-{
-        int curSym, curPos = 0; // Loop counters
-        uint8x16_t parity[2], taps [ 2 ], tapsh [ 2 ], temp; // Parity and tap vectors
-        uint8x16_t data_vec, data_vech;
-        uint8x16_t mask0f = vmovq_n_u8(0x0f) ;
-
-        // Load the multiplication table for the first tap (assuming 8-bit GF(2^8) table)
-        taps[0]  = vld1q_u8(g_tbls + ( 0 * 8 ) ); // Load 16 bytes of the multiplication table
-        tapsh[0] = vld1q_u8(g_tbls + ( 1 * 16 ) ); // Load 16 bytes of the multiplication table
-        taps[1]  = vld1q_u8(g_tbls + ( 2 * 16 ) ); // Load 16 bytes of the multiplication table
-        tapsh[1] = vld1q_u8(g_tbls + ( 3 * 16 ) ); // Load 16 bytes of the multiplication table
-
-        for (curPos = offSet; curPos < len; curPos += 16) 
-        {
-                // Load 16 bytes from data[0]
-                data_vec = vld1q_u8(&data[0][curPos]);
-                // Split the data into two 4 bit chunks
-                data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                data_vec = vandq_u8 ( data_vec, mask0f ) ;
-                // Perform GF(2^8) multiplication for parity 0
-                parity[0] = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
-                temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
-                parity [ 0 ] = veorq_u8 ( parity[0], temp ) ;
-                // Perform GF(2^8) multiplication for parity 1
-                parity[1] = vqtbl1q_u8 ( data_vec, taps [ 1 ] ) ;
-                temp = vqtbl1q_u8 ( data_vech, tapsh [ 1 ] ) ;
-                parity [ 1 ] = veorq_u8 ( parity[1], temp ) ;
-
-                for (curSym = 1; curSym < k; curSym++) 
-                {
-                        // Load 16 bytes from data[curSym]
-                        data_vec = vld1q_u8(&data[curSym][curPos]);
-                        // Split the data into two 4 bit chunks
-                        data_vech = vshrq_n_u8 ( data_vec, 4 ) ;
-                        data_vec = vandq_u8 ( data_vec, mask0f ) ;
-                        // Perform GF(2^8) multiplication for parity 0
-                        temp = vqtbl1q_u8 ( data_vec, taps [ 0 ] ) ;
-                        parity [ 0 ] = veorq_u8 ( parity[0], temp ) ;
-                        temp = vqtbl1q_u8 ( data_vech, tapsh [ 0 ] ) ;
-                        parity [ 0 ] = veorq_u8 ( parity[0], temp ) ;
-                        // Perform GF(2^8) multiplication for parity 1
-                        temp = vqtbl1q_u8 ( data_vec, taps [ 1 ] ) ;
-                        parity [ 1 ] = veorq_u8 ( parity[0], temp ) ;
-                        temp = vqtbl1q_u8 ( data_vech, tapsh [ 1 ] ) ;
-                        parity [ 1 ] = veorq_u8 ( parity[0], temp ) ;
-                }
-                // Store results to dest
-                vst1q_u8(&dest[0][curPos], parity[0]);
-                vst1q_u8(&dest[1][curPos], parity[1]);
-        }
-        return curPos;
-}
-
 
 /*external function*/
 extern void
@@ -240,81 +141,6 @@ ec_encode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsigned ch
                 break;
         }
 }
-#ifdef NDEF
-int gf_nvect_syndrome_neon(int len, int k, unsigned char *g_tbls,
-  unsigned char **data, int offSet, int synCount)
-{
-        int curSym, curRow, curPos = 0; // Loop counters
-        unsigned char *cur_g; // Affine table pointer
-        uint8x16_t result, data_vec; // Working registers
-        uint8x16_t parity[32]; // Parity registers
-
-
-        // Loop through all the bytes, 16 at a time (NEON processes 128 bits)
-        for (curPos = 0; curPos < len; curPos += 16)
-        {
-                // Initialize affine table pointer
-                cur_g = g_tbls;
-
-                // Initialize the parities
-                result = vdupq_n_u8(0);
-                for (curSym = 0; curSym < synCount; curSym++)
-                {
-                        parity[curSym] = result;
-                }
-
-                // Loop for each symbol
-                for (curSym = 0; curSym < k; curSym++)
-                {
-                        // Load data for current symbol (unaligned load)
-                        data_vec = vld1q_u8(data[curSym] + curPos);
-
-                        for (curRow = 0; curRow < synCount; curRow++)
-                        {
-                                // Load 8-byte affine table entry
-                                //uint8x8_t aff_table = vld1_u8(cur_g + (curRow * 8 * k));
-                                // Replicate affine table across 16 bytes
-                                //aff_vec = vcombine_u8(aff_table, aff_table);
-                                // Compute the result of the data multiplied by the affine
-                                //result = gf2p8affine_neon(data_vec, aff_table);
-                                // Add in the current parity row
-                                result = veorq_u8(result, parity[curRow]);
-                                // Save back to parity
-                                parity[curRow] = result;
-                        }
-                        // Move affine table forward by one entry
-                        cur_g += 8;
-                }
-
-                // Check for non-zero parity
-                result = vorrq_u8(parity[0], parity[1]);
-                for (curSym = 2; curSym < synCount; curSym++) 
-                {
-                        result = vorrq_u8(result, parity[curSym]);
-                }
-
-                // Test if result is non-zero
-                 //uint8x16_t mask = vceqq_u8(result, vdupq_n_u8(0));
-                uint32x4_t vec32 = vreinterpretq_u32_u8(result); // Reinterpret as uint32x4_t
-                //return vmaxvq_u32(vec32) == 0; // Returns 1 if all zeros, 0 otherwise
-                //mask = vmvnq_u8(mask); // Invert: non-zero bytes -> 0xFF
-                //uint16x8_t mask16 = vmovn_high_u16(vmovn_u16(mask), mask);
-                //bitmask = vgetq_lane_u16(mask16, 0);
-
-                if (vmaxvq_u32(vec32) == 0)
-                {
-                        // Store non-zero parities to output
-                        for (curSym = 0; curSym < synCount; curSym++)
-                        {
-                                vst1q_u8(data[curSym + k] + curPos, parity[curSym]);
-                        }
-                        return curPos;
-                }
-        }
-        return curPos;
-}
-
-#endif
 
 extern int 
 pc_correct ( int newPos, int k, int p, unsigned char ** data, int vLen ) ;
@@ -325,7 +151,7 @@ int
 ec_decode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
                     unsigned char **coding)
 {
-        int newPos = 0, retry = 0, p = rows, vSize ;
+        int newPos = 0, retry = 0, p = rows ;
         unsigned char ** dest = coding, *g_orig = g_tbls ;
         
         if (len < 16) {
@@ -375,7 +201,7 @@ ec_decode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsigned ch
                 // If premature stop, correct data
                 if ( newPos < len )
                 {
-                        if ( pc_correct ( newPos, k, p, data, vSize ) )
+                        if ( pc_correct ( newPos, k, p, data, 16 ) )
                         {
                                 return ( newPos ) ;
                         }
