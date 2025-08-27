@@ -47,9 +47,10 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include "erasure_code.h"
 #include <immintrin.h>
 #include "ec_base.h" /* for GF tables */
-#include "PCLib_AVX512_GFNI.c"
-#include "PCLib_AVX2_GFNI.c"
-
+#ifndef MAX_PC_RETRY
+#define MAX_PC_RETRY 1
+extern int pc_correct ( int newPos, int k, int rows, unsigned char ** data, int vLen ) ;
+#endif
 #if __x86_64__ || __i386__ || _M_X64 || _M_IX86
 
 void

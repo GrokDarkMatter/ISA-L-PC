@@ -50,30 +50,20 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include "erasure_code.h"
 #include "test.h"
 #include "ec_base.h"
+#include <immintrin.h>
 
+typedef unsigned char u8;
 
 #ifdef __aarch64__
-extern void pc_encode_data_neon(int len, int k, int rows, unsigned char *g_tbls, 
-        unsigned char **data, unsigned char **coding) ;
-extern void pc_decode_data_neon(int len, int k, int rows, unsigned char *g_tbls, 
-        unsigned char **data, unsigned char **coding, int offSet) ;
+#include "PCLib_AARCH_64_NEON.c" 
+extern void ec_encode_data_neon ( int len, int k, int p, u8 * g_tbls, u8 ** buffs, u8 ** dest ) ;
+extern void ec_encode_data_neon ( int len, int k, int p, u8 * g_tbls, u8 ** buffs, u8 ** dest ) ;
 #else
-extern void pc_encode_data_avx512_gfni(int len, int k, int rows, unsigned char *g_tbls, 
-        unsigned char **data, unsigned char **coding) ;
-extern void pc_decode_data_avx512_gfni(int len, int k, int rows, unsigned char *g_tbls, 
-        unsigned char **data, unsigned char **coding, int offSet) ;
-extern void ec_encode_data_avx512_gfni(int len, int k, int rows, unsigned char *g_tbls, 
-        unsigned char **data, unsigned char **coding) ;
-
-extern void pc_encode_data_avx2_gfni(int len, int k, int rows, unsigned char *g_tbls, 
-        unsigned char **data, unsigned char **coding) ;
-extern void pc_decode_data_avx2_gfni(int len, int k, int rows, unsigned char *g_tbls, 
-        unsigned char **data, unsigned char **coding, int offSet) ;
-extern void ec_encode_data_avx2_gfni(int len, int k, int rows, unsigned char *g_tbls, 
-        unsigned char **data, unsigned char **coding) ;
+#include "PCLib_AVX2_GFNI.c" 
+#include "PCLib_AVX512_GFNI.c"
+extern void ec_encode_data_avx512_gfni ( int len, int k, int p, u8 * g_tbls, u8 ** buffs, u8 ** dest ) ;
+extern void ec_encode_data_avx2_gfni ( int len, int k, int p, u8 * g_tbls, u8 ** buffs, u8 ** dest ) ;
 #endif
-
-
 
 #ifndef GT_L3_CACHE
 #define GT_L3_CACHE 32 * 1024 * 1024 /* some number > last level cache */
@@ -103,8 +93,6 @@ extern void ec_encode_data_avx2_gfni(int len, int k, int rows, unsigned char *g_
 
 #define BAD_MATRIX -1
 
-typedef unsigned char u8;
-
 // Utility print routine
 void
 dump_u8xu8(unsigned char *s, int k, int m)
@@ -127,10 +115,7 @@ usage(const char *app_name)
                 "  -h        Help\n"
                 "  -k <val>  Number of source buffers\n"
                 "  -p <val>  Number of parity buffers\n"
-                "  -e <val>  Number of simulated buffers with errors (cannot be higher than p or "
-                "k)\n"
-                "  -pe <val> Error value for Polynomial Code decoding"
-                "  -pp <val> Error position for Polynomial Code decoding",
+                "  -2 <val>  If 1 then AVX2 testing\n",
                 app_name);
 }
 
@@ -204,11 +189,10 @@ main(int argc, char *argv[])
 {
         // Work variables
         int i, j, m, k, p, nerrs, pp, ret = -1;
-        void *buf;
+        void *buf ;
+        u8 *a, *g_tbls=0, *z0=0, avx2=0;
         u8 *temp_buffs[TEST_SOURCES] = { NULL };
         u8 *buffs[TEST_SOURCES] = { NULL };
-        u8 *a ;
-        u8 *g_tbls=0;
         struct perf start;
 
         /* Set default parameters */
@@ -223,10 +207,8 @@ main(int argc, char *argv[])
                         k = atoi(argv[++i]);
                 } else if (strcmp(argv[i], "-p") == 0) {
                         p = atoi(argv[++i]);
-                } else if (strcmp(argv[i], "-e") == 0) {
-                        nerrs = atoi(argv[++i]);
-                } else if (strcmp(argv[i], "-pp") == 0) {
-                        pp = atoi(argv[++i]);
+                } else if (strcmp(argv[i], "-2") == 0) {
+                        avx2 = atoi(argv[++i]);
                 } else if (strcmp(argv[i], "-h") == 0) {
                         usage(argv[0]);
                         return 0;
@@ -286,6 +268,13 @@ main(int argc, char *argv[])
         printf("erasure_code_perf: %dx%d %d\n", m, TEST_LEN(m), nerrs);
 
         // Allocate the arrays
+        if (posix_memalign(&buf, 64, TEST_LEN(m))) {
+                printf("Error allocating buffers\n");
+                goto exit;
+        }
+        z0 = buf;
+        memset ( z0, 0, TEST_LEN(m)) ;
+
         for (i = 0; i < m; i++) {
                 if (posix_memalign(&buf, 64, TEST_LEN(m))) {
                         printf("Error allocating buffers\n");
@@ -314,6 +303,20 @@ main(int argc, char *argv[])
                 for (j = 0; j < TEST_LEN(m); j++)
                         buffs[i][j] = rand();
 
+        // Print test type
+#ifdef __aarch64__
+        printf ( "Testing ARM64-NEON\n" ) ;
+#else
+        if ( avx2 == 0 )
+        {
+                printf ( "Testing AVX512-GFNI\n" ) ;
+        }
+        else
+        {
+                printf ( "Testing AVX2-GFNI\n" ) ;
+        }
+#endif
+
         // Perform the baseline benchmark
         gf_gen_poly_matrix(a, m, k ) ;
         ec_init_tables(k, m - k, &a[k * k], g_tbls);
@@ -321,8 +324,16 @@ main(int argc, char *argv[])
         BENCHMARK(&start, BENCHMARK_TIME,
                   ec_encode_data_neon(TEST_LEN(m), k, m - k, g_tbls, buffs, &buffs[k]));
 #else
-        BENCHMARK(&start, BENCHMARK_TIME,
-                  ec_encode_data_avx512_gfni(TEST_LEN(m), k, m - k, g_tbls, buffs, &buffs[k]));
+        if ( avx2 == 0 )
+        {
+                BENCHMARK(&start, BENCHMARK_TIME,
+                        ec_encode_data_avx512_gfni(TEST_LEN(m), k, m - k, g_tbls, buffs, &buffs[k]));
+        }
+        else
+        {
+                BENCHMARK(&start, BENCHMARK_TIME,
+                        ec_encode_data_avx2_gfni(TEST_LEN(m), k, m - k, g_tbls, buffs, &buffs[k]));
+        }
 #endif
         printf("erasure_code_encode" TEST_TYPE_STR ": k=%d p=%d ", k, p);
         perf_print(start, (long long) (TEST_LEN(m)) * (m));
@@ -335,12 +346,20 @@ main(int argc, char *argv[])
         BENCHMARK(&start, BENCHMARK_TIME,
                   pc_encode_data_neon(TEST_LEN(m), k, m - k, g_tbls, buffs, temp_buffs));
 #else
-        BENCHMARK(&start, BENCHMARK_TIME,
-                  pc_encode_data_avx512_gfni(TEST_LEN(m), k, m - k, g_tbls, buffs, temp_buffs));
+        if ( avx2 == 0 )
+        {
+                BENCHMARK(&start, BENCHMARK_TIME,
+                        pc_encode_data_avx512_gfni(TEST_LEN(m), k, m - k, g_tbls, buffs, temp_buffs));
+        }
+        else
+        {
+                BENCHMARK(&start, BENCHMARK_TIME,
+                        pc_encode_data_avx2_gfni(TEST_LEN(m), k, m - k, g_tbls, buffs, temp_buffs));
+        }
 #endif
-        for (i = 0; i < nerrs; i++) {
+        for (i = 0; i < p; i++) {
                 if (0 != memcmp(buffs[k+i], temp_buffs[i], TEST_LEN(m) ) ) {
-                        printf("Fail parity compare (%d, %d, %d) - ", m, k, nerrs);
+                        printf("Fail parity compare (%d, %d, %d) - ", m, k, p);
                         dump_u8xu8 ( buffs [ k ], 1, 16 ) ;
                         dump_u8xu8 ( temp_buffs [ 0 ], 1, 16 ) ;
                         goto exit;
@@ -350,15 +369,35 @@ main(int argc, char *argv[])
         perf_print(start, (long long) (TEST_LEN(m)) * (m));
 
         // Test decoding with dot product
+        gf_gen_rsr_matrix( a, m+p, m ) ;
+        ec_init_tables ( p, m, &a[ m*m ], g_tbls ) ;
 #ifdef __aarch64__
         BENCHMARK(&start, BENCHMARK_TIME,
                   ec_encode_data_neon(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs));
 #else
-        BENCHMARK(&start, BENCHMARK_TIME,
-                  ec_encode_data_avx512_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs));
+        if ( avx2 == 0 )
+        {
+                BENCHMARK(&start, BENCHMARK_TIME,
+                        ec_encode_data_avx512_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs));
+        }
+        else
+        {
+                BENCHMARK(&start, BENCHMARK_TIME,
+                        ec_encode_data_avx2_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs));
+        }
 #endif
         printf("dot_prod_decode" TEST_TYPE_STR ":     k=%d p=%d ", m, p );
         perf_print(start, (long long) (TEST_LEN(m)) * (m));
+
+        // Test result of codeword encoding for zero
+        for (i = 0; i < p; i++) {
+                if (0 != memcmp(z0, temp_buffs[i], TEST_LEN(m) ) ) {
+                        printf("Fail zero compare (%d, %d, %d, %d) - ", m, k, p, i);
+                        dump_u8xu8 ( z0, 1, 16 ) ;
+                        dump_u8xu8 ( temp_buffs [ i ], 1, 256 ) ;
+                        goto exit;
+                }
+        }
 
         // Now test parallel syndrome sequencer
         // First create power vector
@@ -375,10 +414,18 @@ main(int argc, char *argv[])
         //buffs [ 0 ] [ 65 ] ^= 1 ;
 #ifdef __aarch64__
         BENCHMARK(&start, BENCHMARK_TIME,
-                  pc_decode_data_neon(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 0));
+                  pc_decode_data_neon(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs));
 #else
-        BENCHMARK(&start, BENCHMARK_TIME,
-                  pc_decode_data_avx512_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 0));
+        if ( avx2 == 0 )
+        {
+                BENCHMARK(&start, BENCHMARK_TIME,
+                        pc_decode_data_avx512_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs));
+        }
+        else
+        {
+                BENCHMARK(&start, BENCHMARK_TIME,
+                        pc_decode_data_avx2_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs));
+        }
 #endif
         printf("polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p );
         perf_print(start, (long long) (TEST_LEN(m)) * (m));                
@@ -387,6 +434,7 @@ main(int argc, char *argv[])
 
         ret = 0;
 exit:
+        free ( z0 ) ;
         free ( a ) ;
         for (i = 0; i < TEST_SOURCES; i++) {
                 aligned_free(buffs[i]);
