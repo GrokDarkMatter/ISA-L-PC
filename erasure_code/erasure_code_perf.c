@@ -67,6 +67,9 @@ dump_u8xu8(unsigned char *s, int k, int m)
         printf("\n");
 }
 
+#ifdef _WIN64
+#define __builtin_prefetch(a,b,c) _mm_prefetch((const char*)(a), _MM_HINT_T0)
+#endif
 #ifdef __aarch64__
 #include <arm_neon.h>
 #include "aarch64/PCLib_AARCH64_NEON.c" 

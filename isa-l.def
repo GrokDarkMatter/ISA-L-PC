@@ -127,6 +127,6 @@ ec_decode_data                  @122
 gf_gen_rsr_matrix               @123
 gf_gen_poly_matrix              @124
 pc_correct                      @125
-pc_decode_data_avx512_gfni      @126
-pc_encode_data_avx512_gfni      @127
+ec_encode_data_avx512_gfni      @126
+ec_encode_data_avx2_gfni        @127
 gf_gen_poly                     @128
