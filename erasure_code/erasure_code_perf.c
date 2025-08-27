@@ -309,12 +309,7 @@ main(int argc, char *argv[])
                 for (j = 0; j < TEST_LEN(m); j++)
                         buffs[i][j] = 0;
                         //buffs[i][j] = rand();
-        //memset ( buffs [ 0 ], TEST_LEN(m), 1 ) ;
-        //memset ( buffs [ 1 ], TEST_LEN(m), 1 ) ;
-        //memset ( buffs [ 2 ], TEST_LEN(m), 1 ) ;
-        //memset ( buffs [ 3 ], TEST_LEN(m), 1 ) ;
-        //memset ( buffs [ 4 ], TEST_LEN(m), 1 ) ;
-        //memset ( buffs [ 5 ], TEST_LEN(m), 1 ) ;
+
         memset ( buffs [ 0 ], 1, TEST_LEN(m) ) ;
 
         // Print test type
@@ -359,8 +354,8 @@ main(int argc, char *argv[])
         //dump_u8xu8 ( g_tbls, p, 32 ) ;
 
 #ifdef __aarch64__
-        //BENCHMARK(&start, BENCHMARK_TIME,
-                  pc_encode_data_neon(64, k, m - k, g_tbls, buffs, temp_buffs);
+        BENCHMARK(&start, BENCHMARK_TIME,
+                  pc_encode_data_neon(TEST_LEN(m), k, m - k, g_tbls, buffs, temp_buffs));
 #else
         if ( avx2 == 0 )
         {

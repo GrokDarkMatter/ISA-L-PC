@@ -469,13 +469,13 @@ gf_vect_mul_base(int len, unsigned char *a, unsigned char *src, unsigned char *d
 }
 
 int 
-pc_correct ( int newPos, int k, int p, unsigned char ** data, int vLen )
+pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding, int vLen )
 {
         int offSet = 0 ;
         unsigned char eVal, eLoc, synDromes [ 254 ] ;
 
         // Scan for first non-zero byte in vector
-        while ( data [ k ] [ offSet ] == 0 ) 
+        while ( coding [ 0 ] [ offSet ] == 0 ) 
         {
                 offSet ++ ;
                 if ( offSet == vLen )
@@ -487,7 +487,7 @@ pc_correct ( int newPos, int k, int p, unsigned char ** data, int vLen )
         // Gather up the syndromes
         for ( eLoc = 0 ; eLoc < p ; eLoc ++ )
         {
-                synDromes [ eLoc ] = data [ k + p - eLoc - 1 ] [ offSet ] ;
+                synDromes [ eLoc ] = coding [ p - eLoc - 1 ] [ offSet ] ;
         }
 
         // LSB has parity, for single error this equals error value

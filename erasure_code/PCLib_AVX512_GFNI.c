@@ -7040,7 +7040,7 @@ int pc_decode_data_avx512_gfni(int len, int k, int rows, unsigned char *g_tbls, 
                 }
                 if ( newPos < len )
                 {
-                        if ( pc_correct ( newPos, k, rows, data, 64 ) )
+                        if ( pc_correct ( newPos, k, rows, data, coding, 64 ) )
                         {
                                 return ( newPos ) ;
                         }
