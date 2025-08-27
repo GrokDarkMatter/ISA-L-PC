@@ -15184,8 +15184,7 @@ int gf_2vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 0 ], data_vech ) ;
                         parity0 [ 0 ] = veorq_u8 ( parity0 [ 0 ], temp ) ;
                         parity0 [ 0 ] = veorq_u8 ( parity0 [ 0 ], parity0 [ 1 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 1 ], data_vec ) ;
-                        parity0 [ 1 ] = veorq_u8 ( parity0 [ 1 ], temp ) ;
+                        parity0 [ 1 ] = vqtbl1q_u8 ( taps [ 1 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 1 ], data_vech ) ;
                         parity0[ 1 ] = veorq_u8 ( parity0 [ 1 ], temp ) ;
 
@@ -15198,8 +15197,7 @@ int gf_2vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 0 ], data_vech ) ;
                         parity1 [ 0 ] = veorq_u8 ( parity1 [ 0 ], temp ) ;
                         parity1 [ 0 ] = veorq_u8 ( parity1 [ 0 ], parity1 [ 1 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 1 ], data_vec ) ;
-                        parity1 [ 1 ] = veorq_u8 ( parity1 [ 1 ], temp ) ;
+                        parity1 [ 1 ] = vqtbl1q_u8 ( taps [ 1 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 1 ], data_vech ) ;
                         parity1[ 1 ] = veorq_u8 ( parity1 [ 1 ], temp ) ;
 
@@ -15212,8 +15210,7 @@ int gf_2vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 0 ], data_vech ) ;
                         parity2 [ 0 ] = veorq_u8 ( parity2 [ 0 ], temp ) ;
                         parity2 [ 0 ] = veorq_u8 ( parity2 [ 0 ], parity2 [ 1 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 1 ], data_vec ) ;
-                        parity2 [ 1 ] = veorq_u8 ( parity2 [ 1 ], temp ) ;
+                        parity2 [ 1 ] = vqtbl1q_u8 ( taps [ 1 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 1 ], data_vech ) ;
                         parity2[ 1 ] = veorq_u8 ( parity2 [ 1 ], temp ) ;
 
@@ -15227,8 +15224,7 @@ int gf_2vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 0 ], data_vech ) ;
                         parity3 [ 0 ] = veorq_u8 ( parity3 [ 0 ], temp ) ;
                         parity3 [ 0 ] = veorq_u8 ( parity3 [ 0 ], parity3 [ 1 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 1 ], data_vec ) ;
-                        parity3 [ 1 ] = veorq_u8 ( parity3 [ 1 ], temp ) ;
+                        parity3 [ 1 ] = vqtbl1q_u8 ( taps [ 1 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 1 ], data_vech ) ;
                         parity3[ 1 ] = veorq_u8 ( parity3 [ 1 ], temp ) ;
 
@@ -15335,8 +15331,7 @@ int gf_3vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 1 ], data_vech ) ;
                         parity0 [ 1 ] = veorq_u8 ( parity0 [ 1 ], temp ) ;
                         parity0 [ 1 ] = veorq_u8 ( parity0 [ 1 ], parity0 [ 2 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 2 ], data_vec ) ;
-                        parity0 [ 2 ] = veorq_u8 ( parity0 [ 2 ], temp ) ;
+                        parity0 [ 2 ] = vqtbl1q_u8 ( taps [ 2 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 2 ], data_vech ) ;
                         parity0[ 2 ] = veorq_u8 ( parity0 [ 2 ], temp ) ;
 
@@ -15353,8 +15348,7 @@ int gf_3vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 1 ], data_vech ) ;
                         parity1 [ 1 ] = veorq_u8 ( parity1 [ 1 ], temp ) ;
                         parity1 [ 1 ] = veorq_u8 ( parity1 [ 1 ], parity1 [ 2 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 2 ], data_vec ) ;
-                        parity1 [ 2 ] = veorq_u8 ( parity1 [ 2 ], temp ) ;
+                        parity1 [ 2 ] = vqtbl1q_u8 ( taps [ 2 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 2 ], data_vech ) ;
                         parity1[ 2 ] = veorq_u8 ( parity1 [ 2 ], temp ) ;
 
@@ -15371,8 +15365,7 @@ int gf_3vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 1 ], data_vech ) ;
                         parity2 [ 1 ] = veorq_u8 ( parity2 [ 1 ], temp ) ;
                         parity2 [ 1 ] = veorq_u8 ( parity2 [ 1 ], parity2 [ 2 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 2 ], data_vec ) ;
-                        parity2 [ 2 ] = veorq_u8 ( parity2 [ 2 ], temp ) ;
+                        parity2 [ 2 ] = vqtbl1q_u8 ( taps [ 2 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 2 ], data_vech ) ;
                         parity2[ 2 ] = veorq_u8 ( parity2 [ 2 ], temp ) ;
 
@@ -15390,8 +15383,7 @@ int gf_3vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 1 ], data_vech ) ;
                         parity3 [ 1 ] = veorq_u8 ( parity3 [ 1 ], temp ) ;
                         parity3 [ 1 ] = veorq_u8 ( parity3 [ 1 ], parity3 [ 2 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 2 ], data_vec ) ;
-                        parity3 [ 2 ] = veorq_u8 ( parity3 [ 2 ], temp ) ;
+                        parity3 [ 2 ] = vqtbl1q_u8 ( taps [ 2 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 2 ], data_vech ) ;
                         parity3[ 2 ] = veorq_u8 ( parity3 [ 2 ], temp ) ;
 
@@ -15520,8 +15512,7 @@ int gf_4vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 2 ], data_vech ) ;
                         parity0 [ 2 ] = veorq_u8 ( parity0 [ 2 ], temp ) ;
                         parity0 [ 2 ] = veorq_u8 ( parity0 [ 2 ], parity0 [ 3 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 3 ], data_vec ) ;
-                        parity0 [ 3 ] = veorq_u8 ( parity0 [ 3 ], temp ) ;
+                        parity0 [ 3 ] = vqtbl1q_u8 ( taps [ 3 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 3 ], data_vech ) ;
                         parity0[ 3 ] = veorq_u8 ( parity0 [ 3 ], temp ) ;
 
@@ -15542,8 +15533,7 @@ int gf_4vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 2 ], data_vech ) ;
                         parity1 [ 2 ] = veorq_u8 ( parity1 [ 2 ], temp ) ;
                         parity1 [ 2 ] = veorq_u8 ( parity1 [ 2 ], parity1 [ 3 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 3 ], data_vec ) ;
-                        parity1 [ 3 ] = veorq_u8 ( parity1 [ 3 ], temp ) ;
+                        parity1 [ 3 ] = vqtbl1q_u8 ( taps [ 3 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 3 ], data_vech ) ;
                         parity1[ 3 ] = veorq_u8 ( parity1 [ 3 ], temp ) ;
 
@@ -15564,8 +15554,7 @@ int gf_4vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 2 ], data_vech ) ;
                         parity2 [ 2 ] = veorq_u8 ( parity2 [ 2 ], temp ) ;
                         parity2 [ 2 ] = veorq_u8 ( parity2 [ 2 ], parity2 [ 3 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 3 ], data_vec ) ;
-                        parity2 [ 3 ] = veorq_u8 ( parity2 [ 3 ], temp ) ;
+                        parity2 [ 3 ] = vqtbl1q_u8 ( taps [ 3 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 3 ], data_vech ) ;
                         parity2[ 3 ] = veorq_u8 ( parity2 [ 3 ], temp ) ;
 
@@ -15587,8 +15576,7 @@ int gf_4vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 2 ], data_vech ) ;
                         parity3 [ 2 ] = veorq_u8 ( parity3 [ 2 ], temp ) ;
                         parity3 [ 2 ] = veorq_u8 ( parity3 [ 2 ], parity3 [ 3 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 3 ], data_vec ) ;
-                        parity3 [ 3 ] = veorq_u8 ( parity3 [ 3 ], temp ) ;
+                        parity3 [ 3 ] = vqtbl1q_u8 ( taps [ 3 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 3 ], data_vech ) ;
                         parity3[ 3 ] = veorq_u8 ( parity3 [ 3 ], temp ) ;
 
@@ -15739,8 +15727,7 @@ int gf_5vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 3 ], data_vech ) ;
                         parity0 [ 3 ] = veorq_u8 ( parity0 [ 3 ], temp ) ;
                         parity0 [ 3 ] = veorq_u8 ( parity0 [ 3 ], parity0 [ 4 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 4 ], data_vec ) ;
-                        parity0 [ 4 ] = veorq_u8 ( parity0 [ 4 ], temp ) ;
+                        parity0 [ 4 ] = vqtbl1q_u8 ( taps [ 4 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 4 ], data_vech ) ;
                         parity0[ 4 ] = veorq_u8 ( parity0 [ 4 ], temp ) ;
 
@@ -15765,8 +15752,7 @@ int gf_5vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 3 ], data_vech ) ;
                         parity1 [ 3 ] = veorq_u8 ( parity1 [ 3 ], temp ) ;
                         parity1 [ 3 ] = veorq_u8 ( parity1 [ 3 ], parity1 [ 4 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 4 ], data_vec ) ;
-                        parity1 [ 4 ] = veorq_u8 ( parity1 [ 4 ], temp ) ;
+                        parity1 [ 4 ] = vqtbl1q_u8 ( taps [ 4 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 4 ], data_vech ) ;
                         parity1[ 4 ] = veorq_u8 ( parity1 [ 4 ], temp ) ;
 
@@ -15791,8 +15777,7 @@ int gf_5vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 3 ], data_vech ) ;
                         parity2 [ 3 ] = veorq_u8 ( parity2 [ 3 ], temp ) ;
                         parity2 [ 3 ] = veorq_u8 ( parity2 [ 3 ], parity2 [ 4 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 4 ], data_vec ) ;
-                        parity2 [ 4 ] = veorq_u8 ( parity2 [ 4 ], temp ) ;
+                        parity2 [ 4 ] = vqtbl1q_u8 ( taps [ 4 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 4 ], data_vech ) ;
                         parity2[ 4 ] = veorq_u8 ( parity2 [ 4 ], temp ) ;
 
@@ -15818,8 +15803,7 @@ int gf_5vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 3 ], data_vech ) ;
                         parity3 [ 3 ] = veorq_u8 ( parity3 [ 3 ], temp ) ;
                         parity3 [ 3 ] = veorq_u8 ( parity3 [ 3 ], parity3 [ 4 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 4 ], data_vec ) ;
-                        parity3 [ 4 ] = veorq_u8 ( parity3 [ 4 ], temp ) ;
+                        parity3 [ 4 ] = vqtbl1q_u8 ( taps [ 4 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 4 ], data_vech ) ;
                         parity3[ 4 ] = veorq_u8 ( parity3 [ 4 ], temp ) ;
 
@@ -15992,8 +15976,7 @@ int gf_6vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 4 ], data_vech ) ;
                         parity0 [ 4 ] = veorq_u8 ( parity0 [ 4 ], temp ) ;
                         parity0 [ 4 ] = veorq_u8 ( parity0 [ 4 ], parity0 [ 5 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 5 ], data_vec ) ;
-                        parity0 [ 5 ] = veorq_u8 ( parity0 [ 5 ], temp ) ;
+                        parity0 [ 5 ] = vqtbl1q_u8 ( taps [ 5 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 5 ], data_vech ) ;
                         parity0[ 5 ] = veorq_u8 ( parity0 [ 5 ], temp ) ;
 
@@ -16022,8 +16005,7 @@ int gf_6vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 4 ], data_vech ) ;
                         parity1 [ 4 ] = veorq_u8 ( parity1 [ 4 ], temp ) ;
                         parity1 [ 4 ] = veorq_u8 ( parity1 [ 4 ], parity1 [ 5 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 5 ], data_vec ) ;
-                        parity1 [ 5 ] = veorq_u8 ( parity1 [ 5 ], temp ) ;
+                        parity1 [ 5 ] = vqtbl1q_u8 ( taps [ 5 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 5 ], data_vech ) ;
                         parity1[ 5 ] = veorq_u8 ( parity1 [ 5 ], temp ) ;
 
@@ -16052,8 +16034,7 @@ int gf_6vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 4 ], data_vech ) ;
                         parity2 [ 4 ] = veorq_u8 ( parity2 [ 4 ], temp ) ;
                         parity2 [ 4 ] = veorq_u8 ( parity2 [ 4 ], parity2 [ 5 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 5 ], data_vec ) ;
-                        parity2 [ 5 ] = veorq_u8 ( parity2 [ 5 ], temp ) ;
+                        parity2 [ 5 ] = vqtbl1q_u8 ( taps [ 5 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 5 ], data_vech ) ;
                         parity2[ 5 ] = veorq_u8 ( parity2 [ 5 ], temp ) ;
 
@@ -16083,8 +16064,7 @@ int gf_6vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 4 ], data_vech ) ;
                         parity3 [ 4 ] = veorq_u8 ( parity3 [ 4 ], temp ) ;
                         parity3 [ 4 ] = veorq_u8 ( parity3 [ 4 ], parity3 [ 5 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 5 ], data_vec ) ;
-                        parity3 [ 5 ] = veorq_u8 ( parity3 [ 5 ], temp ) ;
+                        parity3 [ 5 ] = vqtbl1q_u8 ( taps [ 5 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 5 ], data_vech ) ;
                         parity3[ 5 ] = veorq_u8 ( parity3 [ 5 ], temp ) ;
 
@@ -16279,8 +16259,7 @@ int gf_7vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 5 ], data_vech ) ;
                         parity0 [ 5 ] = veorq_u8 ( parity0 [ 5 ], temp ) ;
                         parity0 [ 5 ] = veorq_u8 ( parity0 [ 5 ], parity0 [ 6 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 6 ], data_vec ) ;
-                        parity0 [ 6 ] = veorq_u8 ( parity0 [ 6 ], temp ) ;
+                        parity0 [ 6 ] = vqtbl1q_u8 ( taps [ 6 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 6 ], data_vech ) ;
                         parity0[ 6 ] = veorq_u8 ( parity0 [ 6 ], temp ) ;
 
@@ -16313,8 +16292,7 @@ int gf_7vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 5 ], data_vech ) ;
                         parity1 [ 5 ] = veorq_u8 ( parity1 [ 5 ], temp ) ;
                         parity1 [ 5 ] = veorq_u8 ( parity1 [ 5 ], parity1 [ 6 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 6 ], data_vec ) ;
-                        parity1 [ 6 ] = veorq_u8 ( parity1 [ 6 ], temp ) ;
+                        parity1 [ 6 ] = vqtbl1q_u8 ( taps [ 6 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 6 ], data_vech ) ;
                         parity1[ 6 ] = veorq_u8 ( parity1 [ 6 ], temp ) ;
 
@@ -16347,8 +16325,7 @@ int gf_7vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 5 ], data_vech ) ;
                         parity2 [ 5 ] = veorq_u8 ( parity2 [ 5 ], temp ) ;
                         parity2 [ 5 ] = veorq_u8 ( parity2 [ 5 ], parity2 [ 6 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 6 ], data_vec ) ;
-                        parity2 [ 6 ] = veorq_u8 ( parity2 [ 6 ], temp ) ;
+                        parity2 [ 6 ] = vqtbl1q_u8 ( taps [ 6 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 6 ], data_vech ) ;
                         parity2[ 6 ] = veorq_u8 ( parity2 [ 6 ], temp ) ;
 
@@ -16382,8 +16359,7 @@ int gf_7vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 5 ], data_vech ) ;
                         parity3 [ 5 ] = veorq_u8 ( parity3 [ 5 ], temp ) ;
                         parity3 [ 5 ] = veorq_u8 ( parity3 [ 5 ], parity3 [ 6 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 6 ], data_vec ) ;
-                        parity3 [ 6 ] = veorq_u8 ( parity3 [ 6 ], temp ) ;
+                        parity3 [ 6 ] = vqtbl1q_u8 ( taps [ 6 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 6 ], data_vech ) ;
                         parity3[ 6 ] = veorq_u8 ( parity3 [ 6 ], temp ) ;
 
@@ -16600,8 +16576,7 @@ int gf_8vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 6 ], data_vech ) ;
                         parity0 [ 6 ] = veorq_u8 ( parity0 [ 6 ], temp ) ;
                         parity0 [ 6 ] = veorq_u8 ( parity0 [ 6 ], parity0 [ 7 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 7 ], data_vec ) ;
-                        parity0 [ 7 ] = veorq_u8 ( parity0 [ 7 ], temp ) ;
+                        parity0 [ 7 ] = vqtbl1q_u8 ( taps [ 7 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 7 ], data_vech ) ;
                         parity0[ 7 ] = veorq_u8 ( parity0 [ 7 ], temp ) ;
 
@@ -16638,8 +16613,7 @@ int gf_8vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 6 ], data_vech ) ;
                         parity1 [ 6 ] = veorq_u8 ( parity1 [ 6 ], temp ) ;
                         parity1 [ 6 ] = veorq_u8 ( parity1 [ 6 ], parity1 [ 7 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 7 ], data_vec ) ;
-                        parity1 [ 7 ] = veorq_u8 ( parity1 [ 7 ], temp ) ;
+                        parity1 [ 7 ] = vqtbl1q_u8 ( taps [ 7 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 7 ], data_vech ) ;
                         parity1[ 7 ] = veorq_u8 ( parity1 [ 7 ], temp ) ;
 
@@ -16676,8 +16650,7 @@ int gf_8vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 6 ], data_vech ) ;
                         parity2 [ 6 ] = veorq_u8 ( parity2 [ 6 ], temp ) ;
                         parity2 [ 6 ] = veorq_u8 ( parity2 [ 6 ], parity2 [ 7 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 7 ], data_vec ) ;
-                        parity2 [ 7 ] = veorq_u8 ( parity2 [ 7 ], temp ) ;
+                        parity2 [ 7 ] = vqtbl1q_u8 ( taps [ 7 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 7 ], data_vech ) ;
                         parity2[ 7 ] = veorq_u8 ( parity2 [ 7 ], temp ) ;
 
@@ -16715,8 +16688,7 @@ int gf_8vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 6 ], data_vech ) ;
                         parity3 [ 6 ] = veorq_u8 ( parity3 [ 6 ], temp ) ;
                         parity3 [ 6 ] = veorq_u8 ( parity3 [ 6 ], parity3 [ 7 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 7 ], data_vec ) ;
-                        parity3 [ 7 ] = veorq_u8 ( parity3 [ 7 ], temp ) ;
+                        parity3 [ 7 ] = vqtbl1q_u8 ( taps [ 7 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 7 ], data_vech ) ;
                         parity3[ 7 ] = veorq_u8 ( parity3 [ 7 ], temp ) ;
 
@@ -16955,8 +16927,7 @@ int gf_9vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 7 ], data_vech ) ;
                         parity0 [ 7 ] = veorq_u8 ( parity0 [ 7 ], temp ) ;
                         parity0 [ 7 ] = veorq_u8 ( parity0 [ 7 ], parity0 [ 8 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 8 ], data_vec ) ;
-                        parity0 [ 8 ] = veorq_u8 ( parity0 [ 8 ], temp ) ;
+                        parity0 [ 8 ] = vqtbl1q_u8 ( taps [ 8 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 8 ], data_vech ) ;
                         parity0[ 8 ] = veorq_u8 ( parity0 [ 8 ], temp ) ;
 
@@ -16997,8 +16968,7 @@ int gf_9vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 7 ], data_vech ) ;
                         parity1 [ 7 ] = veorq_u8 ( parity1 [ 7 ], temp ) ;
                         parity1 [ 7 ] = veorq_u8 ( parity1 [ 7 ], parity1 [ 8 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 8 ], data_vec ) ;
-                        parity1 [ 8 ] = veorq_u8 ( parity1 [ 8 ], temp ) ;
+                        parity1 [ 8 ] = vqtbl1q_u8 ( taps [ 8 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 8 ], data_vech ) ;
                         parity1[ 8 ] = veorq_u8 ( parity1 [ 8 ], temp ) ;
 
@@ -17039,8 +17009,7 @@ int gf_9vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 7 ], data_vech ) ;
                         parity2 [ 7 ] = veorq_u8 ( parity2 [ 7 ], temp ) ;
                         parity2 [ 7 ] = veorq_u8 ( parity2 [ 7 ], parity2 [ 8 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 8 ], data_vec ) ;
-                        parity2 [ 8 ] = veorq_u8 ( parity2 [ 8 ], temp ) ;
+                        parity2 [ 8 ] = vqtbl1q_u8 ( taps [ 8 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 8 ], data_vech ) ;
                         parity2[ 8 ] = veorq_u8 ( parity2 [ 8 ], temp ) ;
 
@@ -17082,8 +17051,7 @@ int gf_9vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         temp = vqtbl1q_u8 ( tapsh [ 7 ], data_vech ) ;
                         parity3 [ 7 ] = veorq_u8 ( parity3 [ 7 ], temp ) ;
                         parity3 [ 7 ] = veorq_u8 ( parity3 [ 7 ], parity3 [ 8 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 8 ], data_vec ) ;
-                        parity3 [ 8 ] = veorq_u8 ( parity3 [ 8 ], temp ) ;
+                        parity3 [ 8 ] = vqtbl1q_u8 ( taps [ 8 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 8 ], data_vech ) ;
                         parity3[ 8 ] = veorq_u8 ( parity3 [ 8 ], temp ) ;
 
@@ -17344,8 +17312,7 @@ int gf_10vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 8 ], data_vech ) ;
                         parity0 [ 8 ] = veorq_u8 ( parity0 [ 8 ], temp ) ;
                         parity0 [ 8 ] = veorq_u8 ( parity0 [ 8 ], parity0 [ 9 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 9 ], data_vec ) ;
-                        parity0 [ 9 ] = veorq_u8 ( parity0 [ 9 ], temp ) ;
+                        parity0 [ 9 ] = vqtbl1q_u8 ( taps [ 9 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 9 ], data_vech ) ;
                         parity0[ 9 ] = veorq_u8 ( parity0 [ 9 ], temp ) ;
 
@@ -17390,8 +17357,7 @@ int gf_10vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 8 ], data_vech ) ;
                         parity1 [ 8 ] = veorq_u8 ( parity1 [ 8 ], temp ) ;
                         parity1 [ 8 ] = veorq_u8 ( parity1 [ 8 ], parity1 [ 9 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 9 ], data_vec ) ;
-                        parity1 [ 9 ] = veorq_u8 ( parity1 [ 9 ], temp ) ;
+                        parity1 [ 9 ] = vqtbl1q_u8 ( taps [ 9 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 9 ], data_vech ) ;
                         parity1[ 9 ] = veorq_u8 ( parity1 [ 9 ], temp ) ;
 
@@ -17436,8 +17402,7 @@ int gf_10vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 8 ], data_vech ) ;
                         parity2 [ 8 ] = veorq_u8 ( parity2 [ 8 ], temp ) ;
                         parity2 [ 8 ] = veorq_u8 ( parity2 [ 8 ], parity2 [ 9 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 9 ], data_vec ) ;
-                        parity2 [ 9 ] = veorq_u8 ( parity2 [ 9 ], temp ) ;
+                        parity2 [ 9 ] = vqtbl1q_u8 ( taps [ 9 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 9 ], data_vech ) ;
                         parity2[ 9 ] = veorq_u8 ( parity2 [ 9 ], temp ) ;
 
@@ -17483,8 +17448,7 @@ int gf_10vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 8 ], data_vech ) ;
                         parity3 [ 8 ] = veorq_u8 ( parity3 [ 8 ], temp ) ;
                         parity3 [ 8 ] = veorq_u8 ( parity3 [ 8 ], parity3 [ 9 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 9 ], data_vec ) ;
-                        parity3 [ 9 ] = veorq_u8 ( parity3 [ 9 ], temp ) ;
+                        parity3 [ 9 ] = vqtbl1q_u8 ( taps [ 9 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 9 ], data_vech ) ;
                         parity3[ 9 ] = veorq_u8 ( parity3 [ 9 ], temp ) ;
 
@@ -17767,8 +17731,7 @@ int gf_11vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 9 ], data_vech ) ;
                         parity0 [ 9 ] = veorq_u8 ( parity0 [ 9 ], temp ) ;
                         parity0 [ 9 ] = veorq_u8 ( parity0 [ 9 ], parity0 [ 10 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 10 ], data_vec ) ;
-                        parity0 [ 10 ] = veorq_u8 ( parity0 [ 10 ], temp ) ;
+                        parity0 [ 10 ] = vqtbl1q_u8 ( taps [ 10 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 10 ], data_vech ) ;
                         parity0[ 10 ] = veorq_u8 ( parity0 [ 10 ], temp ) ;
 
@@ -17817,8 +17780,7 @@ int gf_11vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 9 ], data_vech ) ;
                         parity1 [ 9 ] = veorq_u8 ( parity1 [ 9 ], temp ) ;
                         parity1 [ 9 ] = veorq_u8 ( parity1 [ 9 ], parity1 [ 10 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 10 ], data_vec ) ;
-                        parity1 [ 10 ] = veorq_u8 ( parity1 [ 10 ], temp ) ;
+                        parity1 [ 10 ] = vqtbl1q_u8 ( taps [ 10 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 10 ], data_vech ) ;
                         parity1[ 10 ] = veorq_u8 ( parity1 [ 10 ], temp ) ;
 
@@ -17867,8 +17829,7 @@ int gf_11vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 9 ], data_vech ) ;
                         parity2 [ 9 ] = veorq_u8 ( parity2 [ 9 ], temp ) ;
                         parity2 [ 9 ] = veorq_u8 ( parity2 [ 9 ], parity2 [ 10 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 10 ], data_vec ) ;
-                        parity2 [ 10 ] = veorq_u8 ( parity2 [ 10 ], temp ) ;
+                        parity2 [ 10 ] = vqtbl1q_u8 ( taps [ 10 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 10 ], data_vech ) ;
                         parity2[ 10 ] = veorq_u8 ( parity2 [ 10 ], temp ) ;
 
@@ -17918,8 +17879,7 @@ int gf_11vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 9 ], data_vech ) ;
                         parity3 [ 9 ] = veorq_u8 ( parity3 [ 9 ], temp ) ;
                         parity3 [ 9 ] = veorq_u8 ( parity3 [ 9 ], parity3 [ 10 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 10 ], data_vec ) ;
-                        parity3 [ 10 ] = veorq_u8 ( parity3 [ 10 ], temp ) ;
+                        parity3 [ 10 ] = vqtbl1q_u8 ( taps [ 10 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 10 ], data_vech ) ;
                         parity3[ 10 ] = veorq_u8 ( parity3 [ 10 ], temp ) ;
 
@@ -18224,8 +18184,7 @@ int gf_12vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 10 ], data_vech ) ;
                         parity0 [ 10 ] = veorq_u8 ( parity0 [ 10 ], temp ) ;
                         parity0 [ 10 ] = veorq_u8 ( parity0 [ 10 ], parity0 [ 11 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 11 ], data_vec ) ;
-                        parity0 [ 11 ] = veorq_u8 ( parity0 [ 11 ], temp ) ;
+                        parity0 [ 11 ] = vqtbl1q_u8 ( taps [ 11 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 11 ], data_vech ) ;
                         parity0[ 11 ] = veorq_u8 ( parity0 [ 11 ], temp ) ;
 
@@ -18278,8 +18237,7 @@ int gf_12vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 10 ], data_vech ) ;
                         parity1 [ 10 ] = veorq_u8 ( parity1 [ 10 ], temp ) ;
                         parity1 [ 10 ] = veorq_u8 ( parity1 [ 10 ], parity1 [ 11 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 11 ], data_vec ) ;
-                        parity1 [ 11 ] = veorq_u8 ( parity1 [ 11 ], temp ) ;
+                        parity1 [ 11 ] = vqtbl1q_u8 ( taps [ 11 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 11 ], data_vech ) ;
                         parity1[ 11 ] = veorq_u8 ( parity1 [ 11 ], temp ) ;
 
@@ -18332,8 +18290,7 @@ int gf_12vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 10 ], data_vech ) ;
                         parity2 [ 10 ] = veorq_u8 ( parity2 [ 10 ], temp ) ;
                         parity2 [ 10 ] = veorq_u8 ( parity2 [ 10 ], parity2 [ 11 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 11 ], data_vec ) ;
-                        parity2 [ 11 ] = veorq_u8 ( parity2 [ 11 ], temp ) ;
+                        parity2 [ 11 ] = vqtbl1q_u8 ( taps [ 11 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 11 ], data_vech ) ;
                         parity2[ 11 ] = veorq_u8 ( parity2 [ 11 ], temp ) ;
 
@@ -18387,8 +18344,7 @@ int gf_12vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 10 ], data_vech ) ;
                         parity3 [ 10 ] = veorq_u8 ( parity3 [ 10 ], temp ) ;
                         parity3 [ 10 ] = veorq_u8 ( parity3 [ 10 ], parity3 [ 11 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 11 ], data_vec ) ;
-                        parity3 [ 11 ] = veorq_u8 ( parity3 [ 11 ], temp ) ;
+                        parity3 [ 11 ] = vqtbl1q_u8 ( taps [ 11 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 11 ], data_vech ) ;
                         parity3[ 11 ] = veorq_u8 ( parity3 [ 11 ], temp ) ;
 
@@ -18715,8 +18671,7 @@ int gf_13vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 11 ], data_vech ) ;
                         parity0 [ 11 ] = veorq_u8 ( parity0 [ 11 ], temp ) ;
                         parity0 [ 11 ] = veorq_u8 ( parity0 [ 11 ], parity0 [ 12 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 12 ], data_vec ) ;
-                        parity0 [ 12 ] = veorq_u8 ( parity0 [ 12 ], temp ) ;
+                        parity0 [ 12 ] = vqtbl1q_u8 ( taps [ 12 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 12 ], data_vech ) ;
                         parity0[ 12 ] = veorq_u8 ( parity0 [ 12 ], temp ) ;
 
@@ -18773,8 +18728,7 @@ int gf_13vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 11 ], data_vech ) ;
                         parity1 [ 11 ] = veorq_u8 ( parity1 [ 11 ], temp ) ;
                         parity1 [ 11 ] = veorq_u8 ( parity1 [ 11 ], parity1 [ 12 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 12 ], data_vec ) ;
-                        parity1 [ 12 ] = veorq_u8 ( parity1 [ 12 ], temp ) ;
+                        parity1 [ 12 ] = vqtbl1q_u8 ( taps [ 12 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 12 ], data_vech ) ;
                         parity1[ 12 ] = veorq_u8 ( parity1 [ 12 ], temp ) ;
 
@@ -18831,8 +18785,7 @@ int gf_13vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 11 ], data_vech ) ;
                         parity2 [ 11 ] = veorq_u8 ( parity2 [ 11 ], temp ) ;
                         parity2 [ 11 ] = veorq_u8 ( parity2 [ 11 ], parity2 [ 12 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 12 ], data_vec ) ;
-                        parity2 [ 12 ] = veorq_u8 ( parity2 [ 12 ], temp ) ;
+                        parity2 [ 12 ] = vqtbl1q_u8 ( taps [ 12 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 12 ], data_vech ) ;
                         parity2[ 12 ] = veorq_u8 ( parity2 [ 12 ], temp ) ;
 
@@ -18890,8 +18843,7 @@ int gf_13vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 11 ], data_vech ) ;
                         parity3 [ 11 ] = veorq_u8 ( parity3 [ 11 ], temp ) ;
                         parity3 [ 11 ] = veorq_u8 ( parity3 [ 11 ], parity3 [ 12 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 12 ], data_vec ) ;
-                        parity3 [ 12 ] = veorq_u8 ( parity3 [ 12 ], temp ) ;
+                        parity3 [ 12 ] = vqtbl1q_u8 ( taps [ 12 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 12 ], data_vech ) ;
                         parity3[ 12 ] = veorq_u8 ( parity3 [ 12 ], temp ) ;
 
@@ -19240,8 +19192,7 @@ int gf_14vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 12 ], data_vech ) ;
                         parity0 [ 12 ] = veorq_u8 ( parity0 [ 12 ], temp ) ;
                         parity0 [ 12 ] = veorq_u8 ( parity0 [ 12 ], parity0 [ 13 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 13 ], data_vec ) ;
-                        parity0 [ 13 ] = veorq_u8 ( parity0 [ 13 ], temp ) ;
+                        parity0 [ 13 ] = vqtbl1q_u8 ( taps [ 13 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 13 ], data_vech ) ;
                         parity0[ 13 ] = veorq_u8 ( parity0 [ 13 ], temp ) ;
 
@@ -19302,8 +19253,7 @@ int gf_14vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 12 ], data_vech ) ;
                         parity1 [ 12 ] = veorq_u8 ( parity1 [ 12 ], temp ) ;
                         parity1 [ 12 ] = veorq_u8 ( parity1 [ 12 ], parity1 [ 13 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 13 ], data_vec ) ;
-                        parity1 [ 13 ] = veorq_u8 ( parity1 [ 13 ], temp ) ;
+                        parity1 [ 13 ] = vqtbl1q_u8 ( taps [ 13 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 13 ], data_vech ) ;
                         parity1[ 13 ] = veorq_u8 ( parity1 [ 13 ], temp ) ;
 
@@ -19364,8 +19314,7 @@ int gf_14vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 12 ], data_vech ) ;
                         parity2 [ 12 ] = veorq_u8 ( parity2 [ 12 ], temp ) ;
                         parity2 [ 12 ] = veorq_u8 ( parity2 [ 12 ], parity2 [ 13 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 13 ], data_vec ) ;
-                        parity2 [ 13 ] = veorq_u8 ( parity2 [ 13 ], temp ) ;
+                        parity2 [ 13 ] = vqtbl1q_u8 ( taps [ 13 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 13 ], data_vech ) ;
                         parity2[ 13 ] = veorq_u8 ( parity2 [ 13 ], temp ) ;
 
@@ -19427,8 +19376,7 @@ int gf_14vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 12 ], data_vech ) ;
                         parity3 [ 12 ] = veorq_u8 ( parity3 [ 12 ], temp ) ;
                         parity3 [ 12 ] = veorq_u8 ( parity3 [ 12 ], parity3 [ 13 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 13 ], data_vec ) ;
-                        parity3 [ 13 ] = veorq_u8 ( parity3 [ 13 ], temp ) ;
+                        parity3 [ 13 ] = vqtbl1q_u8 ( taps [ 13 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 13 ], data_vech ) ;
                         parity3[ 13 ] = veorq_u8 ( parity3 [ 13 ], temp ) ;
 
@@ -19799,8 +19747,7 @@ int gf_15vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 13 ], data_vech ) ;
                         parity0 [ 13 ] = veorq_u8 ( parity0 [ 13 ], temp ) ;
                         parity0 [ 13 ] = veorq_u8 ( parity0 [ 13 ], parity0 [ 14 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 14 ], data_vec ) ;
-                        parity0 [ 14 ] = veorq_u8 ( parity0 [ 14 ], temp ) ;
+                        parity0 [ 14 ] = vqtbl1q_u8 ( taps [ 14 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 14 ], data_vech ) ;
                         parity0[ 14 ] = veorq_u8 ( parity0 [ 14 ], temp ) ;
 
@@ -19865,8 +19812,7 @@ int gf_15vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 13 ], data_vech ) ;
                         parity1 [ 13 ] = veorq_u8 ( parity1 [ 13 ], temp ) ;
                         parity1 [ 13 ] = veorq_u8 ( parity1 [ 13 ], parity1 [ 14 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 14 ], data_vec ) ;
-                        parity1 [ 14 ] = veorq_u8 ( parity1 [ 14 ], temp ) ;
+                        parity1 [ 14 ] = vqtbl1q_u8 ( taps [ 14 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 14 ], data_vech ) ;
                         parity1[ 14 ] = veorq_u8 ( parity1 [ 14 ], temp ) ;
 
@@ -19931,8 +19877,7 @@ int gf_15vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 13 ], data_vech ) ;
                         parity2 [ 13 ] = veorq_u8 ( parity2 [ 13 ], temp ) ;
                         parity2 [ 13 ] = veorq_u8 ( parity2 [ 13 ], parity2 [ 14 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 14 ], data_vec ) ;
-                        parity2 [ 14 ] = veorq_u8 ( parity2 [ 14 ], temp ) ;
+                        parity2 [ 14 ] = vqtbl1q_u8 ( taps [ 14 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 14 ], data_vech ) ;
                         parity2[ 14 ] = veorq_u8 ( parity2 [ 14 ], temp ) ;
 
@@ -19998,8 +19943,7 @@ int gf_15vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 13 ], data_vech ) ;
                         parity3 [ 13 ] = veorq_u8 ( parity3 [ 13 ], temp ) ;
                         parity3 [ 13 ] = veorq_u8 ( parity3 [ 13 ], parity3 [ 14 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 14 ], data_vec ) ;
-                        parity3 [ 14 ] = veorq_u8 ( parity3 [ 14 ], temp ) ;
+                        parity3 [ 14 ] = vqtbl1q_u8 ( taps [ 14 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 14 ], data_vech ) ;
                         parity3[ 14 ] = veorq_u8 ( parity3 [ 14 ], temp ) ;
 
@@ -20392,8 +20336,7 @@ int gf_16vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 14 ], data_vech ) ;
                         parity0 [ 14 ] = veorq_u8 ( parity0 [ 14 ], temp ) ;
                         parity0 [ 14 ] = veorq_u8 ( parity0 [ 14 ], parity0 [ 15 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 15 ], data_vec ) ;
-                        parity0 [ 15 ] = veorq_u8 ( parity0 [ 15 ], temp ) ;
+                        parity0 [ 15 ] = vqtbl1q_u8 ( taps [ 15 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 15 ], data_vech ) ;
                         parity0[ 15 ] = veorq_u8 ( parity0 [ 15 ], temp ) ;
 
@@ -20462,8 +20405,7 @@ int gf_16vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 14 ], data_vech ) ;
                         parity1 [ 14 ] = veorq_u8 ( parity1 [ 14 ], temp ) ;
                         parity1 [ 14 ] = veorq_u8 ( parity1 [ 14 ], parity1 [ 15 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 15 ], data_vec ) ;
-                        parity1 [ 15 ] = veorq_u8 ( parity1 [ 15 ], temp ) ;
+                        parity1 [ 15 ] = vqtbl1q_u8 ( taps [ 15 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 15 ], data_vech ) ;
                         parity1[ 15 ] = veorq_u8 ( parity1 [ 15 ], temp ) ;
 
@@ -20532,8 +20474,7 @@ int gf_16vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 14 ], data_vech ) ;
                         parity2 [ 14 ] = veorq_u8 ( parity2 [ 14 ], temp ) ;
                         parity2 [ 14 ] = veorq_u8 ( parity2 [ 14 ], parity2 [ 15 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 15 ], data_vec ) ;
-                        parity2 [ 15 ] = veorq_u8 ( parity2 [ 15 ], temp ) ;
+                        parity2 [ 15 ] = vqtbl1q_u8 ( taps [ 15 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 15 ], data_vech ) ;
                         parity2[ 15 ] = veorq_u8 ( parity2 [ 15 ], temp ) ;
 
@@ -20603,8 +20544,7 @@ int gf_16vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 14 ], data_vech ) ;
                         parity3 [ 14 ] = veorq_u8 ( parity3 [ 14 ], temp ) ;
                         parity3 [ 14 ] = veorq_u8 ( parity3 [ 14 ], parity3 [ 15 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 15 ], data_vec ) ;
-                        parity3 [ 15 ] = veorq_u8 ( parity3 [ 15 ], temp ) ;
+                        parity3 [ 15 ] = vqtbl1q_u8 ( taps [ 15 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 15 ], data_vech ) ;
                         parity3[ 15 ] = veorq_u8 ( parity3 [ 15 ], temp ) ;
 
@@ -21019,8 +20959,7 @@ int gf_17vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 15 ], data_vech ) ;
                         parity0 [ 15 ] = veorq_u8 ( parity0 [ 15 ], temp ) ;
                         parity0 [ 15 ] = veorq_u8 ( parity0 [ 15 ], parity0 [ 16 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 16 ], data_vec ) ;
-                        parity0 [ 16 ] = veorq_u8 ( parity0 [ 16 ], temp ) ;
+                        parity0 [ 16 ] = vqtbl1q_u8 ( taps [ 16 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 16 ], data_vech ) ;
                         parity0[ 16 ] = veorq_u8 ( parity0 [ 16 ], temp ) ;
 
@@ -21093,8 +21032,7 @@ int gf_17vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 15 ], data_vech ) ;
                         parity1 [ 15 ] = veorq_u8 ( parity1 [ 15 ], temp ) ;
                         parity1 [ 15 ] = veorq_u8 ( parity1 [ 15 ], parity1 [ 16 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 16 ], data_vec ) ;
-                        parity1 [ 16 ] = veorq_u8 ( parity1 [ 16 ], temp ) ;
+                        parity1 [ 16 ] = vqtbl1q_u8 ( taps [ 16 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 16 ], data_vech ) ;
                         parity1[ 16 ] = veorq_u8 ( parity1 [ 16 ], temp ) ;
 
@@ -21167,8 +21105,7 @@ int gf_17vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 15 ], data_vech ) ;
                         parity2 [ 15 ] = veorq_u8 ( parity2 [ 15 ], temp ) ;
                         parity2 [ 15 ] = veorq_u8 ( parity2 [ 15 ], parity2 [ 16 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 16 ], data_vec ) ;
-                        parity2 [ 16 ] = veorq_u8 ( parity2 [ 16 ], temp ) ;
+                        parity2 [ 16 ] = vqtbl1q_u8 ( taps [ 16 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 16 ], data_vech ) ;
                         parity2[ 16 ] = veorq_u8 ( parity2 [ 16 ], temp ) ;
 
@@ -21242,8 +21179,7 @@ int gf_17vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 15 ], data_vech ) ;
                         parity3 [ 15 ] = veorq_u8 ( parity3 [ 15 ], temp ) ;
                         parity3 [ 15 ] = veorq_u8 ( parity3 [ 15 ], parity3 [ 16 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 16 ], data_vec ) ;
-                        parity3 [ 16 ] = veorq_u8 ( parity3 [ 16 ], temp ) ;
+                        parity3 [ 16 ] = vqtbl1q_u8 ( taps [ 16 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 16 ], data_vech ) ;
                         parity3[ 16 ] = veorq_u8 ( parity3 [ 16 ], temp ) ;
 
@@ -21680,8 +21616,7 @@ int gf_18vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 16 ], data_vech ) ;
                         parity0 [ 16 ] = veorq_u8 ( parity0 [ 16 ], temp ) ;
                         parity0 [ 16 ] = veorq_u8 ( parity0 [ 16 ], parity0 [ 17 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 17 ], data_vec ) ;
-                        parity0 [ 17 ] = veorq_u8 ( parity0 [ 17 ], temp ) ;
+                        parity0 [ 17 ] = vqtbl1q_u8 ( taps [ 17 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 17 ], data_vech ) ;
                         parity0[ 17 ] = veorq_u8 ( parity0 [ 17 ], temp ) ;
 
@@ -21758,8 +21693,7 @@ int gf_18vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 16 ], data_vech ) ;
                         parity1 [ 16 ] = veorq_u8 ( parity1 [ 16 ], temp ) ;
                         parity1 [ 16 ] = veorq_u8 ( parity1 [ 16 ], parity1 [ 17 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 17 ], data_vec ) ;
-                        parity1 [ 17 ] = veorq_u8 ( parity1 [ 17 ], temp ) ;
+                        parity1 [ 17 ] = vqtbl1q_u8 ( taps [ 17 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 17 ], data_vech ) ;
                         parity1[ 17 ] = veorq_u8 ( parity1 [ 17 ], temp ) ;
 
@@ -21836,8 +21770,7 @@ int gf_18vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 16 ], data_vech ) ;
                         parity2 [ 16 ] = veorq_u8 ( parity2 [ 16 ], temp ) ;
                         parity2 [ 16 ] = veorq_u8 ( parity2 [ 16 ], parity2 [ 17 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 17 ], data_vec ) ;
-                        parity2 [ 17 ] = veorq_u8 ( parity2 [ 17 ], temp ) ;
+                        parity2 [ 17 ] = vqtbl1q_u8 ( taps [ 17 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 17 ], data_vech ) ;
                         parity2[ 17 ] = veorq_u8 ( parity2 [ 17 ], temp ) ;
 
@@ -21915,8 +21848,7 @@ int gf_18vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 16 ], data_vech ) ;
                         parity3 [ 16 ] = veorq_u8 ( parity3 [ 16 ], temp ) ;
                         parity3 [ 16 ] = veorq_u8 ( parity3 [ 16 ], parity3 [ 17 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 17 ], data_vec ) ;
-                        parity3 [ 17 ] = veorq_u8 ( parity3 [ 17 ], temp ) ;
+                        parity3 [ 17 ] = vqtbl1q_u8 ( taps [ 17 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 17 ], data_vech ) ;
                         parity3[ 17 ] = veorq_u8 ( parity3 [ 17 ], temp ) ;
 
@@ -22375,8 +22307,7 @@ int gf_19vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 17 ], data_vech ) ;
                         parity0 [ 17 ] = veorq_u8 ( parity0 [ 17 ], temp ) ;
                         parity0 [ 17 ] = veorq_u8 ( parity0 [ 17 ], parity0 [ 18 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 18 ], data_vec ) ;
-                        parity0 [ 18 ] = veorq_u8 ( parity0 [ 18 ], temp ) ;
+                        parity0 [ 18 ] = vqtbl1q_u8 ( taps [ 18 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 18 ], data_vech ) ;
                         parity0[ 18 ] = veorq_u8 ( parity0 [ 18 ], temp ) ;
 
@@ -22457,8 +22388,7 @@ int gf_19vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 17 ], data_vech ) ;
                         parity1 [ 17 ] = veorq_u8 ( parity1 [ 17 ], temp ) ;
                         parity1 [ 17 ] = veorq_u8 ( parity1 [ 17 ], parity1 [ 18 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 18 ], data_vec ) ;
-                        parity1 [ 18 ] = veorq_u8 ( parity1 [ 18 ], temp ) ;
+                        parity1 [ 18 ] = vqtbl1q_u8 ( taps [ 18 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 18 ], data_vech ) ;
                         parity1[ 18 ] = veorq_u8 ( parity1 [ 18 ], temp ) ;
 
@@ -22539,8 +22469,7 @@ int gf_19vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 17 ], data_vech ) ;
                         parity2 [ 17 ] = veorq_u8 ( parity2 [ 17 ], temp ) ;
                         parity2 [ 17 ] = veorq_u8 ( parity2 [ 17 ], parity2 [ 18 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 18 ], data_vec ) ;
-                        parity2 [ 18 ] = veorq_u8 ( parity2 [ 18 ], temp ) ;
+                        parity2 [ 18 ] = vqtbl1q_u8 ( taps [ 18 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 18 ], data_vech ) ;
                         parity2[ 18 ] = veorq_u8 ( parity2 [ 18 ], temp ) ;
 
@@ -22622,8 +22551,7 @@ int gf_19vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 17 ], data_vech ) ;
                         parity3 [ 17 ] = veorq_u8 ( parity3 [ 17 ], temp ) ;
                         parity3 [ 17 ] = veorq_u8 ( parity3 [ 17 ], parity3 [ 18 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 18 ], data_vec ) ;
-                        parity3 [ 18 ] = veorq_u8 ( parity3 [ 18 ], temp ) ;
+                        parity3 [ 18 ] = vqtbl1q_u8 ( taps [ 18 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 18 ], data_vech ) ;
                         parity3[ 18 ] = veorq_u8 ( parity3 [ 18 ], temp ) ;
 
@@ -23104,8 +23032,7 @@ int gf_20vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 18 ], data_vech ) ;
                         parity0 [ 18 ] = veorq_u8 ( parity0 [ 18 ], temp ) ;
                         parity0 [ 18 ] = veorq_u8 ( parity0 [ 18 ], parity0 [ 19 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 19 ], data_vec ) ;
-                        parity0 [ 19 ] = veorq_u8 ( parity0 [ 19 ], temp ) ;
+                        parity0 [ 19 ] = vqtbl1q_u8 ( taps [ 19 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 19 ], data_vech ) ;
                         parity0[ 19 ] = veorq_u8 ( parity0 [ 19 ], temp ) ;
 
@@ -23190,8 +23117,7 @@ int gf_20vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 18 ], data_vech ) ;
                         parity1 [ 18 ] = veorq_u8 ( parity1 [ 18 ], temp ) ;
                         parity1 [ 18 ] = veorq_u8 ( parity1 [ 18 ], parity1 [ 19 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 19 ], data_vec ) ;
-                        parity1 [ 19 ] = veorq_u8 ( parity1 [ 19 ], temp ) ;
+                        parity1 [ 19 ] = vqtbl1q_u8 ( taps [ 19 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 19 ], data_vech ) ;
                         parity1[ 19 ] = veorq_u8 ( parity1 [ 19 ], temp ) ;
 
@@ -23276,8 +23202,7 @@ int gf_20vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 18 ], data_vech ) ;
                         parity2 [ 18 ] = veorq_u8 ( parity2 [ 18 ], temp ) ;
                         parity2 [ 18 ] = veorq_u8 ( parity2 [ 18 ], parity2 [ 19 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 19 ], data_vec ) ;
-                        parity2 [ 19 ] = veorq_u8 ( parity2 [ 19 ], temp ) ;
+                        parity2 [ 19 ] = vqtbl1q_u8 ( taps [ 19 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 19 ], data_vech ) ;
                         parity2[ 19 ] = veorq_u8 ( parity2 [ 19 ], temp ) ;
 
@@ -23363,8 +23288,7 @@ int gf_20vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 18 ], data_vech ) ;
                         parity3 [ 18 ] = veorq_u8 ( parity3 [ 18 ], temp ) ;
                         parity3 [ 18 ] = veorq_u8 ( parity3 [ 18 ], parity3 [ 19 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 19 ], data_vec ) ;
-                        parity3 [ 19 ] = veorq_u8 ( parity3 [ 19 ], temp ) ;
+                        parity3 [ 19 ] = vqtbl1q_u8 ( taps [ 19 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 19 ], data_vech ) ;
                         parity3[ 19 ] = veorq_u8 ( parity3 [ 19 ], temp ) ;
 
@@ -23867,8 +23791,7 @@ int gf_21vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 19 ], data_vech ) ;
                         parity0 [ 19 ] = veorq_u8 ( parity0 [ 19 ], temp ) ;
                         parity0 [ 19 ] = veorq_u8 ( parity0 [ 19 ], parity0 [ 20 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 20 ], data_vec ) ;
-                        parity0 [ 20 ] = veorq_u8 ( parity0 [ 20 ], temp ) ;
+                        parity0 [ 20 ] = vqtbl1q_u8 ( taps [ 20 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 20 ], data_vech ) ;
                         parity0[ 20 ] = veorq_u8 ( parity0 [ 20 ], temp ) ;
 
@@ -23957,8 +23880,7 @@ int gf_21vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 19 ], data_vech ) ;
                         parity1 [ 19 ] = veorq_u8 ( parity1 [ 19 ], temp ) ;
                         parity1 [ 19 ] = veorq_u8 ( parity1 [ 19 ], parity1 [ 20 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 20 ], data_vec ) ;
-                        parity1 [ 20 ] = veorq_u8 ( parity1 [ 20 ], temp ) ;
+                        parity1 [ 20 ] = vqtbl1q_u8 ( taps [ 20 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 20 ], data_vech ) ;
                         parity1[ 20 ] = veorq_u8 ( parity1 [ 20 ], temp ) ;
 
@@ -24047,8 +23969,7 @@ int gf_21vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 19 ], data_vech ) ;
                         parity2 [ 19 ] = veorq_u8 ( parity2 [ 19 ], temp ) ;
                         parity2 [ 19 ] = veorq_u8 ( parity2 [ 19 ], parity2 [ 20 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 20 ], data_vec ) ;
-                        parity2 [ 20 ] = veorq_u8 ( parity2 [ 20 ], temp ) ;
+                        parity2 [ 20 ] = vqtbl1q_u8 ( taps [ 20 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 20 ], data_vech ) ;
                         parity2[ 20 ] = veorq_u8 ( parity2 [ 20 ], temp ) ;
 
@@ -24138,8 +24059,7 @@ int gf_21vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 19 ], data_vech ) ;
                         parity3 [ 19 ] = veorq_u8 ( parity3 [ 19 ], temp ) ;
                         parity3 [ 19 ] = veorq_u8 ( parity3 [ 19 ], parity3 [ 20 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 20 ], data_vec ) ;
-                        parity3 [ 20 ] = veorq_u8 ( parity3 [ 20 ], temp ) ;
+                        parity3 [ 20 ] = vqtbl1q_u8 ( taps [ 20 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 20 ], data_vech ) ;
                         parity3[ 20 ] = veorq_u8 ( parity3 [ 20 ], temp ) ;
 
@@ -24664,8 +24584,7 @@ int gf_22vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 20 ], data_vech ) ;
                         parity0 [ 20 ] = veorq_u8 ( parity0 [ 20 ], temp ) ;
                         parity0 [ 20 ] = veorq_u8 ( parity0 [ 20 ], parity0 [ 21 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 21 ], data_vec ) ;
-                        parity0 [ 21 ] = veorq_u8 ( parity0 [ 21 ], temp ) ;
+                        parity0 [ 21 ] = vqtbl1q_u8 ( taps [ 21 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 21 ], data_vech ) ;
                         parity0[ 21 ] = veorq_u8 ( parity0 [ 21 ], temp ) ;
 
@@ -24758,8 +24677,7 @@ int gf_22vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 20 ], data_vech ) ;
                         parity1 [ 20 ] = veorq_u8 ( parity1 [ 20 ], temp ) ;
                         parity1 [ 20 ] = veorq_u8 ( parity1 [ 20 ], parity1 [ 21 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 21 ], data_vec ) ;
-                        parity1 [ 21 ] = veorq_u8 ( parity1 [ 21 ], temp ) ;
+                        parity1 [ 21 ] = vqtbl1q_u8 ( taps [ 21 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 21 ], data_vech ) ;
                         parity1[ 21 ] = veorq_u8 ( parity1 [ 21 ], temp ) ;
 
@@ -24852,8 +24770,7 @@ int gf_22vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 20 ], data_vech ) ;
                         parity2 [ 20 ] = veorq_u8 ( parity2 [ 20 ], temp ) ;
                         parity2 [ 20 ] = veorq_u8 ( parity2 [ 20 ], parity2 [ 21 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 21 ], data_vec ) ;
-                        parity2 [ 21 ] = veorq_u8 ( parity2 [ 21 ], temp ) ;
+                        parity2 [ 21 ] = vqtbl1q_u8 ( taps [ 21 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 21 ], data_vech ) ;
                         parity2[ 21 ] = veorq_u8 ( parity2 [ 21 ], temp ) ;
 
@@ -24947,8 +24864,7 @@ int gf_22vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 20 ], data_vech ) ;
                         parity3 [ 20 ] = veorq_u8 ( parity3 [ 20 ], temp ) ;
                         parity3 [ 20 ] = veorq_u8 ( parity3 [ 20 ], parity3 [ 21 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 21 ], data_vec ) ;
-                        parity3 [ 21 ] = veorq_u8 ( parity3 [ 21 ], temp ) ;
+                        parity3 [ 21 ] = vqtbl1q_u8 ( taps [ 21 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 21 ], data_vech ) ;
                         parity3[ 21 ] = veorq_u8 ( parity3 [ 21 ], temp ) ;
 
@@ -25495,8 +25411,7 @@ int gf_23vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 21 ], data_vech ) ;
                         parity0 [ 21 ] = veorq_u8 ( parity0 [ 21 ], temp ) ;
                         parity0 [ 21 ] = veorq_u8 ( parity0 [ 21 ], parity0 [ 22 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 22 ], data_vec ) ;
-                        parity0 [ 22 ] = veorq_u8 ( parity0 [ 22 ], temp ) ;
+                        parity0 [ 22 ] = vqtbl1q_u8 ( taps [ 22 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 22 ], data_vech ) ;
                         parity0[ 22 ] = veorq_u8 ( parity0 [ 22 ], temp ) ;
 
@@ -25593,8 +25508,7 @@ int gf_23vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 21 ], data_vech ) ;
                         parity1 [ 21 ] = veorq_u8 ( parity1 [ 21 ], temp ) ;
                         parity1 [ 21 ] = veorq_u8 ( parity1 [ 21 ], parity1 [ 22 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 22 ], data_vec ) ;
-                        parity1 [ 22 ] = veorq_u8 ( parity1 [ 22 ], temp ) ;
+                        parity1 [ 22 ] = vqtbl1q_u8 ( taps [ 22 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 22 ], data_vech ) ;
                         parity1[ 22 ] = veorq_u8 ( parity1 [ 22 ], temp ) ;
 
@@ -25691,8 +25605,7 @@ int gf_23vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 21 ], data_vech ) ;
                         parity2 [ 21 ] = veorq_u8 ( parity2 [ 21 ], temp ) ;
                         parity2 [ 21 ] = veorq_u8 ( parity2 [ 21 ], parity2 [ 22 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 22 ], data_vec ) ;
-                        parity2 [ 22 ] = veorq_u8 ( parity2 [ 22 ], temp ) ;
+                        parity2 [ 22 ] = vqtbl1q_u8 ( taps [ 22 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 22 ], data_vech ) ;
                         parity2[ 22 ] = veorq_u8 ( parity2 [ 22 ], temp ) ;
 
@@ -25790,8 +25703,7 @@ int gf_23vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 21 ], data_vech ) ;
                         parity3 [ 21 ] = veorq_u8 ( parity3 [ 21 ], temp ) ;
                         parity3 [ 21 ] = veorq_u8 ( parity3 [ 21 ], parity3 [ 22 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 22 ], data_vec ) ;
-                        parity3 [ 22 ] = veorq_u8 ( parity3 [ 22 ], temp ) ;
+                        parity3 [ 22 ] = vqtbl1q_u8 ( taps [ 22 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 22 ], data_vech ) ;
                         parity3[ 22 ] = veorq_u8 ( parity3 [ 22 ], temp ) ;
 
@@ -26360,8 +26272,7 @@ int gf_24vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 22 ], data_vech ) ;
                         parity0 [ 22 ] = veorq_u8 ( parity0 [ 22 ], temp ) ;
                         parity0 [ 22 ] = veorq_u8 ( parity0 [ 22 ], parity0 [ 23 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 23 ], data_vec ) ;
-                        parity0 [ 23 ] = veorq_u8 ( parity0 [ 23 ], temp ) ;
+                        parity0 [ 23 ] = vqtbl1q_u8 ( taps [ 23 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 23 ], data_vech ) ;
                         parity0[ 23 ] = veorq_u8 ( parity0 [ 23 ], temp ) ;
 
@@ -26462,8 +26373,7 @@ int gf_24vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 22 ], data_vech ) ;
                         parity1 [ 22 ] = veorq_u8 ( parity1 [ 22 ], temp ) ;
                         parity1 [ 22 ] = veorq_u8 ( parity1 [ 22 ], parity1 [ 23 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 23 ], data_vec ) ;
-                        parity1 [ 23 ] = veorq_u8 ( parity1 [ 23 ], temp ) ;
+                        parity1 [ 23 ] = vqtbl1q_u8 ( taps [ 23 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 23 ], data_vech ) ;
                         parity1[ 23 ] = veorq_u8 ( parity1 [ 23 ], temp ) ;
 
@@ -26564,8 +26474,7 @@ int gf_24vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 22 ], data_vech ) ;
                         parity2 [ 22 ] = veorq_u8 ( parity2 [ 22 ], temp ) ;
                         parity2 [ 22 ] = veorq_u8 ( parity2 [ 22 ], parity2 [ 23 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 23 ], data_vec ) ;
-                        parity2 [ 23 ] = veorq_u8 ( parity2 [ 23 ], temp ) ;
+                        parity2 [ 23 ] = vqtbl1q_u8 ( taps [ 23 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 23 ], data_vech ) ;
                         parity2[ 23 ] = veorq_u8 ( parity2 [ 23 ], temp ) ;
 
@@ -26667,8 +26576,7 @@ int gf_24vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 22 ], data_vech ) ;
                         parity3 [ 22 ] = veorq_u8 ( parity3 [ 22 ], temp ) ;
                         parity3 [ 22 ] = veorq_u8 ( parity3 [ 22 ], parity3 [ 23 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 23 ], data_vec ) ;
-                        parity3 [ 23 ] = veorq_u8 ( parity3 [ 23 ], temp ) ;
+                        parity3 [ 23 ] = vqtbl1q_u8 ( taps [ 23 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 23 ], data_vech ) ;
                         parity3[ 23 ] = veorq_u8 ( parity3 [ 23 ], temp ) ;
 
@@ -27259,8 +27167,7 @@ int gf_25vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 23 ], data_vech ) ;
                         parity0 [ 23 ] = veorq_u8 ( parity0 [ 23 ], temp ) ;
                         parity0 [ 23 ] = veorq_u8 ( parity0 [ 23 ], parity0 [ 24 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 24 ], data_vec ) ;
-                        parity0 [ 24 ] = veorq_u8 ( parity0 [ 24 ], temp ) ;
+                        parity0 [ 24 ] = vqtbl1q_u8 ( taps [ 24 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 24 ], data_vech ) ;
                         parity0[ 24 ] = veorq_u8 ( parity0 [ 24 ], temp ) ;
 
@@ -27365,8 +27272,7 @@ int gf_25vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 23 ], data_vech ) ;
                         parity1 [ 23 ] = veorq_u8 ( parity1 [ 23 ], temp ) ;
                         parity1 [ 23 ] = veorq_u8 ( parity1 [ 23 ], parity1 [ 24 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 24 ], data_vec ) ;
-                        parity1 [ 24 ] = veorq_u8 ( parity1 [ 24 ], temp ) ;
+                        parity1 [ 24 ] = vqtbl1q_u8 ( taps [ 24 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 24 ], data_vech ) ;
                         parity1[ 24 ] = veorq_u8 ( parity1 [ 24 ], temp ) ;
 
@@ -27471,8 +27377,7 @@ int gf_25vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 23 ], data_vech ) ;
                         parity2 [ 23 ] = veorq_u8 ( parity2 [ 23 ], temp ) ;
                         parity2 [ 23 ] = veorq_u8 ( parity2 [ 23 ], parity2 [ 24 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 24 ], data_vec ) ;
-                        parity2 [ 24 ] = veorq_u8 ( parity2 [ 24 ], temp ) ;
+                        parity2 [ 24 ] = vqtbl1q_u8 ( taps [ 24 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 24 ], data_vech ) ;
                         parity2[ 24 ] = veorq_u8 ( parity2 [ 24 ], temp ) ;
 
@@ -27578,8 +27483,7 @@ int gf_25vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 23 ], data_vech ) ;
                         parity3 [ 23 ] = veorq_u8 ( parity3 [ 23 ], temp ) ;
                         parity3 [ 23 ] = veorq_u8 ( parity3 [ 23 ], parity3 [ 24 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 24 ], data_vec ) ;
-                        parity3 [ 24 ] = veorq_u8 ( parity3 [ 24 ], temp ) ;
+                        parity3 [ 24 ] = vqtbl1q_u8 ( taps [ 24 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 24 ], data_vech ) ;
                         parity3[ 24 ] = veorq_u8 ( parity3 [ 24 ], temp ) ;
 
@@ -28192,8 +28096,7 @@ int gf_26vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 24 ], data_vech ) ;
                         parity0 [ 24 ] = veorq_u8 ( parity0 [ 24 ], temp ) ;
                         parity0 [ 24 ] = veorq_u8 ( parity0 [ 24 ], parity0 [ 25 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 25 ], data_vec ) ;
-                        parity0 [ 25 ] = veorq_u8 ( parity0 [ 25 ], temp ) ;
+                        parity0 [ 25 ] = vqtbl1q_u8 ( taps [ 25 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 25 ], data_vech ) ;
                         parity0[ 25 ] = veorq_u8 ( parity0 [ 25 ], temp ) ;
 
@@ -28302,8 +28205,7 @@ int gf_26vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 24 ], data_vech ) ;
                         parity1 [ 24 ] = veorq_u8 ( parity1 [ 24 ], temp ) ;
                         parity1 [ 24 ] = veorq_u8 ( parity1 [ 24 ], parity1 [ 25 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 25 ], data_vec ) ;
-                        parity1 [ 25 ] = veorq_u8 ( parity1 [ 25 ], temp ) ;
+                        parity1 [ 25 ] = vqtbl1q_u8 ( taps [ 25 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 25 ], data_vech ) ;
                         parity1[ 25 ] = veorq_u8 ( parity1 [ 25 ], temp ) ;
 
@@ -28412,8 +28314,7 @@ int gf_26vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 24 ], data_vech ) ;
                         parity2 [ 24 ] = veorq_u8 ( parity2 [ 24 ], temp ) ;
                         parity2 [ 24 ] = veorq_u8 ( parity2 [ 24 ], parity2 [ 25 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 25 ], data_vec ) ;
-                        parity2 [ 25 ] = veorq_u8 ( parity2 [ 25 ], temp ) ;
+                        parity2 [ 25 ] = vqtbl1q_u8 ( taps [ 25 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 25 ], data_vech ) ;
                         parity2[ 25 ] = veorq_u8 ( parity2 [ 25 ], temp ) ;
 
@@ -28523,8 +28424,7 @@ int gf_26vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 24 ], data_vech ) ;
                         parity3 [ 24 ] = veorq_u8 ( parity3 [ 24 ], temp ) ;
                         parity3 [ 24 ] = veorq_u8 ( parity3 [ 24 ], parity3 [ 25 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 25 ], data_vec ) ;
-                        parity3 [ 25 ] = veorq_u8 ( parity3 [ 25 ], temp ) ;
+                        parity3 [ 25 ] = vqtbl1q_u8 ( taps [ 25 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 25 ], data_vech ) ;
                         parity3[ 25 ] = veorq_u8 ( parity3 [ 25 ], temp ) ;
 
@@ -29159,8 +29059,7 @@ int gf_27vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 25 ], data_vech ) ;
                         parity0 [ 25 ] = veorq_u8 ( parity0 [ 25 ], temp ) ;
                         parity0 [ 25 ] = veorq_u8 ( parity0 [ 25 ], parity0 [ 26 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 26 ], data_vec ) ;
-                        parity0 [ 26 ] = veorq_u8 ( parity0 [ 26 ], temp ) ;
+                        parity0 [ 26 ] = vqtbl1q_u8 ( taps [ 26 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 26 ], data_vech ) ;
                         parity0[ 26 ] = veorq_u8 ( parity0 [ 26 ], temp ) ;
 
@@ -29273,8 +29172,7 @@ int gf_27vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 25 ], data_vech ) ;
                         parity1 [ 25 ] = veorq_u8 ( parity1 [ 25 ], temp ) ;
                         parity1 [ 25 ] = veorq_u8 ( parity1 [ 25 ], parity1 [ 26 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 26 ], data_vec ) ;
-                        parity1 [ 26 ] = veorq_u8 ( parity1 [ 26 ], temp ) ;
+                        parity1 [ 26 ] = vqtbl1q_u8 ( taps [ 26 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 26 ], data_vech ) ;
                         parity1[ 26 ] = veorq_u8 ( parity1 [ 26 ], temp ) ;
 
@@ -29387,8 +29285,7 @@ int gf_27vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 25 ], data_vech ) ;
                         parity2 [ 25 ] = veorq_u8 ( parity2 [ 25 ], temp ) ;
                         parity2 [ 25 ] = veorq_u8 ( parity2 [ 25 ], parity2 [ 26 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 26 ], data_vec ) ;
-                        parity2 [ 26 ] = veorq_u8 ( parity2 [ 26 ], temp ) ;
+                        parity2 [ 26 ] = vqtbl1q_u8 ( taps [ 26 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 26 ], data_vech ) ;
                         parity2[ 26 ] = veorq_u8 ( parity2 [ 26 ], temp ) ;
 
@@ -29502,8 +29399,7 @@ int gf_27vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 25 ], data_vech ) ;
                         parity3 [ 25 ] = veorq_u8 ( parity3 [ 25 ], temp ) ;
                         parity3 [ 25 ] = veorq_u8 ( parity3 [ 25 ], parity3 [ 26 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 26 ], data_vec ) ;
-                        parity3 [ 26 ] = veorq_u8 ( parity3 [ 26 ], temp ) ;
+                        parity3 [ 26 ] = vqtbl1q_u8 ( taps [ 26 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 26 ], data_vech ) ;
                         parity3[ 26 ] = veorq_u8 ( parity3 [ 26 ], temp ) ;
 
@@ -30160,8 +30056,7 @@ int gf_28vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 26 ], data_vech ) ;
                         parity0 [ 26 ] = veorq_u8 ( parity0 [ 26 ], temp ) ;
                         parity0 [ 26 ] = veorq_u8 ( parity0 [ 26 ], parity0 [ 27 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 27 ], data_vec ) ;
-                        parity0 [ 27 ] = veorq_u8 ( parity0 [ 27 ], temp ) ;
+                        parity0 [ 27 ] = vqtbl1q_u8 ( taps [ 27 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 27 ], data_vech ) ;
                         parity0[ 27 ] = veorq_u8 ( parity0 [ 27 ], temp ) ;
 
@@ -30278,8 +30173,7 @@ int gf_28vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 26 ], data_vech ) ;
                         parity1 [ 26 ] = veorq_u8 ( parity1 [ 26 ], temp ) ;
                         parity1 [ 26 ] = veorq_u8 ( parity1 [ 26 ], parity1 [ 27 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 27 ], data_vec ) ;
-                        parity1 [ 27 ] = veorq_u8 ( parity1 [ 27 ], temp ) ;
+                        parity1 [ 27 ] = vqtbl1q_u8 ( taps [ 27 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 27 ], data_vech ) ;
                         parity1[ 27 ] = veorq_u8 ( parity1 [ 27 ], temp ) ;
 
@@ -30396,8 +30290,7 @@ int gf_28vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 26 ], data_vech ) ;
                         parity2 [ 26 ] = veorq_u8 ( parity2 [ 26 ], temp ) ;
                         parity2 [ 26 ] = veorq_u8 ( parity2 [ 26 ], parity2 [ 27 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 27 ], data_vec ) ;
-                        parity2 [ 27 ] = veorq_u8 ( parity2 [ 27 ], temp ) ;
+                        parity2 [ 27 ] = vqtbl1q_u8 ( taps [ 27 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 27 ], data_vech ) ;
                         parity2[ 27 ] = veorq_u8 ( parity2 [ 27 ], temp ) ;
 
@@ -30515,8 +30408,7 @@ int gf_28vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 26 ], data_vech ) ;
                         parity3 [ 26 ] = veorq_u8 ( parity3 [ 26 ], temp ) ;
                         parity3 [ 26 ] = veorq_u8 ( parity3 [ 26 ], parity3 [ 27 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 27 ], data_vec ) ;
-                        parity3 [ 27 ] = veorq_u8 ( parity3 [ 27 ], temp ) ;
+                        parity3 [ 27 ] = vqtbl1q_u8 ( taps [ 27 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 27 ], data_vech ) ;
                         parity3[ 27 ] = veorq_u8 ( parity3 [ 27 ], temp ) ;
 
@@ -31195,8 +31087,7 @@ int gf_29vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 27 ], data_vech ) ;
                         parity0 [ 27 ] = veorq_u8 ( parity0 [ 27 ], temp ) ;
                         parity0 [ 27 ] = veorq_u8 ( parity0 [ 27 ], parity0 [ 28 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 28 ], data_vec ) ;
-                        parity0 [ 28 ] = veorq_u8 ( parity0 [ 28 ], temp ) ;
+                        parity0 [ 28 ] = vqtbl1q_u8 ( taps [ 28 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 28 ], data_vech ) ;
                         parity0[ 28 ] = veorq_u8 ( parity0 [ 28 ], temp ) ;
 
@@ -31317,8 +31208,7 @@ int gf_29vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 27 ], data_vech ) ;
                         parity1 [ 27 ] = veorq_u8 ( parity1 [ 27 ], temp ) ;
                         parity1 [ 27 ] = veorq_u8 ( parity1 [ 27 ], parity1 [ 28 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 28 ], data_vec ) ;
-                        parity1 [ 28 ] = veorq_u8 ( parity1 [ 28 ], temp ) ;
+                        parity1 [ 28 ] = vqtbl1q_u8 ( taps [ 28 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 28 ], data_vech ) ;
                         parity1[ 28 ] = veorq_u8 ( parity1 [ 28 ], temp ) ;
 
@@ -31439,8 +31329,7 @@ int gf_29vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 27 ], data_vech ) ;
                         parity2 [ 27 ] = veorq_u8 ( parity2 [ 27 ], temp ) ;
                         parity2 [ 27 ] = veorq_u8 ( parity2 [ 27 ], parity2 [ 28 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 28 ], data_vec ) ;
-                        parity2 [ 28 ] = veorq_u8 ( parity2 [ 28 ], temp ) ;
+                        parity2 [ 28 ] = vqtbl1q_u8 ( taps [ 28 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 28 ], data_vech ) ;
                         parity2[ 28 ] = veorq_u8 ( parity2 [ 28 ], temp ) ;
 
@@ -31562,8 +31451,7 @@ int gf_29vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 27 ], data_vech ) ;
                         parity3 [ 27 ] = veorq_u8 ( parity3 [ 27 ], temp ) ;
                         parity3 [ 27 ] = veorq_u8 ( parity3 [ 27 ], parity3 [ 28 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 28 ], data_vec ) ;
-                        parity3 [ 28 ] = veorq_u8 ( parity3 [ 28 ], temp ) ;
+                        parity3 [ 28 ] = vqtbl1q_u8 ( taps [ 28 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 28 ], data_vech ) ;
                         parity3[ 28 ] = veorq_u8 ( parity3 [ 28 ], temp ) ;
 
@@ -32264,8 +32152,7 @@ int gf_30vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 28 ], data_vech ) ;
                         parity0 [ 28 ] = veorq_u8 ( parity0 [ 28 ], temp ) ;
                         parity0 [ 28 ] = veorq_u8 ( parity0 [ 28 ], parity0 [ 29 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 29 ], data_vec ) ;
-                        parity0 [ 29 ] = veorq_u8 ( parity0 [ 29 ], temp ) ;
+                        parity0 [ 29 ] = vqtbl1q_u8 ( taps [ 29 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 29 ], data_vech ) ;
                         parity0[ 29 ] = veorq_u8 ( parity0 [ 29 ], temp ) ;
 
@@ -32390,8 +32277,7 @@ int gf_30vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 28 ], data_vech ) ;
                         parity1 [ 28 ] = veorq_u8 ( parity1 [ 28 ], temp ) ;
                         parity1 [ 28 ] = veorq_u8 ( parity1 [ 28 ], parity1 [ 29 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 29 ], data_vec ) ;
-                        parity1 [ 29 ] = veorq_u8 ( parity1 [ 29 ], temp ) ;
+                        parity1 [ 29 ] = vqtbl1q_u8 ( taps [ 29 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 29 ], data_vech ) ;
                         parity1[ 29 ] = veorq_u8 ( parity1 [ 29 ], temp ) ;
 
@@ -32516,8 +32402,7 @@ int gf_30vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 28 ], data_vech ) ;
                         parity2 [ 28 ] = veorq_u8 ( parity2 [ 28 ], temp ) ;
                         parity2 [ 28 ] = veorq_u8 ( parity2 [ 28 ], parity2 [ 29 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 29 ], data_vec ) ;
-                        parity2 [ 29 ] = veorq_u8 ( parity2 [ 29 ], temp ) ;
+                        parity2 [ 29 ] = vqtbl1q_u8 ( taps [ 29 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 29 ], data_vech ) ;
                         parity2[ 29 ] = veorq_u8 ( parity2 [ 29 ], temp ) ;
 
@@ -32643,8 +32528,7 @@ int gf_30vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 28 ], data_vech ) ;
                         parity3 [ 28 ] = veorq_u8 ( parity3 [ 28 ], temp ) ;
                         parity3 [ 28 ] = veorq_u8 ( parity3 [ 28 ], parity3 [ 29 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 29 ], data_vec ) ;
-                        parity3 [ 29 ] = veorq_u8 ( parity3 [ 29 ], temp ) ;
+                        parity3 [ 29 ] = vqtbl1q_u8 ( taps [ 29 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 29 ], data_vech ) ;
                         parity3[ 29 ] = veorq_u8 ( parity3 [ 29 ], temp ) ;
 
@@ -33367,8 +33251,7 @@ int gf_31vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 29 ], data_vech ) ;
                         parity0 [ 29 ] = veorq_u8 ( parity0 [ 29 ], temp ) ;
                         parity0 [ 29 ] = veorq_u8 ( parity0 [ 29 ], parity0 [ 30 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 30 ], data_vec ) ;
-                        parity0 [ 30 ] = veorq_u8 ( parity0 [ 30 ], temp ) ;
+                        parity0 [ 30 ] = vqtbl1q_u8 ( taps [ 30 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 30 ], data_vech ) ;
                         parity0[ 30 ] = veorq_u8 ( parity0 [ 30 ], temp ) ;
 
@@ -33497,8 +33380,7 @@ int gf_31vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 29 ], data_vech ) ;
                         parity1 [ 29 ] = veorq_u8 ( parity1 [ 29 ], temp ) ;
                         parity1 [ 29 ] = veorq_u8 ( parity1 [ 29 ], parity1 [ 30 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 30 ], data_vec ) ;
-                        parity1 [ 30 ] = veorq_u8 ( parity1 [ 30 ], temp ) ;
+                        parity1 [ 30 ] = vqtbl1q_u8 ( taps [ 30 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 30 ], data_vech ) ;
                         parity1[ 30 ] = veorq_u8 ( parity1 [ 30 ], temp ) ;
 
@@ -33627,8 +33509,7 @@ int gf_31vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 29 ], data_vech ) ;
                         parity2 [ 29 ] = veorq_u8 ( parity2 [ 29 ], temp ) ;
                         parity2 [ 29 ] = veorq_u8 ( parity2 [ 29 ], parity2 [ 30 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 30 ], data_vec ) ;
-                        parity2 [ 30 ] = veorq_u8 ( parity2 [ 30 ], temp ) ;
+                        parity2 [ 30 ] = vqtbl1q_u8 ( taps [ 30 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 30 ], data_vech ) ;
                         parity2[ 30 ] = veorq_u8 ( parity2 [ 30 ], temp ) ;
 
@@ -33758,8 +33639,7 @@ int gf_31vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 29 ], data_vech ) ;
                         parity3 [ 29 ] = veorq_u8 ( parity3 [ 29 ], temp ) ;
                         parity3 [ 29 ] = veorq_u8 ( parity3 [ 29 ], parity3 [ 30 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 30 ], data_vec ) ;
-                        parity3 [ 30 ] = veorq_u8 ( parity3 [ 30 ], temp ) ;
+                        parity3 [ 30 ] = vqtbl1q_u8 ( taps [ 30 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 30 ], data_vech ) ;
                         parity3[ 30 ] = veorq_u8 ( parity3 [ 30 ], temp ) ;
 
@@ -34504,8 +34384,7 @@ int gf_32vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 30 ], data_vech ) ;
                         parity0 [ 30 ] = veorq_u8 ( parity0 [ 30 ], temp ) ;
                         parity0 [ 30 ] = veorq_u8 ( parity0 [ 30 ], parity0 [ 31 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 31 ], data_vec ) ;
-                        parity0 [ 31 ] = veorq_u8 ( parity0 [ 31 ], temp ) ;
+                        parity0 [ 31 ] = vqtbl1q_u8 ( taps [ 31 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 31 ], data_vech ) ;
                         parity0[ 31 ] = veorq_u8 ( parity0 [ 31 ], temp ) ;
 
@@ -34638,8 +34517,7 @@ int gf_32vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 30 ], data_vech ) ;
                         parity1 [ 30 ] = veorq_u8 ( parity1 [ 30 ], temp ) ;
                         parity1 [ 30 ] = veorq_u8 ( parity1 [ 30 ], parity1 [ 31 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 31 ], data_vec ) ;
-                        parity1 [ 31 ] = veorq_u8 ( parity1 [ 31 ], temp ) ;
+                        parity1 [ 31 ] = vqtbl1q_u8 ( taps [ 31 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 31 ], data_vech ) ;
                         parity1[ 31 ] = veorq_u8 ( parity1 [ 31 ], temp ) ;
 
@@ -34772,8 +34650,7 @@ int gf_32vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 30 ], data_vech ) ;
                         parity2 [ 30 ] = veorq_u8 ( parity2 [ 30 ], temp ) ;
                         parity2 [ 30 ] = veorq_u8 ( parity2 [ 30 ], parity2 [ 31 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 31 ], data_vec ) ;
-                        parity2 [ 31 ] = veorq_u8 ( parity2 [ 31 ], temp ) ;
+                        parity2 [ 31 ] = vqtbl1q_u8 ( taps [ 31 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 31 ], data_vech ) ;
                         parity2[ 31 ] = veorq_u8 ( parity2 [ 31 ], temp ) ;
 
@@ -34907,8 +34784,7 @@ int gf_32vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         temp = vqtbl1q_u8 ( tapsh [ 30 ], data_vech ) ;
                         parity3 [ 30 ] = veorq_u8 ( parity3 [ 30 ], temp ) ;
                         parity3 [ 30 ] = veorq_u8 ( parity3 [ 30 ], parity3 [ 31 ] ) ;
-                        temp = vqtbl1q_u8 ( taps [ 31 ], data_vec ) ;
-                        parity3 [ 31 ] = veorq_u8 ( parity3 [ 31 ], temp ) ;
+                        parity3 [ 31 ] = vqtbl1q_u8 ( taps [ 31 ], data_vec ) ;
                         temp = vqtbl1q_u8 ( tapsh [ 31 ], data_vech ) ;
                         parity3[ 31 ] = veorq_u8 ( parity3 [ 31 ], temp ) ;
 
