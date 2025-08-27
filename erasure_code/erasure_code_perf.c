@@ -307,10 +307,10 @@ main(int argc, char *argv[])
         // Make random data
         for (i = 0; i < k; i++)
                 for (j = 0; j < TEST_LEN(m); j++)
-                        buffs[i][j] = 0;
-                        //buffs[i][j] = rand();
+                        //buffs[i][j] = 0;
+                        buffs[i][j] = rand();
 
-        memset ( buffs [ 0 ], 1, TEST_LEN(m) ) ;
+        //memset ( buffs [ 0 ], 1, TEST_LEN(m) ) ;
 
         // Print test type
 #ifdef __aarch64__
