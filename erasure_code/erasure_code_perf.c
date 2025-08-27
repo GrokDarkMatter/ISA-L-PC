@@ -356,7 +356,7 @@ main(int argc, char *argv[])
         // Test intrinsics lfsr
         gf_gen_poly ( a, p ) ;
         ec_init_tables ( p, 1, a, g_tbls ) ;
-        dump_u8xu8 ( g_tbls, p, 32 ) ;
+        //dump_u8xu8 ( g_tbls, p, 32 ) ;
 
 #ifdef __aarch64__
         //BENCHMARK(&start, BENCHMARK_TIME,
