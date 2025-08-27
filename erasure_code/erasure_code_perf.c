@@ -328,7 +328,7 @@ main(int argc, char *argv[])
 
         // Perform the baseline benchmark
         gf_gen_poly_matrix(a, m, k ) ;
-        dump_u8xu8 ( a, m, k ) ;
+        //dump_u8xu8 ( a, m, k ) ;
         ec_init_tables(k, m - k, &a[k * k], g_tbls);
 #ifdef __aarch64__
         BENCHMARK(&start, BENCHMARK_TIME,
