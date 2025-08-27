@@ -151,7 +151,7 @@ int
 ec_decode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
                     unsigned char **coding)
 {
-        int newPos = 0, retry = 0, p = rows ;
+        int newPos = 0, retry = 0, p = rows, vSize ;
         unsigned char ** dest = coding, *g_orig = g_tbls ;
         
         if (len < 16) {
@@ -201,7 +201,7 @@ ec_decode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsigned ch
                 // If premature stop, correct data
                 if ( newPos < len )
                 {
-                        if ( pc_correct ( newPos, k, p, data, 16 ) )
+                        if ( pc_correct ( newPos, k, p, data, vSize ) )
                         {
                                 return ( newPos ) ;
                         }

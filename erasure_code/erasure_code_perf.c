@@ -50,15 +50,30 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include "erasure_code.h"
 #include "test.h"
 #include "ec_base.h"
-#include <immintrin.h>
 
 typedef unsigned char u8;
 
+// Utility print routine
+void
+dump_u8xu8(unsigned char *s, int k, int m)
+{
+        int i, j;
+        for (i = 0; i < k; i++) {
+                for (j = 0; j < m; j++) {
+                        printf(" %3x", 0xff & s[j + (i * m)]);
+                }
+                printf("\n");
+        }
+        printf("\n");
+}
+
 #ifdef __aarch64__
-#include "PCLib_AARCH_64_NEON.c" 
+#include <arm_neon.h>
+#include "aarch64/PCLib_AARCH64_NEON.c" 
 extern void ec_encode_data_neon ( int len, int k, int p, u8 * g_tbls, u8 ** buffs, u8 ** dest ) ;
 extern void ec_encode_data_neon ( int len, int k, int p, u8 * g_tbls, u8 ** buffs, u8 ** dest ) ;
 #else
+#include <immintrin.h>
 #include "PCLib_AVX2_GFNI.c" 
 #include "PCLib_AVX512_GFNI.c"
 extern void ec_encode_data_avx512_gfni ( int len, int k, int p, u8 * g_tbls, u8 ** buffs, u8 ** dest ) ;
@@ -92,20 +107,6 @@ extern void ec_encode_data_avx2_gfni ( int len, int k, int p, u8 * g_tbls, u8 **
 #define KMAX TEST_SOURCES // Maximum data buffer count, excluding parity
 
 #define BAD_MATRIX -1
-
-// Utility print routine
-void
-dump_u8xu8(unsigned char *s, int k, int m)
-{
-        int i, j;
-        for (i = 0; i < k; i++) {
-                for (j = 0; j < m; j++) {
-                        printf(" %3x", 0xff & s[j + (i * m)]);
-                }
-                printf("\n");
-        }
-        printf("\n");
-}
 
 void
 usage(const char *app_name)
@@ -190,10 +191,13 @@ main(int argc, char *argv[])
         // Work variables
         int i, j, m, k, p, nerrs, pp, ret = -1;
         void *buf ;
-        u8 *a, *g_tbls=0, *z0=0, avx2=0;
+        u8 *a, *g_tbls=0, *z0=0 ;
         u8 *temp_buffs[TEST_SOURCES] = { NULL };
         u8 *buffs[TEST_SOURCES] = { NULL };
         struct perf start;
+#ifndef __aarch64__
+        u8 avx2=0;
+#endif
 
         /* Set default parameters */
         k = 12;
@@ -207,8 +211,10 @@ main(int argc, char *argv[])
                         k = atoi(argv[++i]);
                 } else if (strcmp(argv[i], "-p") == 0) {
                         p = atoi(argv[++i]);
+#ifndef __aarch64__
                 } else if (strcmp(argv[i], "-2") == 0) {
                         avx2 = atoi(argv[++i]);
+#endif
                 } else if (strcmp(argv[i], "-h") == 0) {
                         usage(argv[0]);
                         return 0;
@@ -301,7 +307,15 @@ main(int argc, char *argv[])
         // Make random data
         for (i = 0; i < k; i++)
                 for (j = 0; j < TEST_LEN(m); j++)
-                        buffs[i][j] = rand();
+                        buffs[i][j] = 0;
+                        //buffs[i][j] = rand();
+        //memset ( buffs [ 0 ], TEST_LEN(m), 1 ) ;
+        //memset ( buffs [ 1 ], TEST_LEN(m), 1 ) ;
+        //memset ( buffs [ 2 ], TEST_LEN(m), 1 ) ;
+        //memset ( buffs [ 3 ], TEST_LEN(m), 1 ) ;
+        //memset ( buffs [ 4 ], TEST_LEN(m), 1 ) ;
+        //memset ( buffs [ 5 ], TEST_LEN(m), 1 ) ;
+        memset ( buffs [ 0 ], 1, TEST_LEN(m) ) ;
 
         // Print test type
 #ifdef __aarch64__
@@ -319,6 +333,7 @@ main(int argc, char *argv[])
 
         // Perform the baseline benchmark
         gf_gen_poly_matrix(a, m, k ) ;
+        dump_u8xu8 ( a, m, k ) ;
         ec_init_tables(k, m - k, &a[k * k], g_tbls);
 #ifdef __aarch64__
         BENCHMARK(&start, BENCHMARK_TIME,
@@ -341,10 +356,11 @@ main(int argc, char *argv[])
         // Test intrinsics lfsr
         gf_gen_poly ( a, p ) ;
         ec_init_tables ( p, 1, a, g_tbls ) ;
+        dump_u8xu8 ( g_tbls, p, 32 ) ;
 
 #ifdef __aarch64__
-        BENCHMARK(&start, BENCHMARK_TIME,
-                  pc_encode_data_neon(TEST_LEN(m), k, m - k, g_tbls, buffs, temp_buffs));
+        //BENCHMARK(&start, BENCHMARK_TIME,
+                  pc_encode_data_neon(64, k, m - k, g_tbls, buffs, temp_buffs);
 #else
         if ( avx2 == 0 )
         {
@@ -358,10 +374,10 @@ main(int argc, char *argv[])
         }
 #endif
         for (i = 0; i < p; i++) {
-                if (0 != memcmp(buffs[k+i], temp_buffs[i], TEST_LEN(m) ) ) {
-                        printf("Fail parity compare (%d, %d, %d) - ", m, k, p);
-                        dump_u8xu8 ( buffs [ k ], 1, 16 ) ;
-                        dump_u8xu8 ( temp_buffs [ 0 ], 1, 16 ) ;
+                if (0 != memcmp(buffs[k+i], temp_buffs[i], 64 ) ) {
+                        printf("Fail parity compare (%d, %d, %d, %d) - ", m, k, p, i);
+                        dump_u8xu8 ( buffs [ k+i ], 1, 16 ) ;
+                        dump_u8xu8 ( temp_buffs [ i ], 1, 16 ) ;
                         goto exit;
                 }
         }
