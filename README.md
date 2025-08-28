@@ -228,7 +228,7 @@ This code basically replaces all the ISA-L ASM code with Intrinsics in C languag
 
 ### Typical erasure_code_perf Test Results - AVX2_GFNI
 
-NOTE- USE ./configure CFLAGS="-O2 -march-native"
+NOTE- USE ./configure CFLAGS="-O2 -march=native"
 
 Here are the results for AVX2-GFNI
 
