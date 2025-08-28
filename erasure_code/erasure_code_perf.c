@@ -77,10 +77,10 @@ extern void ec_encode_data_neon ( int len, int k, int p, u8 * g_tbls, u8 ** buff
 extern void ec_encode_data_neon ( int len, int k, int p, u8 * g_tbls, u8 ** buffs, u8 ** dest ) ;
 #else
 #include <immintrin.h>
-#include "PCLib_AVX2_GFNI.c" 
-#include "PCLib_AVX512_GFNI.c"
-extern void ec_encode_data_avx512_gfni ( int len, int k, int p, u8 * g_tbls, u8 ** buffs, u8 ** dest ) ;
 extern void ec_encode_data_avx2_gfni ( int len, int k, int p, u8 * g_tbls, u8 ** buffs, u8 ** dest ) ;
+#include "PCLib_AVX2_GFNI.c" 
+extern void ec_encode_data_avx512_gfni ( int len, int k, int p, u8 * g_tbls, u8 ** buffs, u8 ** dest ) ;
+#include "PCLib_AVX512_GFNI.c"
 #endif
 
 #ifndef GT_L3_CACHE

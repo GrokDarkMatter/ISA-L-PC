@@ -51,7 +51,6 @@ int gf_2vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 2 ], taps [ 1 ] ;
         __m256i parity1 [ 2 ] ;
         __m256i data_vec ;
@@ -85,8 +84,7 @@ int gf_2vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -102,7 +100,6 @@ int gf_3vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 3 ], taps [ 2 ] ;
         __m256i parity1 [ 3 ] ;
         __m256i data_vec ;
@@ -143,8 +140,7 @@ int gf_3vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -162,7 +158,6 @@ int gf_4vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 4 ], taps [ 3 ] ;
         __m256i parity1 [ 4 ] ;
         __m256i data_vec ;
@@ -210,8 +205,7 @@ int gf_4vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -231,7 +225,6 @@ int gf_5vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 5 ], taps [ 4 ] ;
         __m256i parity1 [ 5 ] ;
         __m256i data_vec ;
@@ -286,8 +279,7 @@ int gf_5vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -309,7 +301,6 @@ int gf_6vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 6 ], taps [ 5 ] ;
         __m256i parity1 [ 6 ] ;
         __m256i data_vec ;
@@ -371,8 +362,7 @@ int gf_6vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -396,7 +386,6 @@ int gf_7vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 7 ], taps [ 6 ] ;
         __m256i parity1 [ 7 ] ;
         __m256i data_vec ;
@@ -465,8 +454,7 @@ int gf_7vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -492,7 +480,6 @@ int gf_8vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 8 ], taps [ 7 ] ;
         __m256i parity1 [ 8 ] ;
         __m256i data_vec ;
@@ -568,8 +555,7 @@ int gf_8vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -597,7 +583,6 @@ int gf_9vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 9 ], taps [ 8 ] ;
         __m256i parity1 [ 9 ] ;
         __m256i data_vec ;
@@ -680,8 +665,7 @@ int gf_9vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -711,7 +695,6 @@ int gf_10vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 10 ], taps [ 9 ] ;
         __m256i parity1 [ 10 ] ;
         __m256i data_vec ;
@@ -801,8 +784,7 @@ int gf_10vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -834,7 +816,6 @@ int gf_11vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 11 ], taps [ 10 ] ;
         __m256i parity1 [ 11 ] ;
         __m256i data_vec ;
@@ -931,8 +912,7 @@ int gf_11vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -966,7 +946,6 @@ int gf_12vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 12 ], taps [ 11 ] ;
         __m256i parity1 [ 12 ] ;
         __m256i data_vec ;
@@ -1070,8 +1049,7 @@ int gf_12vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -1107,7 +1085,6 @@ int gf_13vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 13 ], taps [ 12 ] ;
         __m256i parity1 [ 13 ] ;
         __m256i data_vec ;
@@ -1218,8 +1195,7 @@ int gf_13vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -1257,7 +1233,6 @@ int gf_14vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 14 ], taps [ 13 ] ;
         __m256i parity1 [ 14 ] ;
         __m256i data_vec ;
@@ -1375,8 +1350,7 @@ int gf_14vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -1416,7 +1390,6 @@ int gf_15vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 15 ], taps [ 14 ] ;
         __m256i parity1 [ 15 ] ;
         __m256i data_vec ;
@@ -1541,8 +1514,7 @@ int gf_15vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -1584,7 +1556,6 @@ int gf_16vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 16 ], taps [ 15 ] ;
         __m256i parity1 [ 16 ] ;
         __m256i data_vec ;
@@ -1716,8 +1687,7 @@ int gf_16vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -1761,7 +1731,6 @@ int gf_17vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 17 ], taps [ 16 ] ;
         __m256i parity1 [ 17 ] ;
         __m256i data_vec ;
@@ -1900,8 +1869,7 @@ int gf_17vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -1947,7 +1915,6 @@ int gf_18vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 18 ], taps [ 17 ] ;
         __m256i parity1 [ 18 ] ;
         __m256i data_vec ;
@@ -2093,8 +2060,7 @@ int gf_18vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -2142,7 +2108,6 @@ int gf_19vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 19 ], taps [ 18 ] ;
         __m256i parity1 [ 19 ] ;
         __m256i data_vec ;
@@ -2295,8 +2260,7 @@ int gf_19vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -2346,7 +2310,6 @@ int gf_20vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 20 ], taps [ 19 ] ;
         __m256i parity1 [ 20 ] ;
         __m256i data_vec ;
@@ -2506,8 +2469,7 @@ int gf_20vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -2559,7 +2521,6 @@ int gf_21vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 21 ], taps [ 20 ] ;
         __m256i parity1 [ 21 ] ;
         __m256i data_vec ;
@@ -2726,8 +2687,7 @@ int gf_21vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -2781,7 +2741,6 @@ int gf_22vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 22 ], taps [ 21 ] ;
         __m256i parity1 [ 22 ] ;
         __m256i data_vec ;
@@ -2955,8 +2914,7 @@ int gf_22vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -3012,7 +2970,6 @@ int gf_23vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 23 ], taps [ 22 ] ;
         __m256i parity1 [ 23 ] ;
         __m256i data_vec ;
@@ -3193,8 +3150,7 @@ int gf_23vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -3252,7 +3208,6 @@ int gf_24vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 24 ], taps [ 23 ] ;
         __m256i parity1 [ 24 ] ;
         __m256i data_vec ;
@@ -3440,8 +3395,7 @@ int gf_24vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -3501,7 +3455,6 @@ int gf_25vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 25 ], taps [ 24 ] ;
         __m256i parity1 [ 25 ] ;
         __m256i data_vec ;
@@ -3696,8 +3649,7 @@ int gf_25vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -3759,7 +3711,6 @@ int gf_26vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 26 ], taps [ 25 ] ;
         __m256i parity1 [ 26 ] ;
         __m256i data_vec ;
@@ -3961,8 +3912,7 @@ int gf_26vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -4026,7 +3976,6 @@ int gf_27vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 27 ], taps [ 26 ] ;
         __m256i parity1 [ 27 ] ;
         __m256i data_vec ;
@@ -4235,8 +4184,7 @@ int gf_27vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -4302,7 +4250,6 @@ int gf_28vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 28 ], taps [ 27 ] ;
         __m256i parity1 [ 28 ] ;
         __m256i data_vec ;
@@ -4518,8 +4465,7 @@ int gf_28vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -4587,7 +4533,6 @@ int gf_29vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 29 ], taps [ 28 ] ;
         __m256i parity1 [ 29 ] ;
         __m256i data_vec ;
@@ -4810,8 +4755,7 @@ int gf_29vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -4881,7 +4825,6 @@ int gf_30vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 30 ], taps [ 29 ] ;
         __m256i parity1 [ 30 ] ;
         __m256i data_vec ;
@@ -5111,8 +5054,7 @@ int gf_30vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -5184,7 +5126,6 @@ int gf_31vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 31 ], taps [ 30 ] ;
         __m256i parity1 [ 31 ] ;
         __m256i data_vec ;
@@ -5421,8 +5362,7 @@ int gf_31vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
@@ -5496,7 +5436,6 @@ int gf_32vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos = 0 ;
-        __mmask8 mask ;
         __m256i parity0 [ 32 ], taps [ 31 ] ;
         __m256i parity1 [ 32 ] ;
         __m256i data_vec ;
@@ -5740,8 +5679,7 @@ int gf_32vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
-                mask = _mm256_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 1 * 32 ], parity1 [ 0 ] ) ;
