@@ -242,6 +242,25 @@ polynomial_code_pss_cold: k=20 p=8 runtime =    3063989 usecs, bandwidth 18219 M
 
 done all: Pass
 
+### Typical erasure_code_perf Test Results - ARM64-NEON Raspberry Pi 5
+
+Here are the results for AVX2-GFNI
+
+Testing with 12 data buffers and 8 parity buffers
+
+erasure_code_perf: 20x1677696 8
+
+Testing ARM64-NEON
+
+erasure_code_encode_cold: k=12 p=8 runtime =    3074889 usecs, bandwidth 5637 MB in 3.0749 sec = 1833.26 MB/s
+
+polynomial_code_pls_cold: k=12 p=8 runtime =    3064811 usecs, bandwidth 7549 MB in 3.0648 sec = 2463.33 MB/s
+
+dot_prod_decode_cold:     k=20 p=8 runtime =    3010598 usecs, bandwidth 2650 MB in 3.0106 sec = 880.48 MB/s
+
+polynomial_code_pss_cold: k=20 p=8 runtime =    3024648 usecs, bandwidth 3690 MB in 3.0246 sec = 1220.28 MB/s
+
+done all: Pass
 
 ### Validated Platforms
 
