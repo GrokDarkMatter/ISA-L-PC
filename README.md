@@ -206,7 +206,7 @@ erasure_code_test: 127x8192 done EC tests: Pass
 
 ### Typical erasure_code_perf Test Results - AVX512_GFNI
 
-NOTE- USE ./configure CFLAGS="-O2 -march-native"
+NOTE- USE ./configure CFLAGS="-O2 -march=native"
 
 Testing with 12 data buffers and 8 parity buffers (num errors = 8, in [ 6 0 7 11 10 1 3 4 ])
 
