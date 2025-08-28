@@ -244,8 +244,6 @@ done all: Pass
 
 ### Typical erasure_code_perf Test Results - ARM64-NEON Raspberry Pi 5
 
-Here are the results for AVX2-GFNI
-
 Testing with 12 data buffers and 8 parity buffers
 
 erasure_code_perf: 20x1677696 8
