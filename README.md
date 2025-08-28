@@ -244,6 +244,8 @@ done all: Pass
 
 ### Typical erasure_code_perf Test Results - ARM64-NEON Raspberry Pi 5
 
+NOTE- USE ./configure CC=clang after ./autogen.sh when installing, clang has better results
+
 Testing with 12 data buffers and 8 parity buffers
 
 erasure_code_perf: 20x1677696 8
