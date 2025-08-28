@@ -214,7 +214,7 @@ erasure_code_perf: 20x1677696 8
 
 erasure_code_encode_cold: k=12 p=8 runtime = 3066588 usecs, bandwidth 30232 MB in 3.0666 sec = 9858.54 MB/s
 
-polynomial_code_ls_cold: k=12 p=8 runtime = 3024831 usecs, bandwidth 42579 MB in 3.0248 sec = 14076.79 MB/s
+polynomial_code_pls_cold: k=12 p=8 runtime = 3024831 usecs, bandwidth 42579 MB in 3.0248 sec = 14076.79 MB/s
 
 dot_prod_decode_cold: k=20 p=8 runtime = 3449346 usecs, bandwidth 18555 MB in 3.4493 sec = 5379.37 MB/s
 
