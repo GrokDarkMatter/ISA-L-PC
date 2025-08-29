@@ -460,6 +460,7 @@ main(int argc, char *argv[])
                 {
                         printf ( "Failed to correct data, sym %d offset %d expected %2x got %2x\n",
                                 errSym, errOffset, origData, buffs [ errSym ] [ errOffset ] ) ;
+                                goto exit ;
                 }
         }
 
