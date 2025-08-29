@@ -361,7 +361,7 @@ main(int argc, char *argv[])
         }
 #endif
         for (i = 0; i < p; i++) {
-                if (0 != memcmp(buffs[k+i], temp_buffs[i], 64 ) ) {
+                if (0 != memcmp(buffs[k+i], temp_buffs[i], TEST_LEN(m) ) ) {
                         printf("Fail parity compare (%d, %d, %d, %d) - ", m, k, p, i);
                         dump_u8xu8 ( buffs [ k+i ], 1, 16 ) ;
                         dump_u8xu8 ( temp_buffs [ i ], 1, 16 ) ;
