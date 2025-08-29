@@ -197,7 +197,7 @@ main(int argc, char *argv[])
         u8 *a, *g_tbls=0, *z0=0 ;
         u8 *temp_buffs[TEST_SOURCES] = { NULL };
         u8 *buffs[TEST_SOURCES] = { NULL };
-        u8 origData, errData=0x5a, errSym ;
+        u8 origData, errSym, errData ;
         int errOffset, errTests = 1000 ;
         struct perf start;
 #ifndef __aarch64__
@@ -436,6 +436,7 @@ main(int argc, char *argv[])
         // Syndromes verified as zero, now inject some errors and test
         for ( i = 0 ; i < errTests ; i ++ )
         {
+                errData = ( rand () % 254 ) + 1 ;
                 errSym = rand() % ( k + p ) ;
                 errOffset = rand() % TEST_LEN(m) ;
                 origData = buffs [ errSym ] [ errOffset ] ;
