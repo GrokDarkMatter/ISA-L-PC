@@ -192,11 +192,13 @@ int
 main(int argc, char *argv[])
 {
         // Work variables
-        int i, j, m, k, p, nerrs, pp, ret = -1;
+        int i, j, m, k, p, nerrs, ret = -1;
         void *buf ;
         u8 *a, *g_tbls=0, *z0=0 ;
         u8 *temp_buffs[TEST_SOURCES] = { NULL };
         u8 *buffs[TEST_SOURCES] = { NULL };
+        u8 origData, errData=0x5a, errSym ;
+        int errOffset, errTests = 1000 ;
         struct perf start;
 #ifndef __aarch64__
         u8 avx2=0;
@@ -206,7 +208,6 @@ main(int argc, char *argv[])
         k = 12;
         p = 8;
         nerrs = 4;
-        pp = 1 ;
 
         /* Parse arguments */
         for (i = 1; i < argc; i++) {
@@ -228,13 +229,6 @@ main(int argc, char *argv[])
         }
 
         // Do a little paramater validation
-        if ( pp >= ( k + p ) )
-        {
-                printf("Error location (%d) cannot be higher than number of symbols-1 (%d)\n",
-                       pp, k+p-1 );
-                return - 1;
-        }
-
         if (nerrs > k) {
                 nerrs = k ;
         }
@@ -246,11 +240,6 @@ main(int argc, char *argv[])
 
         if (p <= 0) {
                 printf("Number of parity buffers (%d) must be > 0\n", p);
-                return -1;
-        }
-
-        if (nerrs <= 0) {
-                printf("Number of errors (%d) must be > 0\n", nerrs);
                 return -1;
         }
 
@@ -443,6 +432,36 @@ main(int argc, char *argv[])
 #endif
         printf("polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p );
         perf_print(start, (long long) (TEST_LEN(m)) * (m));                
+
+        // Syndromes verified as zero, now inject some errors and test
+        for ( i = 0 ; i < errTests ; i ++ )
+        {
+                errSym = rand() % ( k + p ) ;
+                errOffset = rand() % TEST_LEN(m) ;
+                origData = buffs [ errSym ] [ errOffset ] ;
+                buffs [ errSym ] [ errOffset ] ^= errData ;
+                //printf ( "Injecting error %d symbol %d offset %d\n", errData, errSym, errOffset ) ;
+                
+                // Error has been injected, now attempt correction
+#ifdef __aarch64__
+                pc_decode_data_neon ( TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs ) ;
+#else
+                if ( avx2 == 0 )
+                {
+                        pc_decode_data_avx512_gfni ( TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs ) ;
+                }
+                else
+                {
+                        pc_decode_data_avx2_gfni ( TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs ) ;
+                }
+#endif
+                // Check to see if error corrected successfully
+                if ( origData != buffs [ errSym ] [ errOffset ] ) 
+                {
+                        printf ( "Failed to correct data, sym %d offset %d expected %2x got %2x\n",
+                                errSym, errOffset, origData, buffs [ errSym ] [ errOffset ] ) ;
+                }
+        }
 
         printf("done all: Pass\n");
 

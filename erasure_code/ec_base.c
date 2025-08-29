@@ -44,11 +44,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restrictions
 **********************************************************************/
 
-
 #include <limits.h>
 #include <string.h> // for memset
 #include <stdint.h>
-
+//#include <stdio.h>
 #include "erasure_code.h"
 #include "ec_base.h" // for GF tables
 
@@ -501,7 +500,8 @@ pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding, in
         {
                 eLoc = 0 ;
         }
-        //printf ( "Error = %d Symbol location = %d Bufpos = %d\n", eVal, eLoc , newPos + offSet ) ;
+        //printf ( "Error = %d Symbol location = %d Bufpos = %d\n", eVal, 
+        //        k - eLoc - 1, newPos + offSet ) ;
 
         // Correct the error if it's within bounds
         if ( eLoc < k )
