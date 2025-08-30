@@ -50,7 +50,7 @@ extern int pc_correct ( int newPos, int k, int rows, unsigned char ** data, char
 int gf_2vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 2 ], taps [ 1 ] ;            // Parity registers
         __m512i data_vec ;
@@ -88,7 +88,7 @@ int gf_2vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
 int gf_3vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 3 ], taps [ 2 ] ;            // Parity registers
         __m512i data_vec ;
@@ -131,7 +131,7 @@ int gf_3vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
 int gf_4vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 4 ], taps [ 3 ] ;            // Parity registers
         __m512i data_vec ;
@@ -179,7 +179,7 @@ int gf_4vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
 int gf_5vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 5 ], taps [ 4 ] ;            // Parity registers
         __m512i data_vec ;
@@ -232,7 +232,7 @@ int gf_5vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
 int gf_6vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 6 ], taps [ 5 ] ;            // Parity registers
         __m512i data_vec ;
@@ -290,7 +290,7 @@ int gf_6vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
 int gf_7vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 7 ], taps [ 6 ] ;            // Parity registers
         __m512i data_vec ;
@@ -353,7 +353,7 @@ int gf_7vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
 int gf_8vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 8 ], taps [ 7 ] ;            // Parity registers
         __m512i data_vec ;
@@ -421,7 +421,7 @@ int gf_8vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
 int gf_9vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 9 ], taps [ 8 ] ;            // Parity registers
         __m512i data_vec ;
@@ -494,7 +494,7 @@ int gf_9vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
 int gf_10vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 10 ], taps [ 9 ] ;            // Parity registers
         __m512i data_vec ;
@@ -572,7 +572,7 @@ int gf_10vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_11vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 11 ], taps [ 10 ] ;            // Parity registers
         __m512i data_vec ;
@@ -655,7 +655,7 @@ int gf_11vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_12vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 12 ], taps [ 11 ] ;            // Parity registers
         __m512i data_vec ;
@@ -743,7 +743,7 @@ int gf_12vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_13vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 13 ], taps [ 12 ] ;            // Parity registers
         __m512i data_vec ;
@@ -836,7 +836,7 @@ int gf_13vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_14vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 14 ], taps [ 13 ] ;            // Parity registers
         __m512i data_vec ;
@@ -934,7 +934,7 @@ int gf_14vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_15vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 15 ], taps [ 14 ] ;            // Parity registers
         __m512i data_vec ;
@@ -1037,7 +1037,7 @@ int gf_15vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_16vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 16 ], taps [ 15 ] ;            // Parity registers
         __m512i data_vec ;
@@ -1145,7 +1145,7 @@ int gf_16vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_17vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 17 ], taps [ 16 ] ;            // Parity registers
         __m512i data_vec ;
@@ -1258,7 +1258,7 @@ int gf_17vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_18vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 18 ], taps [ 17 ] ;            // Parity registers
         __m512i data_vec ;
@@ -1376,7 +1376,7 @@ int gf_18vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_19vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 19 ], taps [ 18 ] ;            // Parity registers
         __m512i data_vec ;
@@ -1499,7 +1499,7 @@ int gf_19vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_20vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 20 ], taps [ 19 ] ;            // Parity registers
         __m512i data_vec ;
@@ -1627,7 +1627,7 @@ int gf_20vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_21vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 21 ], taps [ 20 ] ;            // Parity registers
         __m512i data_vec ;
@@ -1760,7 +1760,7 @@ int gf_21vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_22vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 22 ], taps [ 21 ] ;            // Parity registers
         __m512i data_vec ;
@@ -1898,7 +1898,7 @@ int gf_22vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_23vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 23 ], taps [ 22 ] ;            // Parity registers
         __m512i data_vec ;
@@ -2041,7 +2041,7 @@ int gf_23vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_24vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 24 ], taps [ 23 ] ;            // Parity registers
         __m512i data_vec ;
@@ -2189,7 +2189,7 @@ int gf_24vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_25vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 25 ], taps [ 24 ] ;            // Parity registers
         __m512i data_vec ;
@@ -2342,7 +2342,7 @@ int gf_25vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_26vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 26 ], taps [ 25 ] ;            // Parity registers
         __m512i data_vec ;
@@ -2500,7 +2500,7 @@ int gf_26vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_27vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 27 ], taps [ 26 ] ;            // Parity registers
         __m512i data_vec ;
@@ -2663,7 +2663,7 @@ int gf_27vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_28vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 28 ], taps [ 27 ] ;            // Parity registers
         __m512i data_vec ;
@@ -2831,7 +2831,7 @@ int gf_28vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_29vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 29 ], taps [ 28 ] ;            // Parity registers
         __m512i data_vec ;
@@ -3004,7 +3004,7 @@ int gf_29vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_30vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 30 ], taps [ 29 ] ;            // Parity registers
         __m512i data_vec ;
@@ -3182,7 +3182,7 @@ int gf_30vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_31vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 31 ], taps [ 30 ] ;            // Parity registers
         __m512i data_vec ;
@@ -3365,7 +3365,7 @@ int gf_31vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_32vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                          // Loop counters
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 32 ], taps [ 31 ] ;            // Parity registers
         __m512i data_vec ;
@@ -3554,8 +3554,8 @@ int gf_32vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_2vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 2 ], taps [ 2 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 2 ], taps [ 2 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -3587,8 +3587,8 @@ int gf_2vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
 int gf_3vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 3 ], taps [ 3 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 3 ], taps [ 3 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -3625,8 +3625,8 @@ int gf_3vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
 int gf_4vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 4 ], taps [ 4 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 4 ], taps [ 4 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -3668,8 +3668,8 @@ int gf_4vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
 int gf_5vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 5 ], taps [ 5 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 5 ], taps [ 5 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -3716,8 +3716,8 @@ int gf_5vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
 int gf_6vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 6 ], taps [ 6 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 6 ], taps [ 6 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -3769,8 +3769,8 @@ int gf_6vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
 int gf_7vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 7 ], taps [ 7 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 7 ], taps [ 7 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -3827,8 +3827,8 @@ int gf_7vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
 int gf_8vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 8 ], taps [ 8 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 8 ], taps [ 8 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -3890,8 +3890,8 @@ int gf_8vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
 int gf_9vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 9 ], taps [ 9 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 9 ], taps [ 9 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -3958,8 +3958,8 @@ int gf_9vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
 int gf_10vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 10 ], taps [ 10 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 10 ], taps [ 10 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -4031,8 +4031,8 @@ int gf_10vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_11vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 11 ], taps [ 11 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 11 ], taps [ 11 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -4109,8 +4109,8 @@ int gf_11vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_12vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 12 ], taps [ 12 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 12 ], taps [ 12 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -4192,8 +4192,8 @@ int gf_12vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_13vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 13 ], taps [ 13 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 13 ], taps [ 13 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -4280,8 +4280,8 @@ int gf_13vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_14vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 14 ], taps [ 14 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 14 ], taps [ 14 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -4373,8 +4373,8 @@ int gf_14vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_15vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 15 ], taps [ 15 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 15 ], taps [ 15 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -4471,8 +4471,8 @@ int gf_15vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_16vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 16 ], taps [ 16 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 16 ], taps [ 16 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -4574,8 +4574,8 @@ int gf_16vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_17vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 17 ], taps [ 17 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 17 ], taps [ 17 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -4682,8 +4682,8 @@ int gf_17vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_18vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 18 ], taps [ 18 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 18 ], taps [ 18 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -4795,8 +4795,8 @@ int gf_18vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_19vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 19 ], taps [ 19 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 19 ], taps [ 19 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -4913,8 +4913,8 @@ int gf_19vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_20vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 20 ], taps [ 20 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 20 ], taps [ 20 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -5036,8 +5036,8 @@ int gf_20vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_21vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 21 ], taps [ 21 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 21 ], taps [ 21 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -5164,8 +5164,8 @@ int gf_21vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_22vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 22 ], taps [ 22 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 22 ], taps [ 22 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -5297,8 +5297,8 @@ int gf_22vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_23vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 23 ], taps [ 23 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 23 ], taps [ 23 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -5435,8 +5435,8 @@ int gf_23vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_24vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 24 ], taps [ 24 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 24 ], taps [ 24 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -5578,8 +5578,8 @@ int gf_24vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_25vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 25 ], taps [ 25 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 25 ], taps [ 25 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -5726,8 +5726,8 @@ int gf_25vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_26vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 26 ], taps [ 26 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 26 ], taps [ 26 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -5879,8 +5879,8 @@ int gf_26vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_27vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 27 ], taps [ 27 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 27 ], taps [ 27 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -6037,8 +6037,8 @@ int gf_27vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_28vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 28 ], taps [ 28 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 28 ], taps [ 28 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -6200,8 +6200,8 @@ int gf_28vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_29vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 29 ], taps [ 29 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 29 ], taps [ 29 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -6368,8 +6368,8 @@ int gf_29vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_30vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 30 ], taps [ 30 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 30 ], taps [ 30 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -6541,8 +6541,8 @@ int gf_30vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_31vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 31 ], taps [ 31 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 31 ], taps [ 31 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -6719,8 +6719,8 @@ int gf_31vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
 int gf_32vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
-        __m512i parity [ 32 ], taps [ 32 ] ;            // Parity registers
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 32 ], taps [ 32 ] ;          // Parity registers
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );

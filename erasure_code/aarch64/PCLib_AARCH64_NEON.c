@@ -50,7 +50,7 @@ extern int pc_correct ( int newPos, int k, int rows, unsigned char ** data, unsi
 int gf_2vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 2 ], parity1 [ 2 ], parity2 [ 2 ], parity3 [ 2 ] ;
         uint8x16_t taps [ 1 ], tapsh [ 1 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -147,7 +147,7 @@ int gf_2vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
 int gf_3vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 3 ], parity1 [ 3 ], parity2 [ 3 ], parity3 [ 3 ] ;
         uint8x16_t taps [ 2 ], tapsh [ 2 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -278,7 +278,7 @@ int gf_3vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
 int gf_4vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 4 ], parity1 [ 4 ], parity2 [ 4 ], parity3 [ 4 ] ;
         uint8x16_t taps [ 3 ], tapsh [ 3 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -443,7 +443,7 @@ int gf_4vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
 int gf_5vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 5 ], parity1 [ 5 ], parity2 [ 5 ], parity3 [ 5 ] ;
         uint8x16_t taps [ 4 ], tapsh [ 4 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -642,7 +642,7 @@ int gf_5vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
 int gf_6vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 6 ], parity1 [ 6 ], parity2 [ 6 ], parity3 [ 6 ] ;
         uint8x16_t taps [ 5 ], tapsh [ 5 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -875,7 +875,7 @@ int gf_6vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
 int gf_7vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 7 ], parity1 [ 7 ], parity2 [ 7 ], parity3 [ 7 ] ;
         uint8x16_t taps [ 6 ], tapsh [ 6 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -1142,7 +1142,7 @@ int gf_7vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
 int gf_8vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 8 ], parity1 [ 8 ], parity2 [ 8 ], parity3 [ 8 ] ;
         uint8x16_t taps [ 7 ], tapsh [ 7 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -1443,7 +1443,7 @@ int gf_8vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
 int gf_9vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 9 ], parity1 [ 9 ], parity2 [ 9 ], parity3 [ 9 ] ;
         uint8x16_t taps [ 8 ], tapsh [ 8 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -1778,7 +1778,7 @@ int gf_9vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
 int gf_10vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 10 ], parity1 [ 10 ], parity2 [ 10 ], parity3 [ 10 ] ;
         uint8x16_t taps [ 9 ], tapsh [ 9 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -2147,7 +2147,7 @@ int gf_10vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_11vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 11 ], parity1 [ 11 ], parity2 [ 11 ], parity3 [ 11 ] ;
         uint8x16_t taps [ 10 ], tapsh [ 10 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -2550,7 +2550,7 @@ int gf_11vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_12vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 12 ], parity1 [ 12 ], parity2 [ 12 ], parity3 [ 12 ] ;
         uint8x16_t taps [ 11 ], tapsh [ 11 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -2987,7 +2987,7 @@ int gf_12vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_13vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 13 ], parity1 [ 13 ], parity2 [ 13 ], parity3 [ 13 ] ;
         uint8x16_t taps [ 12 ], tapsh [ 12 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -3458,7 +3458,7 @@ int gf_13vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_14vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 14 ], parity1 [ 14 ], parity2 [ 14 ], parity3 [ 14 ] ;
         uint8x16_t taps [ 13 ], tapsh [ 13 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -3963,7 +3963,7 @@ int gf_14vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_15vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 15 ], parity1 [ 15 ], parity2 [ 15 ], parity3 [ 15 ] ;
         uint8x16_t taps [ 14 ], tapsh [ 14 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -4502,7 +4502,7 @@ int gf_15vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_16vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 16 ], parity1 [ 16 ], parity2 [ 16 ], parity3 [ 16 ] ;
         uint8x16_t taps [ 15 ], tapsh [ 15 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -5075,7 +5075,7 @@ int gf_16vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_17vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 17 ], parity1 [ 17 ], parity2 [ 17 ], parity3 [ 17 ] ;
         uint8x16_t taps [ 16 ], tapsh [ 16 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -5682,7 +5682,7 @@ int gf_17vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_18vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 18 ], parity1 [ 18 ], parity2 [ 18 ], parity3 [ 18 ] ;
         uint8x16_t taps [ 17 ], tapsh [ 17 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -6323,7 +6323,7 @@ int gf_18vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_19vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 19 ], parity1 [ 19 ], parity2 [ 19 ], parity3 [ 19 ] ;
         uint8x16_t taps [ 18 ], tapsh [ 18 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -6998,7 +6998,7 @@ int gf_19vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_20vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 20 ], parity1 [ 20 ], parity2 [ 20 ], parity3 [ 20 ] ;
         uint8x16_t taps [ 19 ], tapsh [ 19 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -7707,7 +7707,7 @@ int gf_20vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_21vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 21 ], parity1 [ 21 ], parity2 [ 21 ], parity3 [ 21 ] ;
         uint8x16_t taps [ 20 ], tapsh [ 20 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -8450,7 +8450,7 @@ int gf_21vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_22vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 22 ], parity1 [ 22 ], parity2 [ 22 ], parity3 [ 22 ] ;
         uint8x16_t taps [ 21 ], tapsh [ 21 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -9227,7 +9227,7 @@ int gf_22vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_23vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 23 ], parity1 [ 23 ], parity2 [ 23 ], parity3 [ 23 ] ;
         uint8x16_t taps [ 22 ], tapsh [ 22 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -10038,7 +10038,7 @@ int gf_23vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_24vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 24 ], parity1 [ 24 ], parity2 [ 24 ], parity3 [ 24 ] ;
         uint8x16_t taps [ 23 ], tapsh [ 23 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -10883,7 +10883,7 @@ int gf_24vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_25vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 25 ], parity1 [ 25 ], parity2 [ 25 ], parity3 [ 25 ] ;
         uint8x16_t taps [ 24 ], tapsh [ 24 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -11762,7 +11762,7 @@ int gf_25vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_26vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 26 ], parity1 [ 26 ], parity2 [ 26 ], parity3 [ 26 ] ;
         uint8x16_t taps [ 25 ], tapsh [ 25 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -12675,7 +12675,7 @@ int gf_26vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_27vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 27 ], parity1 [ 27 ], parity2 [ 27 ], parity3 [ 27 ] ;
         uint8x16_t taps [ 26 ], tapsh [ 26 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -13622,7 +13622,7 @@ int gf_27vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_28vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 28 ], parity1 [ 28 ], parity2 [ 28 ], parity3 [ 28 ] ;
         uint8x16_t taps [ 27 ], tapsh [ 27 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -14603,7 +14603,7 @@ int gf_28vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_29vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 29 ], parity1 [ 29 ], parity2 [ 29 ], parity3 [ 29 ] ;
         uint8x16_t taps [ 28 ], tapsh [ 28 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -15618,7 +15618,7 @@ int gf_29vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_30vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 30 ], parity1 [ 30 ], parity2 [ 30 ], parity3 [ 30 ] ;
         uint8x16_t taps [ 29 ], tapsh [ 29 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -16667,7 +16667,7 @@ int gf_30vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_31vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 31 ], parity1 [ 31 ], parity2 [ 31 ], parity3 [ 31 ] ;
         uint8x16_t taps [ 30 ], tapsh [ 30 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -17750,7 +17750,7 @@ int gf_31vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_32vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
-        int curSym, curPos = 0 ;
+        int curSym, curPos ;
         uint8x16_t parity0 [ 32 ], parity1 [ 32 ], parity2 [ 32 ], parity3 [ 32 ] ;
         uint8x16_t taps [ 31 ], tapsh [ 31 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -18868,7 +18868,7 @@ int gf_32vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_2vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 2 ], parity1 [ 2 ], parity2 [ 2 ], parity3 [ 2 ] ;
         uint8x16_t taps [ 2 ], tapsh [ 2 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -18997,7 +18997,7 @@ int gf_2vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
 int gf_3vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 3 ], parity1 [ 3 ], parity2 [ 3 ], parity3 [ 3 ] ;
         uint8x16_t taps [ 3 ], tapsh [ 3 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -19160,7 +19160,7 @@ int gf_3vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
 int gf_4vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 4 ], parity1 [ 4 ], parity2 [ 4 ], parity3 [ 4 ] ;
         uint8x16_t taps [ 4 ], tapsh [ 4 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -19357,7 +19357,7 @@ int gf_4vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
 int gf_5vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 5 ], parity1 [ 5 ], parity2 [ 5 ], parity3 [ 5 ] ;
         uint8x16_t taps [ 5 ], tapsh [ 5 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -19588,7 +19588,7 @@ int gf_5vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
 int gf_6vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 6 ], parity1 [ 6 ], parity2 [ 6 ], parity3 [ 6 ] ;
         uint8x16_t taps [ 6 ], tapsh [ 6 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -19853,7 +19853,7 @@ int gf_6vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
 int gf_7vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 7 ], parity1 [ 7 ], parity2 [ 7 ], parity3 [ 7 ] ;
         uint8x16_t taps [ 7 ], tapsh [ 7 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -20152,7 +20152,7 @@ int gf_7vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
 int gf_8vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 8 ], parity1 [ 8 ], parity2 [ 8 ], parity3 [ 8 ] ;
         uint8x16_t taps [ 8 ], tapsh [ 8 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -20485,7 +20485,7 @@ int gf_8vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
 int gf_9vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 9 ], parity1 [ 9 ], parity2 [ 9 ], parity3 [ 9 ] ;
         uint8x16_t taps [ 9 ], tapsh [ 9 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -20852,7 +20852,7 @@ int gf_9vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
 int gf_10vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 10 ], parity1 [ 10 ], parity2 [ 10 ], parity3 [ 10 ] ;
         uint8x16_t taps [ 10 ], tapsh [ 10 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -21253,7 +21253,7 @@ int gf_10vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_11vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 11 ], parity1 [ 11 ], parity2 [ 11 ], parity3 [ 11 ] ;
         uint8x16_t taps [ 11 ], tapsh [ 11 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -21688,7 +21688,7 @@ int gf_11vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_12vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 12 ], parity1 [ 12 ], parity2 [ 12 ], parity3 [ 12 ] ;
         uint8x16_t taps [ 12 ], tapsh [ 12 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -22157,7 +22157,7 @@ int gf_12vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_13vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 13 ], parity1 [ 13 ], parity2 [ 13 ], parity3 [ 13 ] ;
         uint8x16_t taps [ 13 ], tapsh [ 13 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -22660,7 +22660,7 @@ int gf_13vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_14vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 14 ], parity1 [ 14 ], parity2 [ 14 ], parity3 [ 14 ] ;
         uint8x16_t taps [ 14 ], tapsh [ 14 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -23197,7 +23197,7 @@ int gf_14vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_15vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 15 ], parity1 [ 15 ], parity2 [ 15 ], parity3 [ 15 ] ;
         uint8x16_t taps [ 15 ], tapsh [ 15 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -23768,7 +23768,7 @@ int gf_15vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_16vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 16 ], parity1 [ 16 ], parity2 [ 16 ], parity3 [ 16 ] ;
         uint8x16_t taps [ 16 ], tapsh [ 16 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -24373,7 +24373,7 @@ int gf_16vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_17vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 17 ], parity1 [ 17 ], parity2 [ 17 ], parity3 [ 17 ] ;
         uint8x16_t taps [ 17 ], tapsh [ 17 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -25012,7 +25012,7 @@ int gf_17vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_18vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 18 ], parity1 [ 18 ], parity2 [ 18 ], parity3 [ 18 ] ;
         uint8x16_t taps [ 18 ], tapsh [ 18 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -25685,7 +25685,7 @@ int gf_18vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_19vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 19 ], parity1 [ 19 ], parity2 [ 19 ], parity3 [ 19 ] ;
         uint8x16_t taps [ 19 ], tapsh [ 19 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -26392,7 +26392,7 @@ int gf_19vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_20vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 20 ], parity1 [ 20 ], parity2 [ 20 ], parity3 [ 20 ] ;
         uint8x16_t taps [ 20 ], tapsh [ 20 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -27133,7 +27133,7 @@ int gf_20vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_21vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 21 ], parity1 [ 21 ], parity2 [ 21 ], parity3 [ 21 ] ;
         uint8x16_t taps [ 21 ], tapsh [ 21 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -27908,7 +27908,7 @@ int gf_21vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_22vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 22 ], parity1 [ 22 ], parity2 [ 22 ], parity3 [ 22 ] ;
         uint8x16_t taps [ 22 ], tapsh [ 22 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -28717,7 +28717,7 @@ int gf_22vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_23vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 23 ], parity1 [ 23 ], parity2 [ 23 ], parity3 [ 23 ] ;
         uint8x16_t taps [ 23 ], tapsh [ 23 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -29560,7 +29560,7 @@ int gf_23vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_24vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 24 ], parity1 [ 24 ], parity2 [ 24 ], parity3 [ 24 ] ;
         uint8x16_t taps [ 24 ], tapsh [ 24 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -30437,7 +30437,7 @@ int gf_24vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_25vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 25 ], parity1 [ 25 ], parity2 [ 25 ], parity3 [ 25 ] ;
         uint8x16_t taps [ 25 ], tapsh [ 25 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -31348,7 +31348,7 @@ int gf_25vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_26vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 26 ], parity1 [ 26 ], parity2 [ 26 ], parity3 [ 26 ] ;
         uint8x16_t taps [ 26 ], tapsh [ 26 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -32293,7 +32293,7 @@ int gf_26vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_27vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 27 ], parity1 [ 27 ], parity2 [ 27 ], parity3 [ 27 ] ;
         uint8x16_t taps [ 27 ], tapsh [ 27 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -33272,7 +33272,7 @@ int gf_27vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_28vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 28 ], parity1 [ 28 ], parity2 [ 28 ], parity3 [ 28 ] ;
         uint8x16_t taps [ 28 ], tapsh [ 28 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -34285,7 +34285,7 @@ int gf_28vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_29vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 29 ], parity1 [ 29 ], parity2 [ 29 ], parity3 [ 29 ] ;
         uint8x16_t taps [ 29 ], tapsh [ 29 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -35332,7 +35332,7 @@ int gf_29vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_30vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 30 ], parity1 [ 30 ], parity2 [ 30 ], parity3 [ 30 ] ;
         uint8x16_t taps [ 30 ], tapsh [ 30 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -36413,7 +36413,7 @@ int gf_30vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_31vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 31 ], parity1 [ 31 ], parity2 [ 31 ], parity3 [ 31 ] ;
         uint8x16_t taps [ 31 ], tapsh [ 31 ] ;
         uint8x16_t data_vec, data_vech, temp ;
@@ -37528,7 +37528,7 @@ int gf_31vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 int gf_32vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos = 0 ;                      // Loop counters
+        int curSym, curPos ;                      // Loop counters
         uint8x16_t parity0 [ 32 ], parity1 [ 32 ], parity2 [ 32 ], parity3 [ 32 ] ;
         uint8x16_t taps [ 32 ], tapsh [ 32 ] ;
         uint8x16_t data_vec, data_vech, temp ;
