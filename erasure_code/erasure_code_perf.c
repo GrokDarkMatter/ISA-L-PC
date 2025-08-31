@@ -466,10 +466,11 @@ main(int argc, char *argv[])
         }
 
         printf("done all: Pass\n");
+        fflush ( stdout ) ;
 
         ret = 0;
 exit:
-        free ( z0 ) ;
+        aligned_free ( z0 ) ;
         free ( a ) ;
         for (i = 0; i < TEST_SOURCES; i++) {
                 aligned_free(buffs[i]);
