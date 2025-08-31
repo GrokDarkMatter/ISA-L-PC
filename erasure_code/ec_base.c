@@ -470,8 +470,8 @@ gf_vect_mul_base(int len, unsigned char *a, unsigned char *src, unsigned char *d
 int 
 pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding, int vLen )
 {
-        int offSet = 0 ;
-        unsigned char eVal, eLoc, synDromes [ 254 ] ;
+        int offSet = 0, i ;
+        unsigned char eVal, eLoc, pVal, synDromes [ 254 ] ;
 
         // Scan for first non-zero byte in vector
         while ( coding [ 0 ] [ offSet ] == 0 ) 
@@ -493,8 +493,8 @@ pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding, in
         eVal = synDromes [ 0 ] ;
         // Compute error location is log2(syndrome[1]/syndrome[0])
         eLoc = synDromes [ 1 ] ;
-        eLoc = gf_mul ( eLoc, gf_inv ( eVal ) ) ;
-        eLoc = gflog_base [ eLoc ] ;
+        pVal = gf_mul ( eLoc, gf_inv ( eVal ) ) ;
+        eLoc = gflog_base [ pVal ] ;
         // First entry in log table
         if ( eLoc == 255 )
         {
@@ -506,10 +506,25 @@ pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding, in
         // Correct the error if it's within bounds
         if ( eLoc < k )
         {
-                data [ k - eLoc - 1 ] [ newPos + offSet ] ^= eVal ;
-                return 0 ;
-        }
+                // If more than 2 symbols, verify we can produce them all
+                if ( p > 2 )
+                {
+                        // Now verify that the error can be used to produce the remaining syndromes
+                        for ( i = 2 ; i < p ; i ++ )
+                        {
+                                if ( gf_mul ( synDromes [ i - 1 ], pVal ) != synDromes [ i ] )
+                                {
+                                        //printf ( "Error verification failed\n" ) ;
+                                        goto NotOneError ;
+                                }
+                        }
 
-        return 1 ;
+                }
+                // Good correction
+                data [ k - eLoc - 1 ] [ newPos + offSet ] ^= eVal ;
+                return 1 ;
+        }
+NotOneError:
+        return 0 ;
 }
 
