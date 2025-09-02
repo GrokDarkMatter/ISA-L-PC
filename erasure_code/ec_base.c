@@ -47,9 +47,22 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include <limits.h>
 #include <string.h> // for memset
 #include <stdint.h>
-//#include <stdio.h>
+#include <stdio.h>
 #include "erasure_code.h"
 #include "ec_base.h" // for GF tables
+// Utility print routine
+void
+dump_u8xu8(unsigned char *s, int k, int m)
+{
+        int i, j;
+        for (i = 0; i < k; i++) {
+                for (j = 0; j < m; j++) {
+                        printf(" %3x", 0xff & s[j + (i * m)]);
+                }
+                printf("\n");
+        }
+        printf("\n");
+}
 
 void
 ec_init_tables_base(int k, int rows, unsigned char *a, unsigned char *g_tbls)
@@ -472,15 +485,14 @@ int pc_verify_single_error ( unsigned char * S, unsigned char ** data, int k, in
 {
         // LSB has parity, for single error this equals error value
         unsigned char eVal = S [ 0 ] ;
+
         // Compute error location is log2(syndrome[1]/syndrome[0])
         unsigned char eLoc = S [ 1 ] ;
         unsigned char pVal = gf_mul ( eLoc, gf_inv ( eVal ) ) ;
         eLoc = gflog_base [ pVal ] ;
-        // First entry in log table
-        if ( eLoc == 255 )
-        {
-                eLoc = 0 ;
-        }
+        // First entry in log table is 255
+        eLoc %= 255 ;
+
         //printf ( "Error = %d Symbol location = %d Bufpos = %d\n", eVal, 
         //        k - eLoc - 1, newPos + offSet ) ;
 
@@ -509,10 +521,127 @@ int pc_verify_single_error ( unsigned char * S, unsigned char ** data, int k, in
 }
 
 #define PC_MAX_ERRS 16
+
+int find_roots ( unsigned char * keyEq, unsigned char * roots, int mSize )
+{
+        int rootCount = 0 ;
+        unsigned char baseVal = 1, eVal ;
+
+        for ( int i = 0 ; i < 255 ; i ++ )
+        {
+                eVal = 1 ;
+                for ( int j = 0 ; j < mSize ; j ++ )
+                {
+                        eVal = gf_mul ( eVal, baseVal ) ;
+                        eVal = eVal ^ keyEq [ mSize - j - 1 ] ;
+                }
+                if ( eVal == 0 )
+                {
+                        roots [ rootCount ] = i ;
+                        rootCount ++ ;
+                        printf ( "Found root %d\n", i ) ;
+                }
+                baseVal = gf_mul ( baseVal, 2 ) ;
+        }
+        return rootCount ;
+}
+
+int pc_pow ( unsigned char Power ) 
+{
+        if ( Power == 0 ) 
+        {
+                return 1 ;
+        }
+        unsigned char computedPow = 2 ;
+        for ( int i = 1 ; i < Power ; i ++ )
+        {
+                computedPow = gf_mul ( computedPow, 2 ) ;
+        }
+        return computedPow ;
+}
+
+int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mSize, int k, 
+        int p, int newPos, int offSet, unsigned char * invMat )
+{
+        unsigned char keyEq [ PC_MAX_ERRS ] = {0}, roots [ PC_MAX_ERRS ] = {0} ;
+        unsigned char Mat [ PC_MAX_ERRS * PC_MAX_ERRS ] ;
+        unsigned char Mat_inv [ PC_MAX_ERRS * PC_MAX_ERRS ] ;
+        unsigned char errVal [ PC_MAX_ERRS ] ;
+        int i, j ;
+
+        printf ( "Inverted matrix\n" ) ;
+        dump_u8xu8 ( invMat, mSize, mSize ) ;
+
+        // Compute the key equation terms
+        for ( i = 0 ; i < mSize ; i ++ )
+        {
+                for ( j = 0 ; j < mSize ; j ++ )
+                {
+                        keyEq [ i ] ^= gf_mul ( S [ mSize + j ], invMat [ i * mSize + j ] ) ;
+                }
+        }
+
+        printf ( "keyEq\n" ) ;
+        dump_u8xu8 ( keyEq, 1, mSize ) ;
+
+        // Find roots
+        if ( find_roots ( keyEq, roots, mSize ) != mSize )
+        {
+                return 0 ;
+        }
+        printf ( "Good roots\n" ) ;
+        dump_u8xu8 ( roots, 1, mSize ) ;
+
+        // Find error values by building and inverting Vandemonde
+        for ( i = 0 ; i < mSize ; i ++ )
+        {
+                Mat [ i ] = 1 ;
+        }
+        for ( i = 1 ; i < mSize ; i ++ )
+        {
+                for ( j = 0 ; j < mSize ; j ++ )
+                {
+                        Mat [ i * mSize + j ] = pc_pow ( roots [ j ] ) ;
+                }
+        }
+        printf ( "Vand Matrix\n" ) ;
+        dump_u8xu8 ( Mat, mSize, mSize ) ;
+
+        if ( gf_invert_matrix ( Mat, Mat_inv, mSize ) != 0 )
+        {
+                printf ( "Invert matrix failed\n" ) ;
+                return 0 ;
+        }
+        dump_u8xu8 ( Mat_inv, mSize, mSize ) ;
+
+        for ( i = 0 ; i < mSize ; i ++ )
+        {
+                errVal [ i ] = 0 ;
+                for ( j = 0 ; j < mSize ; j ++ )
+                {
+                        errVal [ i ] ^= gf_mul ( S [ j ], Mat_inv [ i * mSize + j ] ) ;
+                }
+        }
+        printf ( "Error values\n" ) ;
+        dump_u8xu8 ( errVal, 1, mSize ) ;
+
+        for ( i = 0 ; i < mSize ; i ++ )
+        {
+                int sym = k - roots [ i ] - 1 ;
+                printf ( "k=%d roots [ %d ] = %d k-roots-1=%d\n", k, i, roots[i], sym ) ;
+                printf ( "Before correction data [ %d ] [ %d ] = %d\n", sym, newPos + offSet, data [ sym ] [ newPos + offSet ] ) ;
+                data [ sym] [ newPos + offSet ] ^= errVal [ i ] ;
+                printf ( "After correction data [ %d ] [ %d ]= %d\n", sym, newPos + offSet, data [ sym ] [ newPos + offSet ] ) ;
+        }
+ 
+        // Good correction
+        return 1 ;
+}
 int pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding, int vLen )
 {
-        int offSet = 0, i  ;
+        int offSet = 0, i, j, mSize  ;
         unsigned char S [ PC_MAX_ERRS ] ;
+        unsigned char SMat [ PC_MAX_ERRS * PC_MAX_ERRS ], SMat_inv [ PC_MAX_ERRS * PC_MAX_ERRS ] ;
 
         // Scan for first non-zero byte in vector
         while ( coding [ 0 ] [ offSet ] == 0 ) 
@@ -529,6 +658,9 @@ int pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding
         {
                 S [ i ] = coding [ p - i - 1 ] [ offSet ] ;
         }
+        printf ( "Syndromes\n" ) ;
+        dump_u8xu8 ( S, 1, p ) ;
+        printf ( "newPos = %d offSet = %d together %d\n", newPos, offSet, newPos + offSet ) ;
 
         // Check to see if a single error can be verified
         if ( pc_verify_single_error ( S, data, k, p, newPos, offSet ) )
@@ -536,6 +668,27 @@ int pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding
                 return 1 ;
         }
 
+        // Create and find Hankel matrix that will invert
+        for ( mSize = ( p / 2 ) ; mSize >= 2 ; mSize -- )
+        {
+                for ( i = 0 ; i < mSize ; i ++ )
+                {
+                        for ( j = 0 ; j < mSize ; j ++ )
+                        {
+                                SMat [ i * mSize + j ] = S [ i + j ] ;
+                                //printf ( "Index = %d, from = %d\n", i * mSize + j, i + j ) ;
+                        }
+                }
+                printf ( "Candidate matrix to invert\n" ) ;
+                dump_u8xu8 ( SMat, mSize, mSize ) ;
+                if ( gf_invert_matrix ( SMat, SMat_inv, mSize ) == 0 )
+                {
+                        if ( pc_verify_multiple_errors ( S, data, mSize, k, p, newPos, offSet, SMat_inv ) )
+                        {
+                                return 1 ;
+                        }
+                }
+        }
         return 0 ;
 }
 
