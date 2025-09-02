@@ -467,33 +467,14 @@ gf_vect_mul_base(int len, unsigned char *a, unsigned char *src, unsigned char *d
         return 0;
 }
 
-int 
-pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding, int vLen )
+int pc_verify_single_error ( unsigned char * S, unsigned char ** data, int k, int p, 
+        int newPos, int offSet )
 {
-        int offSet = 0, i ;
-        unsigned char eVal, eLoc, pVal, synDromes [ 254 ] ;
-
-        // Scan for first non-zero byte in vector
-        while ( coding [ 0 ] [ offSet ] == 0 ) 
-        {
-                offSet ++ ;
-                if ( offSet == vLen )
-                {
-                        return 1 ;
-                }
-        }
-
-        // Gather up the syndromes
-        for ( eLoc = 0 ; eLoc < p ; eLoc ++ )
-        {
-                synDromes [ eLoc ] = coding [ p - eLoc - 1 ] [ offSet ] ;
-        }
-
         // LSB has parity, for single error this equals error value
-        eVal = synDromes [ 0 ] ;
+        unsigned char eVal = S [ 0 ] ;
         // Compute error location is log2(syndrome[1]/syndrome[0])
-        eLoc = synDromes [ 1 ] ;
-        pVal = gf_mul ( eLoc, gf_inv ( eVal ) ) ;
+        unsigned char eLoc = S [ 1 ] ;
+        unsigned char pVal = gf_mul ( eLoc, gf_inv ( eVal ) ) ;
         eLoc = gflog_base [ pVal ] ;
         // First entry in log table
         if ( eLoc == 255 )
@@ -503,28 +484,58 @@ pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding, in
         //printf ( "Error = %d Symbol location = %d Bufpos = %d\n", eVal, 
         //        k - eLoc - 1, newPos + offSet ) ;
 
-        // Correct the error if it's within bounds
-        if ( eLoc < k )
+        if ( eLoc >= k )
         {
-                // If more than 2 symbols, verify we can produce them all
-                if ( p > 2 )
-                {
-                        // Now verify that the error can be used to produce the remaining syndromes
-                        for ( i = 2 ; i < p ; i ++ )
-                        {
-                                if ( gf_mul ( synDromes [ i - 1 ], pVal ) != synDromes [ i ] )
-                                {
-                                        //printf ( "Error verification failed\n" ) ;
-                                        goto NotOneError ;
-                                }
-                        }
+                return 0 ;
+        }
 
+        // If more than 2 symbols, verify we can produce them all
+        if ( p > 2 )
+        {
+                // Now verify that the error can be used to produce the remaining syndromes
+                for ( int i = 2 ; i < p ; i ++ )
+                {
+                        if ( gf_mul ( S [ i - 1 ], pVal ) != S [ i ] )
+                        {
+                                //printf ( "Error verification failed\n" ) ;
+                                return 0 ;
+                        }
                 }
-                // Good correction
-                data [ k - eLoc - 1 ] [ newPos + offSet ] ^= eVal ;
+
+        }
+        // Good correction
+        data [ k - eLoc - 1 ] [ newPos + offSet ] ^= eVal ;
+        return 1 ;
+}
+
+#define PC_MAX_ERRS 16
+int pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding, int vLen )
+{
+        int offSet = 0, i  ;
+        unsigned char S [ PC_MAX_ERRS ] ;
+
+        // Scan for first non-zero byte in vector
+        while ( coding [ 0 ] [ offSet ] == 0 ) 
+        {
+                offSet ++ ;
+                if ( offSet >= vLen )
+                {
+                        return 1 ;
+                }
+        }
+
+        // Gather up the syndromes
+        for ( i = 0 ; i < p ; i ++ )
+        {
+                S [ i ] = coding [ p - i - 1 ] [ offSet ] ;
+        }
+
+        // Check to see if a single error can be verified
+        if ( pc_verify_single_error ( S, data, k, p, newPos, offSet ) )
+        {
                 return 1 ;
         }
-NotOneError:
+
         return 0 ;
 }
 
