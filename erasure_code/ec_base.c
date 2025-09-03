@@ -516,7 +516,7 @@ int pc_verify_single_error ( unsigned char * S, unsigned char ** data, int k, in
         return 1 ;
 }
 
-#define PC_MAX_ERRS 16
+#define PC_MAX_ERRS 32
 
 // Identify roots from key equation
 int find_roots ( unsigned char * keyEq, unsigned char * roots, int mSize )
