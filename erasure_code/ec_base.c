@@ -640,17 +640,27 @@ int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mS
 int pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding, int vLen )
 {
         int offSet = 0, i, j, mSize  ;
+        unsigned char synZero = 0 ;
         unsigned char S [ PC_MAX_ERRS ] ;
         unsigned char SMat [ PC_MAX_ERRS * PC_MAX_ERRS ], SMat_inv [ PC_MAX_ERRS * PC_MAX_ERRS ] ;
 
-        // Scan for first non-zero byte in vector
-        while ( coding [ 0 ] [ offSet ] == 0 ) 
+        while ( offSet < vLen ) 
         {
-                offSet ++ ;
-                if ( offSet >= vLen )
+                // Scan for first non-zero byte in syndrome vectors
+                for ( i = 0 ; i < ( p / 2 ) ; i ++ )
                 {
-                        return 1 ;
+                        synZero |= coding [ i ] [ offSet ] ;
                 }
+                if ( synZero != 0 )
+                {
+                        break ;
+                }
+                offSet ++ ;
+        }
+        if ( offSet >= vLen )
+        {
+                printf ( "Error can't find error offset %d vLen %d\n", offSet, vLen ) ;
+                return 0 ;
         }
 
         // Gather up the syndromes
