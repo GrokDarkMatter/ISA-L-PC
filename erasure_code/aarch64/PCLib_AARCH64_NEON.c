@@ -122,7 +122,6 @@ int gf_2vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         parity3 [ 0 ] = veorq_u8 ( parity3 [ 0 ], data_vec ) ;
                         parity3 [ 1 ] = veorq_u8 ( parity3 [ 1 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
@@ -249,11 +248,14 @@ int gf_3vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         parity3 [ 1 ] = veorq_u8 ( parity3 [ 1 ], data_vec ) ;
                         parity3 [ 2 ] = veorq_u8 ( parity3 [ 2 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -410,11 +412,14 @@ int gf_4vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         parity3 [ 2 ] = veorq_u8 ( parity3 [ 2 ], data_vec ) ;
                         parity3 [ 3 ] = veorq_u8 ( parity3 [ 3 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -605,11 +610,18 @@ int gf_5vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         parity3 [ 3 ] = veorq_u8 ( parity3 [ 3 ], data_vec ) ;
                         parity3 [ 4 ] = veorq_u8 ( parity3 [ 4 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -834,11 +846,18 @@ int gf_6vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         parity3 [ 4 ] = veorq_u8 ( parity3 [ 4 ], data_vec ) ;
                         parity3 [ 5 ] = veorq_u8 ( parity3 [ 5 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -1097,11 +1116,22 @@ int gf_7vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         parity3 [ 5 ] = veorq_u8 ( parity3 [ 5 ], data_vec ) ;
                         parity3 [ 6 ] = veorq_u8 ( parity3 [ 6 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -1394,11 +1424,22 @@ int gf_8vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         parity3 [ 6 ] = veorq_u8 ( parity3 [ 6 ], data_vec ) ;
                         parity3 [ 7 ] = veorq_u8 ( parity3 [ 7 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -1725,11 +1766,26 @@ int gf_9vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **dat
                         parity3 [ 7 ] = veorq_u8 ( parity3 [ 7 ], data_vec ) ;
                         parity3 [ 8 ] = veorq_u8 ( parity3 [ 8 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -2090,11 +2146,26 @@ int gf_10vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 8 ] = veorq_u8 ( parity3 [ 8 ], data_vec ) ;
                         parity3 [ 9 ] = veorq_u8 ( parity3 [ 9 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -2489,11 +2560,30 @@ int gf_11vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 9 ] = veorq_u8 ( parity3 [ 9 ], data_vec ) ;
                         parity3 [ 10 ] = veorq_u8 ( parity3 [ 10 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 5 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -2922,11 +3012,30 @@ int gf_12vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 10 ] = veorq_u8 ( parity3 [ 10 ], data_vec ) ;
                         parity3 [ 11 ] = veorq_u8 ( parity3 [ 11 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 5 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -3389,11 +3498,34 @@ int gf_13vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 11 ] = veorq_u8 ( parity3 [ 11 ], data_vec ) ;
                         parity3 [ 12 ] = veorq_u8 ( parity3 [ 12 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 6 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -3890,11 +4022,34 @@ int gf_14vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 12 ] = veorq_u8 ( parity3 [ 12 ], data_vec ) ;
                         parity3 [ 13 ] = veorq_u8 ( parity3 [ 13 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 6 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -4425,11 +4580,38 @@ int gf_15vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 13 ] = veorq_u8 ( parity3 [ 13 ], data_vec ) ;
                         parity3 [ 14 ] = veorq_u8 ( parity3 [ 14 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 7 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -4994,11 +5176,38 @@ int gf_16vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 14 ] = veorq_u8 ( parity3 [ 14 ], data_vec ) ;
                         parity3 [ 15 ] = veorq_u8 ( parity3 [ 15 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 7 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -5597,11 +5806,42 @@ int gf_17vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 15 ] = veorq_u8 ( parity3 [ 15 ], data_vec ) ;
                         parity3 [ 16 ] = veorq_u8 ( parity3 [ 16 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 8 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -6234,11 +6474,42 @@ int gf_18vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 16 ] = veorq_u8 ( parity3 [ 16 ], data_vec ) ;
                         parity3 [ 17 ] = veorq_u8 ( parity3 [ 17 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 8 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -6905,11 +7176,46 @@ int gf_19vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 17 ] = veorq_u8 ( parity3 [ 17 ], data_vec ) ;
                         parity3 [ 18 ] = veorq_u8 ( parity3 [ 18 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 9 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -7610,11 +7916,46 @@ int gf_20vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 18 ] = veorq_u8 ( parity3 [ 18 ], data_vec ) ;
                         parity3 [ 19 ] = veorq_u8 ( parity3 [ 19 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 9 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -8349,11 +8690,50 @@ int gf_21vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 19 ] = veorq_u8 ( parity3 [ 19 ], data_vec ) ;
                         parity3 [ 20 ] = veorq_u8 ( parity3 [ 20 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 10 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -9122,11 +9502,50 @@ int gf_22vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 20 ] = veorq_u8 ( parity3 [ 20 ], data_vec ) ;
                         parity3 [ 21 ] = veorq_u8 ( parity3 [ 21 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 10 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -9929,11 +10348,54 @@ int gf_23vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 21 ] = veorq_u8 ( parity3 [ 21 ], data_vec ) ;
                         parity3 [ 22 ] = veorq_u8 ( parity3 [ 22 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 11 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -10770,11 +11232,54 @@ int gf_24vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 22 ] = veorq_u8 ( parity3 [ 22 ], data_vec ) ;
                         parity3 [ 23 ] = veorq_u8 ( parity3 [ 23 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 11 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -11645,11 +12150,58 @@ int gf_25vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 23 ] = veorq_u8 ( parity3 [ 23 ], data_vec ) ;
                         parity3 [ 24 ] = veorq_u8 ( parity3 [ 24 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 12 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -12554,11 +13106,58 @@ int gf_26vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 24 ] = veorq_u8 ( parity3 [ 24 ], data_vec ) ;
                         parity3 [ 25 ] = veorq_u8 ( parity3 [ 25 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 12 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -13497,11 +14096,62 @@ int gf_27vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 25 ] = veorq_u8 ( parity3 [ 25 ], data_vec ) ;
                         parity3 [ 26 ] = veorq_u8 ( parity3 [ 26 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 13 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 13 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 13 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 13 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -14474,11 +15124,62 @@ int gf_28vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 26 ] = veorq_u8 ( parity3 [ 26 ], data_vec ) ;
                         parity3 [ 27 ] = veorq_u8 ( parity3 [ 27 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 13 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 13 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 13 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 13 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -15485,11 +16186,66 @@ int gf_29vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 27 ] = veorq_u8 ( parity3 [ 27 ], data_vec ) ;
                         parity3 [ 28 ] = veorq_u8 ( parity3 [ 28 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 13 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 13 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 13 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 13 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 14 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 14 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 14 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 14 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -16530,11 +17286,66 @@ int gf_30vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 28 ] = veorq_u8 ( parity3 [ 28 ], data_vec ) ;
                         parity3 [ 29 ] = veorq_u8 ( parity3 [ 29 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 13 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 13 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 13 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 13 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 14 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 14 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 14 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 14 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -17609,11 +18420,70 @@ int gf_31vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 29 ] = veorq_u8 ( parity3 [ 29 ], data_vec ) ;
                         parity3 [ 30 ] = veorq_u8 ( parity3 [ 30 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 13 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 13 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 13 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 13 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 14 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 14 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 14 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 14 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 15 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 15 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 15 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 15 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
@@ -18722,11 +19592,70 @@ int gf_32vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
                         parity3 [ 30 ] = veorq_u8 ( parity3 [ 30 ], data_vec ) ;
                         parity3 [ 31 ] = veorq_u8 ( parity3 [ 31 ], data_vec ) ;
 
-                }
 
                 data_vec = vorrq_u8 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity2 [ 0 ] ) ;
                 data_vec = vorrq_u8 ( data_vec, parity3 [ 0 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 1 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 2 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 3 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 4 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 5 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 6 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 7 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 8 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 9 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 10 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 11 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 12 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 13 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 13 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 13 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 13 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 14 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 14 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 14 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 14 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity0 [ 15 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity1 [ 15 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity2 [ 15 ] ) ;
+                data_vec = vorrq_u8 ( data_vec, parity3 [ 15 ] ) ;
                 uint32x4_t tmp = vreinterpretq_u32_u8( data_vec ) ;
                 if ( vmaxvq_u32 ( tmp ) != 0 )
                 {
