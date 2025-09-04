@@ -188,6 +188,116 @@ exit:
         return 0;
 }
 
+#define FIELD_SIZE 256
+
+void inject_errors_in_place(unsigned char **data, int index, int num_errors, unsigned char *error_positions, uint8_t *original_values)
+{
+    printf ( "error positions\n" ) ;
+    dump_u8xu8 ( error_positions, 1, num_errors ) ;
+    for (int i = 0; i < num_errors; i++)
+    {
+        int pos = error_positions[i];
+        original_values[i] = data[pos][index];
+        uint8_t error = (rand() % (FIELD_SIZE - 1)) + 1;
+        printf ( "Injector error pos = %d index = %d error = %d\n", pos, index, error ) ;
+        data[pos][index] = data[pos][index] ^ error;
+    }
+}
+
+int verify_correction_in_place(unsigned char **data, int index, int num_errors, unsigned char *error_positions, uint8_t *original_values)
+{
+    for (int i = 0; i < num_errors; i++)
+    {
+        if (data[error_positions[i]][index] != original_values[i])
+        {
+            printf ( "Error data= %d orig = %d\n", data[error_positions[i]][index], original_values[i] ) ;
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int test_pgz_decoder ( int index, int m, int p, unsigned char * g_tbls,
+                unsigned char ** data, unsigned char ** coding )
+{
+    int successes = 0, total_tests = 0;
+
+    printf("Testing PGZ decoder...\n");
+
+    for (int num_errors = 1; num_errors <= (p/2); num_errors++)
+    {
+        printf ( "Testing sequential %d errors\n", num_errors ) ;
+        for (int start = 0; start < m - (p/2); start++)
+        {
+            unsigned char error_positions[16];
+            uint8_t original_values[16];
+            for (int i = 0; i < (p/2); i++)
+            {
+                error_positions[i] = start + i;
+            }
+            inject_errors_in_place(data, index, num_errors, error_positions, original_values);
+
+            pc_decode_data_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding ) ;
+
+            if (verify_correction_in_place(data, index, num_errors, error_positions, original_values))
+            {
+                printf ( "Good sequential correction num errors = %d\n", num_errors ) ;
+                successes++;
+            }
+            else
+            {
+                printf("Failed: Sequential, %d errors at %d\n", num_errors, start);
+                return 0 ;
+            }
+            total_tests++;
+        }
+    }
+
+    for (int num_errors = 1; num_errors <= (p/2) ; num_errors++)
+    {
+        for (int trial = 0; trial < 100000; trial++)
+        {
+            printf ( "Starting random trial num_errors = %d trial = %d\n", num_errors, trial ) ;
+            uint8_t error_positions[16];
+            uint8_t original_values[16];
+            int available[FIELD_SIZE];
+            for (int i = 0; i < m; i++)
+            {
+                available[i] = i;
+            }
+            printf ( "Generating random values\n" ) ;
+            for (int i = 0; i < num_errors; i++)
+            {
+                int idx = rand() % (m - i);
+                printf ( "idx=%d\n", idx ) ;
+                error_positions[i] = available[idx];
+                printf ( "Error position %d = %d\n", i, error_positions[i] ) ;
+                available[idx] = available[m- 1 - i];
+            }
+            printf ( "Injecting errors\n" ) ;
+            inject_errors_in_place(data, index, num_errors, error_positions, original_values);
+
+            pc_decode_data_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding ) ;
+
+            printf ( "Verifying\n" ) ;
+            if (verify_correction_in_place(data, index, num_errors, error_positions, original_values))
+            {
+                printf ( "Good random correction num errors = %d\n", num_errors ) ;
+                successes++;
+            }
+            else
+            {
+                printf("Failed: Random, %d errors, trial %d\n", num_errors, trial);
+                return 0 ;
+            }
+            total_tests++;
+        }
+    }
+
+    printf("Tests completed\n" ) ;
+    return 1 ;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -197,8 +307,8 @@ main(int argc, char *argv[])
         u8 *a, *g_tbls=0, *z0=0 ;
         u8 *temp_buffs[TEST_SOURCES] = { NULL };
         u8 *buffs[TEST_SOURCES] = { NULL };
-        u8 origData, errSym, errData ;
-        int errOffset, errTests = 1000 ;
+        //u8 origData, errSym, errData ;
+        //int errOffset, errTests = 1000 ;
         struct perf start;
 #ifndef __aarch64__
         u8 avx2=0;
@@ -299,10 +409,7 @@ main(int argc, char *argv[])
         // Make random data
         for (i = 0; i < k; i++)
                 for (j = 0; j < TEST_LEN(m); j++)
-                        //buffs[i][j] = 0;
                         buffs[i][j] = rand();
-
-        //memset ( buffs [ 0 ], 1, TEST_LEN(m) ) ;
 
         // Print test type
 #ifdef __aarch64__
@@ -320,7 +427,6 @@ main(int argc, char *argv[])
 
         // Perform the baseline benchmark
         gf_gen_poly_matrix(a, m, k ) ;
-        //dump_u8xu8 ( a, m, k ) ;
         ec_init_tables(k, m - k, &a[k * k], g_tbls);
 #ifdef __aarch64__
         BENCHMARK(&start, BENCHMARK_TIME,
@@ -343,7 +449,6 @@ main(int argc, char *argv[])
         // Test intrinsics lfsr
         gf_gen_poly ( a, p ) ;
         ec_init_tables ( p, 1, a, g_tbls ) ;
-        //dump_u8xu8 ( g_tbls, p, 32 ) ;
 
 #ifdef __aarch64__
         BENCHMARK(&start, BENCHMARK_TIME,
@@ -402,19 +507,15 @@ main(int argc, char *argv[])
                 }
         }
 
-        // Now test parallel syndrome sequencer
-        // First create power vector
+        // Now benchmark parallel syndrome sequencer - First create power vector
         i = 2 ;
         for ( j = p - 2 ; j >= 0 ; j -- )
         {
                 a [ j ] = i ;
                 i = gf_mul ( i, 2 ) ;
         }
-        //printf ( "Vectors for pss\n" ) ;
-        //dump_u8xu8 ( a, 1, p-1 ) ;
+
         ec_init_tables ( p - 1, 1, a, g_tbls ) ;
-        //dump_u8xu8 ( g_tbls, p-1, 8 ) ;
-        //buffs [ 0 ] [ 65 ] ^= 1 ;
 #ifdef __aarch64__
         BENCHMARK(&start, BENCHMARK_TIME,
                   pc_decode_data_neon(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs));
@@ -431,17 +532,50 @@ main(int argc, char *argv[])
         }
 #endif
         printf("polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p );
-        perf_print(start, (long long) (TEST_LEN(m)) * (m));                
+        perf_print(start, (long long) (TEST_LEN(m)) * (m));
+
+        if ( test_pgz_decoder ( 0, m, p, g_tbls, buffs, temp_buffs ) == 0 )
+        {
+                printf ( "Decoder failed\n" ) ;
+                goto exit ;
+        }
+        printf("done all: Pass\n");
+        fflush ( stdout ) ;
+
+        ret = 0;
+exit:
+        aligned_free ( z0 ) ;
+        free ( a ) ;
+        for (i = 0; i < TEST_SOURCES; i++) {
+                aligned_free(buffs[i]);
+                aligned_free(temp_buffs[i]);
+        }
+        aligned_free(g_tbls);
+        return ret;
+}
+
+#ifdef NDEF
 
         // Syndromes verified as zero, now inject some errors and test
         for ( i = 0 ; i < errTests ; i ++ )
         {
                 errData = ( rand () % 254 ) + 1 ;
+                unsigned char errData2 = ( rand() % 254 ) + 1 ;
+                while ( errData2 == errData )
+                {
+                        errData2 = ( rand() % 254 ) + 1 ;
+                }
                 errSym = rand() % ( k + p ) ;
+                unsigned char errSym2 = rand() % ( k + p ) ;
+                while ( errSym2 == errSym )
+                {
+                        errSym2 = rand() % ( k + p ) ;
+                }
+
                 errOffset = rand() % TEST_LEN(m) ;
                 origData = buffs [ errSym ] [ errOffset ] ;
                 buffs [ errSym ] [ errOffset ] ^= errData ;
-                //printf ( "Injecting error %d symbol %d offset %d\n", errData, errSym, errOffset ) ;
+                buffs [ errSym2 ] [ errOffset ] ^= errData2 ;
                 
                 // Error has been injected, now attempt correction
 #ifdef __aarch64__
@@ -459,23 +593,10 @@ main(int argc, char *argv[])
                 // Check to see if error corrected successfully
                 if ( origData != buffs [ errSym ] [ errOffset ] ) 
                 {
+                        printf ( "Test no %d\n", i ) ;
                         printf ( "Failed to correct data, sym %d offset %d expected %2x got %2x\n",
                                 errSym, errOffset, origData, buffs [ errSym ] [ errOffset ] ) ;
                                 goto exit ;
                 }
         }
-
-        printf("done all: Pass\n");
-        fflush ( stdout ) ;
-
-        ret = 0;
-exit:
-        aligned_free ( z0 ) ;
-        free ( a ) ;
-        for (i = 0; i < TEST_SOURCES; i++) {
-                aligned_free(buffs[i]);
-                aligned_free(temp_buffs[i]);
-        }
-        aligned_free(g_tbls);
-        return ret;
-}
+#endif

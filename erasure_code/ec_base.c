@@ -49,7 +49,7 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include <stdint.h>
 #include "erasure_code.h"
 #include "ec_base.h" // for GF tables
-#ifdef NDEF
+//#ifdef NDEF
 // Utility print routine
 #include <stdio.h>
 void
@@ -64,7 +64,7 @@ dump_u8xu8(unsigned char *s, int k, int m)
         }
         printf("\n");
 }
-#endif
+//#endif
 void
 ec_init_tables_base(int k, int rows, unsigned char *a, unsigned char *g_tbls)
 {
@@ -543,6 +543,8 @@ int find_roots ( unsigned char * keyEq, unsigned char * roots, int mSize )
                 // Next evaluation is at the next power of 2
                 baseVal = gf_mul ( baseVal, 2 ) ;
         }
+        printf ( "Roots\n" ) ;
+        dump_u8xu8 ( roots, 1, mSize ) ;
         return rootCount ;
 }
 
@@ -577,17 +579,22 @@ int pc_compute_error_values ( int mSize, unsigned char * S, unsigned char * root
         {
                 Mat [ i ] = 1 ;
         }
+        unsigned char base = 2 ;
         for ( i = 1 ; i < mSize ; i ++ )
         {
                 for ( j = 0 ; j < mSize ; j ++ )
                 {
-                        Mat [ i * mSize + j ] = pc_pow ( 2, roots [ j ] ) ;
+                        Mat [ i * mSize + j ] = pc_pow ( base, roots [ j ] ) ;
                 }
+                base = gf_mul ( base, 2 ) ;
         }
+        printf ( "Vand Matrix\n" ) ;
+        dump_u8xu8 ( Mat, mSize, mSize ) ;
 
         // Invert matrix and verify inversion
         if ( gf_invert_matrix ( Mat, Mat_inv, mSize ) != 0 )
         {
+                printf ( "Inversion failed\n" ) ;
                 return 0 ;
         }
 
@@ -600,6 +607,7 @@ int pc_compute_error_values ( int mSize, unsigned char * S, unsigned char * root
                         errVal [ i ] ^= gf_mul ( S [ j ], Mat_inv [ i * mSize + j ] ) ;
                 }
         }
+        printf ( "Error values calculated\n" ) ;
         return 1 ;
 }
 
@@ -650,15 +658,21 @@ int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mS
                 }
         }
 
+        printf ( "Key Equation\n" ) ;
+        dump_u8xu8 ( keyEq, 1, mSize ) ;
+
+        int nroots = find_roots ( keyEq, roots, mSize );
         // Find roots, exit if mismatch with expected roots
-        if ( find_roots ( keyEq, roots, mSize ) != mSize )
+        if ( nroots != mSize )
         {
+                printf ( "Roots %d expected %d\n", nroots, mSize ) ;
                 return 0 ;
         }
 
         // Compute the error values
         if ( pc_compute_error_values ( mSize, S, roots, errVal ) == 0 )
         {
+                printf ( "Error_values\n" ) ;
                 return 0 ;
         }
 
@@ -666,6 +680,7 @@ int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mS
         // Verify all syndromes are correct
         if ( pc_verify_syndromes ( S, p, mSize, roots, errVal ) == 0 )
         {
+                printf ( "verify_syndromes\n" ) ;
                 return 0 ;
         }
 
@@ -675,12 +690,12 @@ int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mS
                 int sym = k - roots [ i ] - 1 ;
                 data [ sym ] [ newPos + offSet ] ^= errVal [ i ] ;
         }
- 
+        printf ( "Data corrected\n" ) ;
         // Good correction
         return 1 ;
 }
 
-// Syndromes are non-zero, try to calculation error location and data values
+// Syndromes are non-zero, try to calculate error location and data values
 int pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding, int vLen )
 {
         int offSet = 0, i, j, mSize  ;
@@ -731,12 +746,9 @@ int pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding
                 }
                 if ( gf_invert_matrix ( SMat, SMat_inv, mSize ) == 0 )
                 {
-                        if ( pc_verify_multiple_errors ( S, data, mSize, k, p, newPos, offSet, SMat_inv ) )
-                        {
-                                return 1 ;
-                        }
+                        printf ( "Found inversion size = %d\n", mSize ) ;
+                        return pc_verify_multiple_errors ( S, data, mSize, k, p, newPos, offSet, SMat_inv ) ;
                 }
         }
         return 0 ;
 }
-
