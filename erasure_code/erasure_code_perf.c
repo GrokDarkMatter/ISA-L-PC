@@ -237,7 +237,7 @@ int test_pgz_decoder ( int index, int m, int p, unsigned char * g_tbls,
             }
             inject_errors_in_place(data, index, num_errors, error_positions, original_values);
 #ifdef __aarch64__
-            pc_decode_data_neon(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs);
+            pc_decode_data_neon(TEST_LEN(m), m, p, g_tbls, data, coding);
 #else
             pc_decode_data_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding ) ;
 #endif
@@ -281,7 +281,7 @@ int test_pgz_decoder ( int index, int m, int p, unsigned char * g_tbls,
             inject_errors_in_place(data, index, num_errors, error_positions, original_values);
 
 #ifdef __aarch64__
-            pc_decode_data_neon(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs);
+            pc_decode_data_neon(TEST_LEN(m), m, p, g_tbls, data, coding);
 #else
             pc_decode_data_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding ) ;
 #endif
