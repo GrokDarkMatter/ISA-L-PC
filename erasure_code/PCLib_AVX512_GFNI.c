@@ -118,6 +118,7 @@ int gf_3vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
                 }
 
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -166,6 +167,8 @@ int gf_4vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
                 }
 
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -220,6 +223,8 @@ int gf_5vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
 
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -279,6 +284,9 @@ int gf_6vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
 
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -344,6 +352,9 @@ int gf_7vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -414,6 +425,10 @@ int gf_8vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -490,6 +505,10 @@ int gf_9vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -571,6 +590,11 @@ int gf_10vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -658,6 +682,11 @@ int gf_11vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -750,6 +779,12 @@ int gf_12vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -848,6 +883,12 @@ int gf_13vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -951,6 +992,13 @@ int gf_14vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -1060,6 +1108,13 @@ int gf_15vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -1174,6 +1229,14 @@ int gf_16vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -1294,6 +1357,14 @@ int gf_17vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -1419,6 +1490,15 @@ int gf_18vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -1550,6 +1630,15 @@ int gf_19vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -1686,6 +1775,16 @@ int gf_20vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -1828,6 +1927,16 @@ int gf_21vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -1975,6 +2084,17 @@ int gf_22vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -2128,6 +2248,17 @@ int gf_23vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 22 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -2286,6 +2417,18 @@ int gf_24vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 22 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 23 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -2450,6 +2593,18 @@ int gf_25vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 22 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 23 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 24 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -2619,6 +2774,19 @@ int gf_26vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 22 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 23 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 24 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 25 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -2794,6 +2962,19 @@ int gf_27vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 22 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 23 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 24 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 25 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 26 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -2974,6 +3155,20 @@ int gf_28vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 22 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 23 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 24 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 25 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 26 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 27 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -3160,6 +3355,20 @@ int gf_29vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 22 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 23 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 24 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 25 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 26 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 27 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 28 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -3351,6 +3560,21 @@ int gf_30vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 22 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 23 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 24 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 25 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 26 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 27 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 28 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 29 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -3548,6 +3772,21 @@ int gf_31vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 22 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 23 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 24 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 25 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 26 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 27 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 28 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 29 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 30 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
@@ -3750,6 +3989,22 @@ int gf_32vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 22 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 23 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 24 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 25 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 26 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 27 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 28 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 29 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 30 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 31 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {

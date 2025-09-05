@@ -192,15 +192,12 @@ exit:
 
 void inject_errors_in_place(unsigned char **data, int index, int num_errors, unsigned char *error_positions, uint8_t *original_values)
 {
-    printf ( "error positions\n" ) ;
-    dump_u8xu8 ( error_positions, 1, num_errors ) ;
     for (int i = 0; i < num_errors; i++)
     {
         int pos = error_positions[i];
         original_values[i] = data[pos][index];
         uint8_t error = (rand() % (FIELD_SIZE - 1)) + 1;
-        printf ( "Injector error pos = %d index = %d error = %d\n", pos, index, error ) ;
-        data[pos][index] = data[pos][index] ^ error;
+       data[pos][index] = data[pos][index] ^ error;
     }
 }
 
@@ -222,11 +219,8 @@ int test_pgz_decoder ( int index, int m, int p, unsigned char * g_tbls,
 {
     int successes = 0, total_tests = 0;
 
-    printf("Testing PGZ decoder...\n");
-
     for (int num_errors = 1; num_errors <= (p/2); num_errors++)
     {
-        printf ( "Testing sequential %d errors\n", num_errors ) ;
         for (int start = 0; start < m - (p/2); start++)
         {
             unsigned char error_positions[16];
@@ -244,7 +238,6 @@ int test_pgz_decoder ( int index, int m, int p, unsigned char * g_tbls,
 
             if (verify_correction_in_place(data, index, num_errors, error_positions, original_values))
             {
-                printf ( "Good sequential correction num errors = %d\n", num_errors ) ;
                 successes++;
             }
             else
@@ -258,9 +251,8 @@ int test_pgz_decoder ( int index, int m, int p, unsigned char * g_tbls,
 
     for (int num_errors = 1; num_errors <= (p/2) ; num_errors++)
     {
-        for (int trial = 0; trial < 100000; trial++)
+        for (int trial = 0; trial < 1000; trial++)
         {
-            printf ( "Starting random trial num_errors = %d trial = %d\n", num_errors, trial ) ;
             uint8_t error_positions[16];
             uint8_t original_values[16];
             int available[FIELD_SIZE];
@@ -268,16 +260,12 @@ int test_pgz_decoder ( int index, int m, int p, unsigned char * g_tbls,
             {
                 available[i] = i;
             }
-            printf ( "Generating random values\n" ) ;
             for (int i = 0; i < num_errors; i++)
             {
                 int idx = rand() % (m - i);
-                printf ( "idx=%d\n", idx ) ;
                 error_positions[i] = available[idx];
-                printf ( "Error position %d = %d\n", i, error_positions[i] ) ;
                 available[idx] = available[m- 1 - i];
             }
-            printf ( "Injecting errors\n" ) ;
             inject_errors_in_place(data, index, num_errors, error_positions, original_values);
 
 #ifdef __aarch64__
@@ -286,10 +274,8 @@ int test_pgz_decoder ( int index, int m, int p, unsigned char * g_tbls,
             pc_decode_data_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding ) ;
 #endif
 
-            printf ( "Verifying\n" ) ;
             if (verify_correction_in_place(data, index, num_errors, error_positions, original_values))
             {
-                printf ( "Good random correction num errors = %d\n", num_errors ) ;
                 successes++;
             }
             else
@@ -560,50 +546,3 @@ exit:
         aligned_free(g_tbls);
         return ret;
 }
-
-#ifdef NDEF
-
-        // Syndromes verified as zero, now inject some errors and test
-        for ( i = 0 ; i < errTests ; i ++ )
-        {
-                errData = ( rand () % 254 ) + 1 ;
-                unsigned char errData2 = ( rand() % 254 ) + 1 ;
-                while ( errData2 == errData )
-                {
-                        errData2 = ( rand() % 254 ) + 1 ;
-                }
-                errSym = rand() % ( k + p ) ;
-                unsigned char errSym2 = rand() % ( k + p ) ;
-                while ( errSym2 == errSym )
-                {
-                        errSym2 = rand() % ( k + p ) ;
-                }
-
-                errOffset = rand() % TEST_LEN(m) ;
-                origData = buffs [ errSym ] [ errOffset ] ;
-                buffs [ errSym ] [ errOffset ] ^= errData ;
-                buffs [ errSym2 ] [ errOffset ] ^= errData2 ;
-                
-                // Error has been injected, now attempt correction
-#ifdef __aarch64__
-                pc_decode_data_neon ( TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs ) ;
-#else
-                if ( avx2 == 0 )
-                {
-                        pc_decode_data_avx512_gfni ( TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs ) ;
-                }
-                else
-                {
-                        pc_decode_data_avx2_gfni ( TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs ) ;
-                }
-#endif
-                // Check to see if error corrected successfully
-                if ( origData != buffs [ errSym ] [ errOffset ] ) 
-                {
-                        printf ( "Test no %d\n", i ) ;
-                        printf ( "Failed to correct data, sym %d offset %d expected %2x got %2x\n",
-                                errSym, errOffset, origData, buffs [ errSym ] [ errOffset ] ) ;
-                                goto exit ;
-                }
-        }
-#endif

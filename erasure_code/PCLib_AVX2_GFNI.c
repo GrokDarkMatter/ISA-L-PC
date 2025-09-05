@@ -84,6 +84,8 @@ int gf_2vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 }
 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -142,6 +144,8 @@ int gf_3vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 2 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -209,6 +213,10 @@ int gf_4vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 2 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 3 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -287,6 +295,10 @@ int gf_5vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 2 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 4 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -374,6 +386,12 @@ int gf_6vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 2 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 2 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 3 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 5 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -472,6 +490,12 @@ int gf_7vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 2 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 3 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 6 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -579,6 +603,14 @@ int gf_8vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 2 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 3 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 3 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 4 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 7 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -697,6 +729,14 @@ int gf_9vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 3 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 4 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 8 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -824,6 +864,16 @@ int gf_10vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 3 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 4 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 4 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 5 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 9 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -962,6 +1012,16 @@ int gf_11vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 4 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 5 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 10 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 10 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -1109,6 +1169,18 @@ int gf_12vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 4 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 5 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 5 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 6 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 10 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 11 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -1267,6 +1339,18 @@ int gf_13vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 5 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 6 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 10 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 12 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -1434,6 +1518,20 @@ int gf_14vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 5 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 6 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 6 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 7 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 10 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 13 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -1612,6 +1710,20 @@ int gf_15vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 6 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 7 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 10 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 14 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -1799,6 +1911,22 @@ int gf_16vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 6 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 7 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 7 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 8 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 10 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 15 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -1997,6 +2125,22 @@ int gf_17vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 7 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 8 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 10 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 16 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -2204,6 +2348,24 @@ int gf_18vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 7 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 8 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 8 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 9 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 10 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 17 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -2422,6 +2584,24 @@ int gf_19vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 8 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 9 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 10 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 18 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -2649,6 +2829,26 @@ int gf_20vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 8 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 9 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 9 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 10 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 19 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -2887,6 +3087,26 @@ int gf_21vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 9 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 10 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 20 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -3134,6 +3354,28 @@ int gf_22vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 9 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 10 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 10 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 21 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 21 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -3392,6 +3634,28 @@ int gf_23vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 10 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 11 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 21 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 21 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 22 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 22 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -3659,6 +3923,30 @@ int gf_24vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 10 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 11 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 11 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 21 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 21 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 22 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 22 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 23 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 23 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -3937,6 +4225,30 @@ int gf_25vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 11 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 12 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 21 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 21 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 22 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 22 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 23 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 23 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 24 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 24 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -4224,6 +4536,32 @@ int gf_26vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 11 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 12 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 12 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 21 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 21 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 22 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 22 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 23 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 23 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 24 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 24 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 25 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 25 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -4522,6 +4860,32 @@ int gf_27vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 12 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 13 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 21 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 21 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 22 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 22 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 23 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 23 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 24 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 24 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 25 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 25 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 26 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 26 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -4829,6 +5193,34 @@ int gf_28vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 12 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 13 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 13 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 21 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 21 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 22 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 22 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 23 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 23 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 24 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 24 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 25 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 25 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 26 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 26 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 27 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 27 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -5147,6 +5539,34 @@ int gf_29vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 13 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 14 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 21 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 21 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 22 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 22 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 23 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 23 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 24 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 24 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 25 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 25 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 26 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 26 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 27 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 27 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 28 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 28 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -5474,6 +5894,36 @@ int gf_30vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 13 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 14 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 14 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 21 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 21 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 22 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 22 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 23 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 23 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 24 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 24 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 25 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 25 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 26 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 26 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 27 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 27 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 28 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 28 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 29 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 29 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -5812,6 +6262,36 @@ int gf_31vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 14 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 15 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 21 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 21 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 22 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 22 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 23 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 23 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 24 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 24 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 25 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 25 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 26 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 26 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 27 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 27 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 28 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 28 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 29 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 29 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 30 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 30 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -6159,6 +6639,38 @@ int gf_32vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 14 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 15 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 15 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 16 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 17 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 18 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 19 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 20 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 21 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 21 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 22 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 22 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 23 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 23 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 24 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 24 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 25 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 25 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 26 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 26 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 27 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 27 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 28 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 28 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 29 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 29 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 30 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 30 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity0 [ 31 ] ) ;
+                data_vec = _mm256_or_si256 ( data_vec, parity1 [ 31 ] ) ;
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
