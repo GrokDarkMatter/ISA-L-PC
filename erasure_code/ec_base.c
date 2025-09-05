@@ -901,7 +901,7 @@ int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mS
                         keyEq [ i ] ^= gf_mul ( S [ mSize + j ], invMat [ i * mSize + j ] ) ;
                 }
         }
-
+#ifdef NDEF
         printf ( "PGZ key equation\n" ) ;
         dump_u8xu8 ( keyEq, 1, mSize ) ;
         unsigned char lambda [ 17 ], lambda2 [ 33 ] ;
@@ -911,15 +911,15 @@ int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mS
         l = berlekamp_massey_vec ( S, p, lambda2 ) ;
         printf ( "Berlekamp Vec\n" ) ;
         dump_u8xu8 ( lambda, 1, l+1 ) ;
-
+#endif
         int nroots = find_roots ( keyEq, roots, mSize );
         // Find roots, exit if mismatch with expected roots
         if ( nroots != mSize )
         {
                 return 0 ;
         }
-        printf ( "Roots\n" ) ;
-        dump_u8xu8 ( roots, 1, nroots ) ;
+        //printf ( "Roots\n" ) ;
+        //dump_u8xu8 ( roots, 1, nroots ) ;
 
         // Compute the error values
         if ( pc_compute_error_values ( mSize, S, roots, errVal ) == 0 )
@@ -997,10 +997,12 @@ int pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding
                 }
                 if ( gf_invert_matrix ( SMat, SMat_inv, mSize ) == 0 )
                 {
+#ifdef NDEF
                         gf_invert_matrix_vec ( SMat2, SMat_inv2, mSize ) ;
                         printf ( "Smat_inv2\n" ) ;
                         dump_u8xu8 ( SMat_inv, mSize, mSize ) ;
                         dump_u8xu8 ( SMat_inv2, mSize, mSize ) ;
+#endif
                         return pc_verify_multiple_errors ( S, data, mSize, k, p, newPos, offSet, SMat_inv ) ;
                 }
         }
