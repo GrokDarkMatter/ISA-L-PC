@@ -652,70 +652,8 @@ int find_roots ( unsigned char * keyEq, unsigned char * roots, int mSize )
 // roots: output array for root indices (0 to 254).
 // mSize: polynomial degree (assumes mSize <= 64).
 // Returns: number of roots found.
-int find_roots_vec(unsigned char *keyEq, unsigned char *roots, int mSize)
-{
-    int rootCount = 0;
-    __m512i base_vals;  // Vector of 64 roots (α^i, α^(i+1), ..., α^(i+63))
-    unsigned char temp[64] = {0};
 
-    // Initialize base_vals for first 64 roots (α^0 to α^63)
-    for (int i = 0; i < 64; i++)
-    {
-        temp[i] = gf_mul(1, i == 0 ? 1 : gf_mul(temp[i-1], 2));  // α^i = gf_mul(α^(i-1), α)
-    }
-    base_vals = _mm512_loadu_si512(temp);
-
-    // Process 255 roots in batches of 64
-    for (int batch = 0; batch < 256; batch += 64)
-    {
-        __m512i e_vals = _mm512_setzero_si512();  // Accumulator for Λ(α^i)
-        __m512i x_vals = base_vals;  // Current x values (α^i to α^(i+63))
-
-        // Evaluate polynomial using Horner's method
-        for (int j = 0; j < mSize; j++)
-        {
-            if (keyEq[mSize - j - 1] != 0)  // Skip zero coefficients
-            {
-                __m128i matrix_128 = _mm_set1_epi64x(gf_table_gfni[keyEq[mSize - j - 1]]);
-                __m512i matrix = _mm512_broadcast_i32x2(matrix_128);
-                e_vals = _mm512_gf2p8affine_epi64_epi8(x_vals, matrix, 0);
-            }
-            if (j < mSize - 1)  // Update x_vals to x * α for next term
-            {
-                __m128i matrix_128 = _mm_set1_epi64x(gf_table_gfni[2]);  // α
-                __m512i matrix = _mm512_broadcast_i32x2(matrix_128);
-                x_vals = _mm512_gf2p8affine_epi64_epi8(x_vals, matrix, 0);
-            }
-        }
-        // Include x^mSize term (coefficient is 1)
-        __m128i matrix_128 = _mm_set1_epi64x(gf_table_gfni[1]);
-        __m512i matrix = _mm512_broadcast_i32x2(matrix_128);
-        e_vals = _mm512_xor_si512(e_vals, _mm512_gf2p8affine_epi64_epi8(x_vals, matrix, 0));
-
-        // Check for roots (e_vals == 0)
-        _mm512_storeu_si512(temp, e_vals);
-        for (int i = 0; i < 64 && batch + i < 255; i++)
-        {
-            if (temp[i] == 0)
-            {
-                roots[rootCount] = batch + i;
-                rootCount++;
-            }
-        }
-
-        // Update base_vals for next batch (multiply by α^64)
-        if (batch + 64 < 256)
-        {
-            matrix_128 = _mm_set1_epi64x(gf_table_gfni[gf_mul(1, gf_mul(1, 1 << 6))]);  // α^64
-            matrix = _mm512_broadcast_i32x2(matrix_128);
-            base_vals = _mm512_gf2p8affine_epi64_epi8(base_vals, matrix, 0);
-        }
-    }
-
-    return rootCount;
-}
 #endif
-
 // Compute base ^ Power
 int pc_pow ( unsigned char base, unsigned char Power ) 
 {
@@ -964,14 +902,15 @@ int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mS
                 }
         }
 
-        //printf ( "PGZ key equation\n" ) ;
-        //dump_u8xu8 ( keyEq, 1, mSize ) ;
-        //int l = berlekamp_massey ( S, p, lambda ) ;
-        //printf ( "berlekamp\n" ) ;
-        //dump_u8xu8 ( lambda, 1, l+1 ) ;
-        //l = berlekamp_massey_vec ( S, p, lambda ) ;
-        //printf ( "Berlekamp Vec\n" ) ;
-        ///dump_u8xu8 ( lambda, 1, l+1 ) ;
+        printf ( "PGZ key equation\n" ) ;
+        dump_u8xu8 ( keyEq, 1, mSize ) ;
+        unsigned char lambda [ 17 ], lambda2 [ 33 ] ;
+        int l = berlekamp_massey ( S, p, lambda ) ;
+        printf ( "berlekamp\n" ) ;
+        dump_u8xu8 ( lambda, 1, l+1 ) ;
+        l = berlekamp_massey_vec ( S, p, lambda2 ) ;
+        printf ( "Berlekamp Vec\n" ) ;
+        dump_u8xu8 ( lambda, 1, l+1 ) ;
 
         int nroots = find_roots ( keyEq, roots, mSize );
         // Find roots, exit if mismatch with expected roots
@@ -979,6 +918,8 @@ int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mS
         {
                 return 0 ;
         }
+        printf ( "Roots\n" ) ;
+        dump_u8xu8 ( roots, 1, nroots ) ;
 
         // Compute the error values
         if ( pc_compute_error_values ( mSize, S, roots, errVal ) == 0 )
@@ -1010,6 +951,7 @@ int pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding
         unsigned char synZero = 0 ;
         unsigned char S [ PC_MAX_ERRS ] ;
         unsigned char SMat [ PC_MAX_ERRS * PC_MAX_ERRS ], SMat_inv [ PC_MAX_ERRS * PC_MAX_ERRS ] ;
+        unsigned char SMat2 [ PC_MAX_ERRS * PC_MAX_ERRS ], SMat_inv2 [ PC_MAX_ERRS * PC_MAX_ERRS ] ;
 
         while ( offSet < vLen ) 
         {
@@ -1050,10 +992,15 @@ int pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding
                         for ( j = 0 ; j < mSize ; j ++ )
                         {
                                 SMat [ i * mSize + j ] = S [ i + j ] ;
+                                SMat2 [ i * mSize + j ] = S [ i + j ] ;
                         }
                 }
                 if ( gf_invert_matrix ( SMat, SMat_inv, mSize ) == 0 )
                 {
+                        gf_invert_matrix_vec ( SMat2, SMat_inv2, mSize ) ;
+                        printf ( "Smat_inv2\n" ) ;
+                        dump_u8xu8 ( SMat_inv, mSize, mSize ) ;
+                        dump_u8xu8 ( SMat_inv2, mSize, mSize ) ;
                         return pc_verify_multiple_errors ( S, data, mSize, k, p, newPos, offSet, SMat_inv ) ;
                 }
         }
