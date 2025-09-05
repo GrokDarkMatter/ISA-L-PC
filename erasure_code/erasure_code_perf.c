@@ -314,12 +314,10 @@ main(int argc, char *argv[])
         u8 *a, *g_tbls=0, *z0=0 ;
         u8 *temp_buffs[TEST_SOURCES] = { NULL };
         u8 *buffs[TEST_SOURCES] = { NULL };
-        //u8 origData, errSym, errData ;
-        //int errOffset, errTests = 1000 ;
+
         struct perf start;
 
         u8 avx2=0;
-
 
         /* Set default parameters */
         k = 12;
