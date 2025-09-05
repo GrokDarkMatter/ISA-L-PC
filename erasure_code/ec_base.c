@@ -49,7 +49,7 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include <stdint.h>
 #include "erasure_code.h"
 #include "ec_base.h" // for GF tables
-#ifndef __arch64__
+#ifndef __aarch64__
 #include <immintrin.h>
 #endif
 //#ifdef NDEF
@@ -520,9 +520,6 @@ int pc_verify_single_error ( unsigned char * S, unsigned char ** data, int k, in
         data [ k - eLoc - 1 ] [ newPos + offSet ] ^= eVal ;
         return 1 ;
 }
-
-// Affine table from ec_base.h: 256 * 8-byte matrices for GF(256) multiplication
-static const uint64_t gf_table_gfni[256];
 
 // Affine table from ec_base.h: 256 * 8-byte matrices for GF(256) multiplication
 static const uint64_t gf_table_gfni[256];
