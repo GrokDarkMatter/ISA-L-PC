@@ -533,6 +533,7 @@ static const uint64_t gf_table_gfni[256];
 // Affine table from ec_base.h: 256 * 8-byte matrices for GF(256) multiplication
 static const uint64_t gf_table_gfni[256];
 
+#ifndef __aarch64__
 // Inverts an n x n matrix in GF(256) using Gaussian elimination, with AVX-512 GFNI acceleration.
 // in_mat: input matrix (n x n, row-major, modified in place).
 // out_mat: output matrix (n x n, row-major, starts as identity, becomes inverse).
@@ -623,6 +624,7 @@ int gf_invert_matrix_vec(unsigned char *in_mat, unsigned char *out_mat, const in
 
     return 0;
 }
+#endif
 #define PC_MAX_ERRS 32
 
 // Identify roots from key equation
@@ -652,6 +654,76 @@ int find_roots ( unsigned char * keyEq, unsigned char * roots, int mSize )
         }
         return rootCount ;
 }
+
+#ifndef __aarch64__
+// Identify roots from key equation using AVX-512 GFNI acceleration.
+// keyEq: error locator polynomial coefficients, degree mSize (keyEq[0] is x^0 term).
+// roots: output array for root indices (0 to 254).
+// mSize: polynomial degree (assumes mSize <= 64).
+// Returns: number of roots found.
+int find_roots_vec(unsigned char *keyEq, unsigned char *roots, int mSize)
+{
+    int rootCount = 0;
+    __m512i base_vals;  // Vector of 64 roots (α^i, α^(i+1), ..., α^(i+63))
+    unsigned char temp[64] = {0};
+
+    // Initialize base_vals for first 64 roots (α^0 to α^63)
+    for (int i = 0; i < 64; i++)
+    {
+        temp[i] = gf_mul(1, i == 0 ? 1 : gf_mul(temp[i-1], 2));  // α^i = gf_mul(α^(i-1), α)
+    }
+    base_vals = _mm512_loadu_si512(temp);
+
+    // Process 255 roots in batches of 64
+    for (int batch = 0; batch < 256; batch += 64)
+    {
+        __m512i e_vals = _mm512_setzero_si512();  // Accumulator for Λ(α^i)
+        __m512i x_vals = base_vals;  // Current x values (α^i to α^(i+63))
+
+        // Evaluate polynomial using Horner's method
+        for (int j = 0; j < mSize; j++)
+        {
+            if (keyEq[mSize - j - 1] != 0)  // Skip zero coefficients
+            {
+                __m128i matrix_128 = _mm_set1_epi64x(gf_table_gfni[keyEq[mSize - j - 1]]);
+                __m512i matrix = _mm512_broadcast_i32x2(matrix_128);
+                e_vals = _mm512_gf2p8affine_epi64_epi8(x_vals, matrix, 0);
+            }
+            if (j < mSize - 1)  // Update x_vals to x * α for next term
+            {
+                __m128i matrix_128 = _mm_set1_epi64x(gf_table_gfni[2]);  // α
+                __m512i matrix = _mm512_broadcast_i32x2(matrix_128);
+                x_vals = _mm512_gf2p8affine_epi64_epi8(x_vals, matrix, 0);
+            }
+        }
+        // Include x^mSize term (coefficient is 1)
+        __m128i matrix_128 = _mm_set1_epi64x(gf_table_gfni[1]);
+        __m512i matrix = _mm512_broadcast_i32x2(matrix_128);
+        e_vals = _mm512_xor_si512(e_vals, _mm512_gf2p8affine_epi64_epi8(x_vals, matrix, 0));
+
+        // Check for roots (e_vals == 0)
+        _mm512_storeu_si512(temp, e_vals);
+        for (int i = 0; i < 64 && batch + i < 255; i++)
+        {
+            if (temp[i] == 0)
+            {
+                roots[rootCount] = batch + i;
+                rootCount++;
+            }
+        }
+
+        // Update base_vals for next batch (multiply by α^64)
+        if (batch + 64 < 256)
+        {
+            matrix_128 = _mm_set1_epi64x(gf_table_gfni[gf_mul(1, gf_mul(1, 1 << 6))]);  // α^64
+            matrix = _mm512_broadcast_i32x2(matrix_128);
+            base_vals = _mm512_gf2p8affine_epi64_epi8(base_vals, matrix, 0);
+        }
+    }
+
+    return rootCount;
+}
+#endif
 
 // Compute base ^ Power
 int pc_pow ( unsigned char base, unsigned char Power ) 
@@ -746,73 +818,6 @@ unsigned char gf_div ( unsigned char a, unsigned char b )
         return gf_mul ( a, gf_inv ( b ) ) ;
 }
 
-// Identify roots from key equation using AVX-512 GFNI acceleration.
-// keyEq: error locator polynomial coefficients, degree mSize (keyEq[0] is x^0 term).
-// roots: output array for root indices (0 to 254).
-// mSize: polynomial degree (assumes mSize <= 64).
-// Returns: number of roots found.
-int find_roots_vec(unsigned char *keyEq, unsigned char *roots, int mSize)
-{
-    int rootCount = 0;
-    __m512i base_vals;  // Vector of 64 roots (α^i, α^(i+1), ..., α^(i+63))
-    unsigned char temp[64] = {0};
-
-    // Initialize base_vals for first 64 roots (α^0 to α^63)
-    for (int i = 0; i < 64; i++)
-    {
-        temp[i] = gf_mul(1, i == 0 ? 1 : gf_mul(temp[i-1], 2));  // α^i = gf_mul(α^(i-1), α)
-    }
-    base_vals = _mm512_loadu_si512(temp);
-
-    // Process 255 roots in batches of 64
-    for (int batch = 0; batch < 256; batch += 64)
-    {
-        __m512i e_vals = _mm512_setzero_si512();  // Accumulator for Λ(α^i)
-        __m512i x_vals = base_vals;  // Current x values (α^i to α^(i+63))
-
-        // Evaluate polynomial using Horner's method
-        for (int j = 0; j < mSize; j++)
-        {
-            if (keyEq[mSize - j - 1] != 0)  // Skip zero coefficients
-            {
-                __m128i matrix_128 = _mm_set1_epi64x(gf_table_gfni[keyEq[mSize - j - 1]]);
-                __m512i matrix = _mm512_broadcast_i32x2(matrix_128);
-                e_vals = _mm512_gf2p8affine_epi64_epi8(x_vals, matrix, 0);
-            }
-            if (j < mSize - 1)  // Update x_vals to x * α for next term
-            {
-                __m128i matrix_128 = _mm_set1_epi64x(gf_table_gfni[2]);  // α
-                __m512i matrix = _mm512_broadcast_i32x2(matrix_128);
-                x_vals = _mm512_gf2p8affine_epi64_epi8(x_vals, matrix, 0);
-            }
-        }
-        // Include x^mSize term (coefficient is 1)
-        __m128i matrix_128 = _mm_set1_epi64x(gf_table_gfni[1]);
-        __m512i matrix = _mm512_broadcast_i32x2(matrix_128);
-        e_vals = _mm512_xor_si512(e_vals, _mm512_gf2p8affine_epi64_epi8(x_vals, matrix, 0));
-
-        // Check for roots (e_vals == 0)
-        _mm512_storeu_si512(temp, e_vals);
-        for (int i = 0; i < 64 && batch + i < 255; i++)
-        {
-            if (temp[i] == 0)
-            {
-                roots[rootCount] = batch + i;
-                rootCount++;
-            }
-        }
-
-        // Update base_vals for next batch (multiply by α^64)
-        if (batch + 64 < 256)
-        {
-            matrix_128 = _mm_set1_epi64x(gf_table_gfni[gf_mul(1, gf_mul(1, 1 << 6))]);  // α^64
-            matrix = _mm512_broadcast_i32x2(matrix_128);
-            base_vals = _mm512_gf2p8affine_epi64_epi8(base_vals, matrix, 0);
-        }
-    }
-
-    return rootCount;
-}
 // Assumes external gf_mul and gf_div functions for GF(256).
 // syndromes: array of length 'length' (typically 2t), syndromes[0] = S1, [1] = S2, etc.
 // lambda: caller-allocated array of size at least (length + 1), filled with locator poly coeffs.
@@ -877,6 +882,7 @@ int berlekamp_massey(unsigned char *syndromes, int length, unsigned char *lambda
 // Affine table from ec_base.h: 256 * 8-byte matrices for GF(256) multiplication
 static const uint64_t gf_table_gfni[256];  // Assume defined in ec_base.h
 
+#ifndef __aarch64__
 // syndromes: array of length 'length' (typically 2t), syndromes[0] = S1, [1] = S2, etc.
 // lambda: caller-allocated array of size at least (length + 1 + 31), filled with locator poly coeffs. Padded for SIMD.
 // Returns: degree L of the error locator polynomial.
@@ -947,13 +953,15 @@ int berlekamp_massey_vec(unsigned char *syndromes, int length, unsigned char *la
 
     return L;
 }
+#endif
+
 // Attempt to detect multiple error locations and values
 int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mSize, int k, 
         int p, int newPos, int offSet, unsigned char * invMat )
 {
         unsigned char keyEq [ PC_MAX_ERRS ] = {0}, roots [ PC_MAX_ERRS ] = {0} ;
         unsigned char errVal [ PC_MAX_ERRS ] ;
-        unsigned char lambda [ PC_MAX_ERRS + 1 ] ;
+        //unsigned char lambda [ PC_MAX_ERRS + 1 ] ;
         int i, j ;
 
         // Compute the key equation terms
@@ -965,14 +973,14 @@ int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mS
                 }
         }
 
-        printf ( "PGZ key equation\n" ) ;
-        dump_u8xu8 ( keyEq, 1, mSize ) ;
-        int l = berlekamp_massey ( S, p, lambda ) ;
-        printf ( "berlekamp\n" ) ;
-        dump_u8xu8 ( lambda, 1, l+1 ) ;
-        l = berlekamp_massey_vec ( S, p, lambda ) ;
-        printf ( "Berlekamp Vec\n" ) ;
-        dump_u8xu8 ( lambda, 1, l+1 ) ;
+        //printf ( "PGZ key equation\n" ) ;
+        //dump_u8xu8 ( keyEq, 1, mSize ) ;
+        //int l = berlekamp_massey ( S, p, lambda ) ;
+        //printf ( "berlekamp\n" ) ;
+        //dump_u8xu8 ( lambda, 1, l+1 ) ;
+        //l = berlekamp_massey_vec ( S, p, lambda ) ;
+        //printf ( "Berlekamp Vec\n" ) ;
+        ///dump_u8xu8 ( lambda, 1, l+1 ) ;
 
         int nroots = find_roots ( keyEq, roots, mSize );
         // Find roots, exit if mismatch with expected roots
