@@ -215,7 +215,7 @@ int verify_correction_in_place(unsigned char **data, int index, int num_errors, 
 }
 
 int test_pgz_decoder ( int index, int m, int p, unsigned char * g_tbls,
-                unsigned char ** data, unsigned char ** coding )
+                unsigned char ** data, unsigned char ** coding, int avx2 )
 {
     int successes = 0, total_tests = 0;
 
@@ -233,7 +233,14 @@ int test_pgz_decoder ( int index, int m, int p, unsigned char * g_tbls,
 #ifdef __aarch64__
             pc_decode_data_neon(TEST_LEN(m), m, p, g_tbls, data, coding);
 #else
-            pc_decode_data_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding ) ;
+            if ( avx2 == 0 )
+            {
+                    pc_decode_data_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding ) ;
+            }
+            else
+            {
+                    pc_decode_data_avx2_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding ) ;
+            }
 #endif
 
             if (verify_correction_in_place(data, index, num_errors, error_positions, original_values))
@@ -271,7 +278,14 @@ int test_pgz_decoder ( int index, int m, int p, unsigned char * g_tbls,
 #ifdef __aarch64__
             pc_decode_data_neon(TEST_LEN(m), m, p, g_tbls, data, coding);
 #else
-            pc_decode_data_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding ) ;
+            if ( avx2 == 0 )
+            {
+                    pc_decode_data_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding ) ;
+            }
+            else
+            {
+                    pc_decode_data_avx2_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding ) ;
+            }
 #endif
 
             if (verify_correction_in_place(data, index, num_errors, error_positions, original_values))
@@ -527,7 +541,7 @@ main(int argc, char *argv[])
         printf("polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p );
         perf_print(start, (long long) (TEST_LEN(m)) * (m));
 
-        if ( test_pgz_decoder ( 0, m, p, g_tbls, buffs, temp_buffs ) == 0 )
+        if ( test_pgz_decoder ( 0, m, p, g_tbls, buffs, temp_buffs, avx2 ) == 0 )
         {
                 printf ( "Decoder failed\n" ) ;
                 goto exit ;
