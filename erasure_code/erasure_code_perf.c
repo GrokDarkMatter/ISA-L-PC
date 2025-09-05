@@ -317,9 +317,9 @@ main(int argc, char *argv[])
         //u8 origData, errSym, errData ;
         //int errOffset, errTests = 1000 ;
         struct perf start;
-#ifndef __aarch64__
+
         u8 avx2=0;
-#endif
+
 
         /* Set default parameters */
         k = 12;
