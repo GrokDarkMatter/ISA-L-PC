@@ -42,10 +42,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restrictions
 **********************************************************************/
-#ifndef MAX_PC_RETRY
-#define MAX_PC_RETRY 2
-extern int pc_correct ( int newPos, int k, int rows, unsigned char ** data, char ** coding, int vLen ) ;
-#endif
+extern int pc_correct ( int newPos, int k, int rows, unsigned char ** data, unsigned char ** coding, int vLen ) ;
 
 int gf_2vect_pss_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
@@ -7464,10 +7461,10 @@ void pc_encode_data_avx512_gfni(int len, int k, int rows, unsigned char *g_tbls,
         }
 }
 int pc_decode_data_avx512_gfni(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
-        unsigned char **coding)
+        unsigned char **coding, int retries)
 {
         int newPos = 0, retry = 0 ;
-        while ( ( newPos < len ) && ( retry++ < MAX_PC_RETRY ) )
+        while ( ( newPos < len ) && ( retry++ < retries ) )
         {
 
                 switch (rows) {

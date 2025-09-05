@@ -231,15 +231,15 @@ int test_pgz_decoder ( int index, int m, int p, unsigned char * g_tbls,
             }
             inject_errors_in_place(data, index, num_errors, error_positions, original_values);
 #ifdef __aarch64__
-            pc_decode_data_neon(TEST_LEN(m), m, p, g_tbls, data, coding);
+            pc_decode_data_neon(TEST_LEN(m), m, p, g_tbls, data, coding, 1);
 #else
             if ( avx2 == 0 )
             {
-                    pc_decode_data_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding ) ;
+                    pc_decode_data_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
             }
             else
             {
-                    pc_decode_data_avx2_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding ) ;
+                    pc_decode_data_avx2_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding, 1) ;
             }
 #endif
 
@@ -276,15 +276,15 @@ int test_pgz_decoder ( int index, int m, int p, unsigned char * g_tbls,
             inject_errors_in_place(data, index, num_errors, error_positions, original_values);
 
 #ifdef __aarch64__
-            pc_decode_data_neon(TEST_LEN(m), m, p, g_tbls, data, coding);
+            pc_decode_data_neon(TEST_LEN(m), m, p, g_tbls, data, coding, 1);
 #else
             if ( avx2 == 0 )
             {
-                    pc_decode_data_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding ) ;
+                    pc_decode_data_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
             }
             else
             {
-                    pc_decode_data_avx2_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding ) ;
+                    pc_decode_data_avx2_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
             }
 #endif
 
@@ -525,17 +525,17 @@ main(int argc, char *argv[])
         ec_init_tables ( p - 1, 1, a, g_tbls ) ;
 #ifdef __aarch64__
         BENCHMARK(&start, BENCHMARK_TIME,
-                  pc_decode_data_neon(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs));
+                  pc_decode_data_neon(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 1));
 #else
         if ( avx2 == 0 )
         {
                 BENCHMARK(&start, BENCHMARK_TIME,
-                        pc_decode_data_avx512_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs));
+                        pc_decode_data_avx512_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 1));
         }
         else
         {
                 BENCHMARK(&start, BENCHMARK_TIME,
-                        pc_decode_data_avx2_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs));
+                        pc_decode_data_avx2_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 1));
         }
 #endif
         printf("polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p );

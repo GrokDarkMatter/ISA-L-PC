@@ -42,10 +42,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restrictions
 **********************************************************************/
-#ifndef MAX_PC_RETRY
-#define MAX_PC_RETRY 2
 extern int pc_correct ( int newPos, int k, int rows, unsigned char ** data, unsigned char ** coding, int vLen ) ;
-#endif
 
 int gf_2vect_pss_neon(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
@@ -40473,7 +40470,7 @@ int gf_32vect_pls_neon(int len, int k, unsigned char *g_tbls, unsigned char **da
 }
 
 void pc_encode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
-        unsigned char **coding)
+        unsigned char **coding, int retries)
 {
         switch (rows) {
         case 2: gf_2vect_pls_neon(len, k, g_tbls, data, coding);
@@ -40541,10 +40538,10 @@ void pc_encode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsign
         }
 }
 int pc_decode_data_neon(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
-        unsigned char **coding)
+        unsigned char **coding, int retries)
 {
         int newPos = 0, retry = 0 ;
-        while ( ( newPos < len ) && ( retry++ < MAX_PC_RETRY ) )
+        while ( ( newPos < len ) && ( retry++ < retries ) )
         {
 
                 switch (rows) {
