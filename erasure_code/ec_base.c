@@ -49,7 +49,9 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include <stdint.h>
 #include "erasure_code.h"
 #include "ec_base.h" // for GF tables
+#ifndef __arch64__
 #include <immintrin.h>
+#endif
 //#ifdef NDEF
 // Utility print routine
 #include <stdio.h>
@@ -518,14 +520,6 @@ int pc_verify_single_error ( unsigned char * S, unsigned char ** data, int k, in
         data [ k - eLoc - 1 ] [ newPos + offSet ] ^= eVal ;
         return 1 ;
 }
-
-#include <string.h>  // For memset
-#include <stdint.h>  // For uint8_t
-#include <immintrin.h>  // For AVX-512 GF2P8AFFINE intrinsics
-
-// External GF(256) functions
-extern unsigned char gf_mul(unsigned char a, unsigned char b);
-extern unsigned char gf_inv(unsigned char a);
 
 // Affine table from ec_base.h: 256 * 8-byte matrices for GF(256) multiplication
 static const uint64_t gf_table_gfni[256];
