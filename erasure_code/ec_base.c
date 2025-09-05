@@ -294,6 +294,8 @@ gf_invert_matrix(unsigned char *in_mat, unsigned char *out_mat, const int n)
         return 0;
 }
 
+
+
 // Calculates const table gftbl in GF(2^8) from single input A
 // gftbl(A) = {A{00}, A{01}, A{02}, ... , A{0f} }, {A{00}, A{10}, A{20}, ... , A{f0} }
 
@@ -517,6 +519,138 @@ int pc_verify_single_error ( unsigned char * S, unsigned char ** data, int k, in
         return 1 ;
 }
 
+#include <string.h>  // For memset
+#include <stdint.h>  // For uint8_t
+#include <immintrin.h>  // For AVX-512 GF2P8AFFINE intrinsics
+
+// External GF(256) functions
+extern unsigned char gf_mul(unsigned char a, unsigned char b);
+extern unsigned char gf_inv(unsigned char a);
+
+// Affine table from ec_base.h: 256 * 8-byte matrices for GF(256) multiplication
+static const uint64_t gf_table_gfni[256];
+
+// Inverts an n x n matrix in GF(256) using Gaussian elimination, with AVX-512 GFNI acceleration.
+// in_mat: input matrix (n x n, row-major, modified in place).
+// out_mat: output matrix (n x n, row-major, starts as identity, becomes inverse).
+// n: matrix dimension (assumes n <= 64 for SIMD; larger n handled with scalar remainder).
+// Returns: 0 on success, -1 if matrix is singular.
+int gf_invert_matrix_vec(unsigned char *in_mat, unsigned char *out_mat, const int n)
+{
+    int i, j, k;
+    unsigned char temp;
+
+    // Set out_mat to the identity matrix
+    memset(out_mat, 0, n * n);
+    for (i = 0; i < n; i++)
+    {
+        out_mat[i * n + i] = 1;
+    }
+
+    // Gaussian elimination
+    for (i = 0; i < n; i++)
+    {
+        // Check for 0 in pivot element
+        if (in_mat[i * n + i] == 0)
+        {
+            // Find a row with non-zero in current column and swap
+            for (j = i + 1; j < n; j++)
+            {
+                if (in_mat[j * n + i])
+                {
+                    break;
+                }
+            }
+            if (j == n)
+            {
+                // Singular matrix
+                return -1;
+            }
+            for (k = 0; k < n; k++)
+            {
+                // Swap rows i,j
+                temp = in_mat[i * n + k];
+                in_mat[i * n + k] = in_mat[j * n + k];
+                in_mat[j * n + k] = temp;
+                temp = out_mat[i * n + k];
+                out_mat[i * n + k] = out_mat[j * n + k];
+                out_mat[j * n + k] = temp;
+            }
+        }
+
+        // Scale row i by 1/pivot
+        temp = gf_inv(in_mat[i * n + i]);
+        __m128i matrix_128 = _mm_set1_epi64x(gf_table_gfni[temp]);  // Load affine matrix for 1/pivot
+        __m512i matrix = _mm512_broadcast_i32x2(matrix_128);  // Broadcast to 512-bit vector
+        // Vectorize scaling for in_mat and out_mat
+        for (k = 0; k < n; k += 64)
+        {
+            int len = (n - k < 64) ? n - k : 64;  // Handle partial vectors
+            __m512i in_vec = _mm512_loadu_si512(&in_mat[i * n + k]);
+            __m512i out_vec = _mm512_loadu_si512(&out_mat[i * n + k]);
+            __m512i in_res = _mm512_gf2p8affine_epi64_epi8(in_vec, matrix, 0);
+            __m512i out_res = _mm512_gf2p8affine_epi64_epi8(out_vec, matrix, 0);
+            // Store only up to len bytes to avoid overwriting
+            if (len < 64)
+            {
+                unsigned char temp_in[64], temp_out[64];
+                _mm512_storeu_si512(temp_in, in_res);
+                _mm512_storeu_si512(temp_out, out_res);
+                memcpy(&in_mat[i * n + k], temp_in, len);
+                memcpy(&out_mat[i * n + k], temp_out, len);
+            }
+            else
+            {
+                _mm512_storeu_si512(&in_mat[i * n + k], in_res);
+                _mm512_storeu_si512(&out_mat[i * n + k], out_res);
+            }
+        }
+
+        // Eliminate column i in other rows
+        for (j = 0; j < n; j++)
+        {
+            if (j == i)
+            {
+                continue;
+            }
+            temp = in_mat[j * n + i];
+            if (temp == 0)
+            {
+                // Skip if multiplier is 0
+                continue;
+            }
+            matrix_128 = _mm_set1_epi64x(gf_table_gfni[temp]);
+            matrix = _mm512_broadcast_i32x2(matrix_128);
+            // Vectorize elimination for in_mat and out_mat
+            for (k = 0; k < n; k += 64)
+            {
+                int len = (n - k < 64) ? n - k : 64;
+                __m512i in_vec = _mm512_loadu_si512(&in_mat[j * n + k]);
+                __m512i out_vec = _mm512_loadu_si512(&out_mat[j * n + k]);
+                __m512i ref_in_vec = _mm512_loadu_si512(&in_mat[i * n + k]);
+                __m512i ref_out_vec = _mm512_loadu_si512(&out_mat[i * n + k]);
+                __m512i mul_in_res = _mm512_gf2p8affine_epi64_epi8(ref_in_vec, matrix, 0);
+                __m512i mul_out_res = _mm512_gf2p8affine_epi64_epi8(ref_out_vec, matrix, 0);
+                in_vec = _mm512_xor_si512(in_vec, mul_in_res);
+                out_vec = _mm512_xor_si512(out_vec, mul_out_res);
+                if (len < 64)
+                {
+                    unsigned char temp_in[64], temp_out[64];
+                    _mm512_storeu_si512(temp_in, in_vec);
+                    _mm512_storeu_si512(temp_out, out_vec);
+                    memcpy(&in_mat[j * n + k], temp_in, len);
+                    memcpy(&out_mat[j * n + k], temp_out, len);
+                }
+                else
+                {
+                    _mm512_storeu_si512(&in_mat[j * n + k], in_vec);
+                    _mm512_storeu_si512(&out_mat[j * n + k], out_vec);
+                }
+            }
+        }
+    }
+    return 0;
+}
 #define PC_MAX_ERRS 32
 
 // Identify roots from key equation
@@ -708,7 +842,8 @@ static const uint64_t gf_table_gfni[256];  // Assume defined in ec_base.h
 // lambda: caller-allocated array of size at least (length + 1 + 31), filled with locator poly coeffs. Padded for SIMD.
 // Returns: degree L of the error locator polynomial.
 // Note: Assumes length <= 32 for AVX-512 (32-byte vectors); extend loops for larger lengths.
-int berlekamp_massey_vec(unsigned char *syndromes, int length, unsigned char *lambda) {
+int berlekamp_massey_vec(unsigned char *syndromes, int length, unsigned char *lambda) 
+{
     unsigned char b[length + 1 + 31];  // Padded for AVX-512 (32-byte alignment)
     unsigned char temp[length + 1 + 31];
     int L = 0;
@@ -720,17 +855,21 @@ int berlekamp_massey_vec(unsigned char *syndromes, int length, unsigned char *la
     memset(b, 0, length + 1 + 31);
     b[0] = 1;
 
-    for (int r = 0; r < length; r++) {
+    for (int r = 0; r < length; r++) 
+    {
         unsigned char d = syndromes[r];
-        for (int j = 1; j <= L; j++) {
+        for (int j = 1; j <= L; j++) 
+        {
             if (r - j >= 0) {
                 d ^= gf_mul(lambda[j], syndromes[r - j]);
             }
         }
 
-        if (d == 0) {
+        if (d == 0) 
+        {
             m++;
-        } else {
+        } else 
+        {
             unsigned char q = gf_div(d, old_d);
             memcpy(temp, lambda, length + 1 + 31);
 
@@ -746,18 +885,22 @@ int berlekamp_massey_vec(unsigned char *syndromes, int length, unsigned char *la
             _mm256_storeu_si256((__m256i *)&lambda[m], vec_lam);
 
             // Handle remainder scalarly (unlikely needed for length <= 32)
-            for (int j = 32; j <= length - m; j++) {
-                if (b[j] != 0) {
+            for (int j = 32; j <= length - m; j++) 
+            {
+                if (b[j] != 0) 
+                {
                     lambda[j + m] ^= gf_mul(q, b[j]);
                 }
             }
 
-            if (2 * L <= r) {
+            if (2 * L <= r) 
+            {
                 L = r + 1 - L;
                 memcpy(b, temp, length + 1 + 31);
                 old_d = d;
                 m = 1;
-            } else {
+            } else 
+            {
                 m++;
             }
         }
