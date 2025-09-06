@@ -653,6 +653,81 @@ int find_roots ( unsigned char * keyEq, unsigned char * roots, int mSize )
 // mSize: polynomial degree (assumes mSize <= 64).
 // Returns: number of roots found.
 
+int find_roots_vec_64(unsigned char *keyEq, unsigned char *roots, int mSize)
+{
+        static __m512i Vandermonde [ 16 ] [ 4 ] ;
+        __m512i sum [ 4 ], temp, affineVal512 ;
+        __m128i affineVal128 ;
+        int i, j ;
+
+        unsigned char * vVal = ( unsigned char *) Vandermonde ;
+        // Check to see if Vandermonde has been initialized yet
+        if ( vVal [ 0 ] == 0 )
+        {
+                unsigned char base = 2, cVal = 1 ;
+                for (  i = 0 ; i < 32 ; i ++ )
+                {
+                        vVal = ( unsigned char * ) &Vandermonde [ i ] ;
+                        for ( j = 0 ; j < 255 ; j ++ )
+                        {
+                                vVal [ j ] = cVal ;
+                                cVal = gf_mul ( cVal, base ) ;
+                        }
+                        base = gf_mul ( base, 2 ) ;
+                }
+        }
+        for ( i = 0 ; i < 16 ; i ++ )
+        {
+                //printf ( "Vand %d\n", i ) ;
+                //dump_u8xu8 ( (unsigned char *) &Vandermonde [ i ], 1, 16 ) ;
+        }
+
+        // Initialize sum to the trailing keyEq value, initialize current field
+        for ( i = 0 ; i < 4; i ++ )
+        {
+                sum [ i ] = _mm512_set1_epi8 ( keyEq [ 0 ] ) ;
+                //printf ( "sum %d\n", i ) ;
+                //dump_u8xu8 ( (unsigned char *)&sum[i], 1, 16 ) ;
+        }
+
+        // Loop through each keyEq value, multiply it by keyEq and add it to sum
+        for ( i = 1 ; i < mSize ; i ++ )
+        {
+                affineVal128 = _mm_set1_epi64x ( gf_table_gfni [ keyEq [ i ] ] ) ;
+                affineVal512 = _mm512_broadcast_i32x2 ( affineVal128 ) ;
+                for ( j = 0 ; j < 4 ; j ++ )
+                {
+                        //sum [ j ] = _mm512_xor_si512 ( sum [ j ], Vandermonde [ i ] [ j ] ) ;
+                        temp = _mm512_gf2p8affine_epi64_epi8 ( Vandermonde [ i-1 ] [ j ], affineVal512, 0 ) ;
+                        //printf ( "temp\n" ) ;
+                        //dump_u8xu8 ( ( unsigned char *) &temp, 1, 16 ) ;
+                        sum [ j ] = _mm512_xor_si512 ( sum [ j ], temp ) ;
+                        //printf ( "sum %d\n", j ) ;
+                        //dump_u8xu8 ( ( unsigned char *) &sum[j], 1, 16 ) ;
+               }
+        }
+        // Now add in the final Vandermonde row
+        for ( i = 0 ; i < 4 ; i ++ )
+        {
+                sum [ i ] = _mm512_xor_si512 ( sum [ i ], Vandermonde [ mSize - 1 ] [ i ] ) ;
+                //printf ( "final sum\n" ) ;
+                //dump_u8xu8 ( ( unsigned char *) &sum[i], 1, 64 ) ;
+        }
+        vVal = (unsigned char *) sum ;
+        int rootCount = 0 ;
+        for ( i = 0; i <255; i++)
+        {
+                if (vVal [ i ] == 0)
+                {
+                        roots[rootCount] = i;
+                        rootCount++;
+                }
+        }
+
+        return rootCount ;
+}
+
+
 #endif
 // Compute base ^ Power
 int pc_pow ( unsigned char base, unsigned char Power ) 
@@ -916,11 +991,15 @@ int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mS
         // Find roots, exit if mismatch with expected roots
         if ( nroots != mSize )
         {
+                printf ( "Bad roots expected %d got %d\n", mSize, nroots ) ;
                 return 0 ;
         }
-        //printf ( "Roots\n" ) ;
-        //dump_u8xu8 ( roots, 1, nroots ) ;
-
+        printf ( "Roots\n" ) ;
+        dump_u8xu8 ( roots, 1, nroots ) ;
+        unsigned char roots2 [ 17 ] ;
+        int nroots2 = find_roots_vec_64 ( keyEq, roots2, mSize ) ;
+        printf ( "nroots = %d nroots2 = %d\n", nroots, nroots2 ) ;
+        dump_u8xu8 ( roots2, 1, nroots2 ) ;
         // Compute the error values
         if ( pc_compute_error_values ( mSize, S, roots, errVal ) == 0 )
         {
@@ -951,7 +1030,7 @@ int pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding
         unsigned char synZero = 0 ;
         unsigned char S [ PC_MAX_ERRS ] ;
         unsigned char SMat [ PC_MAX_ERRS * PC_MAX_ERRS ], SMat_inv [ PC_MAX_ERRS * PC_MAX_ERRS ] ;
-        unsigned char SMat2 [ PC_MAX_ERRS * PC_MAX_ERRS ], SMat_inv2 [ PC_MAX_ERRS * PC_MAX_ERRS ] ;
+        //unsigned char SMat2 [ PC_MAX_ERRS * PC_MAX_ERRS ], SMat_inv2 [ PC_MAX_ERRS * PC_MAX_ERRS ] ;
 
         while ( offSet < vLen ) 
         {
@@ -992,7 +1071,7 @@ int pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding
                         for ( j = 0 ; j < mSize ; j ++ )
                         {
                                 SMat [ i * mSize + j ] = S [ i + j ] ;
-                                SMat2 [ i * mSize + j ] = S [ i + j ] ;
+                                //SMat2 [ i * mSize + j ] = S [ i + j ] ;
                         }
                 }
                 if ( gf_invert_matrix ( SMat, SMat_inv, mSize ) == 0 )
