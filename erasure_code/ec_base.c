@@ -665,7 +665,7 @@ int find_roots_vec_64(unsigned char *keyEq, unsigned char *roots, int mSize)
         if ( vVal [ 0 ] == 0 )
         {
                 unsigned char base = 2, cVal = 1 ;
-                for (  i = 0 ; i < 32 ; i ++ )
+                for (  i = 0 ; i < 16 ; i ++ )
                 {
                         vVal = ( unsigned char * ) &Vandermonde [ i ] ;
                         for ( j = 0 ; j < 255 ; j ++ )
@@ -676,43 +676,33 @@ int find_roots_vec_64(unsigned char *keyEq, unsigned char *roots, int mSize)
                         base = gf_mul ( base, 2 ) ;
                 }
         }
-        for ( i = 0 ; i < 16 ; i ++ )
-        {
-                //printf ( "Vand %d\n", i ) ;
-                //dump_u8xu8 ( (unsigned char *) &Vandermonde [ i ], 1, 16 ) ;
-        }
 
-        // Initialize sum to the trailing keyEq value, initialize current field
-        for ( i = 0 ; i < 4; i ++ )
-        {
-                sum [ i ] = _mm512_set1_epi8 ( keyEq [ 0 ] ) ;
-                //printf ( "sum %d\n", i ) ;
-                //dump_u8xu8 ( (unsigned char *)&sum[i], 1, 16 ) ;
-        }
+        sum [ 0 ] = _mm512_set1_epi8 ( keyEq [ 0 ] ) ;
+        sum [ 1 ] = _mm512_set1_epi8 ( keyEq [ 0 ] ) ;
+        sum [ 2 ] = _mm512_set1_epi8 ( keyEq [ 0 ] ) ;
+        sum [ 3 ] = _mm512_set1_epi8 ( keyEq [ 0 ] ) ;
 
-        // Loop through each keyEq value, multiply it by keyEq and add it to sum
+        // Loop through each keyEq value, multiply it by Vandermonde and add it to sum
         for ( i = 1 ; i < mSize ; i ++ )
         {
                 affineVal128 = _mm_set1_epi64x ( gf_table_gfni [ keyEq [ i ] ] ) ;
                 affineVal512 = _mm512_broadcast_i32x2 ( affineVal128 ) ;
-                for ( j = 0 ; j < 4 ; j ++ )
-                {
-                        //sum [ j ] = _mm512_xor_si512 ( sum [ j ], Vandermonde [ i ] [ j ] ) ;
-                        temp = _mm512_gf2p8affine_epi64_epi8 ( Vandermonde [ i-1 ] [ j ], affineVal512, 0 ) ;
-                        //printf ( "temp\n" ) ;
-                        //dump_u8xu8 ( ( unsigned char *) &temp, 1, 16 ) ;
-                        sum [ j ] = _mm512_xor_si512 ( sum [ j ], temp ) ;
-                        //printf ( "sum %d\n", j ) ;
-                        //dump_u8xu8 ( ( unsigned char *) &sum[j], 1, 16 ) ;
-               }
+                temp = _mm512_gf2p8affine_epi64_epi8 ( Vandermonde [ i-1 ] [ 0 ], affineVal512, 0 ) ;
+                sum [ 0 ] = _mm512_xor_si512 ( sum [ 0 ], temp ) ;
+                temp = _mm512_gf2p8affine_epi64_epi8 ( Vandermonde [ i-1 ] [ 1 ], affineVal512, 0 ) ;
+                sum [ 1 ] = _mm512_xor_si512 ( sum [ 1 ], temp ) ;
+                temp = _mm512_gf2p8affine_epi64_epi8 ( Vandermonde [ i-1 ] [ 2 ], affineVal512, 0 ) ;
+                sum [ 2 ] = _mm512_xor_si512 ( sum [ 2 ], temp ) ;
+                temp = _mm512_gf2p8affine_epi64_epi8 ( Vandermonde [ i-1 ] [ 3 ], affineVal512, 0 ) ;
+                sum [ 3 ] = _mm512_xor_si512 ( sum [ 3 ], temp ) ;
         }
-        // Now add in the final Vandermonde row
-        for ( i = 0 ; i < 4 ; i ++ )
-        {
-                sum [ i ] = _mm512_xor_si512 ( sum [ i ], Vandermonde [ mSize - 1 ] [ i ] ) ;
-                //printf ( "final sum\n" ) ;
-                //dump_u8xu8 ( ( unsigned char *) &sum[i], 1, 64 ) ;
-        }
+        // Add in the leading Vandermonde row
+        sum [ 0 ] = _mm512_xor_si512 ( sum [ 0 ], Vandermonde [ mSize - 1 ] [ 0 ] ) ;
+        sum [ 1 ] = _mm512_xor_si512 ( sum [ 1 ], Vandermonde [ mSize - 1 ] [ 1 ] ) ;
+        sum [ 2 ] = _mm512_xor_si512 ( sum [ 2 ], Vandermonde [ mSize - 1 ] [ 2 ] ) ;
+        sum [ 3 ] = _mm512_xor_si512 ( sum [ 3 ], Vandermonde [ mSize - 1 ] [ 3 ] ) ;
+
+        // Identify the roots by looking for zero values
         vVal = (unsigned char *) sum ;
         int rootCount = 0 ;
         for ( i = 0; i <255; i++)
@@ -723,7 +713,6 @@ int find_roots_vec_64(unsigned char *keyEq, unsigned char *roots, int mSize)
                         rootCount++;
                 }
         }
-
         return rootCount ;
 }
 
