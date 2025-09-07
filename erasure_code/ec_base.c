@@ -646,13 +646,6 @@ int find_roots ( unsigned char * keyEq, unsigned char * roots, int mSize )
         return rootCount ;
 }
 
-#ifndef __aarch64__
-// Identify roots from key equation using AVX-512 GFNI acceleration.
-// keyEq: error locator polynomial coefficients, degree mSize (keyEq[0] is x^0 term).
-// roots: output array for root indices (0 to 254).
-// mSize: polynomial degree (assumes mSize <= 64).
-// Returns: number of roots found.
-
 int find_roots_vec_64(unsigned char *keyEq, unsigned char *roots, int mSize)
 {
         static __m512i Vandermonde [ 16 ] [ 4 ] ;
@@ -702,22 +695,29 @@ int find_roots_vec_64(unsigned char *keyEq, unsigned char *roots, int mSize)
         sum [ 2 ] = _mm512_xor_si512 ( sum [ 2 ], Vandermonde [ mSize - 1 ] [ 2 ] ) ;
         sum [ 3 ] = _mm512_xor_si512 ( sum [ 3 ], Vandermonde [ mSize - 1 ] [ 3 ] ) ;
 
-        // Identify the roots by looking for zero values
-        vVal = (unsigned char *) sum ;
-        int rootCount = 0 ;
-        for ( i = 0; i <255; i++)
+        int rootCount = 0, idx = 0 ;
+        // Create the list of roots
+        for ( i = 0 ; i < 4 ; i ++ )
         {
-                if (vVal [ i ] == 0)
+                // Compare each byte to zero, generating a 64-bit mask
+                __mmask64 mask = _mm512_cmpeq_epi8_mask( sum [ i ], _mm512_setzero_si512());
+
+                // Count number of zeros (popcount of mask)
+                rootCount += _popcnt64(mask);
+
+                // Extract indices of set bits (zero bytes)
+                while ( mask )
                 {
-                        roots[rootCount] = i;
-                        rootCount++;
+                        // Find the next set bit (index of zero byte)
+                        uint64_t pos = _tzcnt_u64(mask);
+                        roots[idx++] = (uint8_t) pos + ( i * 64 ) ;
+                        // Clear the lowest set bit
+                        mask = _blsr_u64 ( mask ) ; // mask &= (mask - 1)
                 }
         }
         return rootCount ;
 }
 
-
-#endif
 // Compute base ^ Power
 int pc_pow ( unsigned char base, unsigned char Power ) 
 {
@@ -983,18 +983,29 @@ int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mS
                 printf ( "Bad roots expected %d got %d\n", mSize, nroots ) ;
                 return 0 ;
         }
-        printf ( "Roots\n" ) ;
-        dump_u8xu8 ( roots, 1, nroots ) ;
+        //printf ( "RootsS\n" ) ;
+        //dump_u8xu8 ( roots, 1, nroots ) ;
         unsigned char roots2 [ 17 ] ;
         int nroots2 = find_roots_vec_64 ( keyEq, roots2, mSize ) ;
-        printf ( "nroots = %d nroots2 = %d\n", nroots, nroots2 ) ;
-        dump_u8xu8 ( roots2, 1, nroots2 ) ;
+        //printf ( "nroots = %d nroots2 = %d\n", nroots, nroots2 ) ;
+        //dump_u8xu8 ( roots2, 1, nroots2 ) ;
+        if ( nroots != nroots2 )
+        {
+                printf ( "Root count scalar %d doesn't match vector %d\n", nroots, nroots2 ) ;
+                return 0 ;
+        }
+        if ( memcmp ( roots, roots2, nroots ) )
+        {
+                printf ( "Roots don't match\n" ) ;
+                dump_u8xu8 ( roots, 1, nroots ) ;
+                dump_u8xu8 ( roots2, 1, nroots2 ) ;
+                return 0 ;
+        }
         // Compute the error values
         if ( pc_compute_error_values ( mSize, S, roots, errVal ) == 0 )
         {
                 return 0 ;
         }
-
 
         // Verify all syndromes are correct
         if ( pc_verify_syndromes ( S, p, mSize, roots, errVal ) == 0 )
@@ -1076,3 +1087,37 @@ int pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding
         }
         return 0 ;
 }
+
+#ifdef NDEF
+// Quick experiment for AVX2
+int find_zero_bytes_avx2(const uint8_t *data, uint8_t *indices)
+{
+    // Load 64 bytes into two YMM registers
+    __m256i ymm0 = _mm256_loadu_si256((const __m256i*)data);
+    __m256i ymm1 = _mm256_loadu_si256((const __m256i*)(data + 32));
+
+    // Compare each byte to zero, generating two 32-bit masks
+    __m256i zero = _mm256_setzero_si256();
+    __m256i mask0 = _mm256_cmpeq_epi8(ymm0, zero);
+    __m256i mask1 = _mm256_cmpeq_epi8(ymm1, zero);
+
+    // Extract 32-bit masks
+    uint32_t mask_low = (uint32_t)_mm256_movemask_epi8(mask0);
+    uint32_t mask_high = (uint32_t)_mm256_movemask_epi8(mask1);
+
+    // Combine into a 64-bit mask
+    uint64_t mask = ((uint64_t)mask_high << 32) | mask_low;
+
+    // Count zeros and extract indices
+    int num_zeros = _popcnt64(mask);
+    int idx = 0;
+    while (mask)
+    {
+        uint64_t pos = _tzcnt_u64(mask);
+        indices[idx++] = (uint8_t)pos;
+        mask = _blsr_u64(mask); // Clear lowest set bit
+    }
+
+    return num_zeros;
+}
+#endif
