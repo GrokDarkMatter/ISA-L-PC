@@ -645,7 +645,7 @@ int find_roots ( unsigned char * keyEq, unsigned char * roots, int mSize )
         }
         return rootCount ;
 }
-
+#ifndef __aarch64__
 int find_roots_vec_64(unsigned char *keyEq, unsigned char *roots, int mSize)
 {
         static __m512i Vandermonde [ 16 ] [ 4 ] ;
@@ -669,7 +669,7 @@ int find_roots_vec_64(unsigned char *keyEq, unsigned char *roots, int mSize)
                         base = gf_mul ( base, 2 ) ;
                 }
         }
-
+        // Initialize our sum to the constant term, no need for multiply
         sum [ 0 ] = _mm512_set1_epi8 ( keyEq [ 0 ] ) ;
         sum [ 1 ] = _mm512_set1_epi8 ( keyEq [ 0 ] ) ;
         sum [ 2 ] = _mm512_set1_epi8 ( keyEq [ 0 ] ) ;
@@ -680,6 +680,7 @@ int find_roots_vec_64(unsigned char *keyEq, unsigned char *roots, int mSize)
         {
                 affineVal128 = _mm_set1_epi64x ( gf_table_gfni [ keyEq [ i ] ] ) ;
                 affineVal512 = _mm512_broadcast_i32x2 ( affineVal128 ) ;
+                // Remember that we did not build the first row of Vandermonde, so use i-1
                 temp = _mm512_gf2p8affine_epi64_epi8 ( Vandermonde [ i-1 ] [ 0 ], affineVal512, 0 ) ;
                 sum [ 0 ] = _mm512_xor_si512 ( sum [ 0 ], temp ) ;
                 temp = _mm512_gf2p8affine_epi64_epi8 ( Vandermonde [ i-1 ] [ 1 ], affineVal512, 0 ) ;
@@ -689,7 +690,7 @@ int find_roots_vec_64(unsigned char *keyEq, unsigned char *roots, int mSize)
                 temp = _mm512_gf2p8affine_epi64_epi8 ( Vandermonde [ i-1 ] [ 3 ], affineVal512, 0 ) ;
                 sum [ 3 ] = _mm512_xor_si512 ( sum [ 3 ], temp ) ;
         }
-        // Add in the leading Vandermonde row
+        // Add in the leading Vandermonde row, just assume it's a one so no multiply
         sum [ 0 ] = _mm512_xor_si512 ( sum [ 0 ], Vandermonde [ mSize - 1 ] [ 0 ] ) ;
         sum [ 1 ] = _mm512_xor_si512 ( sum [ 1 ], Vandermonde [ mSize - 1 ] [ 1 ] ) ;
         sum [ 2 ] = _mm512_xor_si512 ( sum [ 2 ], Vandermonde [ mSize - 1 ] [ 2 ] ) ;
@@ -717,6 +718,7 @@ int find_roots_vec_64(unsigned char *keyEq, unsigned char *roots, int mSize)
         }
         return rootCount ;
 }
+#endif
 
 // Compute base ^ Power
 int pc_pow ( unsigned char base, unsigned char Power ) 
@@ -906,7 +908,8 @@ int berlekamp_massey_vec(unsigned char *syndromes, int length, unsigned char *la
         if (d == 0) 
         {
             m++;
-        } else 
+        } 
+        else 
         {
             unsigned char q = gf_div(d, old_d);
             memcpy(temp, lambda, length + 1 + 31);
@@ -937,7 +940,8 @@ int berlekamp_massey_vec(unsigned char *syndromes, int length, unsigned char *la
                 memcpy(b, temp, length + 1 + 31);
                 old_d = d;
                 m = 1;
-            } else 
+            } 
+            else 
             {
                 m++;
             }
@@ -985,6 +989,7 @@ int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mS
         }
         //printf ( "RootsS\n" ) ;
         //dump_u8xu8 ( roots, 1, nroots ) ;
+#ifndef __aarch64__
         unsigned char roots2 [ 17 ] ;
         int nroots2 = find_roots_vec_64 ( keyEq, roots2, mSize ) ;
         //printf ( "nroots = %d nroots2 = %d\n", nroots, nroots2 ) ;
@@ -1001,6 +1006,7 @@ int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mS
                 dump_u8xu8 ( roots2, 1, nroots2 ) ;
                 return 0 ;
         }
+#endif
         // Compute the error values
         if ( pc_compute_error_values ( mSize, S, roots, errVal ) == 0 )
         {
