@@ -129,31 +129,35 @@ void TestPAPIRoots ( int avx2 )
         double CPI;
 
         // Initialize PAPI
-        if ((ret = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT) {
+        if ((ret = PAPI_library_init ( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT ) 
+        {
                 handle_error ( ret ) ;
         }
 
         // Create event set
-        if ((ret = PAPI_create_eventset(&event_set)) != PAPI_OK) {
+        if ( ( ret = PAPI_create_eventset ( &event_set ) ) != PAPI_OK ) 
+        {
                 handle_error ( ret ) ;
         }
 
         // Add native event
-        if ((ret = PAPI_event_name_to_code("perf::CPU-CYCLES", &event_code)) != PAPI_OK)
+        if ( ( ret = PAPI_event_name_to_code ( "perf::CPU-CYCLES", &event_code ) ) != PAPI_OK )
         {
                 handle_error ( ret ) ;
         }
-        if ((ret = PAPI_add_event(event_set, event_code)) != PAPI_OK) {
+        if ( ( ret = PAPI_add_event ( event_set, event_code ) ) != PAPI_OK ) 
+        {
                 handle_error ( ret ) ;
         }
 
         // Try perf::INSTRUCTIONS
-        if ((ret = PAPI_event_name_to_code("perf::INSTRUCTIONS", &event_code)) != PAPI_OK)
+        if ( ( ret = PAPI_event_name_to_code ( "perf::INSTRUCTIONS", &event_code ) ) != PAPI_OK )
         {
                 handle_error ( ret ) ;
         }
 
-        if ((ret = PAPI_add_event(event_set, event_code)) != PAPI_OK) {
+        if ( ( ret = PAPI_add_event ( event_set, event_code ) ) != PAPI_OK ) 
+        {
                 handle_error ( ret ) ;
         }
 
@@ -172,32 +176,28 @@ void TestPAPIRoots ( int avx2 )
                         keyEq [ i ] = S [ lenPoly - i - 1 ] ;
                 }
 
-                if ((ret = PAPI_start(event_set)) != PAPI_OK) {
+                if ( ( ret = PAPI_start ( event_set ) ) != PAPI_OK ) 
+                {
                         handle_error(ret);
                 }
 
                 // Workload
-                if ( avx2 == 0 )
-                {
-                        rootCount = find_roots ( keyEq, roots, lenPoly ) ;
+                rootCount = find_roots ( keyEq, roots, lenPoly ) ;
 
-                }
-                else
+                if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK ) 
                 {
-                }
-
-                if ((ret = PAPI_stop(event_set, values)) != PAPI_OK) {
-                        handle_error(ret);
+                        handle_error ( ret ) ;
                 }
 
                 //printf ( "Rootcount = %d\n", rootCount ) ;
                 //dump_u8xu8 ( roots, 1, rootCount ) ;
 
-                CPI = (double) values[0]/values[1] ;
-                printf("find_roots_sc %11lld cycles %11lld instructions CPI %.3lf\n", values[0], values[1], CPI);
+                CPI = (double) values[0] / values[1] ;
+                printf("find_roots_sc %11lld cycles %11lld instructions CPI %.3lf\n", values [ 0 ], values [ 1 ], CPI);
 
                 int rootCount2 = find_roots_vec_64 ( keyEq, roots, lenPoly ) ; // Run once to fill in Vandermonde
-                if ((ret = PAPI_start(event_set)) != PAPI_OK) {
+                if ( ( ret = PAPI_start ( event_set ) ) != PAPI_OK) 
+                {
                         handle_error(ret);
                 }
 
@@ -211,7 +211,8 @@ void TestPAPIRoots ( int avx2 )
                 {
                 }
 
-                if ((ret = PAPI_stop(event_set, values)) != PAPI_OK) {
+                if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK ) 
+                {
                         handle_error(ret);
                 }
 
@@ -222,8 +223,8 @@ void TestPAPIRoots ( int avx2 )
                 //printf ( "Rootcount2 = %d\n", rootCount ) ;
                 //dump_u8xu8 ( roots, 1, rootCount ) ;
 
-                CPI = (double) values[0]/values[1] ;
-                printf("find_roots_64 %11lld cycles %11lld instructions CPI %.3lf\n", values[0], values[1], CPI);
+                CPI = (double) values[0] / values[1] ;
+                printf("find_roots_64 %11lld cycles %11lld instructions CPI %.3lf\n", values[ 0 ], values[ 1 ], CPI);
 
         }
 }
@@ -235,7 +236,7 @@ void TestPAPIInv ( int avx2 )
         double CPI;
 
         // Initialize PAPI
-        if ( ( ret = PAPI_library_init ( PAPI_VER_CURRENT)) != PAPI_VER_CURRENT )
+        if ( ( ret = PAPI_library_init ( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
         {
                 handle_error(ret);
         }
@@ -313,14 +314,7 @@ void TestPAPIInv ( int avx2 )
                         handle_error(ret);
                 }
 
-                // Workload
-                if ( avx2 == 0 )
-                {
-                        gf_invert_matrix ( in_mat, out_mat, lenPoly ) ;
-                }
-                else
-                {
-                }
+                gf_invert_matrix ( in_mat, out_mat, lenPoly ) ;
 
                 if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
                 {
@@ -332,7 +326,6 @@ void TestPAPIInv ( int avx2 )
 
                 CPI = (double) values[0]/values[1] ;
                 printf ( "invert_matrix_sca %11lld cycles %11lld instructions CPI %.3lf\n", values [ 0 ], values [ 1 ], CPI ) ;
-
         }
 }
 
