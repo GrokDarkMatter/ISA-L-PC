@@ -81,6 +81,11 @@ extern void ec_encode_data_avx2_gfni ( int len, int k, int p, u8 * g_tbls, u8 **
 #include "PCLib_AVX2_GFNI.c" 
 extern void ec_encode_data_avx512_gfni ( int len, int k, int p, u8 * g_tbls, u8 ** buffs, u8 ** dest ) ;
 #include "PCLib_AVX512_GFNI.c"
+extern void gf_gen_poly ( unsigned char *, int ) ;
+extern int find_roots ( unsigned char * S, unsigned char * roots, int lenPoly ) ;
+extern int find_roots_vec_64 ( unsigned char * S, unsigned char * roots, int lenPoly ) ;
+extern int gf_invert_matrix ( unsigned char * in_mat, unsigned char * out_mat, int size ) ;
+extern int gf_invert_matrix_vec2 ( unsigned char * in_mat, unsigned char * out_mat, int size ) ;
 #endif
 
 #ifndef GT_L3_CACHE
@@ -110,6 +115,226 @@ extern void ec_encode_data_avx512_gfni ( int len, int k, int p, u8 * g_tbls, u8 
 #define KMAX TEST_SOURCES // Maximum data buffer count, excluding parity
 
 #define BAD_MATRIX -1
+
+void handle_error(int code)
+{
+    fprintf ( stderr, "PAPI error: %s\n", PAPI_strerror ( code ) ) ;
+    exit ( 1 ) ;
+}
+
+void TestPAPIRoots ( int avx2 )
+{
+        int event_set = PAPI_NULL, event_code, ret ;
+        long long values [ 2 ] ;
+        double CPI;
+
+        // Initialize PAPI
+        if ((ret = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT) {
+                handle_error ( ret ) ;
+        }
+
+        // Create event set
+        if ((ret = PAPI_create_eventset(&event_set)) != PAPI_OK) {
+                handle_error ( ret ) ;
+        }
+
+        // Add native event
+        if ((ret = PAPI_event_name_to_code("perf::CPU-CYCLES", &event_code)) != PAPI_OK)
+        {
+                handle_error ( ret ) ;
+        }
+        if ((ret = PAPI_add_event(event_set, event_code)) != PAPI_OK) {
+                handle_error ( ret ) ;
+        }
+
+        // Try perf::INSTRUCTIONS
+        if ((ret = PAPI_event_name_to_code("perf::INSTRUCTIONS", &event_code)) != PAPI_OK)
+        {
+                handle_error ( ret ) ;
+        }
+
+        if ((ret = PAPI_add_event(event_set, event_code)) != PAPI_OK) {
+                handle_error ( ret ) ;
+        }
+
+        unsigned char roots [ 16 ] ;
+
+        for ( int lenPoly = 2 ; lenPoly <= 16 ; lenPoly ++ )
+        {
+                int rootCount = 0 ;
+                unsigned char S [ 16 ], keyEq [ 16 ] ;
+                gf_gen_poly ( S, lenPoly ) ;
+                //printf ( "Generator poly\n" ) ;
+                //dump_u8xu8 ( S, 1, lenPoly ) ;
+
+                for ( int i = 0 ; i < lenPoly ; i ++ )
+                {
+                        keyEq [ i ] = S [ lenPoly - i - 1 ] ;
+                }
+
+                if ((ret = PAPI_start(event_set)) != PAPI_OK) {
+                        handle_error(ret);
+                }
+
+                // Workload
+                if ( avx2 == 0 )
+                {
+                        rootCount = find_roots ( keyEq, roots, lenPoly ) ;
+
+                }
+                else
+                {
+                }
+
+                if ((ret = PAPI_stop(event_set, values)) != PAPI_OK) {
+                        handle_error(ret);
+                }
+
+                //printf ( "Rootcount = %d\n", rootCount ) ;
+                //dump_u8xu8 ( roots, 1, rootCount ) ;
+
+                CPI = (double) values[0]/values[1] ;
+                printf("find_roots_sc %11lld cycles %11lld instructions CPI %.3lf\n", values[0], values[1], CPI);
+
+                int rootCount2 = find_roots_vec_64 ( keyEq, roots, lenPoly ) ; // Run once to fill in Vandermonde
+                if ((ret = PAPI_start(event_set)) != PAPI_OK) {
+                        handle_error(ret);
+                }
+
+                // Workload
+                if ( avx2 == 0 )
+                {
+                        rootCount = find_roots_vec_64 ( keyEq, roots, lenPoly ) ;
+
+                }
+                else
+                {
+                }
+
+                if ((ret = PAPI_stop(event_set, values)) != PAPI_OK) {
+                        handle_error(ret);
+                }
+
+                if ( rootCount != rootCount2 )
+                {
+                        printf ( "Rootcount doesn't match %d %d\n", rootCount, rootCount2 ) ;
+                }
+                //printf ( "Rootcount2 = %d\n", rootCount ) ;
+                //dump_u8xu8 ( roots, 1, rootCount ) ;
+
+                CPI = (double) values[0]/values[1] ;
+                printf("find_roots_64 %11lld cycles %11lld instructions CPI %.3lf\n", values[0], values[1], CPI);
+
+        }
+}
+void TestPAPIInv ( int avx2 )
+{
+
+        int event_set = PAPI_NULL, event_code, ret ;
+        long long values [ 2 ] ;
+        double CPI;
+
+        // Initialize PAPI
+        if ( ( ret = PAPI_library_init ( PAPI_VER_CURRENT)) != PAPI_VER_CURRENT )
+        {
+                handle_error(ret);
+        }
+
+        // Create event set
+        if ( ( ret = PAPI_create_eventset ( &event_set ) ) != PAPI_OK )
+        {
+                handle_error ( ret ) ;
+        }
+
+        // Add native event
+        if ( ( ret = PAPI_event_name_to_code ( "perf::CPU-CYCLES", &event_code ) ) != PAPI_OK )
+        {
+                handle_error ( ret ) ;
+        }
+        if ( ( ret = PAPI_add_event ( event_set, event_code ) ) != PAPI_OK)
+        {
+                handle_error ( ret ) ;
+        }
+
+        // Try perf::INSTRUCTIONS
+        if ( ( ret = PAPI_event_name_to_code ( "perf::INSTRUCTIONS", &event_code ) ) != PAPI_OK )
+        {
+                handle_error ( ret ) ;
+        }
+
+        if ( ( ret = PAPI_add_event ( event_set, event_code ) ) != PAPI_OK )
+        {
+                handle_error ( ret ) ;
+        }
+
+        for ( int lenPoly = 4 ; lenPoly <= 32 ; lenPoly ++ )
+        {
+                unsigned char in_mat [ 32 * 32 ], out_mat [ 32 * 32 ], base = 1, val = 1 ;
+
+                for ( int i = 0 ; i < lenPoly ; i ++ )
+                {
+                        for ( int j = 0 ; j < lenPoly ; j ++ )
+                        {
+                                in_mat [ i * lenPoly + j ] = val ;
+                                val = gf_mul ( val, base ) ;
+                        }
+                        base = gf_mul ( base, 2 ) ;
+                }
+
+                //printf ( "Vandermonde\n" ) ;
+                //dump_u8xu8 ( in_mat, lenPoly, lenPoly ) ;
+                if  ( ( ret = PAPI_start ( event_set ) ) != PAPI_OK )
+                {
+                        handle_error ( ret ) ;
+                }
+
+                // Workload
+                if ( avx2 == 0 )
+                {
+                        ret = gf_invert_matrix_vec2 ( in_mat, out_mat, lenPoly ) ;
+                }
+                else
+                {
+                }
+
+                if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK)
+                {
+                        handle_error ( ret ) ;
+                }
+
+                //printf ( "Outmat\n" ) ;
+                //dump_u8xu8 ( out_mat, lenPoly, lenPoly ) ;
+
+                CPI = (double) values[0]/values[1] ;
+                printf ( "invert_matrix_vec %11lld cycles %11lld instructions CPI %.3lf\n", values [ 0 ], values [ 1 ], CPI ) ;
+
+                if ( ( ret = PAPI_start ( event_set)) != PAPI_OK )
+                {
+                        handle_error(ret);
+                }
+
+                // Workload
+                if ( avx2 == 0 )
+                {
+                        gf_invert_matrix ( in_mat, out_mat, lenPoly ) ;
+                }
+                else
+                {
+                }
+
+                if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
+                {
+                        handle_error(ret);
+                }
+
+                //printf ( "Outmat\n" ) ;
+                //dump_u8xu8 ( out_mat, lenPoly, lenPoly ) ;
+
+                CPI = (double) values[0]/values[1] ;
+                printf ( "invert_matrix_sca %11lld cycles %11lld instructions CPI %.3lf\n", values [ 0 ], values [ 1 ], CPI ) ;
+
+        }
+}
 
 void
 usage(const char *app_name)
@@ -305,12 +530,6 @@ int test_pgz_decoder ( int index, int m, int p, unsigned char * g_tbls,
     return 1 ;
 }
 
-void handle_error(int code) 
-{
-    fprintf(stderr, "PAPI error: %s\n", PAPI_strerror(code));
-    exit(1);
-}
-
 int
 main(int argc, char *argv[])
 {
@@ -366,7 +585,11 @@ main(int argc, char *argv[])
 
         // Match errors to parity count and compute codeword size
         nerrs = p ;
-        m = k + p;
+        m = k + p ;
+
+        // Do early performance testing
+        TestPAPIRoots ( avx2 ) ;
+        TestPAPIInv   ( avx2 ) ;
 
         if (m > MMAX) {
                 printf("Number of total buffers (data and parity) cannot be higher than %d\n",
@@ -552,6 +775,7 @@ main(int argc, char *argv[])
                 goto exit ;
         }
         printf("done all: Pass\n");
+
         int event_set = PAPI_NULL, event_code ;
         long long values[2];
 
@@ -692,4 +916,3 @@ exit:
         return ret;
 }
 
-#endif

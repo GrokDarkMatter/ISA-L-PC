@@ -521,101 +521,6 @@ int pc_verify_single_error ( unsigned char * S, unsigned char ** data, int k, in
         return 1 ;
 }
 
-// Affine table from ec_base.h: 256 * 8-byte matrices for GF(256) multiplication
-static const uint64_t gf_table_gfni[256];
-
-#ifndef __aarch64__
-// Inverts an n x n matrix in GF(256) using Gaussian elimination, with AVX-512 GFNI acceleration.
-// in_mat: input matrix (n x n, row-major, modified in place).
-// out_mat: output matrix (n x n, row-major, starts as identity, becomes inverse).
-// n: matrix dimension (assumes n <= 64 for SIMD; larger n needs multiple vectors per row).
-// Returns: 0 on success, -1 if matrix is singular.
-int gf_invert_matrix_vec(unsigned char *in_mat, unsigned char *out_mat, const int n)
-{
-    int i, j;
-    __m512i in_vecs[64];  // Store n rows of in_mat (n <= 64)
-    __m512i out_vecs[64]; // Store n rows of out_mat
-
-    // Copy in_mat and out_mat to __m512i arrays, set out_mat to identity
-    unsigned char temp_row[64] = {0};
-    for (i = 0; i < n; i++)
-    {
-        memcpy(temp_row, &in_mat[i * n], n);
-        in_vecs[i] = _mm512_loadu_si512(temp_row);
-        memset(temp_row, 0, 64);
-        temp_row[i] = 1; // Identity matrix
-        out_vecs[i] = _mm512_loadu_si512(temp_row);
-    }
-
-    // Gaussian elimination
-    for (i = 0; i < n; i++)
-    {
-        // Check for 0 in pivot element
-        if (((unsigned char*)&in_vecs[i])[i] == 0)
-        {
-            // Find a row with non-zero in current column and swap
-            for (j = i + 1; j < n; j++)
-            {
-                if (((unsigned char*)&in_vecs[j])[i])
-                {
-                    break;
-                }
-            }
-            if (j == n)
-            {
-                // Singular matrix
-                return -1;
-            }
-            // Swap rows i,j in __m512i arrays
-            __m512i temp_vec = in_vecs[i];
-            in_vecs[i] = in_vecs[j];
-            in_vecs[j] = temp_vec;
-            temp_vec = out_vecs[i];
-            out_vecs[i] = out_vecs[j];
-            out_vecs[j] = temp_vec;
-        }
-
-        // Scale row i by 1/pivot
-        unsigned char temp = gf_inv(((unsigned char*)&in_vecs[i])[i]);
-        __m128i matrix_128 = _mm_set1_epi64x(gf_table_gfni[temp]);  // Load affine matrix for 1/pivot
-        __m512i matrix = _mm512_broadcast_i32x2(matrix_128);  // Broadcast to 512-bit vector
-        in_vecs[i] = _mm512_gf2p8affine_epi64_epi8(in_vecs[i], matrix, 0);
-        out_vecs[i] = _mm512_gf2p8affine_epi64_epi8(out_vecs[i], matrix, 0);
-
-        // Eliminate column i in other rows
-        for (j = 0; j < n; j++)
-        {
-            if (j == i)
-            {
-                continue;
-            }
-            temp = ((unsigned char*)&in_vecs[j])[i];
-            if (temp == 0)
-            {
-                // Skip if multiplier is 0
-                continue;
-            }
-            matrix_128 = _mm_set1_epi64x(gf_table_gfni[temp]);
-            matrix = _mm512_broadcast_i32x2(matrix_128);
-            __m512i mul_in_res = _mm512_gf2p8affine_epi64_epi8(in_vecs[i], matrix, 0);
-            __m512i mul_out_res = _mm512_gf2p8affine_epi64_epi8(out_vecs[i], matrix, 0);
-            in_vecs[j] = _mm512_xor_si512(in_vecs[j], mul_in_res);
-            out_vecs[j] = _mm512_xor_si512(out_vecs[j], mul_out_res);
-        }
-    }
-
-    // Copy results back to in_mat and out_mat
-    for (i = 0; i < n; i++)
-    {
-        _mm512_storeu_si512(temp_row, in_vecs[i]);
-        memcpy(&in_mat[i * n], temp_row, n);
-        _mm512_storeu_si512(temp_row, out_vecs[i]);
-        memcpy(&out_mat[i * n], temp_row, n);
-    }
-
-    return 0;
-}
-#endif
 #define PC_MAX_ERRS 32
 
 // Identify roots from key equation
@@ -1126,88 +1031,87 @@ int find_zero_bytes_avx2(const uint8_t *data, uint8_t *indices)
 
     return num_zeros;
 }
+#endif
 
+extern const uint64_t gf_table_gfni[256];
 
-#include <immintrin.h>
-#include <string.h>
+int gf_invert_matrix_vec2(unsigned char *in_mat, unsigned char *out_mat, const int n) 
+{
+        __m512i affineVal512 ;
+        __m128i affineVal128 ;
 
-extern __m512i gf_affine_mul_table[256];
+        if (n > 32) return -1; // Assumption: n <= 32
 
-int gf_invert_matrix_vec2(unsigned char *in_mat, unsigned char *out_mat, const int n) {
-    if (n > 32) return -1; // Assumption: n <= 32
+        int i, j;
+        __m512i aug_rows[32] ;                                 // Ensure 64-byte alignment
+        unsigned char *matrix_mem = (unsigned char *)aug_rows; // Point to aug_rows memory
 
-    int i, j;
-    __m512i aug_rows[32] __attribute__((aligned(64))); // Ensure 64-byte alignment
-    unsigned char *matrix_mem = (unsigned char *)aug_rows; // Point to aug_rows memory
+        // Initialize augmented matrix: [in_mat row | out_mat row | padding zeros]
+        for (i = 0; i < n; i++) 
+        {
+                memcpy(&matrix_mem [i * 64], &in_mat[ i * n ], n ) ;
+                memset(&matrix_mem [i * 64 + n], 0, n ) ;
+                matrix_mem [ i * 64 + n + i ] = 1 ;
+                //dump_u8xu8 ( &matrix_mem [ i * 64 + n ], 1, n ) ;
+        }
 
-    // Initialize augmented matrix: [in_mat row | out_mat row | padding zeros]
-    for (i = 0; i < n; i++) {
-        memcpy(&matrix_mem[i * 64], &in_mat[i * n], n);
-        memcpy(&matrix_mem[i * 64 + n], &out_mat[i * n], n);
-        memset(&matrix_mem[i * 64 + 2 * n], 0, 64 - 2 * n);
-        aug_rows[i] = _mm512_load_si512((__m512i*)&matrix_mem[i * 64]);
-    }
-
-    // Set identity matrix in out_mat and update augmented matrix
-    for (i = 0; i < n * n; i++) {
-        out_mat[i] = 0;
-    }
-    for (i = 0; i < n; i++) {
-        out_mat[i * n + i] = 1;
-        memcpy(&matrix_mem[i * 64 + n], &out_mat[i * n], n); // Update identity part
-        aug_rows[i] = _mm512_load_si512((__m512i*)&matrix_mem[i * 64]); // Reload after identity update
-    }
-
-    // Inverse using Gaussian elimination
-    for (i = 0; i < n; i++) {
-        // Check for 0 in pivot element using matrix_mem
-        if (matrix_mem[i * 64 + i] == 0) {
-            // Find a row with non-zero in current column and swap
-            for (j = i + 1; j < n; j++) {
-                if (matrix_mem[j * 64 + i] != 0) {
-                    break;
+        // Inverse using Gaussian elimination
+        for (i = 0; i < n; i++) 
+        {
+                // Check for 0 in pivot element using matrix_mem
+                unsigned char pivot = matrix_mem [ i * 64 + i ] ;
+                //printf ( "Pivot = %d\n", pivot ) ;
+                if ( pivot == 0 ) 
+                {
+                        // Find a row with non-zero in current column and swap
+                        for ( j = i + 1; j < n; j++ ) 
+                        {
+                                if (matrix_mem[j * 64 + i] != 0) 
+                                {
+                                        break ;
+                                }
+                        }
+                        if (j == n) 
+                        { 
+                                // Couldn't find means it's singular
+                                return -1;
+                        }
+                        // Swap rows i and j in ZMM registers
+                        __m512i temp_vec = aug_rows [ i ] ;
+                        aug_rows[i] = aug_rows [ j ] ;
+                        aug_rows[j] = temp_vec ;
                 }
-            }
-            if (j == n) { // Couldn't find means it's singular
-                return -1;
-            }
-            // Swap rows i and j in ZMM registers
-            __m512i temp_vec = aug_rows[i];
-            aug_rows[i] = aug_rows[j];
-            aug_rows[j] = temp_vec;
-            // No store; compiler handles spills for matrix_mem access
+
+                // Get pivot and compute 1/pivot
+                pivot = matrix_mem [ i * 64 + i ]  ;
+                //printf ( "Pivot2 = %d\n", pivot ) ;
+                unsigned char temp_scalar = gf_inv ( pivot ) ;
+                //printf ( "Scalar = %d\n", temp_scalar ) ;
+
+                // Scale row i by 1/pivot using GFNI affine
+                affineVal128 = _mm_set1_epi64x ( gf_table_gfni [ temp_scalar ] ) ;
+                affineVal512 = _mm512_broadcast_i32x2 ( affineVal128 ) ;
+                aug_rows [ i ]  = _mm512_gf2p8affine_epi64_epi8 ( aug_rows[ i ], affineVal512, 0 ) ;
+
+                // Eliminate in other rows
+                for ( j = 0; j < n; j++ )
+                {
+                        if ( j == i)  continue;
+                        unsigned char factor = matrix_mem[j * 64 + i];
+                        // Compute scaled pivot row: pivot_row * factor
+                        affineVal128 = _mm_set1_epi64x ( gf_table_gfni [ factor ] ) ;
+                        affineVal512 = _mm512_broadcast_i32x2 ( affineVal128 ) ;
+                        __m512i scaled = _mm512_gf2p8affine_epi64_epi8 ( aug_rows [ i ], affineVal512, 0 ) ;
+                        // row_j ^= scaled
+                        aug_rows [ j ] = _mm512_xor_si512( aug_rows [ j ], scaled ) ;
+                }
         }
-
-        // Get pivot and compute 1/pivot
-        unsigned char pivot = matrix_mem[i * 64 + i];
-        unsigned char temp_scalar = gf_inv(pivot);
-
-        // Scale row i by 1/pivot using GFNI affine
-        aug_rows[i] = _mm512_gf2p8affine_epi64_epi8(aug_rows[i], gf_affine_mul_table[temp_scalar], 0);
-
-        // Eliminate in other rows
-        for (j = 0; j < n; j++) {
-            if (j == i) continue;
-            unsigned char factor = matrix_mem[j * 64 + i];
-            // Compute scaled pivot row: pivot_row * factor
-            __m512i scaled = _mm512_gf2p8affine_epi64_epi8(aug_rows[i], gf_affine_mul_table[factor], 0);
-            // row_j ^= scaled
-            aug_rows[j] = _mm512_xor_si512(aug_rows[j], scaled);
+        // Copy back to out_mat
+        for ( i = 0; i < n; i++ ) 
+        {
+                //dump_u8xu8 ( &matrix_mem [ i * 64 + n ], 1, n ) ;
+                memcpy ( &out_mat [ i * n ] , &matrix_mem [ i * 64 + n ], n )  ;
         }
-    }
-
-    // Store results to memory for final copy
-    for (i = 0; i < n; i++) {
-        _mm512_store_si512((__m512i*)&matrix_mem[i * 64], aug_rows[i]);
-    }
-
-    // Copy back to in_mat and out_mat
-    for (i = 0; i < n; i++) {
-        memcpy(&in_mat[i * n], &matrix_mem[i * 64], n);
-        memcpy(&out_mat[i * n], &matrix_mem[i * 64 + n], n);
-    }
-
-    return 0;
+        return 0 ;
 }
 
-#endif
