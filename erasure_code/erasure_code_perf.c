@@ -50,7 +50,7 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include "erasure_code.h"
 #include "test.h"
 #include "ec_base.h"
-
+#include <papi.h>
 typedef unsigned char u8;
 
 // Utility print routine
@@ -305,6 +305,12 @@ int test_pgz_decoder ( int index, int m, int p, unsigned char * g_tbls,
     return 1 ;
 }
 
+void handle_error(int code) 
+{
+    fprintf(stderr, "PAPI error: %s\n", PAPI_strerror(code));
+    exit(1);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -433,19 +439,20 @@ main(int argc, char *argv[])
         // Perform the baseline benchmark
         gf_gen_poly_matrix(a, m, k ) ;
         ec_init_tables(k, m - k, &a[k * k], g_tbls);
+
 #ifdef __aarch64__
         BENCHMARK(&start, BENCHMARK_TIME,
-                  ec_encode_data_neon(TEST_LEN(m), k, m - k, g_tbls, buffs, &buffs[k]));
+                  ec_encode_data_neon(TEST_LEN(m), k, p, g_tbls, buffs, &buffs[k]));
 #else
         if ( avx2 == 0 )
         {
                 BENCHMARK(&start, BENCHMARK_TIME,
-                        ec_encode_data_avx512_gfni(TEST_LEN(m), k, m - k, g_tbls, buffs, &buffs[k]));
+                        ec_encode_data_avx512_gfni(TEST_LEN(m), k, p, g_tbls, buffs, &buffs[k]));
         }
         else
         {
                 BENCHMARK(&start, BENCHMARK_TIME,
-                        ec_encode_data_avx2_gfni(TEST_LEN(m), k, m - k, g_tbls, buffs, &buffs[k]));
+                        ec_encode_data_avx2_gfni(TEST_LEN(m), k, p, g_tbls, buffs, &buffs[k]));
         }
 #endif
         printf("erasure_code_encode" TEST_TYPE_STR ": k=%d p=%d ", k, p);
@@ -457,17 +464,17 @@ main(int argc, char *argv[])
 
 #ifdef __aarch64__
         BENCHMARK(&start, BENCHMARK_TIME,
-                  pc_encode_data_neon(TEST_LEN(m), k, m - k, g_tbls, buffs, temp_buffs));
+                  pc_encode_data_neon(TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs));
 #else
         if ( avx2 == 0 )
         {
                 BENCHMARK(&start, BENCHMARK_TIME,
-                        pc_encode_data_avx512_gfni(TEST_LEN(m), k, m - k, g_tbls, buffs, temp_buffs));
+                        pc_encode_data_avx512_gfni(TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs));
         }
         else
         {
                 BENCHMARK(&start, BENCHMARK_TIME,
-                        pc_encode_data_avx2_gfni(TEST_LEN(m), k, m - k, g_tbls, buffs, temp_buffs));
+                        pc_encode_data_avx2_gfni(TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs));
         }
 #endif
         for (i = 0; i < p; i++) {
@@ -545,6 +552,132 @@ main(int argc, char *argv[])
                 goto exit ;
         }
         printf("done all: Pass\n");
+        int event_set = PAPI_NULL, event_code ;
+        long long values[2];
+
+        // Initialize PAPI
+        if ((ret = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT) {
+                handle_error(ret);
+        }
+
+        // Create event set
+        if ((ret = PAPI_create_eventset(&event_set)) != PAPI_OK) {
+                handle_error(ret);
+        }
+
+        // Add native event
+        if ((ret = PAPI_event_name_to_code("perf::CPU-CYCLES", &event_code)) != PAPI_OK) 
+        {
+                handle_error ( ret ) ;
+        }
+        if ((ret = PAPI_add_event(event_set, event_code)) != PAPI_OK) {
+                handle_error(ret);
+        }
+
+        // Try perf::INSTRUCTIONS
+        if ((ret = PAPI_event_name_to_code("perf::INSTRUCTIONS", &event_code)) != PAPI_OK) 
+        {
+                handle_error(ret);
+        }
+
+        if ((ret = PAPI_add_event(event_set, event_code)) != PAPI_OK) {
+                handle_error(ret);
+        }
+
+        if ((ret = PAPI_start(event_set)) != PAPI_OK) {
+                handle_error(ret);
+        }
+
+        // Workload
+        if ( avx2 == 0 )
+        {
+                ec_encode_data_avx512_gfni(TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs);
+        }
+        else
+        {
+                ec_encode_data_avx2_gfni(TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs);
+
+        }
+
+        if ((ret = PAPI_stop(event_set, values)) != PAPI_OK) {
+                handle_error(ret);
+        }
+
+        double CPI;
+        CPI = (double) values[0]/values[1] ;
+
+        printf("EC_Encode_data %11lld cycles %11lld instructions CPI %.3lf\n", values[0], values[1], CPI);
+
+        if ((ret = PAPI_start(event_set)) != PAPI_OK) {
+                handle_error(ret);
+        }
+        // Workload
+        if ( avx2 == 0 )
+        {
+                pc_encode_data_avx512_gfni(TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs);
+        }
+        else
+        {
+                pc_encode_data_avx2_gfni(TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs);
+
+        }
+
+        if ((ret = PAPI_stop(event_set, values)) != PAPI_OK) {
+                handle_error(ret);
+        }
+
+        CPI = (double) values[0]/values[1] ;
+
+        printf("PC_Encode_data %11lld cycles %11lld instructions CPI %.3lf\n", values[0], values[1], CPI);
+
+        if ((ret = PAPI_start(event_set)) != PAPI_OK) {
+                handle_error(ret);
+        }
+
+        // Workload
+        if ( avx2 == 0 )
+        {
+                ec_encode_data_avx512_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs);
+        }
+        else
+        {
+                ec_encode_data_avx2_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs);
+        }
+
+        if ((ret = PAPI_stop(event_set, values)) != PAPI_OK) {
+                handle_error(ret);
+        }
+
+        CPI = (double) values[0]/values[1] ;
+
+        printf("EC_Decode_data %11lld cycles %11lld instructions CPI %.3lf\n", values[0], values[1], CPI);
+
+        if ((ret = PAPI_start(event_set)) != PAPI_OK) {
+                handle_error(ret);
+        }
+
+        // Workload
+        if ( avx2 == 0 )
+        {
+                pc_decode_data_avx512_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 1);
+        }
+        else
+        {
+                pc_decode_data_avx2_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 1);
+        }
+
+        if ((ret = PAPI_stop(event_set, values)) != PAPI_OK) {
+                handle_error(ret);
+        }
+
+        CPI = (double) values[0]/values[1] ;
+
+        printf("PC_Decode_data %11lld cycles %11lld instructions CPI %.3lf\n", values[0], values[1], CPI);
+
+        PAPI_cleanup_eventset(event_set);
+        PAPI_destroy_eventset(&event_set);
+        PAPI_shutdown();
+
         fflush ( stdout ) ;
 
         ret = 0;
@@ -558,3 +691,5 @@ exit:
         aligned_free(g_tbls);
         return ret;
 }
+
+#endif
