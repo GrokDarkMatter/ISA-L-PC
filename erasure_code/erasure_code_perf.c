@@ -192,7 +192,7 @@ void TestPAPIRoots ( int avx2 )
                 //printf ( "Rootcount = %d\n", rootCount ) ;
                 //dump_u8xu8 ( roots, 1, rootCount ) ;
 
-                CPI = (double) values[0] / values[1] ;
+                CPI = (double) values[ 0 ] / values[ 1 ] ;
                 printf("find_roots_sc %11lld cycles %11lld instructions CPI %.3lf\n", values [ 0 ], values [ 1 ], CPI);
 
                 int rootCount2 = find_roots_vec_64 ( keyEq, roots, lenPoly ) ; // Run once to fill in Vandermonde
