@@ -122,21 +122,21 @@ void handle_error(int code)
     exit ( 1 ) ;
 }
 
-void TestPAPIRoots ( int avx2 )
+int InitPAPI ( void )
 {
         int event_set = PAPI_NULL, event_code, ret ;
-        long long values [ 2 ] ;
-        double CPI;
 
         // Initialize PAPI
         if ((ret = PAPI_library_init ( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT ) 
         {
+                printf ( "init fail\n" ) ;
                 handle_error ( ret ) ;
         }
 
         // Create event set
         if ( ( ret = PAPI_create_eventset ( &event_set ) ) != PAPI_OK ) 
         {
+                printf ( "create set failed\n" ) ;
                 handle_error ( ret ) ;
         }
 
@@ -160,7 +160,22 @@ void TestPAPIRoots ( int avx2 )
         {
                 handle_error ( ret ) ;
         }
+        return event_set ;
+}
 
+void TestPAPIRoots ( void )
+{
+        int event_set = PAPI_NULL, ret ;
+        long long values [ 2 ] ;
+        double CPI;
+
+        event_set = InitPAPI() ;
+
+        if ( event_set == PAPI_NULL )
+        {
+                printf ( "PAPI failed to initialize\n" ) ;
+                exit ( 1 ) ;
+        }
         unsigned char roots [ 16 ] ;
 
         for ( int lenPoly = 2 ; lenPoly <= 16 ; lenPoly ++ )
@@ -184,7 +199,7 @@ void TestPAPIRoots ( int avx2 )
                 // Workload
                 rootCount = find_roots ( keyEq, roots, lenPoly ) ;
 
-                if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK ) 
+                if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
                 {
                         handle_error ( ret ) ;
                 }
@@ -202,16 +217,9 @@ void TestPAPIRoots ( int avx2 )
                 }
 
                 // Workload
-                if ( avx2 == 0 )
-                {
-                        rootCount = find_roots_vec_64 ( keyEq, roots, lenPoly ) ;
+                rootCount = find_roots_vec_64 ( keyEq, roots, lenPoly ) ;
 
-                }
-                else
-                {
-                }
-
-                if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK ) 
+                if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
                 {
                         handle_error(ret);
                 }
@@ -228,44 +236,18 @@ void TestPAPIRoots ( int avx2 )
 
         }
 }
-void TestPAPIInv ( int avx2 )
+void TestPAPIInv ( void )
 {
 
-        int event_set = PAPI_NULL, event_code, ret ;
+        int event_set = PAPI_NULL, ret ;
         long long values [ 2 ] ;
         double CPI;
+        event_set = InitPAPI () ;
 
-        // Initialize PAPI
-        if ( ( ret = PAPI_library_init ( PAPI_VER_CURRENT ) ) != PAPI_VER_CURRENT )
+        if ( event_set == PAPI_NULL )
         {
-                handle_error(ret);
-        }
-
-        // Create event set
-        if ( ( ret = PAPI_create_eventset ( &event_set ) ) != PAPI_OK )
-        {
-                handle_error ( ret ) ;
-        }
-
-        // Add native event
-        if ( ( ret = PAPI_event_name_to_code ( "perf::CPU-CYCLES", &event_code ) ) != PAPI_OK )
-        {
-                handle_error ( ret ) ;
-        }
-        if ( ( ret = PAPI_add_event ( event_set, event_code ) ) != PAPI_OK)
-        {
-                handle_error ( ret ) ;
-        }
-
-        // Try perf::INSTRUCTIONS
-        if ( ( ret = PAPI_event_name_to_code ( "perf::INSTRUCTIONS", &event_code ) ) != PAPI_OK )
-        {
-                handle_error ( ret ) ;
-        }
-
-        if ( ( ret = PAPI_add_event ( event_set, event_code ) ) != PAPI_OK )
-        {
-                handle_error ( ret ) ;
+                printf ( "PAPI failed to initialize\n" ) ;
+                exit ( 1 ) ;
         }
 
         for ( int lenPoly = 4 ; lenPoly <= 32 ; lenPoly ++ )
@@ -290,13 +272,7 @@ void TestPAPIInv ( int avx2 )
                 }
 
                 // Workload
-                if ( avx2 == 0 )
-                {
-                        ret = gf_invert_matrix_vec2 ( in_mat, out_mat, lenPoly ) ;
-                }
-                else
-                {
-                }
+                ret = gf_invert_matrix_vec2 ( in_mat, out_mat, lenPoly ) ;
 
                 if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK)
                 {
@@ -581,10 +557,11 @@ main(int argc, char *argv[])
         m = k + p ;
 
         // Do early performance testing
-        TestPAPIRoots ( avx2 ) ;
-        TestPAPIInv   ( avx2 ) ;
+        TestPAPIRoots () ;
+        TestPAPIInv   () ;
 
-        if (m > MMAX) {
+        if (m > MMAX)
+        {
                 printf("Number of total buffers (data and parity) cannot be higher than %d\n",
                        MMAX);
                 return -1;
@@ -603,7 +580,8 @@ main(int argc, char *argv[])
         printf("erasure_code_perf: %dx%d %d\n", m, TEST_LEN(m), nerrs);
 
         // Allocate the arrays
-        if (posix_memalign(&buf, 64, TEST_LEN(m))) {
+        if (posix_memalign(&buf, 64, TEST_LEN(m)))
+        {
                 printf("Error allocating buffers\n");
                 goto exit;
         }
@@ -611,32 +589,35 @@ main(int argc, char *argv[])
         memset ( z0, 0, TEST_LEN(m)) ;
 
         for (i = 0; i < m; i++) {
-                if (posix_memalign(&buf, 64, TEST_LEN(m))) {
-                        printf("Error allocating buffers\n");
+                if ( posix_memalign ( &buf, 64, TEST_LEN(m) ) )
+                {
+                        printf ( "Error allocating buffers\n" ) ;
                         goto exit;
                 }
-                buffs[i] = buf;
+                buffs [ i ] = buf;
         }
 
         for (i = 0; i < p; i++) {
-                if (posix_memalign(&buf, 64, TEST_LEN(m))) {
-                        printf("Error allocating buffers\n");
+                if ( posix_memalign ( &buf, 64, TEST_LEN(m) ) )
+                {
+                        printf( "Error allocating buffers\n" ) ;
                         goto exit;
                 }
-                temp_buffs[i] = buf;
+                temp_buffs [ i ] = buf;
         }
 
         // Allocate gtbls
-        if (posix_memalign(&buf, 64, KMAX * TEST_SOURCES * 32)) {
-                printf("Error allocating g_tbls\n") ;
-                goto exit;
+        if ( posix_memalign ( &buf, 64, KMAX * TEST_SOURCES * 32 ) )
+        {
+                printf ( "Error allocating g_tbls\n" ) ;
+                goto exit ;
         }
         g_tbls = buf ;
 
         // Make random data
         for (i = 0; i < k; i++)
                 for (j = 0; j < TEST_LEN(m); j++)
-                        buffs[i][j] = rand();
+                        buffs[ i ][ j ] = rand() ;
 
         // Print test type
 #ifdef __aarch64__
@@ -653,8 +634,8 @@ main(int argc, char *argv[])
 #endif
 
         // Perform the baseline benchmark
-        gf_gen_poly_matrix(a, m, k ) ;
-        ec_init_tables(k, m - k, &a[k * k], g_tbls);
+        gf_gen_poly_matrix ( a, m, k ) ;
+        ec_init_tables ( k, m - k, &a[k * k], g_tbls);
 
 #ifdef __aarch64__
         BENCHMARK(&start, BENCHMARK_TIME,
@@ -767,44 +748,10 @@ main(int argc, char *argv[])
                 printf ( "Decoder failed\n" ) ;
                 goto exit ;
         }
-        printf("done all: Pass\n");
-
-        int event_set = PAPI_NULL, event_code ;
-        long long values[2];
-
-        // Initialize PAPI
-        if ((ret = PAPI_library_init(PAPI_VER_CURRENT)) != PAPI_VER_CURRENT) {
-                handle_error(ret);
-        }
-
-        // Create event set
-        if ((ret = PAPI_create_eventset(&event_set)) != PAPI_OK) {
-                handle_error(ret);
-        }
-
-        // Add native event
-        if ((ret = PAPI_event_name_to_code("perf::CPU-CYCLES", &event_code)) != PAPI_OK) 
-        {
-                handle_error ( ret ) ;
-        }
-        if ((ret = PAPI_add_event(event_set, event_code)) != PAPI_OK) {
-                handle_error(ret);
-        }
-
-        // Try perf::INSTRUCTIONS
-        if ((ret = PAPI_event_name_to_code("perf::INSTRUCTIONS", &event_code)) != PAPI_OK) 
-        {
-                handle_error(ret);
-        }
-
-        if ((ret = PAPI_add_event(event_set, event_code)) != PAPI_OK) {
-                handle_error(ret);
-        }
-
+        int event_set = InitPAPI () ; //PAPI_NULL, event_code ;
         if ((ret = PAPI_start(event_set)) != PAPI_OK) {
                 handle_error(ret);
         }
-
         // Workload
         if ( avx2 == 0 )
         {
@@ -816,36 +763,44 @@ main(int argc, char *argv[])
 
         }
 
-        if ((ret = PAPI_stop(event_set, values)) != PAPI_OK) {
+        long long values[2];
+        if ( ( ret = PAPI_stop(event_set, values)) != PAPI_OK )
+        {
                 handle_error(ret);
         }
 
         double CPI;
         CPI = (double) values[0]/values[1] ;
 
-        printf("EC_Encode_data %11lld cycles %11lld instructions CPI %.3lf\n", values[0], values[1], CPI);
+        printf ( "EC_Encode_data %11lld cycles %11lld instructions CPI %.3lf\n", values[0], values[1], CPI ) ;
 
-        if ((ret = PAPI_start(event_set)) != PAPI_OK) {
-                handle_error(ret);
+        if ( avx2 != 0 )
+        {
+
+        }
+        if ( ( ret = PAPI_start( event_set ) ) != PAPI_OK ) 
+        {
+                handle_error ( ret ) ;
         }
         // Workload
         if ( avx2 == 0 )
         {
-                pc_encode_data_avx512_gfni(TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs);
+                pc_encode_data_avx512_gfni( TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs);
         }
         else
         {
-                pc_encode_data_avx2_gfni(TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs);
+                pc_encode_data_avx2_gfni( TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs);
 
         }
 
-        if ((ret = PAPI_stop(event_set, values)) != PAPI_OK) {
-                handle_error(ret);
+        if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
+        {
+                handle_error ( ret ) ;
         }
 
-        CPI = (double) values[0]/values[1] ;
+        CPI = ( double ) values [ 0 ] / values [ 1 ] ;
 
-        printf("PC_Encode_data %11lld cycles %11lld instructions CPI %.3lf\n", values[0], values[1], CPI);
+        printf ( "PC_Encode_data %11lld cycles %11lld instructions CPI %.3lf\n", values[ 0 ], values[ 1 ], CPI);
 
         if ((ret = PAPI_start(event_set)) != PAPI_OK) {
                 handle_error(ret);
@@ -854,14 +809,15 @@ main(int argc, char *argv[])
         // Workload
         if ( avx2 == 0 )
         {
-                ec_encode_data_avx512_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs);
+                ec_encode_data_avx512_gfni( TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs ); 
         }
         else
         {
-                ec_encode_data_avx2_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs);
+                ec_encode_data_avx2_gfni( TEST_LEN( m ), m, p, g_tbls, buffs, temp_buffs ) ;
         }
 
-        if ((ret = PAPI_stop(event_set, values)) != PAPI_OK) {
+        if ((ret = PAPI_stop(event_set, values)) != PAPI_OK)
+        {
                 handle_error(ret);
         }
 
@@ -869,43 +825,47 @@ main(int argc, char *argv[])
 
         printf("EC_Decode_data %11lld cycles %11lld instructions CPI %.3lf\n", values[0], values[1], CPI);
 
-        if ((ret = PAPI_start(event_set)) != PAPI_OK) {
+        if ((ret = PAPI_start(event_set)) != PAPI_OK) 
+        {
                 handle_error(ret);
         }
 
         // Workload
         if ( avx2 == 0 )
         {
-                pc_decode_data_avx512_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 1);
+                pc_decode_data_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 1 ) ;
         }
         else
         {
-                pc_decode_data_avx2_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 1);
+                pc_decode_data_avx2_gfni ( TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 1 ) ;
         }
 
-        if ((ret = PAPI_stop(event_set, values)) != PAPI_OK) {
-                handle_error(ret);
+        if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
+        {
+                handle_error ( ret ) ;
         }
 
-        CPI = (double) values[0]/values[1] ;
+        CPI = ( double ) values[ 0 ] / values[ 1 ] ;
 
-        printf("PC_Decode_data %11lld cycles %11lld instructions CPI %.3lf\n", values[0], values[1], CPI);
+        printf ( "PC_Decode_data %11lld cycles %11lld instructions CPI %.3lf\n", values[ 0 ], values[ 1 ], CPI ) ;
 
-        PAPI_cleanup_eventset(event_set);
-        PAPI_destroy_eventset(&event_set);
-        PAPI_shutdown();
+        PAPI_cleanup_eventset ( event_set ) ;
+        PAPI_destroy_eventset ( &event_set ) ;
+        PAPI_shutdown ();
 
+        printf (" done all: Pass\n" ) ;
         fflush ( stdout ) ;
 
         ret = 0;
 exit:
         aligned_free ( z0 ) ;
         free ( a ) ;
-        for (i = 0; i < TEST_SOURCES; i++) {
-                aligned_free(buffs[i]);
-                aligned_free(temp_buffs[i]);
+        for (i = 0; i < TEST_SOURCES; i++)
+        {
+                aligned_free ( buffs[ i ] ) ;
+                aligned_free ( temp_buffs[ i ] ) ;
         }
-        aligned_free(g_tbls);
+        aligned_free ( g_tbls ) ;
         return ret;
 }
 
