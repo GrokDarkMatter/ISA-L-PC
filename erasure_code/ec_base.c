@@ -550,80 +550,6 @@ int find_roots ( unsigned char * keyEq, unsigned char * roots, int mSize )
         }
         return rootCount ;
 }
-#ifndef __aarch64__
-int find_roots_vec_64(unsigned char *keyEq, unsigned char *roots, int mSize)
-{
-        static __m512i Vandermonde [ 16 ] [ 4 ] ;
-        __m512i sum [ 4 ], temp, affineVal512 ;
-        __m128i affineVal128 ;
-        int i, j ;
-
-        unsigned char * vVal = ( unsigned char *) Vandermonde ;
-        // Check to see if Vandermonde has been initialized yet
-        if ( vVal [ 0 ] == 0 )
-        {
-                unsigned char base = 2, cVal = 1 ;
-                for (  i = 0 ; i < 16 ; i ++ )
-                {
-                        vVal = ( unsigned char * ) &Vandermonde [ i ] ;
-                        for ( j = 0 ; j < 255 ; j ++ )
-                        {
-                                vVal [ j ] = cVal ;
-                                cVal = gf_mul ( cVal, base ) ;
-                        }
-                        base = gf_mul ( base, 2 ) ;
-                }
-        }
-        // Initialize our sum to the constant term, no need for multiply
-        sum [ 0 ] = _mm512_set1_epi8 ( keyEq [ 0 ] ) ;
-        sum [ 1 ] = _mm512_set1_epi8 ( keyEq [ 0 ] ) ;
-        sum [ 2 ] = _mm512_set1_epi8 ( keyEq [ 0 ] ) ;
-        sum [ 3 ] = _mm512_set1_epi8 ( keyEq [ 0 ] ) ;
-
-        // Loop through each keyEq value, multiply it by Vandermonde and add it to sum
-        for ( i = 1 ; i < mSize ; i ++ )
-        {
-                affineVal128 = _mm_set1_epi64x ( gf_table_gfni [ keyEq [ i ] ] ) ;
-                affineVal512 = _mm512_broadcast_i32x2 ( affineVal128 ) ;
-                // Remember that we did not build the first row of Vandermonde, so use i-1
-                temp = _mm512_gf2p8affine_epi64_epi8 ( Vandermonde [ i-1 ] [ 0 ], affineVal512, 0 ) ;
-                sum [ 0 ] = _mm512_xor_si512 ( sum [ 0 ], temp ) ;
-                temp = _mm512_gf2p8affine_epi64_epi8 ( Vandermonde [ i-1 ] [ 1 ], affineVal512, 0 ) ;
-                sum [ 1 ] = _mm512_xor_si512 ( sum [ 1 ], temp ) ;
-                temp = _mm512_gf2p8affine_epi64_epi8 ( Vandermonde [ i-1 ] [ 2 ], affineVal512, 0 ) ;
-                sum [ 2 ] = _mm512_xor_si512 ( sum [ 2 ], temp ) ;
-                temp = _mm512_gf2p8affine_epi64_epi8 ( Vandermonde [ i-1 ] [ 3 ], affineVal512, 0 ) ;
-                sum [ 3 ] = _mm512_xor_si512 ( sum [ 3 ], temp ) ;
-        }
-        // Add in the leading Vandermonde row, just assume it's a one so no multiply
-        sum [ 0 ] = _mm512_xor_si512 ( sum [ 0 ], Vandermonde [ mSize - 1 ] [ 0 ] ) ;
-        sum [ 1 ] = _mm512_xor_si512 ( sum [ 1 ], Vandermonde [ mSize - 1 ] [ 1 ] ) ;
-        sum [ 2 ] = _mm512_xor_si512 ( sum [ 2 ], Vandermonde [ mSize - 1 ] [ 2 ] ) ;
-        sum [ 3 ] = _mm512_xor_si512 ( sum [ 3 ], Vandermonde [ mSize - 1 ] [ 3 ] ) ;
-
-        int rootCount = 0, idx = 0 ;
-        // Create the list of roots
-        for ( i = 0 ; i < 4 ; i ++ )
-        {
-                // Compare each byte to zero, generating a 64-bit mask
-                __mmask64 mask = _mm512_cmpeq_epi8_mask( sum [ i ], _mm512_setzero_si512());
-
-                // Count number of zeros (popcount of mask)
-                rootCount += _popcnt64(mask);
-
-                // Extract indices of set bits (zero bytes)
-                while ( mask )
-                {
-                        // Find the next set bit (index of zero byte)
-                        uint64_t pos = _tzcnt_u64(mask);
-                        roots[idx++] = (uint8_t) pos + ( i * 64 ) ;
-                        // Clear the lowest set bit
-                        mask = _blsr_u64 ( mask ) ; // mask &= (mask - 1)
-                }
-        }
-        return rootCount ;
-}
-#endif
 
 // Compute base ^ Power
 int pc_pow ( unsigned char base, unsigned char Power ) 
@@ -874,17 +800,7 @@ int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mS
                         keyEq [ i ] ^= gf_mul ( S [ mSize + j ], invMat [ i * mSize + j ] ) ;
                 }
         }
-#ifdef NDEF
-        printf ( "PGZ key equation\n" ) ;
-        dump_u8xu8 ( keyEq, 1, mSize ) ;
-        unsigned char lambda [ 17 ], lambda2 [ 33 ] ;
-        int l = berlekamp_massey ( S, p, lambda ) ;
-        printf ( "berlekamp\n" ) ;
-        dump_u8xu8 ( lambda, 1, l+1 ) ;
-        l = berlekamp_massey_vec ( S, p, lambda2 ) ;
-        printf ( "Berlekamp Vec\n" ) ;
-        dump_u8xu8 ( lambda, 1, l+1 ) ;
-#endif
+
         int nroots = find_roots ( keyEq, roots, mSize );
         // Find roots, exit if mismatch with expected roots
         if ( nroots != mSize )
@@ -892,26 +808,7 @@ int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mS
                 printf ( "Bad roots expected %d got %d\n", mSize, nroots ) ;
                 return 0 ;
         }
-        //printf ( "RootsS\n" ) ;
-        //dump_u8xu8 ( roots, 1, nroots ) ;
-#ifndef __aarch64__
-        unsigned char roots2 [ 17 ] ;
-        int nroots2 = find_roots_vec_64 ( keyEq, roots2, mSize ) ;
-        //printf ( "nroots = %d nroots2 = %d\n", nroots, nroots2 ) ;
-        //dump_u8xu8 ( roots2, 1, nroots2 ) ;
-        if ( nroots != nroots2 )
-        {
-                printf ( "Root count scalar %d doesn't match vector %d\n", nroots, nroots2 ) ;
-                return 0 ;
-        }
-        if ( memcmp ( roots, roots2, nroots ) )
-        {
-                printf ( "Roots don't match\n" ) ;
-                dump_u8xu8 ( roots, 1, nroots ) ;
-                dump_u8xu8 ( roots2, 1, nroots2 ) ;
-                return 0 ;
-        }
-#endif
+
         // Compute the error values
         if ( pc_compute_error_values ( mSize, S, roots, errVal ) == 0 )
         {
@@ -987,131 +884,8 @@ int pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding
                 }
                 if ( gf_invert_matrix ( SMat, SMat_inv, mSize ) == 0 )
                 {
-#ifdef NDEF
-                        gf_invert_matrix_vec ( SMat2, SMat_inv2, mSize ) ;
-                        printf ( "Smat_inv2\n" ) ;
-                        dump_u8xu8 ( SMat_inv, mSize, mSize ) ;
-                        dump_u8xu8 ( SMat_inv2, mSize, mSize ) ;
-#endif
                         return pc_verify_multiple_errors ( S, data, mSize, k, p, newPos, offSet, SMat_inv ) ;
                 }
         }
         return 0 ;
 }
-
-#ifdef NDEF
-// Quick experiment for AVX2
-int find_zero_bytes_avx2(const uint8_t *data, uint8_t *indices)
-{
-    // Load 64 bytes into two YMM registers
-    __m256i ymm0 = _mm256_loadu_si256((const __m256i*)data);
-    __m256i ymm1 = _mm256_loadu_si256((const __m256i*)(data + 32));
-
-    // Compare each byte to zero, generating two 32-bit masks
-    __m256i zero = _mm256_setzero_si256();
-    __m256i mask0 = _mm256_cmpeq_epi8(ymm0, zero);
-    __m256i mask1 = _mm256_cmpeq_epi8(ymm1, zero);
-
-    // Extract 32-bit masks
-    uint32_t mask_low = (uint32_t)_mm256_movemask_epi8(mask0);
-    uint32_t mask_high = (uint32_t)_mm256_movemask_epi8(mask1);
-
-    // Combine into a 64-bit mask
-    uint64_t mask = ((uint64_t)mask_high << 32) | mask_low;
-
-    // Count zeros and extract indices
-    int num_zeros = _popcnt64(mask);
-    int idx = 0;
-    while (mask)
-    {
-        uint64_t pos = _tzcnt_u64(mask);
-        indices[idx++] = (uint8_t)pos;
-        mask = _blsr_u64(mask); // Clear lowest set bit
-    }
-
-    return num_zeros;
-}
-#endif
-
-extern const uint64_t gf_table_gfni[256];
-
-int gf_invert_matrix_vec2(unsigned char *in_mat, unsigned char *out_mat, const int n) 
-{
-        __m512i affineVal512 ;
-        __m128i affineVal128 ;
-
-        if (n > 32) return -1; // Assumption: n <= 32
-
-        int i, j;
-        __m512i aug_rows[32] ;                                 // Ensure 64-byte alignment
-        unsigned char *matrix_mem = (unsigned char *)aug_rows; // Point to aug_rows memory
-
-        // Initialize augmented matrix: [in_mat row | out_mat row | padding zeros]
-        for (i = 0; i < n; i++) 
-        {
-                memcpy(&matrix_mem [i * 64], &in_mat[ i * n ], n ) ;
-                memset(&matrix_mem [i * 64 + n], 0, n ) ;
-                matrix_mem [ i * 64 + n + i ] = 1 ;
-                //dump_u8xu8 ( &matrix_mem [ i * 64 + n ], 1, n ) ;
-        }
-
-        // Inverse using Gaussian elimination
-        for (i = 0; i < n; i++) 
-        {
-                // Check for 0 in pivot element using matrix_mem
-                unsigned char pivot = matrix_mem [ i * 64 + i ] ;
-                //printf ( "Pivot = %d\n", pivot ) ;
-                if ( pivot == 0 ) 
-                {
-                        // Find a row with non-zero in current column and swap
-                        for ( j = i + 1; j < n; j++ ) 
-                        {
-                                if (matrix_mem[j * 64 + i] != 0) 
-                                {
-                                        break ;
-                                }
-                        }
-                        if (j == n) 
-                        { 
-                                // Couldn't find means it's singular
-                                return -1;
-                        }
-                        // Swap rows i and j in ZMM registers
-                        __m512i temp_vec = aug_rows [ i ] ;
-                        aug_rows[i] = aug_rows [ j ] ;
-                        aug_rows[j] = temp_vec ;
-                }
-
-                // Get pivot and compute 1/pivot
-                pivot = matrix_mem [ i * 64 + i ]  ;
-                //printf ( "Pivot2 = %d\n", pivot ) ;
-                unsigned char temp_scalar = gf_inv ( pivot ) ;
-                //printf ( "Scalar = %d\n", temp_scalar ) ;
-
-                // Scale row i by 1/pivot using GFNI affine
-                affineVal128 = _mm_set1_epi64x ( gf_table_gfni [ temp_scalar ] ) ;
-                affineVal512 = _mm512_broadcast_i32x2 ( affineVal128 ) ;
-                aug_rows [ i ]  = _mm512_gf2p8affine_epi64_epi8 ( aug_rows[ i ], affineVal512, 0 ) ;
-
-                // Eliminate in other rows
-                for ( j = 0; j < n; j++ )
-                {
-                        if ( j == i)  continue;
-                        unsigned char factor = matrix_mem[j * 64 + i];
-                        // Compute scaled pivot row: pivot_row * factor
-                        affineVal128 = _mm_set1_epi64x ( gf_table_gfni [ factor ] ) ;
-                        affineVal512 = _mm512_broadcast_i32x2 ( affineVal128 ) ;
-                        __m512i scaled = _mm512_gf2p8affine_epi64_epi8 ( aug_rows [ i ], affineVal512, 0 ) ;
-                        // row_j ^= scaled
-                        aug_rows [ j ] = _mm512_xor_si512( aug_rows [ j ], scaled ) ;
-                }
-        }
-        // Copy back to out_mat
-        for ( i = 0; i < n; i++ ) 
-        {
-                //dump_u8xu8 ( &matrix_mem [ i * 64 + n ], 1, n ) ;
-                memcpy ( &out_mat [ i * n ] , &matrix_mem [ i * 64 + n ], n )  ;
-        }
-        return 0 ;
-}
-

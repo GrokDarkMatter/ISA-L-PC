@@ -83,9 +83,7 @@ extern void ec_encode_data_avx512_gfni ( int len, int k, int p, u8 * g_tbls, u8 
 #include "PCLib_AVX512_GFNI.c"
 extern void gf_gen_poly ( unsigned char *, int ) ;
 extern int find_roots ( unsigned char * S, unsigned char * roots, int lenPoly ) ;
-extern int find_roots_vec_64 ( unsigned char * S, unsigned char * roots, int lenPoly ) ;
 extern int gf_invert_matrix ( unsigned char * in_mat, unsigned char * out_mat, int size ) ;
-extern int gf_invert_matrix_vec2 ( unsigned char * in_mat, unsigned char * out_mat, int size ) ;
 #endif
 
 #ifndef GT_L3_CACHE
@@ -210,14 +208,14 @@ void TestPAPIRoots ( void )
                 CPI = (double) values[ 0 ] / values[ 1 ] ;
                 printf("find_roots_sc %11lld cycles %11lld instructions CPI %.3lf\n", values [ 0 ], values [ 1 ], CPI);
 
-                int rootCount2 = find_roots_vec_64 ( keyEq, roots, lenPoly ) ; // Run once to fill in Vandermonde
+                int rootCount2 = find_roots_AVX512_GFNI ( keyEq, roots, lenPoly ) ; // Run once to fill in Vandermonde
                 if ( ( ret = PAPI_start ( event_set ) ) != PAPI_OK) 
                 {
                         handle_error(ret);
                 }
 
                 // Workload
-                rootCount = find_roots_vec_64 ( keyEq, roots, lenPoly ) ;
+                rootCount = find_roots_AVX512_GFNI ( keyEq, roots, lenPoly ) ;
 
                 if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
                 {
@@ -272,7 +270,7 @@ void TestPAPIInv ( void )
                 }
 
                 // Workload
-                ret = gf_invert_matrix_vec2 ( in_mat, out_mat, lenPoly ) ;
+                ret = gf_invert_matrix_AVX512_GFNI ( in_mat, out_mat, lenPoly ) ;
 
                 if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK)
                 {
@@ -557,8 +555,11 @@ main(int argc, char *argv[])
         m = k + p ;
 
         // Do early performance testing
-        TestPAPIRoots () ;
-        TestPAPIInv   () ;
+        if ( avx2 == 0 )
+        {
+                TestPAPIRoots () ;
+                TestPAPIInv   () ;
+        }
 
         if (m > MMAX)
         {
