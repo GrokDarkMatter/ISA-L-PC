@@ -346,7 +346,7 @@ int berlekamp_massey_AVX512_GFNI(unsigned char *syndromes, int length, unsigned 
 
     return L;
 }
-#endif
+
 
 // Attempt to detect multiple error locations and values
 int pc_verify_multiple_errors_AVX512_GFNI ( unsigned char * S, unsigned char ** data, int mSize, int k,
