@@ -114,6 +114,7 @@ extern int gf_invert_matrix ( unsigned char * in_mat, unsigned char * out_mat, i
 
 #define BAD_MATRIX -1
 
+#ifndef __aarch64__
 void handle_error(int code)
 {
     fprintf ( stderr, "PAPI error: %s\n", PAPI_strerror ( code ) ) ;
@@ -206,7 +207,7 @@ void TestPAPIRoots ( void )
                 //dump_u8xu8 ( roots, 1, rootCount ) ;
 
                 CPI = (double) values[ 0 ] / values[ 1 ] ;
-                printf("find_roots_sc %11lld cycles %11lld instructions CPI %.3lf\n", values [ 0 ], values [ 1 ], CPI);
+                printf ( "find_roots_sc %11lld cycles %11lld instructions CPI %.3lf\n", values [ 0 ], values [ 1 ], CPI ) ;
 
                 int rootCount2 = find_roots_AVX512_GFNI ( keyEq, roots, lenPoly ) ; // Run once to fill in Vandermonde
                 if ( ( ret = PAPI_start ( event_set ) ) != PAPI_OK) 
@@ -302,6 +303,7 @@ void TestPAPIInv ( void )
                 printf ( "invert_matrix_sca %11lld cycles %11lld instructions CPI %.3lf\n", values [ 0 ], values [ 1 ], CPI ) ;
         }
 }
+#endif
 
 void
 usage(const char *app_name)
@@ -554,13 +556,14 @@ main(int argc, char *argv[])
         nerrs = p ;
         m = k + p ;
 
+#ifndef __aarch64__
         // Do early performance testing
         if ( avx2 == 0 )
         {
                 TestPAPIRoots () ;
                 TestPAPIInv   () ;
         }
-
+#endif
         if (m > MMAX)
         {
                 printf("Number of total buffers (data and parity) cannot be higher than %d\n",
@@ -749,6 +752,7 @@ main(int argc, char *argv[])
                 printf ( "Decoder failed\n" ) ;
                 goto exit ;
         }
+#ifndef __aarch64__
         int event_set = InitPAPI () ; //PAPI_NULL, event_code ;
         if ((ret = PAPI_start(event_set)) != PAPI_OK) {
                 handle_error(ret);
@@ -853,7 +857,7 @@ main(int argc, char *argv[])
         PAPI_cleanup_eventset ( event_set ) ;
         PAPI_destroy_eventset ( &event_set ) ;
         PAPI_shutdown ();
-
+#endif
         printf (" done all: Pass\n" ) ;
         fflush ( stdout ) ;
 
