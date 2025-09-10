@@ -709,24 +709,13 @@ int berlekamp_massey(unsigned char *syndromes, int length, unsigned char *lambda
 
 // Attempt to detect multiple error locations and values
 int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mSize, int k, 
-        int p, int newPos, int offSet, unsigned char * invMat )
+        int p, int newPos, int offSet, unsigned char * keyEq )
 {
-        unsigned char keyEq [ PC_MAX_ERRS ] = {0}, roots [ PC_MAX_ERRS ] = {0} ;
+        unsigned char roots [ PC_MAX_ERRS ] = {0} ;
         unsigned char errVal [ PC_MAX_ERRS ] ;
-        //unsigned char lambda [ PC_MAX_ERRS + 1 ] ;
-        int i, j ;
 
-        // Compute the key equation terms
-        for ( i = 0 ; i < mSize ; i ++ )
-        {
-                for ( j = 0 ; j < mSize ; j ++ )
-                {
-                        keyEq [ i ] ^= gf_mul ( S [ mSize + j ], invMat [ i * mSize + j ] ) ;
-                }
-        }
-
-        int nroots = find_roots ( keyEq, roots, mSize );
         // Find roots, exit if mismatch with expected roots
+        int nroots = find_roots ( keyEq, roots, mSize );
         if ( nroots != mSize )
         {
                 return 0 ;
@@ -745,7 +734,7 @@ int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mS
         }
 
         // Syndromes are OK, correct the user data
-        for ( i = 0 ; i < mSize ; i ++ )
+        for ( int i = 0 ; i < mSize ; i ++ )
         {
                 int sym = k - roots [ i ] - 1 ;
                 data [ sym ] [ newPos + offSet ] ^= errVal [ i ] ;
@@ -754,15 +743,48 @@ int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mS
         return 1 ;
 }
 
+// PGZ decoding step 1, see if we can invert the matrix, if so, compute key equation
+int PGZ ( unsigned char * S, int p, unsigned char * keyEq ) 
+{
+       unsigned char SMat [ PC_MAX_ERRS * PC_MAX_ERRS ], SMat_inv [ PC_MAX_ERRS * PC_MAX_ERRS ] ;
+        int i,j ;
+
+       // For each potential size, create and find Hankel matrix that will invert
+        for ( int mSize = ( p / 2 ) ; mSize >= 2 ; mSize -- )
+        {
+                for ( i = 0 ; i < mSize ; i ++ )
+                {
+                        for ( j = 0 ; j < mSize ; j ++ )
+                        {
+                                SMat [ i * mSize + j ] = S [ i + j ] ;
+                        }
+                }
+                // If good inversion then we know error count and can compute key equation
+                if ( gf_invert_matrix ( SMat, SMat_inv, mSize ) == 0 )
+                {
+                        // Compute the key equation terms
+                        for ( i = 0 ; i < mSize ; i ++ )
+                        {
+                                for ( j = 0 ; j < mSize ; j ++ )
+                                {
+                                        keyEq [ i ] ^= gf_mul ( S [ mSize + j ], SMat_inv [ i * mSize + j ] ) ;
+                                }
+                        }
+
+                        return mSize ;
+                }
+        }
+        return 0 ;
+
+}
+
 // Syndromes are non-zero, try to calculate error location and data values
 int pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding, int vLen )
 {
-        int offSet = 0, i, j, mSize  ;
+        int offSet = 0, i, mSize  ;
         unsigned char synZero = 0 ;
-        unsigned char S [ PC_MAX_ERRS ] ;
-        unsigned char SMat [ PC_MAX_ERRS * PC_MAX_ERRS ], SMat_inv [ PC_MAX_ERRS * PC_MAX_ERRS ] ;
-        //unsigned char SMat2 [ PC_MAX_ERRS * PC_MAX_ERRS ], SMat_inv2 [ PC_MAX_ERRS * PC_MAX_ERRS ] ;
-
+        unsigned char S [ PC_MAX_ERRS ], keyEq [ PC_MAX_ERRS + 1 ] = { 0 } ;
+ 
         while ( offSet < vLen ) 
         {
                 // Scan for first non-zero byte in syndrome vectors
@@ -794,6 +816,19 @@ int pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding
                 return 1 ;
         }
 
+        mSize = PGZ ( S, p, keyEq ) ;
+
+        if ( mSize > 0 )
+        {
+                return pc_verify_multiple_errors ( S, data, mSize, k, p, newPos, offSet, keyEq ) ;
+        }
+#ifdef NDEF
+        {
+                if ( gf_invert_matrix ( SMat, SMat_inv, mSize ) == 0 )
+                {
+                        return pc_verify_multiple_errors ( S, data, mSize, k, p, newPos, offSet, SMat_inv ) ;
+                }
+        }
         // Create and find Hankel matrix that will invert
         for ( mSize = ( p / 2 ) ; mSize >= 2 ; mSize -- )
         {
@@ -810,5 +845,6 @@ int pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding
                         return pc_verify_multiple_errors ( S, data, mSize, k, p, newPos, offSet, SMat_inv ) ;
                 }
         }
+#endif
         return 0 ;
 }
