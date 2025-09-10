@@ -770,7 +770,6 @@ int PGZ ( unsigned char * S, int p, unsigned char * keyEq )
                                         keyEq [ i ] ^= gf_mul ( S [ mSize + j ], SMat_inv [ i * mSize + j ] ) ;
                                 }
                         }
-
                         return mSize ;
                 }
         }
@@ -822,29 +821,5 @@ int pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding
         {
                 return pc_verify_multiple_errors ( S, data, mSize, k, p, newPos, offSet, keyEq ) ;
         }
-#ifdef NDEF
-        {
-                if ( gf_invert_matrix ( SMat, SMat_inv, mSize ) == 0 )
-                {
-                        return pc_verify_multiple_errors ( S, data, mSize, k, p, newPos, offSet, SMat_inv ) ;
-                }
-        }
-        // Create and find Hankel matrix that will invert
-        for ( mSize = ( p / 2 ) ; mSize >= 2 ; mSize -- )
-        {
-                for ( i = 0 ; i < mSize ; i ++ )
-                {
-                        for ( j = 0 ; j < mSize ; j ++ )
-                        {
-                                SMat [ i * mSize + j ] = S [ i + j ] ;
-                                //SMat2 [ i * mSize + j ] = S [ i + j ] ;
-                        }
-                }
-                if ( gf_invert_matrix ( SMat, SMat_inv, mSize ) == 0 )
-                {
-                        return pc_verify_multiple_errors ( S, data, mSize, k, p, newPos, offSet, SMat_inv ) ;
-                }
-        }
-#endif
         return 0 ;
 }
