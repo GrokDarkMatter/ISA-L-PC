@@ -81,6 +81,7 @@ extern void ec_encode_data_avx2_gfni ( int len, int k, int p, u8 * g_tbls, u8 **
 #include "PCLib_AVX2_GFNI.c" 
 extern void ec_encode_data_avx512_gfni ( int len, int k, int p, u8 * g_tbls, u8 ** buffs, u8 ** dest ) ;
 #include "PCLib_AVX512_GFNI.c"
+#include "PCLib_1B_AVX512_GFNI.c"
 extern void gf_gen_poly ( unsigned char *, int ) ;
 extern int find_roots ( unsigned char * S, unsigned char * roots, int lenPoly ) ;
 extern int gf_invert_matrix ( unsigned char * in_mat, unsigned char * out_mat, int size ) ;
@@ -754,7 +755,8 @@ main(int argc, char *argv[])
         }
 #ifndef __aarch64__
         int event_set = InitPAPI () ; //PAPI_NULL, event_code ;
-        if ((ret = PAPI_start(event_set)) != PAPI_OK) {
+        if ( ( ret = PAPI_start ( event_set ) ) != PAPI_OK ) 
+        {
                 handle_error(ret);
         }
         // Workload
@@ -779,10 +781,6 @@ main(int argc, char *argv[])
 
         printf ( "EC_Encode_data %11lld cycles %11lld instructions CPI %.3lf\n", values[0], values[1], CPI ) ;
 
-        if ( avx2 != 0 )
-        {
-
-        }
         if ( ( ret = PAPI_start( event_set ) ) != PAPI_OK ) 
         {
                 handle_error ( ret ) ;
