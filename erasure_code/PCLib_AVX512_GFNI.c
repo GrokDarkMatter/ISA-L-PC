@@ -350,24 +350,13 @@ int berlekamp_massey_AVX512_GFNI(unsigned char *syndromes, int length, unsigned 
 
 // Attempt to detect multiple error locations and values
 int pc_verify_multiple_errors_AVX512_GFNI ( unsigned char * S, unsigned char ** data, int mSize, int k,
-        int p, int newPos, int offSet, unsigned char * invMat )
+        int p, int newPos, int offSet, unsigned char * keyEq )
 {
-        unsigned char keyEq [ PC_MAX_ERRS ] = {0}, roots [ PC_MAX_ERRS ] = {0} ;
+        unsigned char roots [ PC_MAX_ERRS ] = {0} ;
         unsigned char errVal [ PC_MAX_ERRS ] ;
-        //unsigned char lambda [ PC_MAX_ERRS + 1 ] ;
-        int i, j ;
 
-        // Compute the key equation terms
-        for ( i = 0 ; i < mSize ; i ++ )
-        {
-                for ( j = 0 ; j < mSize ; j ++ )
-                {
-                        keyEq [ i ] ^= gf_mul ( S [ mSize + j ], invMat [ i * mSize + j ] ) ;
-                }
-        }
-
-        int nroots = find_roots_AVX512_GFNI ( keyEq, roots, mSize );
         // Find roots, exit if mismatch with expected roots
+        int nroots = find_roots_AVX512_GFNI ( keyEq, roots, mSize );
         if ( nroots != mSize )
         {
                 printf ( "Bad roots expected %d got %d\n", mSize, nroots ) ;
@@ -387,7 +376,7 @@ int pc_verify_multiple_errors_AVX512_GFNI ( unsigned char * S, unsigned char ** 
         }
 
         // Syndromes are OK, correct the user data
-        for ( i = 0 ; i < mSize ; i ++ )
+        for ( int i = 0 ; i < mSize ; i ++ )
         {
                 int sym = k - roots [ i ] - 1 ;
                 data [ sym ] [ newPos + offSet ] ^= errVal [ i ] ;
@@ -396,13 +385,47 @@ int pc_verify_multiple_errors_AVX512_GFNI ( unsigned char * S, unsigned char ** 
         return 1 ;
 }
 
+// PGZ decoding step 1, see if we can invert the matrix, if so, compute key equation
+int PGZ_AVX512_GFNI ( unsigned char * S, int p, unsigned char * keyEq ) 
+{
+       unsigned char SMat [ PC_MAX_ERRS * PC_MAX_ERRS ], SMat_inv [ PC_MAX_ERRS * PC_MAX_ERRS ] ;
+        int i,j ;
+
+       // For each potential size, create and find Hankel matrix that will invert
+        for ( int mSize = ( p / 2 ) ; mSize >= 2 ; mSize -- )
+        {
+                for ( i = 0 ; i < mSize ; i ++ )
+                {
+                        for ( j = 0 ; j < mSize ; j ++ )
+                        {
+                                SMat [ i * mSize + j ] = S [ i + j ] ;
+                        }
+                }
+                // If good inversion then we know error count and can compute key equation
+                if ( gf_invert_matrix_AVX512_GFNI ( SMat, SMat_inv, mSize ) == 0 )
+                {
+                        // Compute the key equation terms
+                        for ( i = 0 ; i < mSize ; i ++ )
+                        {
+                                for ( j = 0 ; j < mSize ; j ++ )
+                                {
+                                        keyEq [ i ] ^= gf_mul ( S [ mSize + j ], SMat_inv [ i * mSize + j ] ) ;
+                                }
+                        }
+                        return mSize ;
+                }
+        }
+        return 0 ;
+
+}
+
 // Syndromes are non-zero, try to calculate error location and data values
 int pc_correct_AVX512_GFNI ( int newPos, int k, int p,
     unsigned char ** data, unsigned char ** coding, int vLen )
 {
-        int i, j, mSize  ;
-        unsigned char S [ PC_MAX_ERRS ] ;
-        unsigned char SMat [ PC_MAX_ERRS * PC_MAX_ERRS ], SMat_inv [ PC_MAX_ERRS * PC_MAX_ERRS ] ;
+        int i, mSize  ;
+        unsigned char S [ PC_MAX_ERRS ], keyEq [ PC_MAX_ERRS + 1 ] = { 0 } ;
+
         __m512i vec, vec2 ;
 
         // Get a "or" of all the syndrome vectors
@@ -435,22 +458,12 @@ int pc_correct_AVX512_GFNI ( int newPos, int k, int p,
                 return 1 ;
         }
 
-        // Create and find Hankel matrix that will invert
-        for ( mSize = ( p / 2 ) ; mSize >= 2 ; mSize -- )
+        mSize = PGZ_AVX512_GFNI ( S, p, keyEq ) ;
+
+        if ( mSize > 1 )
         {
-                for ( i = 0 ; i < mSize ; i ++ )
-                {
-                        for ( j = 0 ; j < mSize ; j ++ )
-                        {
-                                SMat [ i * mSize + j ] = S [ i + j ] ;
-                        }
-                }
-                if ( gf_invert_matrix_AVX512_GFNI ( SMat, SMat_inv, mSize ) == 0 )
-                {
-                        return pc_verify_multiple_errors_AVX512_GFNI ( S, data, mSize, k, p, newPos, offSet, SMat_inv ) ;
-                }
+                return pc_verify_multiple_errors_AVX512_GFNI ( S, data, mSize, k, p, newPos, offSet, keyEq ) ;
         }
-        printf ( "No matrix found\n" ) ;
         return 0 ;
 }
 
