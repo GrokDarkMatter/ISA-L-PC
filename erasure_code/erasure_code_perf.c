@@ -760,22 +760,22 @@ main(int argc, char *argv[])
         // Workload
         if ( avx2 == 0 )
         {
-                ec_encode_data_avx512_gfni(TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs);
+                ec_encode_data_avx512_gfni ( TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs ) ;
         }
         else
         {
-                ec_encode_data_avx2_gfni(TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs);
+                ec_encode_data_avx2_gfni ( TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs ) ;
 
         }
 
-        long long values[2];
-        if ( ( ret = PAPI_stop(event_set, values)) != PAPI_OK )
+        long long values[ 2 ];
+        if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
         {
-                handle_error(ret);
+                handle_error( ret );
         }
 
         double CPI;
-        CPI = (double) values[0]/values[1] ;
+        CPI = ( double ) values[ 0 ] / values[ 1 ] ;
 
         printf ( "EC_Encode_data %11lld cycles %11lld instructions CPI %.3lf\n", values[0], values[1], CPI ) ;
 

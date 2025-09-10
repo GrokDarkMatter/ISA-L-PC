@@ -52,7 +52,7 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #ifndef __aarch64__
 #include <immintrin.h>
 #endif
-//#ifdef NDEF
+#ifdef NDEF
 // Utility print routine
 #include <stdio.h>
 void
@@ -67,7 +67,8 @@ dump_u8xu8(unsigned char *s, int k, int m)
         }
         printf("\n");
 }
-//#endif
+#endif
+
 void
 ec_init_tables_base(int k, int rows, unsigned char *a, unsigned char *g_tbls)
 {
@@ -705,83 +706,6 @@ int berlekamp_massey(unsigned char *syndromes, int length, unsigned char *lambda
 
     return L;
 }
-// Affine table from ec_base.h: 256 * 8-byte matrices for GF(256) multiplication
-static const uint64_t gf_table_gfni[256];  // Assume defined in ec_base.h
-
-#ifndef __aarch64__
-// syndromes: array of length 'length' (typically 2t), syndromes[0] = S1, [1] = S2, etc.
-// lambda: caller-allocated array of size at least (length + 1 + 31), filled with locator poly coeffs. Padded for SIMD.
-// Returns: degree L of the error locator polynomial.
-// Note: Assumes length <= 32 for AVX-512 (32-byte vectors); extend loops for larger lengths.
-int berlekamp_massey_vec(unsigned char *syndromes, int length, unsigned char *lambda) 
-{
-    unsigned char b[length + 1 + 31];  // Padded for AVX-512 (32-byte alignment)
-    unsigned char temp[length + 1 + 31];
-    int L = 0;
-    int m = 1;
-    unsigned char old_d = 1;  // Initial previous discrepancy
-
-    memset(lambda, 0, length + 1 + 31);
-    lambda[0] = 1;
-    memset(b, 0, length + 1 + 31);
-    b[0] = 1;
-
-    for (int r = 0; r < length; r++) 
-    {
-        unsigned char d = syndromes[r];
-        for (int j = 1; j <= L; j++) 
-        {
-            if (r - j >= 0) {
-                d ^= gf_mul(lambda[j], syndromes[r - j]);
-            }
-        }
-
-        if (d == 0) 
-        {
-            m++;
-        } 
-        else 
-        {
-            unsigned char q = gf_div(d, old_d);
-            memcpy(temp, lambda, length + 1 + 31);
-
-            // SIMD update: lambda[j + m] ^= gf_mul(q, b[j]) using AVX-512 GF2P8AFFINE
-            // Load and broadcast 8-byte affine matrix for q
-            __m128i matrix_128 = _mm_set1_epi64x(gf_table_gfni[q]);  // Load uint64_t from gf_table_gfni[q]
-            __m256i matrix = _mm256_broadcast_i32x2(matrix_128);  // Broadcast to all 4 lanes
-            __m256i b_vec = _mm256_loadu_si256((const __m256i *)b);
-            // Perform GF(256) multiplication: result = affine(b_vec, matrix) + 0
-            __m256i mul_res = _mm256_gf2p8affine_epi64_epi8(b_vec, matrix, 0);
-            __m256i vec_lam = _mm256_loadu_si256((const __m256i *)&lambda[m]);
-            vec_lam = _mm256_xor_si256(vec_lam, mul_res);
-            _mm256_storeu_si256((__m256i *)&lambda[m], vec_lam);
-
-            // Handle remainder scalarly (unlikely needed for length <= 32)
-            for (int j = 32; j <= length - m; j++) 
-            {
-                if (b[j] != 0) 
-                {
-                    lambda[j + m] ^= gf_mul(q, b[j]);
-                }
-            }
-
-            if (2 * L <= r) 
-            {
-                L = r + 1 - L;
-                memcpy(b, temp, length + 1 + 31);
-                old_d = d;
-                m = 1;
-            } 
-            else 
-            {
-                m++;
-            }
-        }
-    }
-
-    return L;
-}
-#endif
 
 // Attempt to detect multiple error locations and values
 int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mSize, int k, 
@@ -805,7 +729,6 @@ int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mS
         // Find roots, exit if mismatch with expected roots
         if ( nroots != mSize )
         {
-                printf ( "Bad roots expected %d got %d\n", mSize, nroots ) ;
                 return 0 ;
         }
 
