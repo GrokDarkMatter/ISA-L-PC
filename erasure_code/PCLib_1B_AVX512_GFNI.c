@@ -1,7 +1,7 @@
 static unsigned char pc_ptab [ 256 ], pc_ltab [ 256 ] ;
 
 // Multiply two bytes using the hardware GF multiply
-unsigned char pc_mul1b ( unsigned char a, unsigned char b) 
+unsigned char pc_mul_1b ( unsigned char a, unsigned char b) 
 {
     __m128i va, vb ;
 
@@ -29,7 +29,7 @@ void pc_bpow ( unsigned char Gen )
     //-----------------------------------------------------------------------
     for ( i = 1 ; i < 256 ; i ++ )
     {
-        pc_ptab[ i ] = pc_mul1b ( pc_ptab [ i - 1 ], Gen ) ;
+        pc_ptab[ i ] = pc_mul_1b ( pc_ptab [ i - 1 ], Gen ) ;
     }
 }
 
@@ -55,7 +55,8 @@ unsigned char pc_inv ( unsigned char Operand1 )
 }
 
 // Utility routine to sum across a ZMM register
-unsigned char reduce_zmm_to_byte(__m512i zmm) {
+unsigned char reduce_zmm_to_byte(__m512i zmm) 
+{
     // Shuffle and XOR 512-bit to 256-bit
     __m256i low = _mm512_castsi512_si256(zmm);
     __m256i high = _mm512_extracti64x4_epi64(zmm, 1);
@@ -85,5 +86,66 @@ unsigned char reduce_zmm_to_byte(__m512i zmm) {
     uint8_t low8 = (uint8_t)(result16 & 0xFF);
     uint8_t high8 = (uint8_t)(result16 >> 8);
     return low8 ^ high8;
+}
+void
+pc_gen_poly_1b( unsigned char *p, int rank)
+{
+        int c, alpha, cr ; // Loop variables
+
+        p [ 0 ] = 1 ; // Start with (x+1)
+        alpha = 3 ;
+        for ( cr = 1 ; cr < rank ; cr ++ ) // Loop rank-1 times
+        {
+                // Compute the last term of the polynomial by multiplying
+                p [ cr ] = pc_mul_1b ( p [ cr - 1 ], alpha ) ;
+
+                // Pass the middle terms to produce multiply result
+                for ( c = cr - 1 ; c > 0 ; c -- )
+                {
+                        p [ c ] ^= pc_mul_1b ( p [ c - 1 ], alpha ) ;
+                }
+
+                // Compute the first term by adding in alphaI
+                p [ 0 ] ^= alpha ;
+
+                // Compute next alpha (power of 2)
+                alpha = pc_mul_1b ( alpha, 3 ) ;
+        }
+}
+
+void
+pc_gen_poly_matrix_1b(unsigned char *a, int m, int k)
+{
+        int i, j, par, over, lpos ;
+        unsigned char *p, taps [ 254 ], lfsr [ 254 ] ;
+
+        // First compute the generator polynomial and initialize the taps
+        par = m - k ;
+
+        pc_gen_poly_1b ( taps, par ) ;
+        printf ( "Poly\n" ) ;
+        dump_u8xu8 ( taps, 1, par ) ;
+        memcpy ( lfsr, taps, par ) ; // Initial value of LFSR is the taps
+
+        // Now use an LFSR to build the values
+        p = a ;
+        for ( i = k - 1 ; i >= 0 ; i-- ) // Outer loop for each col
+        {
+                for (j = 0; j < par ; j++) // Each row
+                {
+                        // Copy in the current LFSR values
+                        p [ ( j * k ) + i ] = lfsr [ j ] ;
+                }
+                // Now update values with LFSR - first compute overflow
+                over = lfsr [ 0 ] ;
+
+                // Loop through the MSB LFSR terms (not the LSB)
+                for ( lpos = 0 ; lpos < par - 1 ; lpos ++ )
+                {
+                        lfsr [ lpos ] = pc_mul_1b ( over, taps [ lpos ] ) ^ lfsr [ lpos + 1 ] ;
+                }
+                // Now do the LSB of the LFSR to finish
+                lfsr [ par - 1 ] = pc_mul_1b ( over, taps [ par - 1 ] ) ;
+        }
 }
 
