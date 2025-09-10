@@ -579,7 +579,7 @@ main(int argc, char *argv[])
                 printf("Error allocating a\n") ;
                 goto exit;
         }
-_ifndef __aarch64__
+#ifndef __aarch64__
         pc_gen_poly_matrix_1b ( a, 12, 10 ) ;
         printf ( "Poly Matrix 1b\n" ) ;
         dump_u8xu8 ( a, 2, 10 ) ;
