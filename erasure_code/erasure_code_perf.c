@@ -583,6 +583,19 @@ main(int argc, char *argv[])
         pc_gen_poly_matrix_1b ( a, 12, 10 ) ;
         printf ( "Poly Matrix 1b\n" ) ;
         dump_u8xu8 ( a, 2, 10 ) ;
+        // Build the power table
+        pc_bpow ( 3 ) ;
+        printf ( "Power table\n" ) ;
+        dump_u8xu8 ( pc_ptab, 16, 16 ) ;
+        // Build the log table
+        printf ( "Log Table\n" ) ;
+        pc_blog () ;
+        dump_u8xu8 ( pc_ltab, 16, 16 ) ;
+        pc_binv () ;
+        printf ( "Inverse table\n" ) ;
+        dump_u8xu8 ( pc_itab, 16, 16 ) ;
+        printf ( "Inverse of 3 is %d\n", pc_itab [ 3 ] ) ;
+        printf ( "%d times 3 is %d\n", pc_itab [ 3 ], pc_mul_1b ( pc_itab [ 3 ], 3 ) ) ;
 #endif
         // Print output header
         printf("Testing with %u data buffers and %u parity buffers\n", k, p ) ;

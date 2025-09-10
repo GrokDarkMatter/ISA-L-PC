@@ -1,4 +1,4 @@
-static unsigned char pc_ptab [ 256 ], pc_ltab [ 256 ] ;
+static unsigned char pc_ptab [ 256 ], pc_ltab [ 256 ], pc_itab [ 256 ] ;
 
 // Multiply two bytes using the hardware GF multiply
 unsigned char pc_mul_1b ( unsigned char a, unsigned char b) 
@@ -19,14 +19,11 @@ void pc_bpow ( unsigned char Gen )
 {
     int i ;
 
-    //-----------------------------------------------------------------------
+
     // A positive integer raised to the power 0 is one
-    //-----------------------------------------------------------------------
     pc_ptab [ 0 ] = 1 ;
 
-    //-----------------------------------------------------------------------
     // Two is a good generator for 0x1d, three is a good generator for 0x1b
-    //-----------------------------------------------------------------------
     for ( i = 1 ; i < 256 ; i ++ )
     {
         pc_ptab[ i ] = pc_mul_1b ( pc_ptab [ i - 1 ], Gen ) ;
@@ -37,11 +34,9 @@ void pc_bpow ( unsigned char Gen )
 void pc_blog ( void ) 
 {
     int i ;
-    pc_ltab [ 0 ] = 0 ;
 
-    //-----------------------------------------------------------------------
+
     // Use the power table to index into the log table and store log value
-    //-----------------------------------------------------------------------
     for ( i = 0 ; i < 256 ; i ++ )
     {
         pc_ltab [ pc_ptab [ i ] ] = i ;
@@ -49,17 +44,24 @@ void pc_blog ( void )
 }
 
 // pc_linv - Calculate the inverse of a number, that is, 1/Number
-unsigned char pc_inv ( unsigned char Operand1 ) 
+void  pc_binv ( void ) 
 {
-    return pc_ptab [ 255 - pc_ltab [ Operand1 ] ] ;
+    int i ;
+    for ( i = 0 ; i < 256 ; i ++ )
+    {
+        pc_itab [ i ] = pc_ptab [ 255 - pc_ltab [ i ] ] ;
+    }
 }
 
 // Utility routine to sum across a ZMM register
-unsigned char reduce_zmm_to_byte(__m512i zmm) 
+unsigned char sum_zmm_AVX512_GFNI(__m512i * zmm) 
 {
+    __m512i vreg ;
+    vreg = _mm512_loadu_si512( zmm ) ;
+
     // Shuffle and XOR 512-bit to 256-bit
-    __m256i low = _mm512_castsi512_si256(zmm);
-    __m256i high = _mm512_extracti64x4_epi64(zmm, 1);
+    __m256i low = _mm512_castsi512_si256(vreg);
+    __m256i high = _mm512_extracti64x4_epi64(vreg, 1);
     __m256i xored = _mm256_xor_si256(low, high);
 
     // Shuffle and XOR 256-bit to 128-bit
@@ -68,24 +70,15 @@ unsigned char reduce_zmm_to_byte(__m512i zmm)
     __m128i xored128 = _mm_xor_si128(low128, high128);
 
     // Shuffle 128-bit to 64-bit using permute
-    __m128i perm = _mm_shuffle_epi32(xored128, _MM_SHUFFLE(3, 2, 1, 0));
+    __m128i perm = _mm_shuffle_epi32(xored128, _MM_SHUFFLE(3, 2, 3, 2));
     __m128i xored64 = _mm_xor_si128(xored128, perm);
 
     // Reduce 64-bit to 32-bit
-    uint64_t result64 = _mm_cvtsi128_si64(xored64);
-    uint32_t low32 = (uint32_t)(result64 & 0xFFFFFFFF);
-    uint32_t high32 = (uint32_t)(result64 >> 32);
-    uint32_t result32 = low32 ^ high32;
-
-    // Reduce 32-bit to 16-bit
-    uint16_t low16 = (uint16_t)(result32 & 0xFFFF);
-    uint16_t high16 = (uint16_t)(result32 >> 16);
-    uint16_t result16 = low16 ^ high16;
-
-    // Reduce 16-bit to 8-bit
-    uint8_t low8 = (uint8_t)(result16 & 0xFF);
-    uint8_t high8 = (uint8_t)(result16 >> 8);
-    return low8 ^ high8;
+    uint64_t result_64 = _mm_cvtsi128_si64(xored64);
+    result_64 ^= result_64 >> 32 ;
+    result_64 ^= result_64 >> 16 ;
+    result_64 ^= result_64 >> 8 ;
+    return ( unsigned char ) result_64 ;
 }
 void
 pc_gen_poly_1b( unsigned char *p, int rank)
