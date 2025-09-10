@@ -817,7 +817,7 @@ int pc_correct ( int newPos, int k, int p, unsigned char ** data, char ** coding
 
         mSize = PGZ ( S, p, keyEq ) ;
 
-        if ( mSize > 0 )
+        if ( mSize > 1 )
         {
                 return pc_verify_multiple_errors ( S, data, mSize, k, p, newPos, offSet, keyEq ) ;
         }
