@@ -581,21 +581,29 @@ main(int argc, char *argv[])
         }
 #ifndef __aarch64__
         pc_gen_poly_matrix_1b ( a, 12, 10 ) ;
-        printf ( "Poly Matrix 1b\n" ) ;
-        dump_u8xu8 ( a, 2, 10 ) ;
         // Build the power table
         pc_bpow ( 3 ) ;
-        printf ( "Power table\n" ) ;
-        dump_u8xu8 ( pc_ptab, 16, 16 ) ;
         // Build the log table
-        printf ( "Log Table\n" ) ;
         pc_blog () ;
-        dump_u8xu8 ( pc_ltab, 16, 16 ) ;
+        // Build the inverse table
         pc_binv () ;
-        printf ( "Inverse table\n" ) ;
-        dump_u8xu8 ( pc_itab, 16, 16 ) ;
-        printf ( "Inverse of 3 is %d\n", pc_itab [ 3 ] ) ;
-        printf ( "%d times 3 is %d\n", pc_itab [ 3 ], pc_mul_1b ( pc_itab [ 3 ], 3 ) ) ;
+        //printf ( "Inverse of 3 is %d\n", pc_itab [ 3 ] ) ;
+        //printf ( "%d times 3 is %d\n", pc_itab [ 3 ], pc_mul_1b ( pc_itab [ 3 ], 3 ) ) ;
+        pc_gen_rsr_matrix_1b ( a, 2 ) ;
+        printf ( "RSR matrix\n" ) ;
+        dump_u8xu8 ( a, 2, 255 ) ;
+        pc_bvan ( a, 2 ) ;
+
+        pc_gen_poly_matrix_1b ( a, 255, 253 ) ;
+        pc_bmat ( a, 2 ) ;
+        memset ( a, 0, 255 ) ;
+        memset ( &a [ 252 ], 1, 1 ) ;
+        pc_encoder1b ( a, &a [ 253 ], 2 ) ;
+        printf ( "Parities\n" ) ;
+        dump_u8xu8 ( &a [ 256 ], 1, 2 ) ;
+        pc_decoder1b ( a, &a [ 256 ], 2 ) ;
+        printf ( "Syndromes\n" ) ;
+        dump_u8xu8 ( &a [ 256 ], 1, 2 ) ;
 #endif
         // Print output header
         printf("Testing with %u data buffers and %u parity buffers\n", k, p ) ;
