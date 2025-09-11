@@ -368,7 +368,10 @@ void TestPAPI1b ( void )
                 //dump_u8xu8 ( &a [ 255 - lenPoly ], 1, lenPoly ) ;
 
                 CPI = ( double ) values [ 0 ] / values [ 1 ] ;
-                printf ( "Encoder_1b %2d %11lld cycles %11lld instructions CPI %.3lf\n", lenPoly, values [ 0 ]/1000, values [ 1 ]/1000, CPI ) ;
+                double BPC = ( 255 - lenPoly ) * 1000 ;
+                BPC /= values [ 0 ] ;
+                printf ( "Encoder_1b %2d %11lld cycles %11lld instructions CPI %.3lf BPC %.3lf\n", lenPoly,
+                         values [ 0 ] / 1000, values [ 1 ] / 1000, CPI, BPC ) ;
 
                 if ( ( ret = PAPI_start ( event_set)) != PAPI_OK )
                 {
@@ -390,7 +393,10 @@ void TestPAPI1b ( void )
                 //dump_u8xu8 ( &a [ 256 ], 1, lenPoly ) ;
 
                 CPI = ( double ) values[ 0 ] / values [ 1 ] ;
-                printf ( "Decoder_1b %2d %11lld cycles %11lld instructions CPI %.3lf\n", lenPoly, values [ 0 ]/1000, values [ 1 ]/1000, CPI ) ;
+                BPC = ( 255 - lenPoly ) * 1000 ;
+                BPC /= values [ 0 ] ;
+                printf ( "Decoder_1b %2d %11lld cycles %11lld instructions CPI %.3lf BPC %.3lf\n", lenPoly, 
+                        values [ 0 ] / 1000, values [ 1 ] /1000, CPI, BPC ) ;
         }
         free ( a ) ;
 }
