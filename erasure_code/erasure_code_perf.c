@@ -207,8 +207,8 @@ void TestPAPIRoots ( void )
                 //printf ( "Rootcount = %d\n", rootCount ) ;
                 //dump_u8xu8 ( roots, 1, rootCount ) ;
 
-                CPI = (double) values[ 0 ] / values[ 1 ] ;
-                printf ( "find_roots_sc %11lld cycles %11lld instructions CPI %.3lf\n", values [ 0 ], values [ 1 ], CPI ) ;
+                CPI = ( double ) values[ 0 ] / values[ 1 ] ;
+                printf ( "find_roots_sca %2d %11lld cycles %11lld instructions CPI %.3lf\n", lenPoly, values [ 0 ], values [ 1 ], CPI ) ;
 
                 int rootCount2 = find_roots_AVX512_GFNI ( keyEq, roots, lenPoly ) ; // Run once to fill in Vandermonde
                 if ( ( ret = PAPI_start ( event_set ) ) != PAPI_OK) 
@@ -231,8 +231,8 @@ void TestPAPIRoots ( void )
                 //printf ( "Rootcount2 = %d\n", rootCount ) ;
                 //dump_u8xu8 ( roots, 1, rootCount ) ;
 
-                CPI = (double) values[0] / values[1] ;
-                printf("find_roots_64 %11lld cycles %11lld instructions CPI %.3lf\n", values[ 0 ], values[ 1 ], CPI);
+                CPI = ( double ) values [ 0 ] / values [ 1 ] ;
+                printf("find_roots_vec %2d %11lld cycles %11lld instructions CPI %.3lf\n", lenPoly, values[ 0 ], values[ 1 ], CPI);
 
         }
 }
@@ -282,8 +282,8 @@ void TestPAPIInv ( void )
                 //printf ( "Outmat\n" ) ;
                 //dump_u8xu8 ( out_mat, lenPoly, lenPoly ) ;
 
-                CPI = (double) values[0]/values[1] ;
-                printf ( "invert_matrix_vec %11lld cycles %11lld instructions CPI %.3lf\n", values [ 0 ], values [ 1 ], CPI ) ;
+                CPI = ( double ) values [ 0 ] / values [ 1 ] ;
+                printf ( "invert_matrix_vec %2d %11lld cycles %11lld instructions CPI %.3lf\n", lenPoly, values [ 0 ], values [ 1 ], CPI ) ;
 
                 if ( ( ret = PAPI_start ( event_set)) != PAPI_OK )
                 {
@@ -300,10 +300,101 @@ void TestPAPIInv ( void )
                 //printf ( "Outmat\n" ) ;
                 //dump_u8xu8 ( out_mat, lenPoly, lenPoly ) ;
 
-                CPI = (double) values[0]/values[1] ;
-                printf ( "invert_matrix_sca %11lld cycles %11lld instructions CPI %.3lf\n", values [ 0 ], values [ 1 ], CPI ) ;
+                CPI = ( double ) values [ 0 ] / values [ 1 ] ;
+                printf ( "invert_matrix_sca %2d %11lld cycles %11lld instructions CPI %.3lf\n", lenPoly, values [ 0 ], values [ 1 ], CPI ) ;
         }
 }
+void TestPAPI1b ( void )
+{
+
+        int event_set = PAPI_NULL, ret ;
+        long long values [ 2 ] ;
+        double CPI;
+        event_set = InitPAPI () ;
+        unsigned char * a ;
+
+        a = malloc ( 256 * 4 * 255 ) ;
+        if ( a == NULL )
+        {
+                printf ( "Allocating A failed\n" ) ;
+                return ;
+        }
+
+        if ( event_set == PAPI_NULL )
+        {
+                printf ( "PAPI failed to initialize\n" ) ;
+                exit ( 1 ) ;
+        }
+
+        // Build the power table
+        pc_bpow ( 3 ) ;
+        // Build the log table
+        pc_blog () ;
+        // Build the inverse table
+        pc_binv () ;
+        //printf ( "Inverse of 3 is %d\n", pc_itab [ 3 ] ) ;
+        //printf ( "%d times 3 is %d\n", pc_itab [ 3 ], pc_mul_1b ( pc_itab [ 3 ], 3 ) ) ;
+
+        for ( int lenPoly = 2 ; lenPoly <= 32 ; lenPoly ++ )
+        {
+                pc_gen_rsr_matrix_1b ( a, lenPoly ) ;
+                //printf ( "RSR matrix\n" ) ;
+                //dump_u8xu8 ( a, 2, 255 ) ;
+                pc_bvan ( a, lenPoly ) ;
+
+                pc_gen_poly_matrix_1b ( a, 255, 255 - lenPoly ) ;
+                pc_bmat ( a, lenPoly ) ;
+
+                memset ( a, 0, 255 ) ;
+                memset ( &a [ 255 - lenPoly - 1 ], 1, 1 ) ;
+
+                if  ( ( ret = PAPI_start ( event_set ) ) != PAPI_OK )
+                {
+                        handle_error ( ret ) ;
+                }
+
+                // Workload
+                for ( int i = 0 ; i < 1000 ; i ++ )
+                {
+                        pc_encoder1b ( a, &a [ 255 - lenPoly ], lenPoly ) ;
+                }
+
+                if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK)
+                {
+                        handle_error ( ret ) ;
+                }
+
+                //printf ( "Parities\n" ) ;
+                //dump_u8xu8 ( &a [ 255 - lenPoly ], 1, lenPoly ) ;
+
+                CPI = ( double ) values [ 0 ] / values [ 1 ] ;
+                printf ( "Encoder_1b %2d %11lld cycles %11lld instructions CPI %.3lf\n", lenPoly, values [ 0 ]/1000, values [ 1 ]/1000, CPI ) ;
+
+                if ( ( ret = PAPI_start ( event_set)) != PAPI_OK )
+                {
+                        handle_error(ret);
+                }
+
+                // Workload
+                for ( int i = 0 ; i < 1000 ; i ++ )
+                {
+                        pc_decoder1b ( a, &a [ 256 ], lenPoly ) ;
+                }
+
+                if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
+                {
+                        handle_error(ret);
+                }
+
+                //printf ( "Syndromes\n" ) ;
+                //dump_u8xu8 ( &a [ 256 ], 1, lenPoly ) ;
+
+                CPI = ( double ) values[ 0 ] / values [ 1 ] ;
+                printf ( "Decoder_1b %2d %11lld cycles %11lld instructions CPI %.3lf\n", lenPoly, values [ 0 ]/1000, values [ 1 ]/1000, CPI ) ;
+        }
+        free ( a ) ;
+}
+
 #endif
 
 void
@@ -563,6 +654,7 @@ main(int argc, char *argv[])
         {
                 TestPAPIRoots () ;
                 TestPAPIInv   () ;
+                TestPAPI1b    () ;
         }
 #endif
         if (m > MMAX)
@@ -579,32 +671,6 @@ main(int argc, char *argv[])
                 printf("Error allocating a\n") ;
                 goto exit;
         }
-#ifndef __aarch64__
-        pc_gen_poly_matrix_1b ( a, 12, 10 ) ;
-        // Build the power table
-        pc_bpow ( 3 ) ;
-        // Build the log table
-        pc_blog () ;
-        // Build the inverse table
-        pc_binv () ;
-        //printf ( "Inverse of 3 is %d\n", pc_itab [ 3 ] ) ;
-        //printf ( "%d times 3 is %d\n", pc_itab [ 3 ], pc_mul_1b ( pc_itab [ 3 ], 3 ) ) ;
-        pc_gen_rsr_matrix_1b ( a, 2 ) ;
-        printf ( "RSR matrix\n" ) ;
-        dump_u8xu8 ( a, 2, 255 ) ;
-        pc_bvan ( a, 2 ) ;
-
-        pc_gen_poly_matrix_1b ( a, 255, 253 ) ;
-        pc_bmat ( a, 2 ) ;
-        memset ( a, 0, 255 ) ;
-        memset ( &a [ 252 ], 1, 1 ) ;
-        pc_encoder1b ( a, &a [ 253 ], 2 ) ;
-        printf ( "Parities\n" ) ;
-        dump_u8xu8 ( &a [ 253 ], 1, 2 ) ;
-        pc_decoder1b ( a, &a [ 256 ], 2 ) ;
-        printf ( "Syndromes\n" ) ;
-        dump_u8xu8 ( &a [ 256 ], 1, 2 ) ;
-#endif
         // Print output header
         printf("Testing with %u data buffers and %u parity buffers\n", k, p ) ;
         printf("erasure_code_perf: %dx%d %d\n", m, TEST_LEN(m), nerrs);

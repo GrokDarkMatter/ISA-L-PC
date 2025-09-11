@@ -69,7 +69,7 @@ void pc_gen_rsr_matrix_1b(unsigned char *a, int k)
                         a[255 * i + (255 - j - 1)] = p;
                         p = pc_mul_1b(p, gen);
                 }
-                gen = gf_mul(gen, 3);
+                gen = pc_mul_1b(gen, 3);
         }
 }
 
@@ -105,20 +105,20 @@ void pc_encoder1b ( unsigned char * codeWord, unsigned char * par, int p )
     codeWordvec [ 1 ] = _mm512_loadu_si512 ( codeWord + 1 * 64 ) ;
     codeWordvec [ 2 ] = _mm512_loadu_si512 ( codeWord + 2 * 64 ) ;
     codeWordvec [ 3 ] = _mm512_loadu_si512 ( codeWord + 3 * 64 ) ;
-    printf ( "Codeword\n" ) ;
-    dump_u8xu8 ( ( unsigned char * ) &codeWordvec [ 0 ], 1, 255 ) ;
+    //printf ( "Codeword\n" ) ;
+    //dump_u8xu8 ( ( unsigned char * ) &codeWordvec [ 0 ], 1, 255 ) ;
 
     // Now loop and compute each parity using the encoding matrix
     for ( int curP = 0 ; curP < p ; curP ++ )
     {
-        printf ( "Encmat\n" ) ;
-        dump_u8xu8 ( ( unsigned char * ) &EncMat [ curP ] [ 0 ], 1, 255 ) ;
+        //printf ( "Encmat\n" ) ;
+        //dump_u8xu8 ( ( unsigned char * ) &EncMat [ curP ] [ 0 ], 1, 255 ) ;
 
         // Load one row of the encoding matrix into vector registers
-        encMatvec [ 0 ] = _mm512_loadu_si512 ( &EncMat [ curP ] [ 0 ] ) ;
-        encMatvec [ 1 ] = _mm512_loadu_si512 ( &EncMat [ curP ] [ 1 ] ) ;
-        encMatvec [ 2 ] = _mm512_loadu_si512 ( &EncMat [ curP ] [ 2 ] ) ;
-        encMatvec [ 3 ] = _mm512_loadu_si512 ( &EncMat [ curP ] [ 3 ] ) ;
+        encMatvec [ 0 ] = _mm512_load_si512 ( &EncMat [ curP ] [ 0 ] ) ;
+        encMatvec [ 1 ] = _mm512_load_si512 ( &EncMat [ curP ] [ 1 ] ) ;
+        encMatvec [ 2 ] = _mm512_load_si512 ( &EncMat [ curP ] [ 2 ] ) ;
+        encMatvec [ 3 ] = _mm512_load_si512 ( &EncMat [ curP ] [ 3 ] ) ;
 
         // Multiply the codeword by the encoding matrix
         vreg [ 0 ] = _mm512_gf2p8mul_epi8 ( codeWordvec [ 0 ], encMatvec [ 0 ] ) ;
@@ -127,9 +127,9 @@ void pc_encoder1b ( unsigned char * codeWord, unsigned char * par, int p )
         vreg [ 3 ] = _mm512_gf2p8mul_epi8 ( codeWordvec [ 3 ], encMatvec [ 3 ] ) ;
 
         // Now collapse the 255 symbols down to 1
-        vreg [ 0 ] = _mm512_or_si512 ( vreg [ 0 ], vreg [ 1 ] ) ;
-        vreg [ 0 ] = _mm512_or_si512 ( vreg [ 0 ], vreg [ 2 ] ) ;
-        vreg [ 0 ] = _mm512_or_si512 ( vreg [ 0 ], vreg [ 3 ] ) ;
+        vreg [ 0 ] = _mm512_xor_si512 ( vreg [ 0 ], vreg [ 1 ] ) ;
+        vreg [ 0 ] = _mm512_xor_si512 ( vreg [ 0 ], vreg [ 2 ] ) ;
+        vreg [ 0 ] = _mm512_xor_si512 ( vreg [ 0 ], vreg [ 3 ] ) ;
 
         // Shuffle and XOR 512-bit to 256-bit
         __m256i low = _mm512_castsi512_si256(vreg [ 0 ] );
@@ -151,6 +151,7 @@ void pc_encoder1b ( unsigned char * codeWord, unsigned char * par, int p )
         result_64 ^= result_64 >> 16 ;
         result_64 ^= result_64 >> 8 ;
         par [ curP ] = ( unsigned char ) result_64 ;
+        //printf ( "Par [ %d ] = %d\n", curP, par [ curP ] ) ;
     }
 }
 
@@ -164,30 +165,34 @@ void pc_decoder1b ( unsigned char * codeWord, unsigned char * syn, int p )
     codeWordvec [ 1 ] = _mm512_loadu_si512 ( codeWord + 1 * 64 ) ;
     codeWordvec [ 2 ] = _mm512_loadu_si512 ( codeWord + 2 * 64 ) ;
     codeWordvec [ 3 ] = _mm512_loadu_si512 ( codeWord + 3 * 64 ) ;
-    printf ( "Codeword LSB\n" ) ;
-    dump_u8xu8 ( ( unsigned char * ) &codeWordvec [ 0 ], 1, 255 ) ;
+    //printf ( "Codeword LSB\n" ) ;
+    //dump_u8xu8 ( ( unsigned char * ) &codeWordvec [ 0 ], 1, 255 ) ;
 
     // Loop through each decoding vector of Vandermonde
     for ( int curP = 0 ; curP < p ; curP ++ )
     {
-        printf ( "curP = %d\n", curP ) ;
-        printf ( "Vandermonde\n" ) ;
-        dump_u8xu8 ( ( unsigned char * ) &Vand1b [ curP ] [ 0 ], 1, 255 ) ;
+        //printf ( "curP = %d\n", curP ) ;
+        //printf ( "Vandermonde\n" ) ;
+        //dump_u8xu8 ( ( unsigned char * ) &Vand1b [ curP ] [ 0 ], 1, 255 ) ;
 
-        vanMatvec [ 0 ] = _mm512_loadu_si512 ( &Vand1b [ curP ] [ 0 ]) ;
-        vanMatvec [ 1 ] = _mm512_loadu_si512 ( &Vand1b [ curP ] [ 1 ] ) ;
-        vanMatvec [ 2 ] = _mm512_loadu_si512 ( &Vand1b [ curP ] [ 2 ] ) ;
-        vanMatvec [ 3 ] = _mm512_loadu_si512 ( &Vand1b [ curP ] [ 3 ] ) ;
+        // Load an entire row from the Vandermonde matrix
+        vanMatvec [ 0 ] = _mm512_load_si512 ( &Vand1b [ curP ] [ 0 ]) ;
+        vanMatvec [ 1 ] = _mm512_load_si512 ( &Vand1b [ curP ] [ 1 ] ) ;
+        vanMatvec [ 2 ] = _mm512_load_si512 ( &Vand1b [ curP ] [ 2 ] ) ;
+        vanMatvec [ 3 ] = _mm512_load_si512 ( &Vand1b [ curP ] [ 3 ] ) ;
 
+        // Multiply the codeword by the entire row
         vreg [ 0 ] = _mm512_gf2p8mul_epi8 ( codeWordvec [ 0 ], vanMatvec [ 0 ] ) ;
         vreg [ 1 ] = _mm512_gf2p8mul_epi8 ( codeWordvec [ 1 ], vanMatvec [ 1 ] ) ;
         vreg [ 2 ] = _mm512_gf2p8mul_epi8 ( codeWordvec [ 2 ], vanMatvec [ 2 ] ) ;
         vreg [ 3 ] = _mm512_gf2p8mul_epi8 ( codeWordvec [ 3 ], vanMatvec [ 3 ] ) ;
+        //printf ( "VReg\n" ) ;
+        //dump_u8xu8 ( (unsigned char *) vreg, 1, 255 ) ;
 
         // Now collapse the 255 symbols down to 1
-        vreg [ 0 ] = _mm512_or_si512 ( vreg [ 0 ], vreg [ 1 ] ) ;
-        vreg [ 0 ] = _mm512_or_si512 ( vreg [ 0 ], vreg [ 2 ] ) ;
-        vreg [ 0 ] = _mm512_or_si512 ( vreg [ 0 ], vreg [ 3 ] ) ;
+        vreg [ 0 ] = _mm512_xor_si512 ( vreg [ 0 ], vreg [ 1 ] ) ;
+        vreg [ 0 ] = _mm512_xor_si512 ( vreg [ 0 ], vreg [ 2 ] ) ;
+        vreg [ 0 ] = _mm512_xor_si512 ( vreg [ 0 ], vreg [ 3 ] ) ;
 
         // Shuffle and XOR 512-bit to 256-bit
         __m256i low = _mm512_castsi512_si256(vreg [ 0 ] );
@@ -210,34 +215,6 @@ void pc_decoder1b ( unsigned char * codeWord, unsigned char * syn, int p )
         result_64 ^= result_64 >> 8 ;
         syn [ curP ] = ( unsigned char ) result_64 ;
     }
-}
-
-// Utility routine to sum across a ZMM register
-unsigned char sum_zmm_AVX512_GFNI(__m512i * zmm) 
-{
-    __m512i vreg ;
-    vreg = _mm512_loadu_si512( zmm ) ;
-
-    // Shuffle and XOR 512-bit to 256-bit
-    __m256i low = _mm512_castsi512_si256(vreg);
-    __m256i high = _mm512_extracti64x4_epi64(vreg, 1);
-    __m256i xored = _mm256_xor_si256(low, high);
-
-    // Shuffle and XOR 256-bit to 128-bit
-    __m128i low128 = _mm256_castsi256_si128(xored);
-    __m128i high128 = _mm256_extracti128_si256(xored, 1);
-    __m128i xored128 = _mm_xor_si128(low128, high128);
-
-    // Shuffle 128-bit to 64-bit using permute
-    __m128i perm = _mm_shuffle_epi32(xored128, _MM_SHUFFLE(3, 2, 3, 2));
-    __m128i xored64 = _mm_xor_si128(xored128, perm);
-
-    // Reduce 64-bit to 32-bit
-    uint64_t result_64 = _mm_cvtsi128_si64(xored64);
-    result_64 ^= result_64 >> 32 ;
-    result_64 ^= result_64 >> 16 ;
-    result_64 ^= result_64 >> 8 ;
-    return ( unsigned char ) result_64 ;
 }
 
 void pc_gen_poly_1b( unsigned char *p, int rank)
