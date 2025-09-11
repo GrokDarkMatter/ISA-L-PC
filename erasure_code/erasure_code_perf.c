@@ -600,7 +600,7 @@ main(int argc, char *argv[])
         memset ( &a [ 252 ], 1, 1 ) ;
         pc_encoder1b ( a, &a [ 253 ], 2 ) ;
         printf ( "Parities\n" ) ;
-        dump_u8xu8 ( &a [ 256 ], 1, 2 ) ;
+        dump_u8xu8 ( &a [ 253 ], 1, 2 ) ;
         pc_decoder1b ( a, &a [ 256 ], 2 ) ;
         printf ( "Syndromes\n" ) ;
         dump_u8xu8 ( &a [ 256 ], 1, 2 ) ;

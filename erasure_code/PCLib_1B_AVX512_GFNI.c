@@ -78,7 +78,6 @@ void pc_bmat ( unsigned char * vals, int p )
 {
     for ( int curP = 0 ; curP < p ; curP ++ )
     {
-        printf ( "Loop %d\n", curP ) ;
         memcpy ( ( unsigned char * ) &EncMat [ curP ], &vals [ curP * ( 255 - p ) ], 255 - p ) ;
         unsigned char * extra = ( unsigned char * ) &EncMat [ curP ] ;
         memset ( extra + 255 - p, 0, p ) ;
@@ -90,7 +89,6 @@ void pc_bvan ( unsigned char * vals, int p )
 {
     for ( int curP = 0 ; curP < p ; curP ++ )
     {
-        printf ( "Loop %d\n", curP ) ;
         memcpy (  ( unsigned char * ) &Vand1b [ curP ], &vals [ curP * ( 255 ) ], 255 ) ;
         unsigned char * extra = ( unsigned char * ) &Vand1b [ curP ] ;
         extra [ 255 ] = 0 ;
@@ -101,34 +99,34 @@ void pc_bvan ( unsigned char * vals, int p )
 void pc_encoder1b ( unsigned char * codeWord, unsigned char * par, int p ) 
 {
     __m512i codeWordvec [ 4 ], encMatvec [ 4 ], vreg [ 4 ] ;
+
+    // Load the entire codeword into 4 vector registers
+    codeWordvec [ 0 ] = _mm512_loadu_si512 ( codeWord + 0 * 64 ) ;
+    codeWordvec [ 1 ] = _mm512_loadu_si512 ( codeWord + 1 * 64 ) ;
+    codeWordvec [ 2 ] = _mm512_loadu_si512 ( codeWord + 2 * 64 ) ;
+    codeWordvec [ 3 ] = _mm512_loadu_si512 ( codeWord + 3 * 64 ) ;
+    printf ( "Codeword\n" ) ;
+    dump_u8xu8 ( ( unsigned char * ) &codeWordvec [ 0 ], 1, 255 ) ;
+
+    // Now loop and compute each parity using the encoding matrix
     for ( int curP = 0 ; curP < p ; curP ++ )
     {
-        printf ( "curP = %d\n", curP ) ;
-        codeWordvec [ 0 ] = _mm512_loadu_si512 ( codeWord + 0 * 64 ) ;
-        codeWordvec [ 1 ] = _mm512_loadu_si512 ( codeWord + 1 * 64 ) ;
-        codeWordvec [ 2 ] = _mm512_loadu_si512 ( codeWord + 2 * 64 ) ;
-        codeWordvec [ 3 ] = _mm512_loadu_si512 ( codeWord + 3 * 64 ) ;
-        printf ( "Codeword LSB\n" ) ;
-        dump_u8xu8 ( ( unsigned char * ) &codeWordvec [ 0 ], 1, 255 ) ;
         printf ( "Encmat\n" ) ;
         dump_u8xu8 ( ( unsigned char * ) &EncMat [ curP ] [ 0 ], 1, 255 ) ;
-        encMatvec [ 0 ] = _mm512_loadu_si512 ( EncMat [ curP ] ) ;
+
+        // Load one row of the encoding matrix into vector registers
+        encMatvec [ 0 ] = _mm512_loadu_si512 ( &EncMat [ curP ] [ 0 ] ) ;
         encMatvec [ 1 ] = _mm512_loadu_si512 ( &EncMat [ curP ] [ 1 ] ) ;
         encMatvec [ 2 ] = _mm512_loadu_si512 ( &EncMat [ curP ] [ 2 ] ) ;
         encMatvec [ 3 ] = _mm512_loadu_si512 ( &EncMat [ curP ] [ 3 ] ) ;
-        printf ( "EncMatvec\n" ) ;
-        dump_u8xu8 ( ( unsigned char * ) &encMatvec [ 0 ], 1, 256 ) ;
 
-
-        printf ( "Load done\n" ) ;
+        // Multiply the codeword by the encoding matrix
         vreg [ 0 ] = _mm512_gf2p8mul_epi8 ( codeWordvec [ 0 ], encMatvec [ 0 ] ) ;
         vreg [ 1 ] = _mm512_gf2p8mul_epi8 ( codeWordvec [ 1 ], encMatvec [ 1 ] ) ;
         vreg [ 2 ] = _mm512_gf2p8mul_epi8 ( codeWordvec [ 2 ], encMatvec [ 2 ] ) ;
         vreg [ 3 ] = _mm512_gf2p8mul_epi8 ( codeWordvec [ 3 ], encMatvec [ 3 ] ) ;
 
-        printf ( "vreg3\n" ) ;
-        dump_u8xu8 ( ( unsigned char * ) &vreg [ 3 ], 1, 64 ) ;
-        // Add up the 4 64 byte registers
+        // Now collapse the 255 symbols down to 1
         vreg [ 0 ] = _mm512_or_si512 ( vreg [ 0 ], vreg [ 1 ] ) ;
         vreg [ 0 ] = _mm512_or_si512 ( vreg [ 0 ], vreg [ 2 ] ) ;
         vreg [ 0 ] = _mm512_or_si512 ( vreg [ 0 ], vreg [ 3 ] ) ;
@@ -152,9 +150,7 @@ void pc_encoder1b ( unsigned char * codeWord, unsigned char * par, int p )
         result_64 ^= result_64 >> 32 ;
         result_64 ^= result_64 >> 16 ;
         result_64 ^= result_64 >> 8 ;
-        printf ( "Before store\n" ) ;
         par [ curP ] = ( unsigned char ) result_64 ;
-        printf ( "parity=%d\n", (unsigned char) result_64 ) ;
     }
 }
 
@@ -162,15 +158,19 @@ void pc_encoder1b ( unsigned char * codeWord, unsigned char * par, int p )
 void pc_decoder1b ( unsigned char * codeWord, unsigned char * syn, int p ) 
 {
     __m512i codeWordvec [ 4 ], vanMatvec [ 4 ], vreg [ 4 ] ;
+
+    // Load the whole codeword into vector registers
+    codeWordvec [ 0 ] = _mm512_loadu_si512 ( codeWord + 0 * 64 ) ;
+    codeWordvec [ 1 ] = _mm512_loadu_si512 ( codeWord + 1 * 64 ) ;
+    codeWordvec [ 2 ] = _mm512_loadu_si512 ( codeWord + 2 * 64 ) ;
+    codeWordvec [ 3 ] = _mm512_loadu_si512 ( codeWord + 3 * 64 ) ;
+    printf ( "Codeword LSB\n" ) ;
+    dump_u8xu8 ( ( unsigned char * ) &codeWordvec [ 0 ], 1, 255 ) ;
+
+    // Loop through each decoding vector of Vandermonde
     for ( int curP = 0 ; curP < p ; curP ++ )
     {
         printf ( "curP = %d\n", curP ) ;
-        codeWordvec [ 0 ] = _mm512_loadu_si512 ( codeWord + 0 * 64 ) ;
-        codeWordvec [ 1 ] = _mm512_loadu_si512 ( codeWord + 1 * 64 ) ;
-        codeWordvec [ 2 ] = _mm512_loadu_si512 ( codeWord + 2 * 64 ) ;
-        codeWordvec [ 3 ] = _mm512_loadu_si512 ( codeWord + 3 * 64 ) ;
-        printf ( "Codeword LSB\n" ) ;
-        dump_u8xu8 ( ( unsigned char * ) &codeWordvec [ 0 ], 1, 255 ) ;
         printf ( "Vandermonde\n" ) ;
         dump_u8xu8 ( ( unsigned char * ) &Vand1b [ curP ] [ 0 ], 1, 255 ) ;
 
@@ -178,19 +178,13 @@ void pc_decoder1b ( unsigned char * codeWord, unsigned char * syn, int p )
         vanMatvec [ 1 ] = _mm512_loadu_si512 ( &Vand1b [ curP ] [ 1 ] ) ;
         vanMatvec [ 2 ] = _mm512_loadu_si512 ( &Vand1b [ curP ] [ 2 ] ) ;
         vanMatvec [ 3 ] = _mm512_loadu_si512 ( &Vand1b [ curP ] [ 3 ] ) ;
-        printf ( "VandVec\n" ) ;
-        dump_u8xu8 ( ( unsigned char * ) &vanMatvec [ 0 ], 1, 255 ) ;
 
-
-        printf ( "Load done\n" ) ;
         vreg [ 0 ] = _mm512_gf2p8mul_epi8 ( codeWordvec [ 0 ], vanMatvec [ 0 ] ) ;
         vreg [ 1 ] = _mm512_gf2p8mul_epi8 ( codeWordvec [ 1 ], vanMatvec [ 1 ] ) ;
         vreg [ 2 ] = _mm512_gf2p8mul_epi8 ( codeWordvec [ 2 ], vanMatvec [ 2 ] ) ;
         vreg [ 3 ] = _mm512_gf2p8mul_epi8 ( codeWordvec [ 3 ], vanMatvec [ 3 ] ) ;
 
-        printf ( "vreg3\n" ) ;
-        dump_u8xu8 ( ( unsigned char * ) &vreg [ 3 ], 1, 64 ) ;
-        // Add up the 4 64 byte registers
+        // Now collapse the 255 symbols down to 1
         vreg [ 0 ] = _mm512_or_si512 ( vreg [ 0 ], vreg [ 1 ] ) ;
         vreg [ 0 ] = _mm512_or_si512 ( vreg [ 0 ], vreg [ 2 ] ) ;
         vreg [ 0 ] = _mm512_or_si512 ( vreg [ 0 ], vreg [ 3 ] ) ;
@@ -214,9 +208,7 @@ void pc_decoder1b ( unsigned char * codeWord, unsigned char * syn, int p )
         result_64 ^= result_64 >> 32 ;
         result_64 ^= result_64 >> 16 ;
         result_64 ^= result_64 >> 8 ;
-        printf ( "Before store\n" ) ;
         syn [ curP ] = ( unsigned char ) result_64 ;
-        printf ( "syndrome=%d\n", (unsigned char) result_64 ) ;
     }
 }
 
@@ -282,8 +274,7 @@ void pc_gen_poly_matrix_1b(unsigned char *a, int m, int k)
         par = m - k ;
 
         pc_gen_poly_1b ( taps, par ) ;
-        printf ( "Poly parites=%d\n", par ) ;
-        dump_u8xu8 ( taps, 1, par ) ;
+
         memcpy ( lfsr, taps, par ) ; // Initial value of LFSR is the taps
 
         // Now use an LFSR to build the values
