@@ -207,6 +207,7 @@ void TestPAPIRoots ( void )
                 //printf ( "Rootcount = %d\n", rootCount ) ;
                 //dump_u8xu8 ( roots, 1, rootCount ) ;
 
+                double baseVal = values [ 0 ] ;
                 CPI = ( double ) values[ 0 ] / values[ 1 ] ;
                 printf ( "find_roots_sca %2d %11lld cycles %11lld instructions CPI %.3lf\n", lenPoly, values [ 0 ], values [ 1 ], CPI ) ;
 
@@ -231,8 +232,11 @@ void TestPAPIRoots ( void )
                 //printf ( "Rootcount2 = %d\n", rootCount ) ;
                 //dump_u8xu8 ( roots, 1, rootCount ) ;
 
+                double vecVal = values [ 0 ] ;
+                double Speedup = baseVal / vecVal ;
                 CPI = ( double ) values [ 0 ] / values [ 1 ] ;
-                printf("find_roots_vec %2d %11lld cycles %11lld instructions CPI %.3lf\n", lenPoly, values[ 0 ], values[ 1 ], CPI);
+                printf("find_roots_vec %2d %11lld cycles %11lld instructions CPI %.3lf Speedup = %.3lf\n", 
+                        lenPoly, values[ 0 ], values[ 1 ], CPI, Speedup ) ;
 
         }
 }
@@ -283,6 +287,7 @@ void TestPAPIInv ( void )
                 //dump_u8xu8 ( out_mat, lenPoly, lenPoly ) ;
 
                 CPI = ( double ) values [ 0 ] / values [ 1 ] ;
+                double vecVal = values [ 0 ] ;
                 printf ( "invert_matrix_vec %2d %11lld cycles %11lld instructions CPI %.3lf\n", lenPoly, values [ 0 ], values [ 1 ], CPI ) ;
 
                 if ( ( ret = PAPI_start ( event_set)) != PAPI_OK )
@@ -301,7 +306,10 @@ void TestPAPIInv ( void )
                 //dump_u8xu8 ( out_mat, lenPoly, lenPoly ) ;
 
                 CPI = ( double ) values [ 0 ] / values [ 1 ] ;
-                printf ( "invert_matrix_sca %2d %11lld cycles %11lld instructions CPI %.3lf\n", lenPoly, values [ 0 ], values [ 1 ], CPI ) ;
+                double baseVal = values [ 0 ] ;
+                double Speedup = baseVal / vecVal ;
+                printf ( "invert_matrix_sca %2d %11lld cycles %11lld instructions CPI %.3lf Speedup = %.3lf\n", 
+                        lenPoly, values [ 0 ], values [ 1 ], CPI, Speedup ) ;
         }
 }
 void TestPAPI1b ( void )
@@ -412,6 +420,7 @@ void TestPAPI1b ( void )
                 BPC /= values [ 0 ] ;
                 printf ( "Decoder_1b %2d %11lld cycles %11lld instructions CPI %.3lf BPC %.3lf\n", lenPoly, 
                         values [ 0 ] / 1000, values [ 1 ] /1000, CPI, BPC ) ;
+#ifdef NDEF
                 if ( ( ret = PAPI_start ( event_set)) != PAPI_OK )
                 {
                         handle_error(ret);
@@ -445,6 +454,7 @@ void TestPAPI1b ( void )
                 BPC /= values [ 0 ] ;
                 printf ( "Decoder1b2 %2d %11lld cycles %11lld instructions CPI %.3lf BPC %.3lf\n", lenPoly, 
                         values [ 0 ] / 1000, values [ 1 ] /1000, CPI, BPC ) ;
+#endif
         }
         free ( a ) ;
 }
