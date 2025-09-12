@@ -1,5 +1,6 @@
 static unsigned char pc_ptab [ 256 ], pc_ltab [ 256 ], pc_itab [ 256 ] ;
 static __m512i Vand1b [ 255 ] [ 4 ] ;
+static __m512i Vand2 [ 2 ] [ 4 ] ;
 static __m512i EncMat [ 255 ] [ 4 ] ;
 
 // Multiply two bytes using the hardware GF multiply
@@ -93,6 +94,22 @@ void pc_bvan ( unsigned char * vals, int p )
         unsigned char * extra = ( unsigned char * ) &Vand1b [ curP ] ;
         extra [ 255 ] = 0 ;
     }
+}
+
+// Intialize the first two rows of Vandermonde
+void pc_bvan2 ( void ) 
+{
+    memset ( ( unsigned char * ) &Vand2 [ 0 ], 1, 255 ) ;
+    unsigned char * vEnd = ( unsigned char * ) &Vand2 [ 0 ] ;
+    vEnd [ 255 ] = 0 ;
+    unsigned char term = 1, base = 3 ;
+    unsigned char * v2 = ( unsigned char * ) &Vand2[ 1 ] ;
+    for ( int curP = 254 ; curP >= 0 ; curP -- )
+    {
+        v2 [ curP ] = term ;
+        term = pc_mul_1b ( term, base ) ;
+    }
+    v2 [ 255 ] = 0 ;
 }
 
 // Encode using the Vandermonde matrix
@@ -214,6 +231,86 @@ void pc_decoder1b ( unsigned char * codeWord, unsigned char * syn, int p )
         result_64 ^= result_64 >> 16 ;
         result_64 ^= result_64 >> 8 ;
         syn [ curP ] = ( unsigned char ) result_64 ;
+    }
+}
+
+// Encode using the Vandermonde matrix
+void pc_decoder1b2 ( unsigned char * codeWord, unsigned char * syn, int p ) 
+{
+    //__m512i codeWordvec [ 4 ], vanMatvec [ 4 ], vreg [ 4 ], Van2Vec [ 2 ] [ 4 ] ;
+    __m512i codeWordvec [ 4 ], vreg [ 4 ], Vand2Vec [ 2 ] [ 4 ] ;
+
+    // Load the whole codeword into vector registers
+    codeWordvec [ 0 ] = _mm512_loadu_si512 ( codeWord + 0 * 64 ) ;
+    codeWordvec [ 1 ] = _mm512_loadu_si512 ( codeWord + 1 * 64 ) ;
+    codeWordvec [ 2 ] = _mm512_loadu_si512 ( codeWord + 2 * 64 ) ;
+    codeWordvec [ 3 ] = _mm512_loadu_si512 ( codeWord + 3 * 64 ) ;
+
+    Vand2Vec [ 0 ] [ 0 ] = _mm512_load_si512 ( &Vand2 [ 0 ] [ 0 ] ) ;
+    Vand2Vec [ 0 ] [ 1 ] = _mm512_load_si512 ( &Vand2 [ 0 ] [ 1 ] ) ;
+    Vand2Vec [ 0 ] [ 2 ] = _mm512_load_si512 ( &Vand2 [ 0 ] [ 2 ] ) ;
+    Vand2Vec [ 0 ] [ 3 ] = _mm512_load_si512 ( &Vand2 [ 0 ] [ 3 ] ) ;
+
+    Vand2Vec [ 1 ] [ 0 ] = _mm512_load_si512 ( &Vand2 [ 1 ] [ 0 ] ) ;
+    Vand2Vec [ 1 ] [ 1 ] = _mm512_load_si512 ( &Vand2 [ 1 ] [ 1 ] ) ;
+    Vand2Vec [ 1 ] [ 2 ] = _mm512_load_si512 ( &Vand2 [ 1 ] [ 2 ] ) ;
+    Vand2Vec [ 1 ] [ 3 ] = _mm512_load_si512 ( &Vand2 [ 1 ] [ 3 ] ) ;
+    //printf ( "Codeword LSB\n" ) ;
+    //dump_u8xu8 ( ( unsigned char * ) &codeWordvec [ 0 ], 1, 255 ) ;
+
+    // Loop through each decoding vector of Vandermonde
+    for ( int curP = 0 ; curP < p ; curP ++ )
+    {
+        //printf ( "curP = %d\n", curP ) ;
+        //printf ( "Vandermonde\n" ) ;
+        //dump_u8xu8 ( ( unsigned char * ) &Vand1b [ curP ] [ 0 ], 1, 255 ) ;
+
+        // Load an entire row from the Vandermonde matrix
+        //vanMatvec [ 0 ] = _mm512_load_si512 ( &Vand1b [ curP ] [ 0 ]) ;
+        //vanMatvec [ 1 ] = _mm512_load_si512 ( &Vand1b [ curP ] [ 1 ] ) ;
+        //vanMatvec [ 2 ] = _mm512_load_si512 ( &Vand1b [ curP ] [ 2 ] ) ;
+        //vanMatvec [ 3 ] = _mm512_load_si512 ( &Vand1b [ curP ] [ 3 ] ) ;
+
+        // Multiply the codeword by the entire row
+        vreg [ 0 ] = _mm512_gf2p8mul_epi8 ( codeWordvec [ 0 ], Vand2Vec [ 0 ] [ 0 ] ) ;
+        vreg [ 1 ] = _mm512_gf2p8mul_epi8 ( codeWordvec [ 1 ], Vand2Vec [ 0 ] [ 1 ] ) ;
+        vreg [ 2 ] = _mm512_gf2p8mul_epi8 ( codeWordvec [ 2 ], Vand2Vec [ 0 ] [ 2 ] ) ;
+        vreg [ 3 ] = _mm512_gf2p8mul_epi8 ( codeWordvec [ 3 ], Vand2Vec [ 0 ] [ 3 ] ) ;
+
+        // Now update Vand2 by multiplying by the base value
+        Vand2Vec [ 0 ] [ 0 ] = _mm512_gf2p8mul_epi8 ( Vand2Vec [ 0 ] [ 0 ], Vand2Vec [ 1 ] [ 0 ] ) ;
+        Vand2Vec [ 0 ] [ 1 ] = _mm512_gf2p8mul_epi8 ( Vand2Vec [ 0 ] [ 1 ], Vand2Vec [ 1 ] [ 1 ] ) ;
+        Vand2Vec [ 0 ] [ 2 ] = _mm512_gf2p8mul_epi8 ( Vand2Vec [ 0 ] [ 2 ], Vand2Vec [ 1 ] [ 2 ] ) ;
+        Vand2Vec [ 0 ] [ 3 ] = _mm512_gf2p8mul_epi8 ( Vand2Vec [ 0 ] [ 3 ], Vand2Vec [ 1 ] [ 3 ] ) ;
+
+        //printf ( "VReg\n" ) ;
+        //dump_u8xu8 ( (unsigned char *) vreg, 1, 255 ) ;
+
+        // Now collapse the 255 symbols down to 1
+        vreg [ 0 ] = _mm512_xor_si512 ( vreg [ 0 ], vreg [ 1 ] ) ;
+        vreg [ 0 ] = _mm512_xor_si512 ( vreg [ 0 ], vreg [ 2 ] ) ;
+        vreg [ 0 ] = _mm512_xor_si512 ( vreg [ 0 ], vreg [ 3 ] ) ;
+
+        // Shuffle and XOR 512-bit to 256-bit
+        __m256i low = _mm512_castsi512_si256(vreg [ 0 ] );
+        __m256i high = _mm512_extracti64x4_epi64(vreg [ 0 ], 1);
+        __m256i xored = _mm256_xor_si256(low, high);
+
+        // Shuffle and XOR 256-bit to 128-bit
+        __m128i low128 = _mm256_castsi256_si128(xored);
+        __m128i high128 = _mm256_extracti128_si256(xored, 1);
+        __m128i xored128 = _mm_xor_si128(low128, high128);
+
+        // Shuffle 128-bit to 64-bit using permute
+        __m128i perm = _mm_shuffle_epi32(xored128, _MM_SHUFFLE(3, 2, 3, 2));
+        __m128i xored64 = _mm_xor_si128(xored128, perm);
+
+        // Reduce 64-bit to 32-bit
+        uint64_t result_64 = _mm_cvtsi128_si64(xored64);
+        result_64 ^= result_64 >> 32 ;
+        result_64 ^= result_64 >> 16 ;
+        result_64 ^= result_64 >> 8 ;
+        syn [ p - curP - 1 ] = ( unsigned char ) result_64 ;
     }
 }
 

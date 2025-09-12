@@ -340,6 +340,7 @@ void TestPAPI1b ( void )
                 pc_gen_rsr_matrix_1b ( a, lenPoly ) ;
                 //printf ( "RSR matrix\n" ) ;
                 //dump_u8xu8 ( a, 2, 255 ) ;
+                pc_bvan2 () ;
                 pc_bvan ( a, lenPoly ) ;
 
                 pc_gen_poly_matrix_1b ( a, 255, 255 - lenPoly ) ;
@@ -347,6 +348,11 @@ void TestPAPI1b ( void )
 
                 memset ( a, 0, 255 ) ;
                 memset ( &a [ 255 - lenPoly - 1 ], 1, 1 ) ;
+
+                for ( int pos = 0 ; pos < 255 ; pos ++ )
+                {
+                        a [ pos ] = rand() ;
+                }
 
                 if  ( ( ret = PAPI_start ( event_set ) ) != PAPI_OK )
                 {
@@ -392,10 +398,52 @@ void TestPAPI1b ( void )
                 //printf ( "Syndromes\n" ) ;
                 //dump_u8xu8 ( &a [ 256 ], 1, lenPoly ) ;
 
+                for ( int pos = 0 ; pos < lenPoly ; pos ++ )
+                {
+                        if ( a [ 256 + pos ] != 0 )
+                        {
+                                printf ( "Syndromes\n" ) ;
+                                dump_u8xu8 ( &a [ 256 ], 1, lenPoly ) ;
+                        }
+                }
+
                 CPI = ( double ) values[ 0 ] / values [ 1 ] ;
                 BPC = ( 255 - lenPoly ) * 1000 ;
                 BPC /= values [ 0 ] ;
                 printf ( "Decoder_1b %2d %11lld cycles %11lld instructions CPI %.3lf BPC %.3lf\n", lenPoly, 
+                        values [ 0 ] / 1000, values [ 1 ] /1000, CPI, BPC ) ;
+                if ( ( ret = PAPI_start ( event_set)) != PAPI_OK )
+                {
+                        handle_error(ret);
+                }
+
+                // Workload
+                for ( int i = 0 ; i < 1000 ; i ++ )
+                {
+                        pc_decoder1b2 ( a, &a [ 256 ], lenPoly ) ;
+                }
+
+                if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
+                {
+                        handle_error(ret);
+                }
+
+                //printf ( "Syndromes\n" ) ;
+                //dump_u8xu8 ( &a [ 256 ], 1, lenPoly ) ;
+
+                for ( int pos = 0 ; pos < lenPoly ; pos ++ )
+                {
+                        if ( a [ 256 + pos ] != 0 )
+                        {
+                                printf ( "Syndromes\n" ) ;
+                                dump_u8xu8 ( &a [ 256 ], 1, lenPoly ) ;
+                        }
+                }
+
+                CPI = ( double ) values[ 0 ] / values [ 1 ] ;
+                BPC = ( 255 - lenPoly ) * 1000 ;
+                BPC /= values [ 0 ] ;
+                printf ( "Decoder1b2 %2d %11lld cycles %11lld instructions CPI %.3lf BPC %.3lf\n", lenPoly, 
                         values [ 0 ] / 1000, values [ 1 ] /1000, CPI, BPC ) ;
         }
         free ( a ) ;
