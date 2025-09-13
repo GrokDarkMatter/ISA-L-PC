@@ -321,15 +321,6 @@ int berlekamp_massey_AVX512_GFNI(unsigned char *syndromes, int length, unsigned 
             vec_lam = _mm256_xor_si256(vec_lam, mul_res);
             _mm256_storeu_si256((__m256i *)&lambda[m], vec_lam);
 
-            // Handle remainder scalarly (unlikely needed for length <= 32)
-            for (int j = 32; j <= length - m; j++)
-            {
-                if (b[j] != 0)
-                {
-                    lambda[j + m] ^= gf_mul(q, b[j]);
-                }
-            }
-
             if (2 * L <= r)
             {
                 L = r + 1 - L;
