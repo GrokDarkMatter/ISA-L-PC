@@ -52,7 +52,7 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #ifndef __aarch64__
 #include <immintrin.h>
 #endif
-#ifdef NDEF
+//#ifdef NDEF
 // Utility print routine
 #include <stdio.h>
 void
@@ -67,7 +67,7 @@ dump_u8xu8(unsigned char *s, int k, int m)
         }
         printf("\n");
 }
-#endif
+//#endif
 
 void
 ec_init_tables_base(int k, int rows, unsigned char *a, unsigned char *g_tbls)
@@ -746,10 +746,11 @@ int pc_verify_multiple_errors ( unsigned char * S, unsigned char ** data, int mS
 // PGZ decoding step 1, see if we can invert the matrix, if so, compute key equation
 int PGZ ( unsigned char * S, int p, unsigned char * keyEq ) 
 {
-       unsigned char SMat [ PC_MAX_ERRS * PC_MAX_ERRS ], SMat_inv [ PC_MAX_ERRS * PC_MAX_ERRS ] ;
+        unsigned char SMat [ PC_MAX_ERRS * PC_MAX_ERRS ], SMat_inv [ PC_MAX_ERRS * PC_MAX_ERRS ] ;
         int i,j ;
+        memset ( keyEq, 0, p/2 ) ;
 
-       // For each potential size, create and find Hankel matrix that will invert
+        // For each potential size, create and find Hankel matrix that will invert
         for ( int mSize = ( p / 2 ) ; mSize >= 2 ; mSize -- )
         {
                 for ( i = 0 ; i < mSize ; i ++ )

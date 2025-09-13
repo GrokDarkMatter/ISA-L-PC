@@ -1,7 +1,9 @@
 static unsigned char pc_ptab [ 256 ], pc_ltab [ 256 ], pc_itab [ 256 ] ;
-static __m512i Vand1b [ 255 ] [ 4 ] ;
-static __m512i Vand2 [ 2 ] [ 4 ] ;
 static __m512i EncMat [ 255 ] [ 4 ] ;
+static __m512i Vand1b [  32 ] [ 4 ] ;
+#ifdef NDEF
+static __m512i Vand2 [ 2 ] [ 4 ] ;
+#endif
 
 // Multiply two bytes using the hardware GF multiply
 unsigned char pc_mul_1b ( unsigned char a, unsigned char b) 
@@ -96,6 +98,7 @@ void pc_bvan ( unsigned char * vals, int p )
     }
 }
 
+#ifdef NDEF
 // Intialize the first two rows of Vandermonde
 void pc_bvan2 ( void ) 
 {
@@ -104,13 +107,14 @@ void pc_bvan2 ( void )
     vEnd [ 255 ] = 0 ;
     unsigned char term = 1, base = 3 ;
     unsigned char * v2 = ( unsigned char * ) &Vand2[ 1 ] ;
-    for ( int curP = 254 ; curP >= 0 ; curP -- )
+    for ( int curP = 32 ; curP >= 0 ; curP -- )
     {
         v2 [ curP ] = term ;
         term = pc_mul_1b ( term, base ) ;
     }
     v2 [ 255 ] = 0 ;
 }
+#endif
 
 // Encode using the Vandermonde matrix
 void pc_encoder1b ( unsigned char * codeWord, unsigned char * par, int p ) 
@@ -234,6 +238,7 @@ void pc_decoder1b ( unsigned char * codeWord, unsigned char * syn, int p )
     }
 }
 
+#ifdef NDEF
 // Encode using the Vandermonde matrix
 void pc_decoder1b2 ( unsigned char * codeWord, unsigned char * syn, int p ) 
 {
@@ -261,16 +266,6 @@ void pc_decoder1b2 ( unsigned char * codeWord, unsigned char * syn, int p )
     // Loop through each decoding vector of Vandermonde
     for ( int curP = 0 ; curP < p ; curP ++ )
     {
-        //printf ( "curP = %d\n", curP ) ;
-        //printf ( "Vandermonde\n" ) ;
-        //dump_u8xu8 ( ( unsigned char * ) &Vand1b [ curP ] [ 0 ], 1, 255 ) ;
-
-        // Load an entire row from the Vandermonde matrix
-        //vanMatvec [ 0 ] = _mm512_load_si512 ( &Vand1b [ curP ] [ 0 ]) ;
-        //vanMatvec [ 1 ] = _mm512_load_si512 ( &Vand1b [ curP ] [ 1 ] ) ;
-        //vanMatvec [ 2 ] = _mm512_load_si512 ( &Vand1b [ curP ] [ 2 ] ) ;
-        //vanMatvec [ 3 ] = _mm512_load_si512 ( &Vand1b [ curP ] [ 3 ] ) ;
-
         // Multiply the codeword by the entire row
         vreg [ 0 ] = _mm512_gf2p8mul_epi8 ( codeWordvec [ 0 ], Vand2Vec [ 0 ] [ 0 ] ) ;
         vreg [ 1 ] = _mm512_gf2p8mul_epi8 ( codeWordvec [ 1 ], Vand2Vec [ 0 ] [ 1 ] ) ;
@@ -313,7 +308,7 @@ void pc_decoder1b2 ( unsigned char * codeWord, unsigned char * syn, int p )
         syn [ p - curP - 1 ] = ( unsigned char ) result_64 ;
     }
 }
-
+#endif
 void pc_gen_poly_1b( unsigned char *p, int rank)
 {
         int c, alpha, cr ; // Loop variables

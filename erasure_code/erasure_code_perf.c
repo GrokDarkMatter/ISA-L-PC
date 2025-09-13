@@ -85,6 +85,8 @@ extern void ec_encode_data_avx512_gfni ( int len, int k, int p, u8 * g_tbls, u8 
 extern void gf_gen_poly ( unsigned char *, int ) ;
 extern int find_roots ( unsigned char * S, unsigned char * roots, int lenPoly ) ;
 extern int gf_invert_matrix ( unsigned char * in_mat, unsigned char * out_mat, int size ) ;
+extern int berlekamp_massey ( unsigned char * S, int length, unsigned char * keyEq ) ;
+extern int PGZ ( unsigned char * S, int length, unsigned char * keyEq ) ;
 #endif
 
 #ifndef GT_L3_CACHE
@@ -312,6 +314,7 @@ void TestPAPIInv ( void )
                         lenPoly, values [ 0 ], values [ 1 ], CPI, Speedup ) ;
         }
 }
+
 void TestPAPI1b ( void )
 {
 
@@ -348,7 +351,7 @@ void TestPAPI1b ( void )
                 pc_gen_rsr_matrix_1b ( a, lenPoly ) ;
                 //printf ( "RSR matrix\n" ) ;
                 //dump_u8xu8 ( a, 2, 255 ) ;
-                pc_bvan2 () ;
+                //pc_bvan2 () ;
                 pc_bvan ( a, lenPoly ) ;
 
                 pc_gen_poly_matrix_1b ( a, 255, 255 - lenPoly ) ;
@@ -420,7 +423,103 @@ void TestPAPI1b ( void )
                 BPC /= values [ 0 ] ;
                 printf ( "Decoder_1b %2d %11lld cycles %11lld instructions CPI %.3lf BPC %.3lf\n", lenPoly, 
                         values [ 0 ] / 1000, values [ 1 ] /1000, CPI, BPC ) ;
-#ifdef NDEF
+        }
+        free ( a ) ;
+}
+
+void TestPAPIbm ( void )
+{
+
+        int event_set = PAPI_NULL, ret, len ;
+        long long values [ 2 ] ;
+        double CPI;
+        event_set = InitPAPI () ;
+
+        if ( event_set == PAPI_NULL )
+        {
+                printf ( "PAPI failed to initialize\n" ) ;
+                exit ( 1 ) ;
+        }
+
+        for ( int lenPoly = 4 ; lenPoly <= 32 ; lenPoly += 2 )
+        {
+                unsigned char S [ 32 ], keyEq [ 16 ] ;
+
+                unsigned char base = 1 ;
+                for ( int i = 0 ; i < lenPoly ; i ++ )
+                {
+                        //int rvs = lenPoly - i - 1 ;
+                        int rvs = i ;
+                        S [ rvs ] = 0 ;
+                        unsigned char val = 1 ;
+                        for ( int j = 0 ; j < lenPoly/2 ; j ++ )
+                        {
+                                S [ rvs ] ^= val ;
+                                val = gf_mul ( val, base ) ;
+                        }
+                        base = gf_mul ( base, 2 ) ;
+                }
+
+                if  ( ( ret = PAPI_start ( event_set ) ) != PAPI_OK )
+                {
+                        handle_error ( ret ) ;
+                }
+
+                // Workload
+                for ( int i = 0 ; i < 1000 ; i ++ )
+                {
+                        len = PGZ ( S, lenPoly, keyEq ) ;
+                }
+
+                if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK)
+                {
+                        handle_error ( ret ) ;
+                }
+
+                CPI = ( double ) values [ 0 ] / values [ 1 ] ;
+                printf ( "PGZ =  %2d %11lld cycles %11lld instructions CPI %.3lf\n", lenPoly,
+                         values [ 0 ] / 1000, values [ 1 ] / 1000, CPI ) ;
+
+                // Now test Berlekamp
+                unsigned char bmKeyEq [ 17 ] ;
+                int bmLen ;
+                if  ( ( ret = PAPI_start ( event_set ) ) != PAPI_OK )
+                {
+                        handle_error ( ret ) ;
+                }
+
+                // Workload
+                for ( int i = 0 ; i < 1000 ; i ++ )
+                {
+                        bmLen = berlekamp_massey ( S, lenPoly, bmKeyEq ) ;
+                }
+
+                if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK)
+                {
+                        handle_error ( ret ) ;
+                }
+
+                unsigned char bmKeyEqRev [ 17 ] ;
+                for ( int curKey = 0 ; curKey < len ; curKey ++ )
+                {
+                        bmKeyEqRev [ curKey ] = bmKeyEq [ len - curKey ] ;
+                }
+                if ( ( memcmp (  bmKeyEqRev, keyEq, len ) != 0 ) || ( bmLen != len ) )
+                {
+                        printf ( "Mismatch %d terms\n", len ) ;
+                        dump_u8xu8 ( keyEq, 1, len ) ;
+                        dump_u8xu8 ( bmKeyEqRev, 1, len ) ;
+                        exit ( 1 ) ;
+                }
+
+                //printf ( "S and Lambda lenPoly = %d len = %d\n", lenPoly, len ) ;
+                //dump_u8xu8 ( S, 1, lenPoly ) ;
+                //dump_u8xu8 ( keyEq, 1, len+1 ) ;
+
+                CPI = ( double ) values [ 0 ] / values [ 1 ] ;
+                printf ( "BM_sca %2d %11lld cycles %11lld instructions CPI %.3lf\n", lenPoly,
+                         values [ 0 ] / 1000, values [ 1 ] / 1000, CPI ) ;
+
                 if ( ( ret = PAPI_start ( event_set)) != PAPI_OK )
                 {
                         handle_error(ret);
@@ -429,7 +528,7 @@ void TestPAPI1b ( void )
                 // Workload
                 for ( int i = 0 ; i < 1000 ; i ++ )
                 {
-                        pc_decoder1b2 ( a, &a [ 256 ], lenPoly ) ;
+                        bmLen = berlekamp_massey_AVX512_GFNI ( S, lenPoly, bmKeyEq ) ;
                 }
 
                 if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
@@ -437,26 +536,22 @@ void TestPAPI1b ( void )
                         handle_error(ret);
                 }
 
-                //printf ( "Syndromes\n" ) ;
-                //dump_u8xu8 ( &a [ 256 ], 1, lenPoly ) ;
-
-                for ( int pos = 0 ; pos < lenPoly ; pos ++ )
+                for ( int curKey = 0 ; curKey < len ; curKey ++ )
                 {
-                        if ( a [ 256 + pos ] != 0 )
-                        {
-                                printf ( "Syndromes\n" ) ;
-                                dump_u8xu8 ( &a [ 256 ], 1, lenPoly ) ;
-                        }
+                        bmKeyEqRev [ curKey ] = bmKeyEq [ len - curKey ] ;
+                }
+                if ( ( memcmp (  bmKeyEqRev, keyEq, len ) != 0 ) || ( bmLen != len ) )
+                {
+                        printf ( "Mismatch %d terms\n", len ) ;
+                        dump_u8xu8 ( keyEq, 1, len ) ;
+                        dump_u8xu8 ( bmKeyEqRev, 1, len ) ;
+                        exit ( 1 ) ;
                 }
 
                 CPI = ( double ) values[ 0 ] / values [ 1 ] ;
-                BPC = ( 255 - lenPoly ) * 1000 ;
-                BPC /= values [ 0 ] ;
-                printf ( "Decoder1b2 %2d %11lld cycles %11lld instructions CPI %.3lf BPC %.3lf\n", lenPoly, 
-                        values [ 0 ] / 1000, values [ 1 ] /1000, CPI, BPC ) ;
-#endif
+                printf ( "BM_vec %2d %11lld cycles %11lld instructions CPI %.3lf\n", lenPoly, 
+                        values [ 0 ] / 1000, values [ 1 ] / 1000, CPI ) ;
         }
-        free ( a ) ;
 }
 
 #endif
@@ -719,6 +814,7 @@ main(int argc, char *argv[])
                 TestPAPIRoots () ;
                 TestPAPIInv   () ;
                 TestPAPI1b    () ;
+                TestPAPIbm    () ;
         }
 #endif
         if (m > MMAX)
