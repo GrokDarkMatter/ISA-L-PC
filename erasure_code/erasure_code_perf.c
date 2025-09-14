@@ -809,7 +809,7 @@ main(int argc, char *argv[])
         nerrs = p ;
         m = k + p ;
 
-#ifndef __aarch64__
+#ifndef NOPAPI
         // Do early performance testing
         if ( avx2 == 0 )
         {
