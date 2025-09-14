@@ -44,9 +44,63 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 **********************************************************************/
 #define PC_MAX_ERRS 32
 
-extern unsigned char pc_pow ( unsigned char base, unsigned char pow ) ;
-extern unsigned char gf_div ( unsigned char a, unsigned char b ) ;
-extern int pc_verify_single_error ( unsigned char * S, unsigned char ** data, int k, int p, int newPos, int offSet ) ;
+unsigned char gf_div_AVX512_GFNI ( unsigned char a, unsigned char b )
+{
+        return gf_mul ( a, gf_inv ( b ) ) ;
+}
+
+// Compute base ^ Power
+int pc_pow_AVX512_GFNI ( unsigned char base, unsigned char Power ) 
+{
+        // The first power is always 1
+        if ( Power == 0 ) 
+        {
+                return 1 ;
+        }
+
+        // Otherwise compute the power of two for Power
+        unsigned char computedPow = base ;
+        for ( int i = 1 ; i < Power ; i ++ )
+        {
+                computedPow = gf_mul ( computedPow, base ) ;
+        }
+        return computedPow ;
+}
+
+// Assume there is a single error and try to correct, see if syndromes match
+int pc_verify_single_error_AVX512_GFNI ( unsigned char * S, unsigned char ** data, int k, int p, 
+        int newPos, int offSet )
+{
+        // LSB has parity, for single error this equals error value
+        unsigned char eVal = S [ 0 ] ;
+
+        // Compute error location is log2(syndrome[1]/syndrome[0])
+        unsigned char eLoc = S [ 1 ] ;
+        unsigned char pVal = gf_mul ( eLoc, gf_inv ( eVal ) ) ;
+        eLoc = ( gflog_base [ pVal ] ) % 255 ;
+
+        // Verify error location is reasonable
+        if ( eLoc >= k )
+        {
+                return 0 ;
+        }
+
+        // If more than 2 syndromes, verify we can produce them all
+        if ( p > 2 )
+        {
+                // Now verify that the error can be used to produce the remaining syndromes
+                for ( int i = 2 ; i < p ; i ++ )
+                {
+                        if ( gf_mul ( S [ i - 1 ], pVal ) != S [ i ] )
+                        {
+                                return 0 ;
+                        }
+                }
+        }
+        // Good correction
+        data [ k - eLoc - 1 ] [ newPos + offSet ] ^= eVal ;
+        return 1 ;
+}
 
 int gf_invert_matrix_AVX512_GFNI(unsigned char *in_mat, unsigned char *out_mat, const int n)
 {
@@ -219,7 +273,7 @@ int pc_compute_error_values_AVX512_GFNI ( int mSize, unsigned char * S, unsigned
         {
                 for ( j = 0 ; j < mSize ; j ++ )
                 {
-                        Mat [ i * mSize + j ] = pc_pow ( base, roots [ j ] ) ;
+                        Mat [ i * mSize + j ] = pc_pow_AVX512_GFNI ( base, roots [ j ] ) ;
                 }
                 base = gf_mul ( base, 2 ) ;
         }
@@ -256,7 +310,7 @@ int pc_verify_syndromes_AVX512_GFNI ( unsigned char * S, int p, int mSize, unsig
                 for ( j = 0 ; j < mSize ; j ++ )
                 {
                         // Scale up the data value based on location
-                        unsigned char termVal = gf_mul ( errVal [ j ], pc_pow ( base, roots [ j ] ) ) ;
+                        unsigned char termVal = gf_mul ( errVal [ j ], pc_pow_AVX512_GFNI ( base, roots [ j ] ) ) ;
                         sum ^= termVal ;
                 }
 
@@ -280,8 +334,8 @@ static const uint64_t gf_table_gfni[256];  // Assume defined in ec_base.h
 // Note: Assumes length <= 32 for AVX-512 (32-byte vectors); extend loops for larger lengths.
 int berlekamp_massey_AVX512_GFNI(unsigned char *syndromes, int length, unsigned char *lambda)
 {
-    unsigned char b[PC_MAX_ERRS*2+1];  // Padded for AVX-512 (32-byte alignment)
-    unsigned char temp[PC_MAX_ERRS*2+1];
+    unsigned char b[PC_MAX_ERRS*2 + 1];  // Padded for AVX-512 (32-byte alignment)
+    unsigned char temp[PC_MAX_ERRS*2 + 1];
     int L = 0;
     int m = 1;
     unsigned char old_d = 1;  // Initial previous discrepancy
@@ -307,7 +361,7 @@ int berlekamp_massey_AVX512_GFNI(unsigned char *syndromes, int length, unsigned 
         }
         else
         {
-            unsigned char q = gf_div(d, old_d);
+            unsigned char q = gf_div_AVX512_GFNI(d, old_d);
             memcpy(temp, lambda, length + 1 + 31);
 
             // SIMD update: lambda[j + m] ^= gf_mul(q, b[j]) using AVX-512 GF2P8AFFINE
@@ -320,6 +374,15 @@ int berlekamp_massey_AVX512_GFNI(unsigned char *syndromes, int length, unsigned 
             __m256i vec_lam = _mm256_loadu_si256((const __m256i *)&lambda[m]);
             vec_lam = _mm256_xor_si256(vec_lam, mul_res);
             _mm256_storeu_si256((__m256i *)&lambda[m], vec_lam);
+
+            // Handle remainder scalarly (unlikely needed for length <= 32)
+            for (int j = 32; j <= length - m; j++)
+            {
+                if (b[j] != 0)
+                {
+                    lambda[j + m] ^= gf_mul(q, b[j]);
+                }
+            }
 
             if (2 * L <= r)
             {
@@ -337,6 +400,7 @@ int berlekamp_massey_AVX512_GFNI(unsigned char *syndromes, int length, unsigned 
 
     return L;
 }
+
 
 // Attempt to detect multiple error locations and values
 int pc_verify_multiple_errors_AVX512_GFNI ( unsigned char * S, unsigned char ** data, int mSize, int k,
@@ -443,7 +507,7 @@ int pc_correct_AVX512_GFNI ( int newPos, int k, int p,
         }
 
         // Check to see if a single error can be verified
-        if ( pc_verify_single_error ( S, data, k, p, newPos, offSet ) )
+        if ( pc_verify_single_error_AVX512_GFNI ( S, data, k, p, newPos, offSet ) )
         {
                 return 1 ;
         }

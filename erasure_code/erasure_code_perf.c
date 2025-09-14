@@ -1031,8 +1031,10 @@ main(int argc, char *argv[])
 
         double CPI;
         CPI = ( double ) values[ 0 ] / values[ 1 ] ;
+        double BPC ;
+        BPC = ( double ) ( TEST_LEN(m) * m ) / values [ 0 ] ;
 
-        printf ( "EC_Encode_data %11lld cycles %11lld instructions CPI %.3lf\n", values[0], values[1], CPI ) ;
+        printf ( "EC_Encode_data %11lld cycles %11lld instructions CPI %.3lf BPC %.3lf\n", values[0], values[1], CPI, BPC ) ;
 
         if ( ( ret = PAPI_start( event_set ) ) != PAPI_OK ) 
         {
@@ -1055,8 +1057,9 @@ main(int argc, char *argv[])
         }
 
         CPI = ( double ) values [ 0 ] / values [ 1 ] ;
+        BPC = ( double ) ( TEST_LEN(m) * m ) / values [ 0 ] ;
 
-        printf ( "PC_Encode_data %11lld cycles %11lld instructions CPI %.3lf\n", values[ 0 ], values[ 1 ], CPI);
+        printf ( "PC_Encode_data %11lld cycles %11lld instructions CPI %.3lf BPC %.3lf\n", values[0], values[1], CPI, BPC ) ;
 
         if ((ret = PAPI_start(event_set)) != PAPI_OK) {
                 handle_error(ret);
@@ -1078,8 +1081,9 @@ main(int argc, char *argv[])
         }
 
         CPI = (double) values[0]/values[1] ;
+        BPC = ( double ) ( TEST_LEN(m) * m ) / values [ 0 ] ;
 
-        printf("EC_Decode_data %11lld cycles %11lld instructions CPI %.3lf\n", values[0], values[1], CPI);
+        printf ( "EC_Decode_data %11lld cycles %11lld instructions CPI %.3lf BPC %.3lf\n", values[0], values[1], CPI, BPC ) ;
 
         if ((ret = PAPI_start(event_set)) != PAPI_OK) 
         {
@@ -1102,8 +1106,9 @@ main(int argc, char *argv[])
         }
 
         CPI = ( double ) values[ 0 ] / values[ 1 ] ;
+        BPC = ( double ) ( TEST_LEN(m) * m ) / values [ 0 ] ;
 
-        printf ( "PC_Decode_data %11lld cycles %11lld instructions CPI %.3lf\n", values[ 0 ], values[ 1 ], CPI ) ;
+        printf ( "PC_Decode_data %11lld cycles %11lld instructions CPI %.3lf BPC %.3lf\n", values[0], values[1], CPI, BPC ) ;
 
         PAPI_cleanup_eventset ( event_set ) ;
         PAPI_destroy_eventset ( &event_set ) ;
