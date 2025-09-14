@@ -280,8 +280,8 @@ static const uint64_t gf_table_gfni[256];  // Assume defined in ec_base.h
 // Note: Assumes length <= 32 for AVX-512 (32-byte vectors); extend loops for larger lengths.
 int berlekamp_massey_AVX512_GFNI(unsigned char *syndromes, int length, unsigned char *lambda)
 {
-    unsigned char b[length + 1 + 31];  // Padded for AVX-512 (32-byte alignment)
-    unsigned char temp[length + 1 + 31];
+    unsigned char b[PC_MAX_ERRS*2+1];  // Padded for AVX-512 (32-byte alignment)
+    unsigned char temp[PC_MAX_ERRS*2+1];
     int L = 0;
     int m = 1;
     unsigned char old_d = 1;  // Initial previous discrepancy
