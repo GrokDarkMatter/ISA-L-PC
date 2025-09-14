@@ -240,7 +240,7 @@ int find_roots_AVX512_GFNI(unsigned char *keyEq, unsigned char *roots, int mSize
                 __mmask64 mask = _mm512_cmpeq_epi8_mask( sum [ i ], _mm512_setzero_si512());
 
                 // Count number of zeros (popcount of mask)
-                rootCount += _popcnt64(mask);
+                rootCount += _mm_popcnt_u64(mask);
 
                 // Extract indices of set bits (zero bytes)
                 while ( mask )
