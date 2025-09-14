@@ -50,7 +50,6 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include "erasure_code.h"
 #include "test.h"
 #include "ec_base.h"
-#include <papi.h>
 typedef unsigned char u8;
 
 // Utility print routine
@@ -120,6 +119,7 @@ extern int PGZ ( unsigned char * S, int length, unsigned char * keyEq ) ;
 #define BAD_MATRIX -1
 
 #ifndef NOPAPI
+#include <papi.h>
 void handle_error(int code)
 {
     fprintf ( stderr, "PAPI error: %s\n", PAPI_strerror ( code ) ) ;

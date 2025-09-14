@@ -52,7 +52,7 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #ifndef __aarch64__
 #include <immintrin.h>
 #endif
-//#ifdef NDEF
+#ifdef NDEF
 // Utility print routine
 #include <stdio.h>
 void
@@ -67,7 +67,7 @@ dump_u8xu8(unsigned char *s, int k, int m)
         }
         printf("\n");
 }
-//#endif
+#endif
 
 void
 ec_init_tables_base(int k, int rows, unsigned char *a, unsigned char *g_tbls)
@@ -651,8 +651,8 @@ unsigned char gf_div ( unsigned char a, unsigned char b )
 // Returns: degree L of the error locator polynomial.
 int berlekamp_massey(unsigned char *syndromes, int length, unsigned char *lambda) 
 {
-    unsigned char b[length + 1];
-    unsigned char temp[length + 1];
+    unsigned char b[PC_MAX_ERRS+1];
+    unsigned char temp[PC_MAX_ERRS+1];
     int L = 0;
     int m = 1;
     unsigned char old_d = 1;  // Initial previous discrepancy
