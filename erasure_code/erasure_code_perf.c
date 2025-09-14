@@ -69,8 +69,10 @@ dump_u8xu8(unsigned char *s, int k, int m)
 
 #ifdef _WIN64
 #define __builtin_prefetch(a,b,c) _mm_prefetch((const char*)(a), _MM_HINT_T0)
+#define NOPAPI 1
 #endif
 #ifdef __aarch64__
+#define NOPAPI 1
 #include <arm_neon.h>
 #include "aarch64/PCLib_AARCH64_NEON.c" 
 extern void ec_encode_data_neon ( int len, int k, int p, u8 * g_tbls, u8 ** buffs, u8 ** dest ) ;
@@ -117,7 +119,7 @@ extern int PGZ ( unsigned char * S, int length, unsigned char * keyEq ) ;
 
 #define BAD_MATRIX -1
 
-#ifndef __aarch64__
+#ifndef NOPAPI
 void handle_error(int code)
 {
     fprintf ( stderr, "PAPI error: %s\n", PAPI_strerror ( code ) ) ;
@@ -1004,7 +1006,7 @@ main(int argc, char *argv[])
                 printf ( "Decoder failed\n" ) ;
                 goto exit ;
         }
-#ifndef __aarch64__
+#ifndef NOPAPI
         int event_set = InitPAPI () ; //PAPI_NULL, event_code ;
         if ( ( ret = PAPI_start ( event_set ) ) != PAPI_OK ) 
         {
