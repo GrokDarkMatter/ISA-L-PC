@@ -137,6 +137,7 @@ perf_tests   += erasure_code/gf_vect_mul_perf \
 		erasure_code/gf_vect_dot_prod_1tbl \
 		erasure_code/erasure_code_perf \
 		erasure_code/erasure_code_base_perf \
+		erasure_code/poly_code_perf \
 		erasure_code/erasure_code_update_perf
 
 other_tests  += erasure_code/gen_rs_matrix_limits
