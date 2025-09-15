@@ -83,7 +83,6 @@ extern void ec_encode_data_avx2_gfni ( int len, int k, int p, u8 * g_tbls, u8 **
 #include "PCLib_AVX2_GFNI.c" 
 extern void ec_encode_data_avx512_gfni ( int len, int k, int p, u8 * g_tbls, u8 ** buffs, u8 ** dest ) ;
 #include "PCLib_AVX512_GFNI.c"
-#include "PCLib_1B_AVX512_GFNI.c"
 extern void gf_gen_poly ( unsigned char *, int ) ;
 extern int find_roots ( unsigned char * S, unsigned char * roots, int lenPoly ) ;
 extern int gf_invert_matrix ( unsigned char * in_mat, unsigned char * out_mat, int size ) ;
@@ -316,118 +315,6 @@ void TestPAPIInv ( void )
                 printf ( "invert_matrix_sca %2d %11lld cycles %11lld instructions CPI %.3lf Speedup = %.3lf\n", 
                         lenPoly, values [ 0 ], values [ 1 ], CPI, Speedup ) ;
         }
-}
-
-void TestPAPI1b ( void )
-{
-
-        int event_set = PAPI_NULL, ret ;
-        long long values [ 2 ] ;
-        double CPI;
-        event_set = InitPAPI () ;
-        unsigned char * a ;
-
-        a = malloc ( 256 * 4 * 255 ) ;
-        if ( a == NULL )
-        {
-                printf ( "Allocating A failed\n" ) ;
-                return ;
-        }
-
-        if ( event_set == PAPI_NULL )
-        {
-                printf ( "PAPI failed to initialize\n" ) ;
-                exit ( 1 ) ;
-        }
-
-        // Build the power table
-        pc_bpow_1b ( 3 ) ;
-        // Build the log table
-        pc_blog_1b () ;
-        // Build the inverse table
-        pc_binv_1b () ;
-        //printf ( "Inverse of 3 is %d\n", pc_itab [ 3 ] ) ;
-        //printf ( "%d times 3 is %d\n", pc_itab [ 3 ], pc_mul_1b ( pc_itab [ 3 ], 3 ) ) ;
-
-        for ( int lenPoly = 2 ; lenPoly <= 32 ; lenPoly ++ )
-        {
-                pc_gen_rsr_matrix_1b ( a, lenPoly ) ;
-                //printf ( "RSR matrix\n" ) ;
-                //dump_u8xu8 ( a, 2, 255 ) ;
-                //pc_bvan2 () ;
-                pc_bvan_1b ( a, lenPoly ) ;
-
-                pc_gen_poly_matrix_1b ( a, 255, 255 - lenPoly ) ;
-                pc_bmat_1b ( a, lenPoly ) ;
-
-                memset ( a, 0, 255 ) ;
-                memset ( &a [ 255 - lenPoly - 1 ], 1, 1 ) ;
-
-                for ( int pos = 0 ; pos < 255 ; pos ++ )
-                {
-                        a [ pos ] = rand() ;
-                }
-
-                if  ( ( ret = PAPI_start ( event_set ) ) != PAPI_OK )
-                {
-                        handle_error ( ret ) ;
-                }
-
-                // Workload
-                for ( int i = 0 ; i < 1000 ; i ++ )
-                {
-                        pc_encoder1b ( a, &a [ 255 - lenPoly ], lenPoly ) ;
-                }
-
-                if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK)
-                {
-                        handle_error ( ret ) ;
-                }
-
-                //printf ( "Parities\n" ) ;
-                //dump_u8xu8 ( &a [ 255 - lenPoly ], 1, lenPoly ) ;
-
-                CPI = ( double ) values [ 0 ] / values [ 1 ] ;
-                double BPC = ( 255 - lenPoly ) * 1000 ;
-                BPC /= values [ 0 ] ;
-                printf ( "Encoder_1b %2d %11lld cycles %11lld instructions CPI %.3lf BPC %.3lf\n", lenPoly,
-                         values [ 0 ] / 1000, values [ 1 ] / 1000, CPI, BPC ) ;
-
-                if ( ( ret = PAPI_start ( event_set)) != PAPI_OK )
-                {
-                        handle_error(ret);
-                }
-
-                // Workload
-                for ( int i = 0 ; i < 1000 ; i ++ )
-                {
-                        pc_decoder1b ( a, &a [ 256 ], lenPoly ) ;
-                }
-
-                if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
-                {
-                        handle_error(ret);
-                }
-
-                //printf ( "Syndromes\n" ) ;
-                //dump_u8xu8 ( &a [ 256 ], 1, lenPoly ) ;
-
-                for ( int pos = 0 ; pos < lenPoly ; pos ++ )
-                {
-                        if ( a [ 256 + pos ] != 0 )
-                        {
-                                printf ( "Syndromes\n" ) ;
-                                dump_u8xu8 ( &a [ 256 ], 1, lenPoly ) ;
-                        }
-                }
-
-                CPI = ( double ) values[ 0 ] / values [ 1 ] ;
-                BPC = ( 255 - lenPoly ) * 1000 ;
-                BPC /= values [ 0 ] ;
-                printf ( "Decoder_1b %2d %11lld cycles %11lld instructions CPI %.3lf BPC %.3lf\n", lenPoly, 
-                        values [ 0 ] / 1000, values [ 1 ] /1000, CPI, BPC ) ;
-        }
-        free ( a ) ;
 }
 
 void TestPAPIbm ( void )
@@ -816,7 +703,6 @@ main(int argc, char *argv[])
         {
                 TestPAPIRoots () ;
                 TestPAPIInv   () ;
-                TestPAPI1b    () ;
                 TestPAPIbm    () ;
         }
 #endif
@@ -1094,8 +980,7 @@ main(int argc, char *argv[])
         // Workload
         if ( avx2 == 0 )
         {
-                //pc_decode_data_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 1 ) ;
-                gf_4vect_pss_avx512_gfni_2d ( TEST_LEN(m), m, g_tbls, buffs, temp_buffs, 0 ) ;
+                pc_decode_data_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 1 ) ;
         }
         else
         {
