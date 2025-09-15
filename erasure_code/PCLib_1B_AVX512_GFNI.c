@@ -836,7 +836,7 @@ int PGZ_1b_AVX512_GFNI ( unsigned char * S, int p, unsigned char * keyEq )
                         }
                 }
                 // If good inversion then we know error count and can compute key equation
-                if ( gf_invert_matrix_AVX512_GFNI ( SMat, SMat_inv, mSize ) == 0 )
+                if ( gf_invert_matrix_1b_AVX512_GFNI ( SMat, SMat_inv, mSize ) == 0 )
                 {
                         // Compute the key equation terms
                         for ( i = 0 ; i < mSize ; i ++ )
