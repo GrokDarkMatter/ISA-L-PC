@@ -67,10 +67,6 @@ dump_u8xu8(unsigned char *s, int k, int m)
         }
         printf("\n");
 }
-//extern int pc_decode_data_1b_avx512_gfni ( int len, int m, int p, unsigned char * g_tbls, 
-//    unsigned char ** data, unsigned char ** coding, int retries ) ;
-//extern int pc_encode_data_1b_avx512_gfni ( int len, int m, int p, unsigned char * g_tbls, 
-//    unsigned char ** data, unsigned char ** coding ) ;
 extern int ec_encode_data_avx512_gfni ( int len, int m, int p, unsigned char * g_tbls, 
     unsigned char ** data, unsigned char ** coding ) ;
 
@@ -88,11 +84,6 @@ extern void ec_encode_data_neon ( int len, int k, int p, u8 * g_tbls, u8 ** buff
 #else
 #include <immintrin.h>
 #include "PCLib_1B_AVX512_GFNI.c"
-extern void gf_gen_poly ( unsigned char *, int ) ;
-extern int find_roots ( unsigned char * S, unsigned char * roots, int lenPoly ) ;
-extern int gf_invert_matrix ( unsigned char * in_mat, unsigned char * out_mat, int size ) ;
-extern int berlekamp_massey ( unsigned char * S, int length, unsigned char * keyEq ) ;
-extern int PGZ ( unsigned char * S, int length, unsigned char * keyEq ) ;
 #endif
 
 #ifndef GT_L3_CACHE
@@ -191,7 +182,7 @@ void TestPAPIRoots ( void )
         {
                 int rootCount = 0 ;
                 unsigned char S [ 16 ], keyEq [ 16 ] ;
-                gf_gen_poly ( S, lenPoly ) ;
+                pc_gen_poly_1b ( S, lenPoly ) ;
                 //printf ( "Generator poly\n" ) ;
                 //dump_u8xu8 ( S, 1, lenPoly ) ;
 
@@ -206,7 +197,7 @@ void TestPAPIRoots ( void )
                 }
 
                 // Workload
-                rootCount = find_roots ( keyEq, roots, lenPoly ) ;
+                rootCount = find_roots_1b ( keyEq, roots, lenPoly ) ;
 
                 if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
                 {
@@ -450,7 +441,7 @@ void TestPAPIbm ( void )
 
         for ( int lenPoly = 4 ; lenPoly <= 32 ; lenPoly += 2 )
         {
-                unsigned char S [ 32 ], keyEq [ 16 ] ;
+                unsigned char S [ 32 ], keyEq [ 16 ] = { 0 } ;
 
                 unsigned char base = 1 ;
                 for ( int i = 0 ; i < lenPoly ; i ++ )
@@ -473,9 +464,9 @@ void TestPAPIbm ( void )
                 }
 
                 // Workload
-                for ( int i = 0 ; i < 1000 ; i ++ )
+                for ( int i = 0 ; i < 1 ; i ++ )
                 {
-                        len = PGZ ( S, lenPoly, keyEq ) ;
+                        len = PGZ_1b_AVX512_GFNI ( S, lenPoly, keyEq ) ;
                 }
 
                 if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK)
@@ -498,7 +489,7 @@ void TestPAPIbm ( void )
                 // Workload
                 for ( int i = 0 ; i < 1000 ; i ++ )
                 {
-                        bmLen = berlekamp_massey ( S, lenPoly, bmKeyEq ) ;
+                        bmLen = berlekamp_massey_1b_AVX512_GFNI ( S, lenPoly, bmKeyEq ) ;
                 }
 
                 if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK)
@@ -866,7 +857,7 @@ main(int argc, char *argv[])
 #endif
 
         // Perform the baseline benchmark
-        gf_gen_poly_matrix ( a, m, k ) ;
+        pc_gen_poly_matrix_1b ( a, m, k ) ;
         ec_init_tables ( k, m - k, &a[k * k], g_tbls);
 
 #ifdef __aarch64__
@@ -880,7 +871,7 @@ main(int argc, char *argv[])
         perf_print(start, (long long) (TEST_LEN(m)) * (m));
 
         // Test intrinsics lfsr
-        gf_gen_poly ( a, p ) ;
+        pc_gen_poly_1b ( a, p ) ;
         ec_init_tables ( p, 1, a, g_tbls ) ;
 
 #ifdef __aarch64__

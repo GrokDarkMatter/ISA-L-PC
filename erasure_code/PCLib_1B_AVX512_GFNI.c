@@ -375,6 +375,35 @@ void pc_decoder1b ( unsigned char * codeWord, unsigned char * syn, int p )
     }
 }
 
+// Identify roots from key equation
+int find_roots_1b ( unsigned char * keyEq, unsigned char * roots, int mSize )
+{
+        int rootCount = 0 ;
+        unsigned char baseVal = 1, eVal ;
+
+        // Check each possible root
+        for ( int i = 0 ; i < 255 ; i ++ )
+        {
+                // Loop over the Key Equation terms and sum
+                eVal = 1 ;
+                for ( int j = 0 ; j < mSize ; j ++ )
+                {
+                        eVal = pc_mul_1b ( eVal, baseVal ) ;
+                        eVal = eVal ^ keyEq [ mSize - j - 1 ] ;
+                }
+                // Check for a good root
+                if ( eVal == 0 )
+                {
+                        roots [ rootCount ] = i ;
+                        rootCount ++ ;
+                }
+                // Next evaluation is at the next power of 3
+                baseVal = gf_mul ( baseVal, 3 ) ;
+        }
+        return rootCount ;
+}
+
+
 void pc_gen_poly_1b( unsigned char *p, int rank)
 {
         int c, alpha, cr ; // Loop variables
@@ -466,7 +495,7 @@ int pc_verify_single_error_1b_AVX512_GFNI ( unsigned char * S, unsigned char ** 
 
         // Compute error location is log2(syndrome[1]/syndrome[0])
         unsigned char eLoc = S [ 1 ] ;
-        unsigned char pVal = gf_mul ( eLoc, pc_itab_1b [ eVal ] ) ;
+        unsigned char pVal = pc_mul_1b ( eLoc, pc_itab_1b [ eVal ] ) ;
         eLoc = pc_ltab_1b [ pVal ] ;
 
         // Verify error location is reasonable
@@ -494,8 +523,7 @@ int pc_verify_single_error_1b_AVX512_GFNI ( unsigned char * S, unsigned char ** 
 
 int gf_invert_matrix_1b_AVX512_GFNI(unsigned char *in_mat, unsigned char *out_mat, const int n)
 {
-        __m512i affineVal512 ;
-        __m128i affineVal128 ;
+        __m512i multVal512 ;
 
         if (n > 32) return -1; // Assumption: n <= 32
 
@@ -531,6 +559,7 @@ int gf_invert_matrix_1b_AVX512_GFNI(unsigned char *in_mat, unsigned char *out_ma
                         if ( j == n )
                         {
                                 // Couldn't find means it's singular
+                                printf ( "Singular\n" ) ;
                                 return -1;
                         }
                         // Swap rows i and j in ZMM registers
@@ -546,9 +575,8 @@ int gf_invert_matrix_1b_AVX512_GFNI(unsigned char *in_mat, unsigned char *out_ma
                 //printf ( "Scalar = %d\n", temp_scalar ) ;
 
                 // Scale row i by 1/pivot using GFNI affine
-                affineVal128 = _mm_set1_epi64x ( gf_table_gfni [ temp_scalar ] ) ;
-                affineVal512 = _mm512_broadcast_i32x2 ( affineVal128 ) ;
-                aug_rows [ i ]  = _mm512_gf2p8affine_epi64_epi8 ( aug_rows[ i ], affineVal512, 0 ) ;
+                multVal512 = _mm512_set1_epi8 ( temp_scalar ) ;
+                aug_rows [ i ]  = _mm512_gf2p8mul_epi8 ( aug_rows[ i ], multVal512 ) ;
 
                 // Eliminate in other rows
                 for ( j = 0; j < n; j++ )
@@ -556,9 +584,8 @@ int gf_invert_matrix_1b_AVX512_GFNI(unsigned char *in_mat, unsigned char *out_ma
                         if ( j == i)  continue;
                         unsigned char factor = matrix_mem[j * 64 + i];
                         // Compute scaled pivot row: pivot_row * factor
-                        affineVal128 = _mm_set1_epi64x ( gf_table_gfni [ factor ] ) ;
-                        affineVal512 = _mm512_broadcast_i32x2 ( affineVal128 ) ;
-                        __m512i scaled = _mm512_gf2p8affine_epi64_epi8 ( aug_rows [ i ], affineVal512, 0 ) ;
+                        multVal512 = _mm512_set1_epi8 ( factor ) ;
+                        __m512i scaled = _mm512_gf2p8mul_epi8 ( aug_rows [ i ], multVal512 ) ;
                         // row_j ^= scaled
                         aug_rows [ j ] = _mm512_xor_si512( aug_rows [ j ], scaled ) ;
                 }
@@ -575,8 +602,7 @@ int gf_invert_matrix_1b_AVX512_GFNI(unsigned char *in_mat, unsigned char *out_ma
 int find_roots_1b_AVX512_GFNI(unsigned char *keyEq, unsigned char *roots, int mSize)
 {
         static __m512i Vandermonde [ 16 ] [ 4 ] ;
-        __m512i sum [ 4 ], temp, affineVal512 ;
-        __m128i affineVal128 ;
+        __m512i sum [ 4 ], temp, multVal512 ;
         int i, j ;
 
         unsigned char * vVal = ( unsigned char *) Vandermonde ;
@@ -590,7 +616,7 @@ int find_roots_1b_AVX512_GFNI(unsigned char *keyEq, unsigned char *roots, int mS
                         for ( j = 0 ; j < 255 ; j ++ )
                         {
                                 vVal [ j ] = cVal ;
-                                cVal = gf_mul ( cVal, base ) ;
+                                cVal = pc_mul_1b ( cVal, base ) ;
                         }
                         base = pc_mul_1b ( base, 3 ) ;
                 }
@@ -604,16 +630,15 @@ int find_roots_1b_AVX512_GFNI(unsigned char *keyEq, unsigned char *roots, int mS
         // Loop through each keyEq value, multiply it by Vandermonde and add it to sum
         for ( i = 1 ; i < mSize ; i ++ )
         {
-                affineVal128 = _mm_set1_epi64x ( gf_table_gfni [ keyEq [ i ] ] ) ;
-                affineVal512 = _mm512_broadcast_i32x2 ( affineVal128 ) ;
+                multVal512 = _mm512_set1_epi8 ( keyEq [ i ] ) ;
                 // Remember that we did not build the first row of Vandermonde, so use i-1
-                temp = _mm512_gf2p8affine_epi64_epi8 ( Vandermonde [ i-1 ] [ 0 ], affineVal512, 0 ) ;
+                temp = _mm512_gf2p8mul_epi8 ( Vandermonde [ i-1 ] [ 0 ], multVal512 ) ;
                 sum [ 0 ] = _mm512_xor_si512 ( sum [ 0 ], temp ) ;
-                temp = _mm512_gf2p8affine_epi64_epi8 ( Vandermonde [ i-1 ] [ 1 ], affineVal512, 0 ) ;
+                temp = _mm512_gf2p8mul_epi8 ( Vandermonde [ i-1 ] [ 1 ], multVal512 ) ;
                 sum [ 1 ] = _mm512_xor_si512 ( sum [ 1 ], temp ) ;
-                temp = _mm512_gf2p8affine_epi64_epi8 ( Vandermonde [ i-1 ] [ 2 ], affineVal512, 0 ) ;
+                temp = _mm512_gf2p8mul_epi8 ( Vandermonde [ i-1 ] [ 2 ], multVal512 ) ;
                 sum [ 2 ] = _mm512_xor_si512 ( sum [ 2 ], temp ) ;
-                temp = _mm512_gf2p8affine_epi64_epi8 ( Vandermonde [ i-1 ] [ 3 ], affineVal512, 0 ) ;
+                temp = _mm512_gf2p8mul_epi8 ( Vandermonde [ i-1 ] [ 3 ], multVal512 ) ;
                 sum [ 3 ] = _mm512_xor_si512 ( sum [ 3 ], temp ) ;
         }
         // Add in the leading Vandermonde row, just assume it's a one so no multiply
@@ -665,7 +690,7 @@ int pc_compute_error_values_1b_AVX512_GFNI ( int mSize, unsigned char * S, unsig
                 {
                         Mat [ i * mSize + j ] = pc_pow_1b_AVX512_GFNI ( base, roots [ j ] ) ;
                 }
-                base = gf_mul ( base, 2 ) ;
+                base = pc_mul_1b ( base, 3 ) ;
         }
         // Invert matrix and verify inversion
         if ( gf_invert_matrix_1b_AVX512_GFNI ( Mat, Mat_inv, mSize ) != 0 )
@@ -756,11 +781,10 @@ int berlekamp_massey_1b_AVX512_GFNI(unsigned char *syndromes, int length, unsign
 
             // SIMD update: lambda[j + m] ^= gf_mul(q, b[j]) using AVX-512 GF2P8AFFINE
             // Load and broadcast 8-byte affine matrix for q
-            __m128i matrix_128 = _mm_set1_epi64x(gf_table_gfni[q]);  // Load uint64_t from gf_table_gfni[q]
-            __m256i matrix = _mm256_broadcast_i32x2(matrix_128);  // Broadcast to all 4 lanes
+            __m256i matrix = _mm256_set1_epi8 (q);  // Broadcast to all 4 lanes
             __m256i b_vec = _mm256_loadu_si256((const __m256i *)b);
             // Perform GF(256) multiplication: result = affine(b_vec, matrix) + 0
-            __m256i mul_res = _mm256_gf2p8affine_epi64_epi8(b_vec, matrix, 0);
+            __m256i mul_res = _mm256_gf2p8mul_epi8(b_vec, matrix);
             __m256i vec_lam = _mm256_loadu_si256((const __m256i *)&lambda[m]);
             vec_lam = _mm256_xor_si256(vec_lam, mul_res);
             _mm256_storeu_si256((__m256i *)&lambda[m], vec_lam);
@@ -843,7 +867,7 @@ int PGZ_1b_AVX512_GFNI ( unsigned char * S, int p, unsigned char * keyEq )
                         {
                                 for ( j = 0 ; j < mSize ; j ++ )
                                 {
-                                        keyEq [ i ] ^= gf_mul ( S [ mSize + j ], SMat_inv [ i * mSize + j ] ) ;
+                                        keyEq [ i ] ^= pc_mul_1b ( S [ mSize + j ], SMat_inv [ i * mSize + j ] ) ;
                                 }
                         }
                         return mSize ;
@@ -854,7 +878,7 @@ int PGZ_1b_AVX512_GFNI ( unsigned char * S, int p, unsigned char * keyEq )
 }
 
 // Syndromes are non-zero, try to calculate error location and data values
-int pc_correct_1b_AVX512_GFNI ( int newPos, int k, int p,
+int pc_correct_AVX512_GFNI_1b ( int newPos, int k, int p,
     unsigned char ** data, unsigned char ** coding, int vLen )
 {
         int i, mSize  ;
@@ -912,4 +936,7825 @@ int pc_decode_data_1b_avx512_gfni ( int len, int m, int p, unsigned char * g_tbl
         return 0 ;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+/**********************************************************************
+Copyright (c) 2025 Michael H. Anderson. All rights reserved.
+This software includes contributions protected by
+U.S. Patents 11,848,686 and 12,341,532.
 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted for non-commercial evaluation purposes
+only, provided that the following conditions are met:
+
+Redistributions of source code must retain the above copyright notices,
+patent notices, this list of conditions, and the following disclaimer.
+
+Redistributions in binary form must reproduce the above copyright notices,
+patent notices, this list of conditions, and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+Neither the name of Michael H. Anderson, nor the names
+of his contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+Commercial deployment or use of this software requires a separate license
+from the copyright holders and patent owners.
+
+In other words, this code is provided solely for the purposes of
+evaluation and is not licensed or intended to be licensed or used as part of
+or in connection with any commercial or non-commercial use other than evaluation
+of the potential for a license from Michael H. Anderson. Neither Michael H. Anderson
+nor any affiliated person grants any express or implied rights under any patents,
+copyrights, trademarks, or trade secret information. No content may be copied,
+stored, or utilized in any way without express written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restrictions
+**********************************************************************/
+int gf_2vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 2 ], taps [ 1 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_3vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 3 ], taps [ 2 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_4vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 4 ], taps [ 3 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_5vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 5 ], taps [ 4 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_6vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 6 ], taps [ 5 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_7vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 7 ], taps [ 6 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_8vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 8 ], taps [ 7 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_9vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 9 ], taps [ 8 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_10vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 10 ], taps [ 9 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_11vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 11 ], taps [ 10 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+                parity [ 10 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(parity [ 9 ], taps [ 9 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 10 ] [ 0 ], parity [ 10 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_12vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 12 ], taps [ 11 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+                parity [ 10 ] = data_vec ;
+                parity [ 11 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(parity [ 9 ], taps [ 9 ]) ;
+                        parity [ 10 ] = _mm512_gf2p8mul_epi8(parity [ 10 ], taps [ 10 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 11 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 10 ] [ 0 ], parity [ 10 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 11 ] [ 0 ], parity [ 11 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_13vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 13 ], taps [ 12 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+                parity [ 10 ] = data_vec ;
+                parity [ 11 ] = data_vec ;
+                parity [ 12 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(parity [ 9 ], taps [ 9 ]) ;
+                        parity [ 10 ] = _mm512_gf2p8mul_epi8(parity [ 10 ], taps [ 10 ]) ;
+                        parity [ 11 ] = _mm512_gf2p8mul_epi8(parity [ 11 ], taps [ 11 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 11 ], data_vec ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 12 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 10 ] [ 0 ], parity [ 10 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 11 ] [ 0 ], parity [ 11 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 12 ] [ 0 ], parity [ 12 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_14vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 14 ], taps [ 13 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+                parity [ 10 ] = data_vec ;
+                parity [ 11 ] = data_vec ;
+                parity [ 12 ] = data_vec ;
+                parity [ 13 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(parity [ 9 ], taps [ 9 ]) ;
+                        parity [ 10 ] = _mm512_gf2p8mul_epi8(parity [ 10 ], taps [ 10 ]) ;
+                        parity [ 11 ] = _mm512_gf2p8mul_epi8(parity [ 11 ], taps [ 11 ]) ;
+                        parity [ 12 ] = _mm512_gf2p8mul_epi8(parity [ 12 ], taps [ 12 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 11 ], data_vec ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 12 ], data_vec ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 13 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 10 ] [ 0 ], parity [ 10 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 11 ] [ 0 ], parity [ 11 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 12 ] [ 0 ], parity [ 12 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 13 ] [ 0 ], parity [ 13 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_15vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 15 ], taps [ 14 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+                parity [ 10 ] = data_vec ;
+                parity [ 11 ] = data_vec ;
+                parity [ 12 ] = data_vec ;
+                parity [ 13 ] = data_vec ;
+                parity [ 14 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(parity [ 9 ], taps [ 9 ]) ;
+                        parity [ 10 ] = _mm512_gf2p8mul_epi8(parity [ 10 ], taps [ 10 ]) ;
+                        parity [ 11 ] = _mm512_gf2p8mul_epi8(parity [ 11 ], taps [ 11 ]) ;
+                        parity [ 12 ] = _mm512_gf2p8mul_epi8(parity [ 12 ], taps [ 12 ]) ;
+                        parity [ 13 ] = _mm512_gf2p8mul_epi8(parity [ 13 ], taps [ 13 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 11 ], data_vec ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 12 ], data_vec ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 13 ], data_vec ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 14 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 10 ] [ 0 ], parity [ 10 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 11 ] [ 0 ], parity [ 11 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 12 ] [ 0 ], parity [ 12 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 13 ] [ 0 ], parity [ 13 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 14 ] [ 0 ], parity [ 14 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_16vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 16 ], taps [ 15 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+                parity [ 10 ] = data_vec ;
+                parity [ 11 ] = data_vec ;
+                parity [ 12 ] = data_vec ;
+                parity [ 13 ] = data_vec ;
+                parity [ 14 ] = data_vec ;
+                parity [ 15 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(parity [ 9 ], taps [ 9 ]) ;
+                        parity [ 10 ] = _mm512_gf2p8mul_epi8(parity [ 10 ], taps [ 10 ]) ;
+                        parity [ 11 ] = _mm512_gf2p8mul_epi8(parity [ 11 ], taps [ 11 ]) ;
+                        parity [ 12 ] = _mm512_gf2p8mul_epi8(parity [ 12 ], taps [ 12 ]) ;
+                        parity [ 13 ] = _mm512_gf2p8mul_epi8(parity [ 13 ], taps [ 13 ]) ;
+                        parity [ 14 ] = _mm512_gf2p8mul_epi8(parity [ 14 ], taps [ 14 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 11 ], data_vec ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 12 ], data_vec ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 13 ], data_vec ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 14 ], data_vec ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 15 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 10 ] [ 0 ], parity [ 10 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 11 ] [ 0 ], parity [ 11 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 12 ] [ 0 ], parity [ 12 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 13 ] [ 0 ], parity [ 13 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 14 ] [ 0 ], parity [ 14 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 15 ] [ 0 ], parity [ 15 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_17vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 17 ], taps [ 16 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+                parity [ 10 ] = data_vec ;
+                parity [ 11 ] = data_vec ;
+                parity [ 12 ] = data_vec ;
+                parity [ 13 ] = data_vec ;
+                parity [ 14 ] = data_vec ;
+                parity [ 15 ] = data_vec ;
+                parity [ 16 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(parity [ 9 ], taps [ 9 ]) ;
+                        parity [ 10 ] = _mm512_gf2p8mul_epi8(parity [ 10 ], taps [ 10 ]) ;
+                        parity [ 11 ] = _mm512_gf2p8mul_epi8(parity [ 11 ], taps [ 11 ]) ;
+                        parity [ 12 ] = _mm512_gf2p8mul_epi8(parity [ 12 ], taps [ 12 ]) ;
+                        parity [ 13 ] = _mm512_gf2p8mul_epi8(parity [ 13 ], taps [ 13 ]) ;
+                        parity [ 14 ] = _mm512_gf2p8mul_epi8(parity [ 14 ], taps [ 14 ]) ;
+                        parity [ 15 ] = _mm512_gf2p8mul_epi8(parity [ 15 ], taps [ 15 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 11 ], data_vec ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 12 ], data_vec ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 13 ], data_vec ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 14 ], data_vec ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 15 ], data_vec ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 16 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 10 ] [ 0 ], parity [ 10 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 11 ] [ 0 ], parity [ 11 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 12 ] [ 0 ], parity [ 12 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 13 ] [ 0 ], parity [ 13 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 14 ] [ 0 ], parity [ 14 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 15 ] [ 0 ], parity [ 15 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 16 ] [ 0 ], parity [ 16 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_18vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 18 ], taps [ 17 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+                parity [ 10 ] = data_vec ;
+                parity [ 11 ] = data_vec ;
+                parity [ 12 ] = data_vec ;
+                parity [ 13 ] = data_vec ;
+                parity [ 14 ] = data_vec ;
+                parity [ 15 ] = data_vec ;
+                parity [ 16 ] = data_vec ;
+                parity [ 17 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(parity [ 9 ], taps [ 9 ]) ;
+                        parity [ 10 ] = _mm512_gf2p8mul_epi8(parity [ 10 ], taps [ 10 ]) ;
+                        parity [ 11 ] = _mm512_gf2p8mul_epi8(parity [ 11 ], taps [ 11 ]) ;
+                        parity [ 12 ] = _mm512_gf2p8mul_epi8(parity [ 12 ], taps [ 12 ]) ;
+                        parity [ 13 ] = _mm512_gf2p8mul_epi8(parity [ 13 ], taps [ 13 ]) ;
+                        parity [ 14 ] = _mm512_gf2p8mul_epi8(parity [ 14 ], taps [ 14 ]) ;
+                        parity [ 15 ] = _mm512_gf2p8mul_epi8(parity [ 15 ], taps [ 15 ]) ;
+                        parity [ 16 ] = _mm512_gf2p8mul_epi8(parity [ 16 ], taps [ 16 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 11 ], data_vec ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 12 ], data_vec ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 13 ], data_vec ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 14 ], data_vec ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 15 ], data_vec ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 16 ], data_vec ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 17 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 10 ] [ 0 ], parity [ 10 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 11 ] [ 0 ], parity [ 11 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 12 ] [ 0 ], parity [ 12 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 13 ] [ 0 ], parity [ 13 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 14 ] [ 0 ], parity [ 14 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 15 ] [ 0 ], parity [ 15 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 16 ] [ 0 ], parity [ 16 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 17 ] [ 0 ], parity [ 17 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_19vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 19 ], taps [ 18 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+                parity [ 10 ] = data_vec ;
+                parity [ 11 ] = data_vec ;
+                parity [ 12 ] = data_vec ;
+                parity [ 13 ] = data_vec ;
+                parity [ 14 ] = data_vec ;
+                parity [ 15 ] = data_vec ;
+                parity [ 16 ] = data_vec ;
+                parity [ 17 ] = data_vec ;
+                parity [ 18 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(parity [ 9 ], taps [ 9 ]) ;
+                        parity [ 10 ] = _mm512_gf2p8mul_epi8(parity [ 10 ], taps [ 10 ]) ;
+                        parity [ 11 ] = _mm512_gf2p8mul_epi8(parity [ 11 ], taps [ 11 ]) ;
+                        parity [ 12 ] = _mm512_gf2p8mul_epi8(parity [ 12 ], taps [ 12 ]) ;
+                        parity [ 13 ] = _mm512_gf2p8mul_epi8(parity [ 13 ], taps [ 13 ]) ;
+                        parity [ 14 ] = _mm512_gf2p8mul_epi8(parity [ 14 ], taps [ 14 ]) ;
+                        parity [ 15 ] = _mm512_gf2p8mul_epi8(parity [ 15 ], taps [ 15 ]) ;
+                        parity [ 16 ] = _mm512_gf2p8mul_epi8(parity [ 16 ], taps [ 16 ]) ;
+                        parity [ 17 ] = _mm512_gf2p8mul_epi8(parity [ 17 ], taps [ 17 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 11 ], data_vec ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 12 ], data_vec ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 13 ], data_vec ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 14 ], data_vec ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 15 ], data_vec ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 16 ], data_vec ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 17 ], data_vec ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 18 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 10 ] [ 0 ], parity [ 10 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 11 ] [ 0 ], parity [ 11 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 12 ] [ 0 ], parity [ 12 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 13 ] [ 0 ], parity [ 13 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 14 ] [ 0 ], parity [ 14 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 15 ] [ 0 ], parity [ 15 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 16 ] [ 0 ], parity [ 16 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 17 ] [ 0 ], parity [ 17 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 18 ] [ 0 ], parity [ 18 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_20vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 20 ], taps [ 19 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+                parity [ 10 ] = data_vec ;
+                parity [ 11 ] = data_vec ;
+                parity [ 12 ] = data_vec ;
+                parity [ 13 ] = data_vec ;
+                parity [ 14 ] = data_vec ;
+                parity [ 15 ] = data_vec ;
+                parity [ 16 ] = data_vec ;
+                parity [ 17 ] = data_vec ;
+                parity [ 18 ] = data_vec ;
+                parity [ 19 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(parity [ 9 ], taps [ 9 ]) ;
+                        parity [ 10 ] = _mm512_gf2p8mul_epi8(parity [ 10 ], taps [ 10 ]) ;
+                        parity [ 11 ] = _mm512_gf2p8mul_epi8(parity [ 11 ], taps [ 11 ]) ;
+                        parity [ 12 ] = _mm512_gf2p8mul_epi8(parity [ 12 ], taps [ 12 ]) ;
+                        parity [ 13 ] = _mm512_gf2p8mul_epi8(parity [ 13 ], taps [ 13 ]) ;
+                        parity [ 14 ] = _mm512_gf2p8mul_epi8(parity [ 14 ], taps [ 14 ]) ;
+                        parity [ 15 ] = _mm512_gf2p8mul_epi8(parity [ 15 ], taps [ 15 ]) ;
+                        parity [ 16 ] = _mm512_gf2p8mul_epi8(parity [ 16 ], taps [ 16 ]) ;
+                        parity [ 17 ] = _mm512_gf2p8mul_epi8(parity [ 17 ], taps [ 17 ]) ;
+                        parity [ 18 ] = _mm512_gf2p8mul_epi8(parity [ 18 ], taps [ 18 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 11 ], data_vec ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 12 ], data_vec ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 13 ], data_vec ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 14 ], data_vec ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 15 ], data_vec ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 16 ], data_vec ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 17 ], data_vec ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 18 ], data_vec ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 19 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 10 ] [ 0 ], parity [ 10 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 11 ] [ 0 ], parity [ 11 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 12 ] [ 0 ], parity [ 12 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 13 ] [ 0 ], parity [ 13 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 14 ] [ 0 ], parity [ 14 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 15 ] [ 0 ], parity [ 15 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 16 ] [ 0 ], parity [ 16 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 17 ] [ 0 ], parity [ 17 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 18 ] [ 0 ], parity [ 18 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 19 ] [ 0 ], parity [ 19 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_21vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 21 ], taps [ 20 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+                parity [ 10 ] = data_vec ;
+                parity [ 11 ] = data_vec ;
+                parity [ 12 ] = data_vec ;
+                parity [ 13 ] = data_vec ;
+                parity [ 14 ] = data_vec ;
+                parity [ 15 ] = data_vec ;
+                parity [ 16 ] = data_vec ;
+                parity [ 17 ] = data_vec ;
+                parity [ 18 ] = data_vec ;
+                parity [ 19 ] = data_vec ;
+                parity [ 20 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(parity [ 9 ], taps [ 9 ]) ;
+                        parity [ 10 ] = _mm512_gf2p8mul_epi8(parity [ 10 ], taps [ 10 ]) ;
+                        parity [ 11 ] = _mm512_gf2p8mul_epi8(parity [ 11 ], taps [ 11 ]) ;
+                        parity [ 12 ] = _mm512_gf2p8mul_epi8(parity [ 12 ], taps [ 12 ]) ;
+                        parity [ 13 ] = _mm512_gf2p8mul_epi8(parity [ 13 ], taps [ 13 ]) ;
+                        parity [ 14 ] = _mm512_gf2p8mul_epi8(parity [ 14 ], taps [ 14 ]) ;
+                        parity [ 15 ] = _mm512_gf2p8mul_epi8(parity [ 15 ], taps [ 15 ]) ;
+                        parity [ 16 ] = _mm512_gf2p8mul_epi8(parity [ 16 ], taps [ 16 ]) ;
+                        parity [ 17 ] = _mm512_gf2p8mul_epi8(parity [ 17 ], taps [ 17 ]) ;
+                        parity [ 18 ] = _mm512_gf2p8mul_epi8(parity [ 18 ], taps [ 18 ]) ;
+                        parity [ 19 ] = _mm512_gf2p8mul_epi8(parity [ 19 ], taps [ 19 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 11 ], data_vec ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 12 ], data_vec ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 13 ], data_vec ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 14 ], data_vec ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 15 ], data_vec ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 16 ], data_vec ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 17 ], data_vec ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 18 ], data_vec ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 19 ], data_vec ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 20 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 10 ] [ 0 ], parity [ 10 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 11 ] [ 0 ], parity [ 11 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 12 ] [ 0 ], parity [ 12 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 13 ] [ 0 ], parity [ 13 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 14 ] [ 0 ], parity [ 14 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 15 ] [ 0 ], parity [ 15 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 16 ] [ 0 ], parity [ 16 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 17 ] [ 0 ], parity [ 17 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 18 ] [ 0 ], parity [ 18 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 19 ] [ 0 ], parity [ 19 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 20 ] [ 0 ], parity [ 20 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_22vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 22 ], taps [ 21 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+                parity [ 10 ] = data_vec ;
+                parity [ 11 ] = data_vec ;
+                parity [ 12 ] = data_vec ;
+                parity [ 13 ] = data_vec ;
+                parity [ 14 ] = data_vec ;
+                parity [ 15 ] = data_vec ;
+                parity [ 16 ] = data_vec ;
+                parity [ 17 ] = data_vec ;
+                parity [ 18 ] = data_vec ;
+                parity [ 19 ] = data_vec ;
+                parity [ 20 ] = data_vec ;
+                parity [ 21 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(parity [ 9 ], taps [ 9 ]) ;
+                        parity [ 10 ] = _mm512_gf2p8mul_epi8(parity [ 10 ], taps [ 10 ]) ;
+                        parity [ 11 ] = _mm512_gf2p8mul_epi8(parity [ 11 ], taps [ 11 ]) ;
+                        parity [ 12 ] = _mm512_gf2p8mul_epi8(parity [ 12 ], taps [ 12 ]) ;
+                        parity [ 13 ] = _mm512_gf2p8mul_epi8(parity [ 13 ], taps [ 13 ]) ;
+                        parity [ 14 ] = _mm512_gf2p8mul_epi8(parity [ 14 ], taps [ 14 ]) ;
+                        parity [ 15 ] = _mm512_gf2p8mul_epi8(parity [ 15 ], taps [ 15 ]) ;
+                        parity [ 16 ] = _mm512_gf2p8mul_epi8(parity [ 16 ], taps [ 16 ]) ;
+                        parity [ 17 ] = _mm512_gf2p8mul_epi8(parity [ 17 ], taps [ 17 ]) ;
+                        parity [ 18 ] = _mm512_gf2p8mul_epi8(parity [ 18 ], taps [ 18 ]) ;
+                        parity [ 19 ] = _mm512_gf2p8mul_epi8(parity [ 19 ], taps [ 19 ]) ;
+                        parity [ 20 ] = _mm512_gf2p8mul_epi8(parity [ 20 ], taps [ 20 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 11 ], data_vec ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 12 ], data_vec ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 13 ], data_vec ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 14 ], data_vec ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 15 ], data_vec ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 16 ], data_vec ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 17 ], data_vec ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 18 ], data_vec ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 19 ], data_vec ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 20 ], data_vec ) ;
+                        parity [ 21 ] = _mm512_xor_si512 ( parity [ 21 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 10 ] [ 0 ], parity [ 10 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 11 ] [ 0 ], parity [ 11 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 12 ] [ 0 ], parity [ 12 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 13 ] [ 0 ], parity [ 13 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 14 ] [ 0 ], parity [ 14 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 15 ] [ 0 ], parity [ 15 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 16 ] [ 0 ], parity [ 16 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 17 ] [ 0 ], parity [ 17 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 18 ] [ 0 ], parity [ 18 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 19 ] [ 0 ], parity [ 19 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 20 ] [ 0 ], parity [ 20 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 21 ] [ 0 ], parity [ 21 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_23vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 23 ], taps [ 22 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+                parity [ 10 ] = data_vec ;
+                parity [ 11 ] = data_vec ;
+                parity [ 12 ] = data_vec ;
+                parity [ 13 ] = data_vec ;
+                parity [ 14 ] = data_vec ;
+                parity [ 15 ] = data_vec ;
+                parity [ 16 ] = data_vec ;
+                parity [ 17 ] = data_vec ;
+                parity [ 18 ] = data_vec ;
+                parity [ 19 ] = data_vec ;
+                parity [ 20 ] = data_vec ;
+                parity [ 21 ] = data_vec ;
+                parity [ 22 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(parity [ 9 ], taps [ 9 ]) ;
+                        parity [ 10 ] = _mm512_gf2p8mul_epi8(parity [ 10 ], taps [ 10 ]) ;
+                        parity [ 11 ] = _mm512_gf2p8mul_epi8(parity [ 11 ], taps [ 11 ]) ;
+                        parity [ 12 ] = _mm512_gf2p8mul_epi8(parity [ 12 ], taps [ 12 ]) ;
+                        parity [ 13 ] = _mm512_gf2p8mul_epi8(parity [ 13 ], taps [ 13 ]) ;
+                        parity [ 14 ] = _mm512_gf2p8mul_epi8(parity [ 14 ], taps [ 14 ]) ;
+                        parity [ 15 ] = _mm512_gf2p8mul_epi8(parity [ 15 ], taps [ 15 ]) ;
+                        parity [ 16 ] = _mm512_gf2p8mul_epi8(parity [ 16 ], taps [ 16 ]) ;
+                        parity [ 17 ] = _mm512_gf2p8mul_epi8(parity [ 17 ], taps [ 17 ]) ;
+                        parity [ 18 ] = _mm512_gf2p8mul_epi8(parity [ 18 ], taps [ 18 ]) ;
+                        parity [ 19 ] = _mm512_gf2p8mul_epi8(parity [ 19 ], taps [ 19 ]) ;
+                        parity [ 20 ] = _mm512_gf2p8mul_epi8(parity [ 20 ], taps [ 20 ]) ;
+                        parity [ 21 ] = _mm512_gf2p8mul_epi8(parity [ 21 ], taps [ 21 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 11 ], data_vec ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 12 ], data_vec ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 13 ], data_vec ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 14 ], data_vec ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 15 ], data_vec ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 16 ], data_vec ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 17 ], data_vec ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 18 ], data_vec ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 19 ], data_vec ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 20 ], data_vec ) ;
+                        parity [ 21 ] = _mm512_xor_si512 ( parity [ 21 ], data_vec ) ;
+                        parity [ 22 ] = _mm512_xor_si512 ( parity [ 22 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 22 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 10 ] [ 0 ], parity [ 10 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 11 ] [ 0 ], parity [ 11 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 12 ] [ 0 ], parity [ 12 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 13 ] [ 0 ], parity [ 13 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 14 ] [ 0 ], parity [ 14 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 15 ] [ 0 ], parity [ 15 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 16 ] [ 0 ], parity [ 16 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 17 ] [ 0 ], parity [ 17 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 18 ] [ 0 ], parity [ 18 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 19 ] [ 0 ], parity [ 19 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 20 ] [ 0 ], parity [ 20 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 21 ] [ 0 ], parity [ 21 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 22 ] [ 0 ], parity [ 22 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_24vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 24 ], taps [ 23 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+                parity [ 10 ] = data_vec ;
+                parity [ 11 ] = data_vec ;
+                parity [ 12 ] = data_vec ;
+                parity [ 13 ] = data_vec ;
+                parity [ 14 ] = data_vec ;
+                parity [ 15 ] = data_vec ;
+                parity [ 16 ] = data_vec ;
+                parity [ 17 ] = data_vec ;
+                parity [ 18 ] = data_vec ;
+                parity [ 19 ] = data_vec ;
+                parity [ 20 ] = data_vec ;
+                parity [ 21 ] = data_vec ;
+                parity [ 22 ] = data_vec ;
+                parity [ 23 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(parity [ 9 ], taps [ 9 ]) ;
+                        parity [ 10 ] = _mm512_gf2p8mul_epi8(parity [ 10 ], taps [ 10 ]) ;
+                        parity [ 11 ] = _mm512_gf2p8mul_epi8(parity [ 11 ], taps [ 11 ]) ;
+                        parity [ 12 ] = _mm512_gf2p8mul_epi8(parity [ 12 ], taps [ 12 ]) ;
+                        parity [ 13 ] = _mm512_gf2p8mul_epi8(parity [ 13 ], taps [ 13 ]) ;
+                        parity [ 14 ] = _mm512_gf2p8mul_epi8(parity [ 14 ], taps [ 14 ]) ;
+                        parity [ 15 ] = _mm512_gf2p8mul_epi8(parity [ 15 ], taps [ 15 ]) ;
+                        parity [ 16 ] = _mm512_gf2p8mul_epi8(parity [ 16 ], taps [ 16 ]) ;
+                        parity [ 17 ] = _mm512_gf2p8mul_epi8(parity [ 17 ], taps [ 17 ]) ;
+                        parity [ 18 ] = _mm512_gf2p8mul_epi8(parity [ 18 ], taps [ 18 ]) ;
+                        parity [ 19 ] = _mm512_gf2p8mul_epi8(parity [ 19 ], taps [ 19 ]) ;
+                        parity [ 20 ] = _mm512_gf2p8mul_epi8(parity [ 20 ], taps [ 20 ]) ;
+                        parity [ 21 ] = _mm512_gf2p8mul_epi8(parity [ 21 ], taps [ 21 ]) ;
+                        parity [ 22 ] = _mm512_gf2p8mul_epi8(parity [ 22 ], taps [ 22 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 11 ], data_vec ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 12 ], data_vec ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 13 ], data_vec ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 14 ], data_vec ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 15 ], data_vec ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 16 ], data_vec ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 17 ], data_vec ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 18 ], data_vec ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 19 ], data_vec ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 20 ], data_vec ) ;
+                        parity [ 21 ] = _mm512_xor_si512 ( parity [ 21 ], data_vec ) ;
+                        parity [ 22 ] = _mm512_xor_si512 ( parity [ 22 ], data_vec ) ;
+                        parity [ 23 ] = _mm512_xor_si512 ( parity [ 23 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 22 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 23 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 10 ] [ 0 ], parity [ 10 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 11 ] [ 0 ], parity [ 11 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 12 ] [ 0 ], parity [ 12 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 13 ] [ 0 ], parity [ 13 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 14 ] [ 0 ], parity [ 14 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 15 ] [ 0 ], parity [ 15 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 16 ] [ 0 ], parity [ 16 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 17 ] [ 0 ], parity [ 17 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 18 ] [ 0 ], parity [ 18 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 19 ] [ 0 ], parity [ 19 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 20 ] [ 0 ], parity [ 20 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 21 ] [ 0 ], parity [ 21 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 22 ] [ 0 ], parity [ 22 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 23 ] [ 0 ], parity [ 23 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_25vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 25 ], taps [ 24 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+                parity [ 10 ] = data_vec ;
+                parity [ 11 ] = data_vec ;
+                parity [ 12 ] = data_vec ;
+                parity [ 13 ] = data_vec ;
+                parity [ 14 ] = data_vec ;
+                parity [ 15 ] = data_vec ;
+                parity [ 16 ] = data_vec ;
+                parity [ 17 ] = data_vec ;
+                parity [ 18 ] = data_vec ;
+                parity [ 19 ] = data_vec ;
+                parity [ 20 ] = data_vec ;
+                parity [ 21 ] = data_vec ;
+                parity [ 22 ] = data_vec ;
+                parity [ 23 ] = data_vec ;
+                parity [ 24 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(parity [ 9 ], taps [ 9 ]) ;
+                        parity [ 10 ] = _mm512_gf2p8mul_epi8(parity [ 10 ], taps [ 10 ]) ;
+                        parity [ 11 ] = _mm512_gf2p8mul_epi8(parity [ 11 ], taps [ 11 ]) ;
+                        parity [ 12 ] = _mm512_gf2p8mul_epi8(parity [ 12 ], taps [ 12 ]) ;
+                        parity [ 13 ] = _mm512_gf2p8mul_epi8(parity [ 13 ], taps [ 13 ]) ;
+                        parity [ 14 ] = _mm512_gf2p8mul_epi8(parity [ 14 ], taps [ 14 ]) ;
+                        parity [ 15 ] = _mm512_gf2p8mul_epi8(parity [ 15 ], taps [ 15 ]) ;
+                        parity [ 16 ] = _mm512_gf2p8mul_epi8(parity [ 16 ], taps [ 16 ]) ;
+                        parity [ 17 ] = _mm512_gf2p8mul_epi8(parity [ 17 ], taps [ 17 ]) ;
+                        parity [ 18 ] = _mm512_gf2p8mul_epi8(parity [ 18 ], taps [ 18 ]) ;
+                        parity [ 19 ] = _mm512_gf2p8mul_epi8(parity [ 19 ], taps [ 19 ]) ;
+                        parity [ 20 ] = _mm512_gf2p8mul_epi8(parity [ 20 ], taps [ 20 ]) ;
+                        parity [ 21 ] = _mm512_gf2p8mul_epi8(parity [ 21 ], taps [ 21 ]) ;
+                        parity [ 22 ] = _mm512_gf2p8mul_epi8(parity [ 22 ], taps [ 22 ]) ;
+                        parity [ 23 ] = _mm512_gf2p8mul_epi8(parity [ 23 ], taps [ 23 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 11 ], data_vec ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 12 ], data_vec ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 13 ], data_vec ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 14 ], data_vec ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 15 ], data_vec ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 16 ], data_vec ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 17 ], data_vec ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 18 ], data_vec ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 19 ], data_vec ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 20 ], data_vec ) ;
+                        parity [ 21 ] = _mm512_xor_si512 ( parity [ 21 ], data_vec ) ;
+                        parity [ 22 ] = _mm512_xor_si512 ( parity [ 22 ], data_vec ) ;
+                        parity [ 23 ] = _mm512_xor_si512 ( parity [ 23 ], data_vec ) ;
+                        parity [ 24 ] = _mm512_xor_si512 ( parity [ 24 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 22 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 23 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 24 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 10 ] [ 0 ], parity [ 10 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 11 ] [ 0 ], parity [ 11 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 12 ] [ 0 ], parity [ 12 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 13 ] [ 0 ], parity [ 13 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 14 ] [ 0 ], parity [ 14 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 15 ] [ 0 ], parity [ 15 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 16 ] [ 0 ], parity [ 16 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 17 ] [ 0 ], parity [ 17 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 18 ] [ 0 ], parity [ 18 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 19 ] [ 0 ], parity [ 19 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 20 ] [ 0 ], parity [ 20 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 21 ] [ 0 ], parity [ 21 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 22 ] [ 0 ], parity [ 22 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 23 ] [ 0 ], parity [ 23 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 24 ] [ 0 ], parity [ 24 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_26vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 26 ], taps [ 25 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+                parity [ 10 ] = data_vec ;
+                parity [ 11 ] = data_vec ;
+                parity [ 12 ] = data_vec ;
+                parity [ 13 ] = data_vec ;
+                parity [ 14 ] = data_vec ;
+                parity [ 15 ] = data_vec ;
+                parity [ 16 ] = data_vec ;
+                parity [ 17 ] = data_vec ;
+                parity [ 18 ] = data_vec ;
+                parity [ 19 ] = data_vec ;
+                parity [ 20 ] = data_vec ;
+                parity [ 21 ] = data_vec ;
+                parity [ 22 ] = data_vec ;
+                parity [ 23 ] = data_vec ;
+                parity [ 24 ] = data_vec ;
+                parity [ 25 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(parity [ 9 ], taps [ 9 ]) ;
+                        parity [ 10 ] = _mm512_gf2p8mul_epi8(parity [ 10 ], taps [ 10 ]) ;
+                        parity [ 11 ] = _mm512_gf2p8mul_epi8(parity [ 11 ], taps [ 11 ]) ;
+                        parity [ 12 ] = _mm512_gf2p8mul_epi8(parity [ 12 ], taps [ 12 ]) ;
+                        parity [ 13 ] = _mm512_gf2p8mul_epi8(parity [ 13 ], taps [ 13 ]) ;
+                        parity [ 14 ] = _mm512_gf2p8mul_epi8(parity [ 14 ], taps [ 14 ]) ;
+                        parity [ 15 ] = _mm512_gf2p8mul_epi8(parity [ 15 ], taps [ 15 ]) ;
+                        parity [ 16 ] = _mm512_gf2p8mul_epi8(parity [ 16 ], taps [ 16 ]) ;
+                        parity [ 17 ] = _mm512_gf2p8mul_epi8(parity [ 17 ], taps [ 17 ]) ;
+                        parity [ 18 ] = _mm512_gf2p8mul_epi8(parity [ 18 ], taps [ 18 ]) ;
+                        parity [ 19 ] = _mm512_gf2p8mul_epi8(parity [ 19 ], taps [ 19 ]) ;
+                        parity [ 20 ] = _mm512_gf2p8mul_epi8(parity [ 20 ], taps [ 20 ]) ;
+                        parity [ 21 ] = _mm512_gf2p8mul_epi8(parity [ 21 ], taps [ 21 ]) ;
+                        parity [ 22 ] = _mm512_gf2p8mul_epi8(parity [ 22 ], taps [ 22 ]) ;
+                        parity [ 23 ] = _mm512_gf2p8mul_epi8(parity [ 23 ], taps [ 23 ]) ;
+                        parity [ 24 ] = _mm512_gf2p8mul_epi8(parity [ 24 ], taps [ 24 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 11 ], data_vec ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 12 ], data_vec ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 13 ], data_vec ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 14 ], data_vec ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 15 ], data_vec ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 16 ], data_vec ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 17 ], data_vec ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 18 ], data_vec ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 19 ], data_vec ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 20 ], data_vec ) ;
+                        parity [ 21 ] = _mm512_xor_si512 ( parity [ 21 ], data_vec ) ;
+                        parity [ 22 ] = _mm512_xor_si512 ( parity [ 22 ], data_vec ) ;
+                        parity [ 23 ] = _mm512_xor_si512 ( parity [ 23 ], data_vec ) ;
+                        parity [ 24 ] = _mm512_xor_si512 ( parity [ 24 ], data_vec ) ;
+                        parity [ 25 ] = _mm512_xor_si512 ( parity [ 25 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 22 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 23 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 24 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 25 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 10 ] [ 0 ], parity [ 10 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 11 ] [ 0 ], parity [ 11 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 12 ] [ 0 ], parity [ 12 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 13 ] [ 0 ], parity [ 13 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 14 ] [ 0 ], parity [ 14 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 15 ] [ 0 ], parity [ 15 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 16 ] [ 0 ], parity [ 16 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 17 ] [ 0 ], parity [ 17 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 18 ] [ 0 ], parity [ 18 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 19 ] [ 0 ], parity [ 19 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 20 ] [ 0 ], parity [ 20 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 21 ] [ 0 ], parity [ 21 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 22 ] [ 0 ], parity [ 22 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 23 ] [ 0 ], parity [ 23 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 24 ] [ 0 ], parity [ 24 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 25 ] [ 0 ], parity [ 25 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_27vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 27 ], taps [ 26 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+                parity [ 10 ] = data_vec ;
+                parity [ 11 ] = data_vec ;
+                parity [ 12 ] = data_vec ;
+                parity [ 13 ] = data_vec ;
+                parity [ 14 ] = data_vec ;
+                parity [ 15 ] = data_vec ;
+                parity [ 16 ] = data_vec ;
+                parity [ 17 ] = data_vec ;
+                parity [ 18 ] = data_vec ;
+                parity [ 19 ] = data_vec ;
+                parity [ 20 ] = data_vec ;
+                parity [ 21 ] = data_vec ;
+                parity [ 22 ] = data_vec ;
+                parity [ 23 ] = data_vec ;
+                parity [ 24 ] = data_vec ;
+                parity [ 25 ] = data_vec ;
+                parity [ 26 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(parity [ 9 ], taps [ 9 ]) ;
+                        parity [ 10 ] = _mm512_gf2p8mul_epi8(parity [ 10 ], taps [ 10 ]) ;
+                        parity [ 11 ] = _mm512_gf2p8mul_epi8(parity [ 11 ], taps [ 11 ]) ;
+                        parity [ 12 ] = _mm512_gf2p8mul_epi8(parity [ 12 ], taps [ 12 ]) ;
+                        parity [ 13 ] = _mm512_gf2p8mul_epi8(parity [ 13 ], taps [ 13 ]) ;
+                        parity [ 14 ] = _mm512_gf2p8mul_epi8(parity [ 14 ], taps [ 14 ]) ;
+                        parity [ 15 ] = _mm512_gf2p8mul_epi8(parity [ 15 ], taps [ 15 ]) ;
+                        parity [ 16 ] = _mm512_gf2p8mul_epi8(parity [ 16 ], taps [ 16 ]) ;
+                        parity [ 17 ] = _mm512_gf2p8mul_epi8(parity [ 17 ], taps [ 17 ]) ;
+                        parity [ 18 ] = _mm512_gf2p8mul_epi8(parity [ 18 ], taps [ 18 ]) ;
+                        parity [ 19 ] = _mm512_gf2p8mul_epi8(parity [ 19 ], taps [ 19 ]) ;
+                        parity [ 20 ] = _mm512_gf2p8mul_epi8(parity [ 20 ], taps [ 20 ]) ;
+                        parity [ 21 ] = _mm512_gf2p8mul_epi8(parity [ 21 ], taps [ 21 ]) ;
+                        parity [ 22 ] = _mm512_gf2p8mul_epi8(parity [ 22 ], taps [ 22 ]) ;
+                        parity [ 23 ] = _mm512_gf2p8mul_epi8(parity [ 23 ], taps [ 23 ]) ;
+                        parity [ 24 ] = _mm512_gf2p8mul_epi8(parity [ 24 ], taps [ 24 ]) ;
+                        parity [ 25 ] = _mm512_gf2p8mul_epi8(parity [ 25 ], taps [ 25 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 11 ], data_vec ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 12 ], data_vec ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 13 ], data_vec ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 14 ], data_vec ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 15 ], data_vec ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 16 ], data_vec ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 17 ], data_vec ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 18 ], data_vec ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 19 ], data_vec ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 20 ], data_vec ) ;
+                        parity [ 21 ] = _mm512_xor_si512 ( parity [ 21 ], data_vec ) ;
+                        parity [ 22 ] = _mm512_xor_si512 ( parity [ 22 ], data_vec ) ;
+                        parity [ 23 ] = _mm512_xor_si512 ( parity [ 23 ], data_vec ) ;
+                        parity [ 24 ] = _mm512_xor_si512 ( parity [ 24 ], data_vec ) ;
+                        parity [ 25 ] = _mm512_xor_si512 ( parity [ 25 ], data_vec ) ;
+                        parity [ 26 ] = _mm512_xor_si512 ( parity [ 26 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 22 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 23 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 24 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 25 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 26 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 10 ] [ 0 ], parity [ 10 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 11 ] [ 0 ], parity [ 11 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 12 ] [ 0 ], parity [ 12 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 13 ] [ 0 ], parity [ 13 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 14 ] [ 0 ], parity [ 14 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 15 ] [ 0 ], parity [ 15 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 16 ] [ 0 ], parity [ 16 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 17 ] [ 0 ], parity [ 17 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 18 ] [ 0 ], parity [ 18 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 19 ] [ 0 ], parity [ 19 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 20 ] [ 0 ], parity [ 20 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 21 ] [ 0 ], parity [ 21 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 22 ] [ 0 ], parity [ 22 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 23 ] [ 0 ], parity [ 23 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 24 ] [ 0 ], parity [ 24 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 25 ] [ 0 ], parity [ 25 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 26 ] [ 0 ], parity [ 26 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_28vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 28 ], taps [ 27 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
+        taps [ 26 ] = _mm512_set1_epi8 ( g_tbls [ 26 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+                parity [ 10 ] = data_vec ;
+                parity [ 11 ] = data_vec ;
+                parity [ 12 ] = data_vec ;
+                parity [ 13 ] = data_vec ;
+                parity [ 14 ] = data_vec ;
+                parity [ 15 ] = data_vec ;
+                parity [ 16 ] = data_vec ;
+                parity [ 17 ] = data_vec ;
+                parity [ 18 ] = data_vec ;
+                parity [ 19 ] = data_vec ;
+                parity [ 20 ] = data_vec ;
+                parity [ 21 ] = data_vec ;
+                parity [ 22 ] = data_vec ;
+                parity [ 23 ] = data_vec ;
+                parity [ 24 ] = data_vec ;
+                parity [ 25 ] = data_vec ;
+                parity [ 26 ] = data_vec ;
+                parity [ 27 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(parity [ 9 ], taps [ 9 ]) ;
+                        parity [ 10 ] = _mm512_gf2p8mul_epi8(parity [ 10 ], taps [ 10 ]) ;
+                        parity [ 11 ] = _mm512_gf2p8mul_epi8(parity [ 11 ], taps [ 11 ]) ;
+                        parity [ 12 ] = _mm512_gf2p8mul_epi8(parity [ 12 ], taps [ 12 ]) ;
+                        parity [ 13 ] = _mm512_gf2p8mul_epi8(parity [ 13 ], taps [ 13 ]) ;
+                        parity [ 14 ] = _mm512_gf2p8mul_epi8(parity [ 14 ], taps [ 14 ]) ;
+                        parity [ 15 ] = _mm512_gf2p8mul_epi8(parity [ 15 ], taps [ 15 ]) ;
+                        parity [ 16 ] = _mm512_gf2p8mul_epi8(parity [ 16 ], taps [ 16 ]) ;
+                        parity [ 17 ] = _mm512_gf2p8mul_epi8(parity [ 17 ], taps [ 17 ]) ;
+                        parity [ 18 ] = _mm512_gf2p8mul_epi8(parity [ 18 ], taps [ 18 ]) ;
+                        parity [ 19 ] = _mm512_gf2p8mul_epi8(parity [ 19 ], taps [ 19 ]) ;
+                        parity [ 20 ] = _mm512_gf2p8mul_epi8(parity [ 20 ], taps [ 20 ]) ;
+                        parity [ 21 ] = _mm512_gf2p8mul_epi8(parity [ 21 ], taps [ 21 ]) ;
+                        parity [ 22 ] = _mm512_gf2p8mul_epi8(parity [ 22 ], taps [ 22 ]) ;
+                        parity [ 23 ] = _mm512_gf2p8mul_epi8(parity [ 23 ], taps [ 23 ]) ;
+                        parity [ 24 ] = _mm512_gf2p8mul_epi8(parity [ 24 ], taps [ 24 ]) ;
+                        parity [ 25 ] = _mm512_gf2p8mul_epi8(parity [ 25 ], taps [ 25 ]) ;
+                        parity [ 26 ] = _mm512_gf2p8mul_epi8(parity [ 26 ], taps [ 26 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 11 ], data_vec ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 12 ], data_vec ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 13 ], data_vec ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 14 ], data_vec ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 15 ], data_vec ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 16 ], data_vec ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 17 ], data_vec ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 18 ], data_vec ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 19 ], data_vec ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 20 ], data_vec ) ;
+                        parity [ 21 ] = _mm512_xor_si512 ( parity [ 21 ], data_vec ) ;
+                        parity [ 22 ] = _mm512_xor_si512 ( parity [ 22 ], data_vec ) ;
+                        parity [ 23 ] = _mm512_xor_si512 ( parity [ 23 ], data_vec ) ;
+                        parity [ 24 ] = _mm512_xor_si512 ( parity [ 24 ], data_vec ) ;
+                        parity [ 25 ] = _mm512_xor_si512 ( parity [ 25 ], data_vec ) ;
+                        parity [ 26 ] = _mm512_xor_si512 ( parity [ 26 ], data_vec ) ;
+                        parity [ 27 ] = _mm512_xor_si512 ( parity [ 27 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 22 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 23 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 24 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 25 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 26 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 27 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 10 ] [ 0 ], parity [ 10 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 11 ] [ 0 ], parity [ 11 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 12 ] [ 0 ], parity [ 12 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 13 ] [ 0 ], parity [ 13 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 14 ] [ 0 ], parity [ 14 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 15 ] [ 0 ], parity [ 15 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 16 ] [ 0 ], parity [ 16 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 17 ] [ 0 ], parity [ 17 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 18 ] [ 0 ], parity [ 18 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 19 ] [ 0 ], parity [ 19 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 20 ] [ 0 ], parity [ 20 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 21 ] [ 0 ], parity [ 21 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 22 ] [ 0 ], parity [ 22 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 23 ] [ 0 ], parity [ 23 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 24 ] [ 0 ], parity [ 24 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 25 ] [ 0 ], parity [ 25 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 26 ] [ 0 ], parity [ 26 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 27 ] [ 0 ], parity [ 27 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_29vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 29 ], taps [ 28 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
+        taps [ 26 ] = _mm512_set1_epi8 ( g_tbls [ 26 ] ) ;
+        taps [ 27 ] = _mm512_set1_epi8 ( g_tbls [ 27 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+                parity [ 10 ] = data_vec ;
+                parity [ 11 ] = data_vec ;
+                parity [ 12 ] = data_vec ;
+                parity [ 13 ] = data_vec ;
+                parity [ 14 ] = data_vec ;
+                parity [ 15 ] = data_vec ;
+                parity [ 16 ] = data_vec ;
+                parity [ 17 ] = data_vec ;
+                parity [ 18 ] = data_vec ;
+                parity [ 19 ] = data_vec ;
+                parity [ 20 ] = data_vec ;
+                parity [ 21 ] = data_vec ;
+                parity [ 22 ] = data_vec ;
+                parity [ 23 ] = data_vec ;
+                parity [ 24 ] = data_vec ;
+                parity [ 25 ] = data_vec ;
+                parity [ 26 ] = data_vec ;
+                parity [ 27 ] = data_vec ;
+                parity [ 28 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(parity [ 9 ], taps [ 9 ]) ;
+                        parity [ 10 ] = _mm512_gf2p8mul_epi8(parity [ 10 ], taps [ 10 ]) ;
+                        parity [ 11 ] = _mm512_gf2p8mul_epi8(parity [ 11 ], taps [ 11 ]) ;
+                        parity [ 12 ] = _mm512_gf2p8mul_epi8(parity [ 12 ], taps [ 12 ]) ;
+                        parity [ 13 ] = _mm512_gf2p8mul_epi8(parity [ 13 ], taps [ 13 ]) ;
+                        parity [ 14 ] = _mm512_gf2p8mul_epi8(parity [ 14 ], taps [ 14 ]) ;
+                        parity [ 15 ] = _mm512_gf2p8mul_epi8(parity [ 15 ], taps [ 15 ]) ;
+                        parity [ 16 ] = _mm512_gf2p8mul_epi8(parity [ 16 ], taps [ 16 ]) ;
+                        parity [ 17 ] = _mm512_gf2p8mul_epi8(parity [ 17 ], taps [ 17 ]) ;
+                        parity [ 18 ] = _mm512_gf2p8mul_epi8(parity [ 18 ], taps [ 18 ]) ;
+                        parity [ 19 ] = _mm512_gf2p8mul_epi8(parity [ 19 ], taps [ 19 ]) ;
+                        parity [ 20 ] = _mm512_gf2p8mul_epi8(parity [ 20 ], taps [ 20 ]) ;
+                        parity [ 21 ] = _mm512_gf2p8mul_epi8(parity [ 21 ], taps [ 21 ]) ;
+                        parity [ 22 ] = _mm512_gf2p8mul_epi8(parity [ 22 ], taps [ 22 ]) ;
+                        parity [ 23 ] = _mm512_gf2p8mul_epi8(parity [ 23 ], taps [ 23 ]) ;
+                        parity [ 24 ] = _mm512_gf2p8mul_epi8(parity [ 24 ], taps [ 24 ]) ;
+                        parity [ 25 ] = _mm512_gf2p8mul_epi8(parity [ 25 ], taps [ 25 ]) ;
+                        parity [ 26 ] = _mm512_gf2p8mul_epi8(parity [ 26 ], taps [ 26 ]) ;
+                        parity [ 27 ] = _mm512_gf2p8mul_epi8(parity [ 27 ], taps [ 27 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 11 ], data_vec ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 12 ], data_vec ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 13 ], data_vec ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 14 ], data_vec ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 15 ], data_vec ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 16 ], data_vec ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 17 ], data_vec ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 18 ], data_vec ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 19 ], data_vec ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 20 ], data_vec ) ;
+                        parity [ 21 ] = _mm512_xor_si512 ( parity [ 21 ], data_vec ) ;
+                        parity [ 22 ] = _mm512_xor_si512 ( parity [ 22 ], data_vec ) ;
+                        parity [ 23 ] = _mm512_xor_si512 ( parity [ 23 ], data_vec ) ;
+                        parity [ 24 ] = _mm512_xor_si512 ( parity [ 24 ], data_vec ) ;
+                        parity [ 25 ] = _mm512_xor_si512 ( parity [ 25 ], data_vec ) ;
+                        parity [ 26 ] = _mm512_xor_si512 ( parity [ 26 ], data_vec ) ;
+                        parity [ 27 ] = _mm512_xor_si512 ( parity [ 27 ], data_vec ) ;
+                        parity [ 28 ] = _mm512_xor_si512 ( parity [ 28 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 22 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 23 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 24 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 25 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 26 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 27 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 28 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 10 ] [ 0 ], parity [ 10 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 11 ] [ 0 ], parity [ 11 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 12 ] [ 0 ], parity [ 12 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 13 ] [ 0 ], parity [ 13 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 14 ] [ 0 ], parity [ 14 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 15 ] [ 0 ], parity [ 15 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 16 ] [ 0 ], parity [ 16 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 17 ] [ 0 ], parity [ 17 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 18 ] [ 0 ], parity [ 18 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 19 ] [ 0 ], parity [ 19 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 20 ] [ 0 ], parity [ 20 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 21 ] [ 0 ], parity [ 21 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 22 ] [ 0 ], parity [ 22 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 23 ] [ 0 ], parity [ 23 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 24 ] [ 0 ], parity [ 24 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 25 ] [ 0 ], parity [ 25 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 26 ] [ 0 ], parity [ 26 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 27 ] [ 0 ], parity [ 27 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 28 ] [ 0 ], parity [ 28 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_30vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 30 ], taps [ 29 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
+        taps [ 26 ] = _mm512_set1_epi8 ( g_tbls [ 26 ] ) ;
+        taps [ 27 ] = _mm512_set1_epi8 ( g_tbls [ 27 ] ) ;
+        taps [ 28 ] = _mm512_set1_epi8 ( g_tbls [ 28 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+                parity [ 10 ] = data_vec ;
+                parity [ 11 ] = data_vec ;
+                parity [ 12 ] = data_vec ;
+                parity [ 13 ] = data_vec ;
+                parity [ 14 ] = data_vec ;
+                parity [ 15 ] = data_vec ;
+                parity [ 16 ] = data_vec ;
+                parity [ 17 ] = data_vec ;
+                parity [ 18 ] = data_vec ;
+                parity [ 19 ] = data_vec ;
+                parity [ 20 ] = data_vec ;
+                parity [ 21 ] = data_vec ;
+                parity [ 22 ] = data_vec ;
+                parity [ 23 ] = data_vec ;
+                parity [ 24 ] = data_vec ;
+                parity [ 25 ] = data_vec ;
+                parity [ 26 ] = data_vec ;
+                parity [ 27 ] = data_vec ;
+                parity [ 28 ] = data_vec ;
+                parity [ 29 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(parity [ 9 ], taps [ 9 ]) ;
+                        parity [ 10 ] = _mm512_gf2p8mul_epi8(parity [ 10 ], taps [ 10 ]) ;
+                        parity [ 11 ] = _mm512_gf2p8mul_epi8(parity [ 11 ], taps [ 11 ]) ;
+                        parity [ 12 ] = _mm512_gf2p8mul_epi8(parity [ 12 ], taps [ 12 ]) ;
+                        parity [ 13 ] = _mm512_gf2p8mul_epi8(parity [ 13 ], taps [ 13 ]) ;
+                        parity [ 14 ] = _mm512_gf2p8mul_epi8(parity [ 14 ], taps [ 14 ]) ;
+                        parity [ 15 ] = _mm512_gf2p8mul_epi8(parity [ 15 ], taps [ 15 ]) ;
+                        parity [ 16 ] = _mm512_gf2p8mul_epi8(parity [ 16 ], taps [ 16 ]) ;
+                        parity [ 17 ] = _mm512_gf2p8mul_epi8(parity [ 17 ], taps [ 17 ]) ;
+                        parity [ 18 ] = _mm512_gf2p8mul_epi8(parity [ 18 ], taps [ 18 ]) ;
+                        parity [ 19 ] = _mm512_gf2p8mul_epi8(parity [ 19 ], taps [ 19 ]) ;
+                        parity [ 20 ] = _mm512_gf2p8mul_epi8(parity [ 20 ], taps [ 20 ]) ;
+                        parity [ 21 ] = _mm512_gf2p8mul_epi8(parity [ 21 ], taps [ 21 ]) ;
+                        parity [ 22 ] = _mm512_gf2p8mul_epi8(parity [ 22 ], taps [ 22 ]) ;
+                        parity [ 23 ] = _mm512_gf2p8mul_epi8(parity [ 23 ], taps [ 23 ]) ;
+                        parity [ 24 ] = _mm512_gf2p8mul_epi8(parity [ 24 ], taps [ 24 ]) ;
+                        parity [ 25 ] = _mm512_gf2p8mul_epi8(parity [ 25 ], taps [ 25 ]) ;
+                        parity [ 26 ] = _mm512_gf2p8mul_epi8(parity [ 26 ], taps [ 26 ]) ;
+                        parity [ 27 ] = _mm512_gf2p8mul_epi8(parity [ 27 ], taps [ 27 ]) ;
+                        parity [ 28 ] = _mm512_gf2p8mul_epi8(parity [ 28 ], taps [ 28 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 11 ], data_vec ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 12 ], data_vec ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 13 ], data_vec ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 14 ], data_vec ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 15 ], data_vec ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 16 ], data_vec ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 17 ], data_vec ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 18 ], data_vec ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 19 ], data_vec ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 20 ], data_vec ) ;
+                        parity [ 21 ] = _mm512_xor_si512 ( parity [ 21 ], data_vec ) ;
+                        parity [ 22 ] = _mm512_xor_si512 ( parity [ 22 ], data_vec ) ;
+                        parity [ 23 ] = _mm512_xor_si512 ( parity [ 23 ], data_vec ) ;
+                        parity [ 24 ] = _mm512_xor_si512 ( parity [ 24 ], data_vec ) ;
+                        parity [ 25 ] = _mm512_xor_si512 ( parity [ 25 ], data_vec ) ;
+                        parity [ 26 ] = _mm512_xor_si512 ( parity [ 26 ], data_vec ) ;
+                        parity [ 27 ] = _mm512_xor_si512 ( parity [ 27 ], data_vec ) ;
+                        parity [ 28 ] = _mm512_xor_si512 ( parity [ 28 ], data_vec ) ;
+                        parity [ 29 ] = _mm512_xor_si512 ( parity [ 29 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 22 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 23 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 24 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 25 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 26 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 27 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 28 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 29 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 10 ] [ 0 ], parity [ 10 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 11 ] [ 0 ], parity [ 11 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 12 ] [ 0 ], parity [ 12 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 13 ] [ 0 ], parity [ 13 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 14 ] [ 0 ], parity [ 14 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 15 ] [ 0 ], parity [ 15 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 16 ] [ 0 ], parity [ 16 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 17 ] [ 0 ], parity [ 17 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 18 ] [ 0 ], parity [ 18 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 19 ] [ 0 ], parity [ 19 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 20 ] [ 0 ], parity [ 20 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 21 ] [ 0 ], parity [ 21 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 22 ] [ 0 ], parity [ 22 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 23 ] [ 0 ], parity [ 23 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 24 ] [ 0 ], parity [ 24 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 25 ] [ 0 ], parity [ 25 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 26 ] [ 0 ], parity [ 26 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 27 ] [ 0 ], parity [ 27 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 28 ] [ 0 ], parity [ 28 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 29 ] [ 0 ], parity [ 29 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_31vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 31 ], taps [ 30 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
+        taps [ 26 ] = _mm512_set1_epi8 ( g_tbls [ 26 ] ) ;
+        taps [ 27 ] = _mm512_set1_epi8 ( g_tbls [ 27 ] ) ;
+        taps [ 28 ] = _mm512_set1_epi8 ( g_tbls [ 28 ] ) ;
+        taps [ 29 ] = _mm512_set1_epi8 ( g_tbls [ 29 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+                parity [ 10 ] = data_vec ;
+                parity [ 11 ] = data_vec ;
+                parity [ 12 ] = data_vec ;
+                parity [ 13 ] = data_vec ;
+                parity [ 14 ] = data_vec ;
+                parity [ 15 ] = data_vec ;
+                parity [ 16 ] = data_vec ;
+                parity [ 17 ] = data_vec ;
+                parity [ 18 ] = data_vec ;
+                parity [ 19 ] = data_vec ;
+                parity [ 20 ] = data_vec ;
+                parity [ 21 ] = data_vec ;
+                parity [ 22 ] = data_vec ;
+                parity [ 23 ] = data_vec ;
+                parity [ 24 ] = data_vec ;
+                parity [ 25 ] = data_vec ;
+                parity [ 26 ] = data_vec ;
+                parity [ 27 ] = data_vec ;
+                parity [ 28 ] = data_vec ;
+                parity [ 29 ] = data_vec ;
+                parity [ 30 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(parity [ 9 ], taps [ 9 ]) ;
+                        parity [ 10 ] = _mm512_gf2p8mul_epi8(parity [ 10 ], taps [ 10 ]) ;
+                        parity [ 11 ] = _mm512_gf2p8mul_epi8(parity [ 11 ], taps [ 11 ]) ;
+                        parity [ 12 ] = _mm512_gf2p8mul_epi8(parity [ 12 ], taps [ 12 ]) ;
+                        parity [ 13 ] = _mm512_gf2p8mul_epi8(parity [ 13 ], taps [ 13 ]) ;
+                        parity [ 14 ] = _mm512_gf2p8mul_epi8(parity [ 14 ], taps [ 14 ]) ;
+                        parity [ 15 ] = _mm512_gf2p8mul_epi8(parity [ 15 ], taps [ 15 ]) ;
+                        parity [ 16 ] = _mm512_gf2p8mul_epi8(parity [ 16 ], taps [ 16 ]) ;
+                        parity [ 17 ] = _mm512_gf2p8mul_epi8(parity [ 17 ], taps [ 17 ]) ;
+                        parity [ 18 ] = _mm512_gf2p8mul_epi8(parity [ 18 ], taps [ 18 ]) ;
+                        parity [ 19 ] = _mm512_gf2p8mul_epi8(parity [ 19 ], taps [ 19 ]) ;
+                        parity [ 20 ] = _mm512_gf2p8mul_epi8(parity [ 20 ], taps [ 20 ]) ;
+                        parity [ 21 ] = _mm512_gf2p8mul_epi8(parity [ 21 ], taps [ 21 ]) ;
+                        parity [ 22 ] = _mm512_gf2p8mul_epi8(parity [ 22 ], taps [ 22 ]) ;
+                        parity [ 23 ] = _mm512_gf2p8mul_epi8(parity [ 23 ], taps [ 23 ]) ;
+                        parity [ 24 ] = _mm512_gf2p8mul_epi8(parity [ 24 ], taps [ 24 ]) ;
+                        parity [ 25 ] = _mm512_gf2p8mul_epi8(parity [ 25 ], taps [ 25 ]) ;
+                        parity [ 26 ] = _mm512_gf2p8mul_epi8(parity [ 26 ], taps [ 26 ]) ;
+                        parity [ 27 ] = _mm512_gf2p8mul_epi8(parity [ 27 ], taps [ 27 ]) ;
+                        parity [ 28 ] = _mm512_gf2p8mul_epi8(parity [ 28 ], taps [ 28 ]) ;
+                        parity [ 29 ] = _mm512_gf2p8mul_epi8(parity [ 29 ], taps [ 29 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 11 ], data_vec ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 12 ], data_vec ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 13 ], data_vec ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 14 ], data_vec ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 15 ], data_vec ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 16 ], data_vec ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 17 ], data_vec ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 18 ], data_vec ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 19 ], data_vec ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 20 ], data_vec ) ;
+                        parity [ 21 ] = _mm512_xor_si512 ( parity [ 21 ], data_vec ) ;
+                        parity [ 22 ] = _mm512_xor_si512 ( parity [ 22 ], data_vec ) ;
+                        parity [ 23 ] = _mm512_xor_si512 ( parity [ 23 ], data_vec ) ;
+                        parity [ 24 ] = _mm512_xor_si512 ( parity [ 24 ], data_vec ) ;
+                        parity [ 25 ] = _mm512_xor_si512 ( parity [ 25 ], data_vec ) ;
+                        parity [ 26 ] = _mm512_xor_si512 ( parity [ 26 ], data_vec ) ;
+                        parity [ 27 ] = _mm512_xor_si512 ( parity [ 27 ], data_vec ) ;
+                        parity [ 28 ] = _mm512_xor_si512 ( parity [ 28 ], data_vec ) ;
+                        parity [ 29 ] = _mm512_xor_si512 ( parity [ 29 ], data_vec ) ;
+                        parity [ 30 ] = _mm512_xor_si512 ( parity [ 30 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 22 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 23 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 24 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 25 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 26 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 27 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 28 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 29 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 30 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 10 ] [ 0 ], parity [ 10 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 11 ] [ 0 ], parity [ 11 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 12 ] [ 0 ], parity [ 12 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 13 ] [ 0 ], parity [ 13 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 14 ] [ 0 ], parity [ 14 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 15 ] [ 0 ], parity [ 15 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 16 ] [ 0 ], parity [ 16 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 17 ] [ 0 ], parity [ 17 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 18 ] [ 0 ], parity [ 18 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 19 ] [ 0 ], parity [ 19 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 20 ] [ 0 ], parity [ 20 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 21 ] [ 0 ], parity [ 21 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 22 ] [ 0 ], parity [ 22 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 23 ] [ 0 ], parity [ 23 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 24 ] [ 0 ], parity [ 24 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 25 ] [ 0 ], parity [ 25 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 26 ] [ 0 ], parity [ 26 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 27 ] [ 0 ], parity [ 27 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 28 ] [ 0 ], parity [ 28 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 29 ] [ 0 ], parity [ 29 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 30 ] [ 0 ], parity [ 30 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+int gf_32vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest, int offSet)
+{
+        int curSym, curPos ;                          // Loop counters
+        unsigned char err = 0, syn [ 4 ] ;
+        __mmask8 mask ;                               // Mask used to test for zero
+        __m512i parity [ 32 ], taps [ 31 ], matVec, vreg ;
+        __m512i data_vec ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
+        taps [ 26 ] = _mm512_set1_epi8 ( g_tbls [ 26 ] ) ;
+        taps [ 27 ] = _mm512_set1_epi8 ( g_tbls [ 27 ] ) ;
+        taps [ 28 ] = _mm512_set1_epi8 ( g_tbls [ 28 ] ) ;
+        taps [ 29 ] = _mm512_set1_epi8 ( g_tbls [ 29 ] ) ;
+        taps [ 30 ] = _mm512_set1_epi8 ( g_tbls [ 30 ] ) ;
+
+        for ( curPos = offSet ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
+                parity [ 0 ] = data_vec ;
+                parity [ 1 ] = data_vec ;
+                parity [ 2 ] = data_vec ;
+                parity [ 3 ] = data_vec ;
+                parity [ 4 ] = data_vec ;
+                parity [ 5 ] = data_vec ;
+                parity [ 6 ] = data_vec ;
+                parity [ 7 ] = data_vec ;
+                parity [ 8 ] = data_vec ;
+                parity [ 9 ] = data_vec ;
+                parity [ 10 ] = data_vec ;
+                parity [ 11 ] = data_vec ;
+                parity [ 12 ] = data_vec ;
+                parity [ 13 ] = data_vec ;
+                parity [ 14 ] = data_vec ;
+                parity [ 15 ] = data_vec ;
+                parity [ 16 ] = data_vec ;
+                parity [ 17 ] = data_vec ;
+                parity [ 18 ] = data_vec ;
+                parity [ 19 ] = data_vec ;
+                parity [ 20 ] = data_vec ;
+                parity [ 21 ] = data_vec ;
+                parity [ 22 ] = data_vec ;
+                parity [ 23 ] = data_vec ;
+                parity [ 24 ] = data_vec ;
+                parity [ 25 ] = data_vec ;
+                parity [ 26 ] = data_vec ;
+                parity [ 27 ] = data_vec ;
+                parity [ 28 ] = data_vec ;
+                parity [ 29 ] = data_vec ;
+                parity [ 30 ] = data_vec ;
+                parity [ 31 ] = data_vec ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
+
+                        parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(parity [ 3 ], taps [ 3 ]) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(parity [ 4 ], taps [ 4 ]) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(parity [ 5 ], taps [ 5 ]) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(parity [ 6 ], taps [ 6 ]) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(parity [ 7 ], taps [ 7 ]) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(parity [ 8 ], taps [ 8 ]) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(parity [ 9 ], taps [ 9 ]) ;
+                        parity [ 10 ] = _mm512_gf2p8mul_epi8(parity [ 10 ], taps [ 10 ]) ;
+                        parity [ 11 ] = _mm512_gf2p8mul_epi8(parity [ 11 ], taps [ 11 ]) ;
+                        parity [ 12 ] = _mm512_gf2p8mul_epi8(parity [ 12 ], taps [ 12 ]) ;
+                        parity [ 13 ] = _mm512_gf2p8mul_epi8(parity [ 13 ], taps [ 13 ]) ;
+                        parity [ 14 ] = _mm512_gf2p8mul_epi8(parity [ 14 ], taps [ 14 ]) ;
+                        parity [ 15 ] = _mm512_gf2p8mul_epi8(parity [ 15 ], taps [ 15 ]) ;
+                        parity [ 16 ] = _mm512_gf2p8mul_epi8(parity [ 16 ], taps [ 16 ]) ;
+                        parity [ 17 ] = _mm512_gf2p8mul_epi8(parity [ 17 ], taps [ 17 ]) ;
+                        parity [ 18 ] = _mm512_gf2p8mul_epi8(parity [ 18 ], taps [ 18 ]) ;
+                        parity [ 19 ] = _mm512_gf2p8mul_epi8(parity [ 19 ], taps [ 19 ]) ;
+                        parity [ 20 ] = _mm512_gf2p8mul_epi8(parity [ 20 ], taps [ 20 ]) ;
+                        parity [ 21 ] = _mm512_gf2p8mul_epi8(parity [ 21 ], taps [ 21 ]) ;
+                        parity [ 22 ] = _mm512_gf2p8mul_epi8(parity [ 22 ], taps [ 22 ]) ;
+                        parity [ 23 ] = _mm512_gf2p8mul_epi8(parity [ 23 ], taps [ 23 ]) ;
+                        parity [ 24 ] = _mm512_gf2p8mul_epi8(parity [ 24 ], taps [ 24 ]) ;
+                        parity [ 25 ] = _mm512_gf2p8mul_epi8(parity [ 25 ], taps [ 25 ]) ;
+                        parity [ 26 ] = _mm512_gf2p8mul_epi8(parity [ 26 ], taps [ 26 ]) ;
+                        parity [ 27 ] = _mm512_gf2p8mul_epi8(parity [ 27 ], taps [ 27 ]) ;
+                        parity [ 28 ] = _mm512_gf2p8mul_epi8(parity [ 28 ], taps [ 28 ]) ;
+                        parity [ 29 ] = _mm512_gf2p8mul_epi8(parity [ 29 ], taps [ 29 ]) ;
+                        parity [ 30 ] = _mm512_gf2p8mul_epi8(parity [ 30 ], taps [ 30 ]) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 11 ], data_vec ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 12 ], data_vec ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 13 ], data_vec ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 14 ], data_vec ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 15 ], data_vec ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 16 ], data_vec ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 17 ], data_vec ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 18 ], data_vec ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 19 ], data_vec ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 20 ], data_vec ) ;
+                        parity [ 21 ] = _mm512_xor_si512 ( parity [ 21 ], data_vec ) ;
+                        parity [ 22 ] = _mm512_xor_si512 ( parity [ 22 ], data_vec ) ;
+                        parity [ 23 ] = _mm512_xor_si512 ( parity [ 23 ], data_vec ) ;
+                        parity [ 24 ] = _mm512_xor_si512 ( parity [ 24 ], data_vec ) ;
+                        parity [ 25 ] = _mm512_xor_si512 ( parity [ 25 ], data_vec ) ;
+                        parity [ 26 ] = _mm512_xor_si512 ( parity [ 26 ], data_vec ) ;
+                        parity [ 27 ] = _mm512_xor_si512 ( parity [ 27 ], data_vec ) ;
+                        parity [ 28 ] = _mm512_xor_si512 ( parity [ 28 ], data_vec ) ;
+                        parity [ 29 ] = _mm512_xor_si512 ( parity [ 29 ], data_vec ) ;
+                        parity [ 30 ] = _mm512_xor_si512 ( parity [ 30 ], data_vec ) ;
+                        parity [ 31 ] = _mm512_xor_si512 ( parity [ 31 ], data_vec ) ;
+                }
+
+                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 22 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 23 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 24 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 25 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 26 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 27 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 28 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 29 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 30 ] ) ;
+                data_vec = _mm512_or_si512 ( data_vec, parity [ 31 ] ) ;
+                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+                if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
+                {
+                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 4 ] [ 0 ], parity [ 4 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 5 ] [ 0 ], parity [ 5 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 6 ] [ 0 ], parity [ 6 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 7 ] [ 0 ], parity [ 7 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 8 ] [ 0 ], parity [ 8 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 9 ] [ 0 ], parity [ 9 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 10 ] [ 0 ], parity [ 10 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 11 ] [ 0 ], parity [ 11 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 12 ] [ 0 ], parity [ 12 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 13 ] [ 0 ], parity [ 13 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 14 ] [ 0 ], parity [ 14 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 15 ] [ 0 ], parity [ 15 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 16 ] [ 0 ], parity [ 16 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 17 ] [ 0 ], parity [ 17 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 18 ] [ 0 ], parity [ 18 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 19 ] [ 0 ], parity [ 19 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 20 ] [ 0 ], parity [ 20 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 21 ] [ 0 ], parity [ 21 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 22 ] [ 0 ], parity [ 22 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 23 ] [ 0 ], parity [ 23 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 24 ] [ 0 ], parity [ 24 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 25 ] [ 0 ], parity [ 25 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 26 ] [ 0 ], parity [ 26 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 27 ] [ 0 ], parity [ 27 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 28 ] [ 0 ], parity [ 28 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 29 ] [ 0 ], parity [ 29 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 30 ] [ 0 ], parity [ 30 ] ) ;
+                        _mm512_store_si512( (__m512i *) &dest [ 31 ] [ 0 ], parity [ 31 ] ) ;
+                        return ( curPos ) ;
+                }
+        }
+        return ( curPos ) ;
+}
+
+
+int gf_2vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 2 ], taps [ 2 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 2, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 2, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_3vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 3 ], taps [ 3 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 3, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 3, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_4vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 4 ], taps [ 4 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_5vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 5 ], taps [ 5 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 5, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 5, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_6vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 6 ], taps [ 6 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 6, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 6, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_7vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 7 ], taps [ 7 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 7, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 7, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_8vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 8 ], taps [ 8 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 8, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 8, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_9vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 9 ], taps [ 9 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 9, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 9, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_10vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 10 ], taps [ 10 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 10, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 10, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_11vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 11 ], taps [ 11 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 11, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 11, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 10 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ] ) ) ;
+                        parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 10 ] [ curPos ], parity [ 10 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_12vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 12 ], taps [ 12 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 12, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+                parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 12, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 10 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ] ) ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 11 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ] ) ) ;
+                        parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 10 ] [ curPos ], parity [ 10 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 11 ] [ curPos ], parity [ 11 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_13vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 13 ], taps [ 13 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 13, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+                parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
+                parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 13, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 10 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ] ) ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 11 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ] ) ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 12 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ] ) ) ;
+                        parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 10 ] [ curPos ], parity [ 10 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 11 ] [ curPos ], parity [ 11 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 12 ] [ curPos ], parity [ 12 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_14vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 14 ], taps [ 14 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 14, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+                parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
+                parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
+                parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 14, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 10 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ] ) ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 11 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ] ) ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 12 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ] ) ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 13 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ] ) ) ;
+                        parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 10 ] [ curPos ], parity [ 10 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 11 ] [ curPos ], parity [ 11 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 12 ] [ curPos ], parity [ 12 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 13 ] [ curPos ], parity [ 13 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_15vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 15 ], taps [ 15 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 15, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+                parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
+                parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
+                parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
+                parity [ 14 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 15, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 10 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ] ) ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 11 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ] ) ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 12 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ] ) ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 13 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ] ) ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 14 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ] ) ) ;
+                        parity [ 14 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 10 ] [ curPos ], parity [ 10 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 11 ] [ curPos ], parity [ 11 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 12 ] [ curPos ], parity [ 12 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 13 ] [ curPos ], parity [ 13 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 14 ] [ curPos ], parity [ 14 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_16vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 16 ], taps [ 16 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 16, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+                parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
+                parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
+                parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
+                parity [ 14 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ]) ;
+                parity [ 15 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 16, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 10 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ] ) ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 11 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ] ) ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 12 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ] ) ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 13 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ] ) ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 14 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ] ) ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 15 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ] ) ) ;
+                        parity [ 15 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 10 ] [ curPos ], parity [ 10 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 11 ] [ curPos ], parity [ 11 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 12 ] [ curPos ], parity [ 12 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 13 ] [ curPos ], parity [ 13 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 14 ] [ curPos ], parity [ 14 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 15 ] [ curPos ], parity [ 15 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_17vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 17 ], taps [ 17 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 17, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+                parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
+                parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
+                parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
+                parity [ 14 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ]) ;
+                parity [ 15 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ]) ;
+                parity [ 16 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 17, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 10 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ] ) ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 11 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ] ) ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 12 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ] ) ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 13 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ] ) ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 14 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ] ) ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 15 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ] ) ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 16 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ] ) ) ;
+                        parity [ 16 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 10 ] [ curPos ], parity [ 10 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 11 ] [ curPos ], parity [ 11 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 12 ] [ curPos ], parity [ 12 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 13 ] [ curPos ], parity [ 13 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 14 ] [ curPos ], parity [ 14 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 15 ] [ curPos ], parity [ 15 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 16 ] [ curPos ], parity [ 16 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_18vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 18 ], taps [ 18 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 18, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+                parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
+                parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
+                parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
+                parity [ 14 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ]) ;
+                parity [ 15 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ]) ;
+                parity [ 16 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ]) ;
+                parity [ 17 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 18, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 10 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ] ) ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 11 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ] ) ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 12 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ] ) ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 13 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ] ) ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 14 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ] ) ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 15 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ] ) ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 16 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ] ) ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 17 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ] ) ) ;
+                        parity [ 17 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 10 ] [ curPos ], parity [ 10 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 11 ] [ curPos ], parity [ 11 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 12 ] [ curPos ], parity [ 12 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 13 ] [ curPos ], parity [ 13 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 14 ] [ curPos ], parity [ 14 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 15 ] [ curPos ], parity [ 15 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 16 ] [ curPos ], parity [ 16 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 17 ] [ curPos ], parity [ 17 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_19vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 19 ], taps [ 19 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 19, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+                parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
+                parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
+                parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
+                parity [ 14 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ]) ;
+                parity [ 15 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ]) ;
+                parity [ 16 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ]) ;
+                parity [ 17 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ]) ;
+                parity [ 18 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 19, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 10 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ] ) ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 11 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ] ) ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 12 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ] ) ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 13 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ] ) ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 14 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ] ) ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 15 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ] ) ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 16 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ] ) ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 17 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ] ) ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 18 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ] ) ) ;
+                        parity [ 18 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 10 ] [ curPos ], parity [ 10 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 11 ] [ curPos ], parity [ 11 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 12 ] [ curPos ], parity [ 12 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 13 ] [ curPos ], parity [ 13 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 14 ] [ curPos ], parity [ 14 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 15 ] [ curPos ], parity [ 15 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 16 ] [ curPos ], parity [ 16 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 17 ] [ curPos ], parity [ 17 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 18 ] [ curPos ], parity [ 18 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_20vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 20 ], taps [ 20 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 20, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+                parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
+                parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
+                parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
+                parity [ 14 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ]) ;
+                parity [ 15 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ]) ;
+                parity [ 16 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ]) ;
+                parity [ 17 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ]) ;
+                parity [ 18 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ]) ;
+                parity [ 19 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 20, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 10 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ] ) ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 11 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ] ) ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 12 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ] ) ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 13 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ] ) ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 14 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ] ) ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 15 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ] ) ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 16 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ] ) ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 17 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ] ) ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 18 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ] ) ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 19 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ] ) ) ;
+                        parity [ 19 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 10 ] [ curPos ], parity [ 10 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 11 ] [ curPos ], parity [ 11 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 12 ] [ curPos ], parity [ 12 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 13 ] [ curPos ], parity [ 13 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 14 ] [ curPos ], parity [ 14 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 15 ] [ curPos ], parity [ 15 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 16 ] [ curPos ], parity [ 16 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 17 ] [ curPos ], parity [ 17 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 18 ] [ curPos ], parity [ 18 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 19 ] [ curPos ], parity [ 19 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_21vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 21 ], taps [ 21 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 21, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+                parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
+                parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
+                parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
+                parity [ 14 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ]) ;
+                parity [ 15 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ]) ;
+                parity [ 16 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ]) ;
+                parity [ 17 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ]) ;
+                parity [ 18 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ]) ;
+                parity [ 19 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ]) ;
+                parity [ 20 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 21, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 10 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ] ) ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 11 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ] ) ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 12 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ] ) ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 13 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ] ) ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 14 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ] ) ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 15 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ] ) ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 16 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ] ) ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 17 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ] ) ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 18 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ] ) ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 19 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ] ) ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 20 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ] ) ) ;
+                        parity [ 20 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 10 ] [ curPos ], parity [ 10 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 11 ] [ curPos ], parity [ 11 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 12 ] [ curPos ], parity [ 12 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 13 ] [ curPos ], parity [ 13 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 14 ] [ curPos ], parity [ 14 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 15 ] [ curPos ], parity [ 15 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 16 ] [ curPos ], parity [ 16 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 17 ] [ curPos ], parity [ 17 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 18 ] [ curPos ], parity [ 18 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 19 ] [ curPos ], parity [ 19 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 20 ] [ curPos ], parity [ 20 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_22vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 22 ], taps [ 22 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 22, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+                parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
+                parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
+                parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
+                parity [ 14 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ]) ;
+                parity [ 15 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ]) ;
+                parity [ 16 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ]) ;
+                parity [ 17 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ]) ;
+                parity [ 18 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ]) ;
+                parity [ 19 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ]) ;
+                parity [ 20 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ]) ;
+                parity [ 21 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 22, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 10 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ] ) ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 11 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ] ) ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 12 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ] ) ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 13 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ] ) ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 14 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ] ) ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 15 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ] ) ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 16 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ] ) ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 17 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ] ) ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 18 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ] ) ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 19 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ] ) ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 20 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ] ) ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 21 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ] ) ) ;
+                        parity [ 21 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 10 ] [ curPos ], parity [ 10 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 11 ] [ curPos ], parity [ 11 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 12 ] [ curPos ], parity [ 12 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 13 ] [ curPos ], parity [ 13 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 14 ] [ curPos ], parity [ 14 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 15 ] [ curPos ], parity [ 15 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 16 ] [ curPos ], parity [ 16 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 17 ] [ curPos ], parity [ 17 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 18 ] [ curPos ], parity [ 18 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 19 ] [ curPos ], parity [ 19 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 20 ] [ curPos ], parity [ 20 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 21 ] [ curPos ], parity [ 21 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_23vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 23 ], taps [ 23 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 23, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+                parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
+                parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
+                parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
+                parity [ 14 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ]) ;
+                parity [ 15 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ]) ;
+                parity [ 16 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ]) ;
+                parity [ 17 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ]) ;
+                parity [ 18 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ]) ;
+                parity [ 19 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ]) ;
+                parity [ 20 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ]) ;
+                parity [ 21 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ]) ;
+                parity [ 22 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 23, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 10 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ] ) ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 11 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ] ) ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 12 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ] ) ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 13 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ] ) ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 14 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ] ) ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 15 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ] ) ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 16 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ] ) ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 17 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ] ) ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 18 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ] ) ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 19 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ] ) ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 20 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ] ) ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 21 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ] ) ) ;
+                        parity [ 21 ] = _mm512_xor_si512 ( parity [ 22 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ] ) ) ;
+                        parity [ 22 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 10 ] [ curPos ], parity [ 10 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 11 ] [ curPos ], parity [ 11 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 12 ] [ curPos ], parity [ 12 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 13 ] [ curPos ], parity [ 13 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 14 ] [ curPos ], parity [ 14 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 15 ] [ curPos ], parity [ 15 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 16 ] [ curPos ], parity [ 16 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 17 ] [ curPos ], parity [ 17 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 18 ] [ curPos ], parity [ 18 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 19 ] [ curPos ], parity [ 19 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 20 ] [ curPos ], parity [ 20 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 21 ] [ curPos ], parity [ 21 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 22 ] [ curPos ], parity [ 22 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_24vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 24 ], taps [ 24 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 24, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+                parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
+                parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
+                parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
+                parity [ 14 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ]) ;
+                parity [ 15 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ]) ;
+                parity [ 16 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ]) ;
+                parity [ 17 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ]) ;
+                parity [ 18 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ]) ;
+                parity [ 19 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ]) ;
+                parity [ 20 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ]) ;
+                parity [ 21 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ]) ;
+                parity [ 22 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ]) ;
+                parity [ 23 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 23 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 24, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 10 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ] ) ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 11 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ] ) ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 12 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ] ) ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 13 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ] ) ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 14 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ] ) ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 15 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ] ) ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 16 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ] ) ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 17 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ] ) ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 18 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ] ) ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 19 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ] ) ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 20 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ] ) ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 21 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ] ) ) ;
+                        parity [ 21 ] = _mm512_xor_si512 ( parity [ 22 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ] ) ) ;
+                        parity [ 22 ] = _mm512_xor_si512 ( parity [ 23 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ] ) ) ;
+                        parity [ 23 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 23 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 10 ] [ curPos ], parity [ 10 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 11 ] [ curPos ], parity [ 11 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 12 ] [ curPos ], parity [ 12 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 13 ] [ curPos ], parity [ 13 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 14 ] [ curPos ], parity [ 14 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 15 ] [ curPos ], parity [ 15 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 16 ] [ curPos ], parity [ 16 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 17 ] [ curPos ], parity [ 17 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 18 ] [ curPos ], parity [ 18 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 19 ] [ curPos ], parity [ 19 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 20 ] [ curPos ], parity [ 20 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 21 ] [ curPos ], parity [ 21 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 22 ] [ curPos ], parity [ 22 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 23 ] [ curPos ], parity [ 23 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_25vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 25 ], taps [ 25 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 25, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+                parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
+                parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
+                parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
+                parity [ 14 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ]) ;
+                parity [ 15 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ]) ;
+                parity [ 16 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ]) ;
+                parity [ 17 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ]) ;
+                parity [ 18 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ]) ;
+                parity [ 19 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ]) ;
+                parity [ 20 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ]) ;
+                parity [ 21 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ]) ;
+                parity [ 22 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ]) ;
+                parity [ 23 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 23 ]) ;
+                parity [ 24 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 24 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 25, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 10 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ] ) ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 11 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ] ) ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 12 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ] ) ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 13 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ] ) ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 14 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ] ) ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 15 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ] ) ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 16 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ] ) ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 17 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ] ) ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 18 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ] ) ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 19 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ] ) ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 20 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ] ) ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 21 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ] ) ) ;
+                        parity [ 21 ] = _mm512_xor_si512 ( parity [ 22 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ] ) ) ;
+                        parity [ 22 ] = _mm512_xor_si512 ( parity [ 23 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ] ) ) ;
+                        parity [ 23 ] = _mm512_xor_si512 ( parity [ 24 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 23 ] ) ) ;
+                        parity [ 24 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 24 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 10 ] [ curPos ], parity [ 10 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 11 ] [ curPos ], parity [ 11 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 12 ] [ curPos ], parity [ 12 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 13 ] [ curPos ], parity [ 13 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 14 ] [ curPos ], parity [ 14 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 15 ] [ curPos ], parity [ 15 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 16 ] [ curPos ], parity [ 16 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 17 ] [ curPos ], parity [ 17 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 18 ] [ curPos ], parity [ 18 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 19 ] [ curPos ], parity [ 19 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 20 ] [ curPos ], parity [ 20 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 21 ] [ curPos ], parity [ 21 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 22 ] [ curPos ], parity [ 22 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 23 ] [ curPos ], parity [ 23 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 24 ] [ curPos ], parity [ 24 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_26vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 26 ], taps [ 26 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 26, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+                parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
+                parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
+                parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
+                parity [ 14 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ]) ;
+                parity [ 15 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ]) ;
+                parity [ 16 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ]) ;
+                parity [ 17 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ]) ;
+                parity [ 18 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ]) ;
+                parity [ 19 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ]) ;
+                parity [ 20 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ]) ;
+                parity [ 21 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ]) ;
+                parity [ 22 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ]) ;
+                parity [ 23 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 23 ]) ;
+                parity [ 24 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 24 ]) ;
+                parity [ 25 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 25 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 26, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 10 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ] ) ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 11 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ] ) ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 12 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ] ) ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 13 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ] ) ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 14 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ] ) ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 15 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ] ) ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 16 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ] ) ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 17 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ] ) ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 18 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ] ) ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 19 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ] ) ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 20 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ] ) ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 21 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ] ) ) ;
+                        parity [ 21 ] = _mm512_xor_si512 ( parity [ 22 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ] ) ) ;
+                        parity [ 22 ] = _mm512_xor_si512 ( parity [ 23 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ] ) ) ;
+                        parity [ 23 ] = _mm512_xor_si512 ( parity [ 24 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 23 ] ) ) ;
+                        parity [ 24 ] = _mm512_xor_si512 ( parity [ 25 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 24 ] ) ) ;
+                        parity [ 25 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 25 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 10 ] [ curPos ], parity [ 10 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 11 ] [ curPos ], parity [ 11 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 12 ] [ curPos ], parity [ 12 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 13 ] [ curPos ], parity [ 13 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 14 ] [ curPos ], parity [ 14 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 15 ] [ curPos ], parity [ 15 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 16 ] [ curPos ], parity [ 16 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 17 ] [ curPos ], parity [ 17 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 18 ] [ curPos ], parity [ 18 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 19 ] [ curPos ], parity [ 19 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 20 ] [ curPos ], parity [ 20 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 21 ] [ curPos ], parity [ 21 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 22 ] [ curPos ], parity [ 22 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 23 ] [ curPos ], parity [ 23 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 24 ] [ curPos ], parity [ 24 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 25 ] [ curPos ], parity [ 25 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_27vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 27 ], taps [ 27 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
+        taps [ 26 ] = _mm512_set1_epi8 ( g_tbls [ 26 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 27, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+                parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
+                parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
+                parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
+                parity [ 14 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ]) ;
+                parity [ 15 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ]) ;
+                parity [ 16 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ]) ;
+                parity [ 17 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ]) ;
+                parity [ 18 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ]) ;
+                parity [ 19 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ]) ;
+                parity [ 20 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ]) ;
+                parity [ 21 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ]) ;
+                parity [ 22 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ]) ;
+                parity [ 23 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 23 ]) ;
+                parity [ 24 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 24 ]) ;
+                parity [ 25 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 25 ]) ;
+                parity [ 26 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 26 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 27, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 10 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ] ) ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 11 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ] ) ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 12 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ] ) ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 13 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ] ) ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 14 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ] ) ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 15 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ] ) ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 16 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ] ) ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 17 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ] ) ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 18 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ] ) ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 19 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ] ) ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 20 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ] ) ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 21 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ] ) ) ;
+                        parity [ 21 ] = _mm512_xor_si512 ( parity [ 22 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ] ) ) ;
+                        parity [ 22 ] = _mm512_xor_si512 ( parity [ 23 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ] ) ) ;
+                        parity [ 23 ] = _mm512_xor_si512 ( parity [ 24 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 23 ] ) ) ;
+                        parity [ 24 ] = _mm512_xor_si512 ( parity [ 25 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 24 ] ) ) ;
+                        parity [ 25 ] = _mm512_xor_si512 ( parity [ 26 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 25 ] ) ) ;
+                        parity [ 26 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 26 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 10 ] [ curPos ], parity [ 10 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 11 ] [ curPos ], parity [ 11 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 12 ] [ curPos ], parity [ 12 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 13 ] [ curPos ], parity [ 13 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 14 ] [ curPos ], parity [ 14 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 15 ] [ curPos ], parity [ 15 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 16 ] [ curPos ], parity [ 16 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 17 ] [ curPos ], parity [ 17 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 18 ] [ curPos ], parity [ 18 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 19 ] [ curPos ], parity [ 19 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 20 ] [ curPos ], parity [ 20 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 21 ] [ curPos ], parity [ 21 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 22 ] [ curPos ], parity [ 22 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 23 ] [ curPos ], parity [ 23 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 24 ] [ curPos ], parity [ 24 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 25 ] [ curPos ], parity [ 25 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 26 ] [ curPos ], parity [ 26 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_28vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 28 ], taps [ 28 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
+        taps [ 26 ] = _mm512_set1_epi8 ( g_tbls [ 26 ] ) ;
+        taps [ 27 ] = _mm512_set1_epi8 ( g_tbls [ 27 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 28, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+                parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
+                parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
+                parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
+                parity [ 14 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ]) ;
+                parity [ 15 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ]) ;
+                parity [ 16 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ]) ;
+                parity [ 17 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ]) ;
+                parity [ 18 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ]) ;
+                parity [ 19 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ]) ;
+                parity [ 20 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ]) ;
+                parity [ 21 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ]) ;
+                parity [ 22 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ]) ;
+                parity [ 23 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 23 ]) ;
+                parity [ 24 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 24 ]) ;
+                parity [ 25 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 25 ]) ;
+                parity [ 26 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 26 ]) ;
+                parity [ 27 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 27 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 28, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 10 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ] ) ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 11 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ] ) ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 12 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ] ) ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 13 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ] ) ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 14 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ] ) ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 15 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ] ) ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 16 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ] ) ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 17 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ] ) ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 18 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ] ) ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 19 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ] ) ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 20 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ] ) ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 21 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ] ) ) ;
+                        parity [ 21 ] = _mm512_xor_si512 ( parity [ 22 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ] ) ) ;
+                        parity [ 22 ] = _mm512_xor_si512 ( parity [ 23 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ] ) ) ;
+                        parity [ 23 ] = _mm512_xor_si512 ( parity [ 24 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 23 ] ) ) ;
+                        parity [ 24 ] = _mm512_xor_si512 ( parity [ 25 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 24 ] ) ) ;
+                        parity [ 25 ] = _mm512_xor_si512 ( parity [ 26 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 25 ] ) ) ;
+                        parity [ 26 ] = _mm512_xor_si512 ( parity [ 27 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 26 ] ) ) ;
+                        parity [ 27 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 27 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 10 ] [ curPos ], parity [ 10 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 11 ] [ curPos ], parity [ 11 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 12 ] [ curPos ], parity [ 12 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 13 ] [ curPos ], parity [ 13 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 14 ] [ curPos ], parity [ 14 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 15 ] [ curPos ], parity [ 15 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 16 ] [ curPos ], parity [ 16 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 17 ] [ curPos ], parity [ 17 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 18 ] [ curPos ], parity [ 18 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 19 ] [ curPos ], parity [ 19 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 20 ] [ curPos ], parity [ 20 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 21 ] [ curPos ], parity [ 21 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 22 ] [ curPos ], parity [ 22 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 23 ] [ curPos ], parity [ 23 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 24 ] [ curPos ], parity [ 24 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 25 ] [ curPos ], parity [ 25 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 26 ] [ curPos ], parity [ 26 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 27 ] [ curPos ], parity [ 27 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_29vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 29 ], taps [ 29 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
+        taps [ 26 ] = _mm512_set1_epi8 ( g_tbls [ 26 ] ) ;
+        taps [ 27 ] = _mm512_set1_epi8 ( g_tbls [ 27 ] ) ;
+        taps [ 28 ] = _mm512_set1_epi8 ( g_tbls [ 28 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 29, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+                parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
+                parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
+                parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
+                parity [ 14 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ]) ;
+                parity [ 15 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ]) ;
+                parity [ 16 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ]) ;
+                parity [ 17 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ]) ;
+                parity [ 18 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ]) ;
+                parity [ 19 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ]) ;
+                parity [ 20 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ]) ;
+                parity [ 21 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ]) ;
+                parity [ 22 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ]) ;
+                parity [ 23 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 23 ]) ;
+                parity [ 24 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 24 ]) ;
+                parity [ 25 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 25 ]) ;
+                parity [ 26 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 26 ]) ;
+                parity [ 27 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 27 ]) ;
+                parity [ 28 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 28 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 29, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 10 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ] ) ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 11 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ] ) ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 12 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ] ) ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 13 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ] ) ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 14 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ] ) ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 15 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ] ) ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 16 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ] ) ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 17 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ] ) ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 18 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ] ) ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 19 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ] ) ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 20 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ] ) ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 21 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ] ) ) ;
+                        parity [ 21 ] = _mm512_xor_si512 ( parity [ 22 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ] ) ) ;
+                        parity [ 22 ] = _mm512_xor_si512 ( parity [ 23 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ] ) ) ;
+                        parity [ 23 ] = _mm512_xor_si512 ( parity [ 24 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 23 ] ) ) ;
+                        parity [ 24 ] = _mm512_xor_si512 ( parity [ 25 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 24 ] ) ) ;
+                        parity [ 25 ] = _mm512_xor_si512 ( parity [ 26 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 25 ] ) ) ;
+                        parity [ 26 ] = _mm512_xor_si512 ( parity [ 27 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 26 ] ) ) ;
+                        parity [ 27 ] = _mm512_xor_si512 ( parity [ 28 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 27 ] ) ) ;
+                        parity [ 28 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 28 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 10 ] [ curPos ], parity [ 10 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 11 ] [ curPos ], parity [ 11 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 12 ] [ curPos ], parity [ 12 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 13 ] [ curPos ], parity [ 13 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 14 ] [ curPos ], parity [ 14 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 15 ] [ curPos ], parity [ 15 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 16 ] [ curPos ], parity [ 16 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 17 ] [ curPos ], parity [ 17 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 18 ] [ curPos ], parity [ 18 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 19 ] [ curPos ], parity [ 19 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 20 ] [ curPos ], parity [ 20 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 21 ] [ curPos ], parity [ 21 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 22 ] [ curPos ], parity [ 22 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 23 ] [ curPos ], parity [ 23 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 24 ] [ curPos ], parity [ 24 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 25 ] [ curPos ], parity [ 25 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 26 ] [ curPos ], parity [ 26 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 27 ] [ curPos ], parity [ 27 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 28 ] [ curPos ], parity [ 28 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_30vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 30 ], taps [ 30 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
+        taps [ 26 ] = _mm512_set1_epi8 ( g_tbls [ 26 ] ) ;
+        taps [ 27 ] = _mm512_set1_epi8 ( g_tbls [ 27 ] ) ;
+        taps [ 28 ] = _mm512_set1_epi8 ( g_tbls [ 28 ] ) ;
+        taps [ 29 ] = _mm512_set1_epi8 ( g_tbls [ 29 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 30, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+                parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
+                parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
+                parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
+                parity [ 14 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ]) ;
+                parity [ 15 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ]) ;
+                parity [ 16 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ]) ;
+                parity [ 17 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ]) ;
+                parity [ 18 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ]) ;
+                parity [ 19 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ]) ;
+                parity [ 20 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ]) ;
+                parity [ 21 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ]) ;
+                parity [ 22 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ]) ;
+                parity [ 23 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 23 ]) ;
+                parity [ 24 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 24 ]) ;
+                parity [ 25 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 25 ]) ;
+                parity [ 26 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 26 ]) ;
+                parity [ 27 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 27 ]) ;
+                parity [ 28 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 28 ]) ;
+                parity [ 29 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 29 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 30, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 10 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ] ) ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 11 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ] ) ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 12 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ] ) ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 13 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ] ) ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 14 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ] ) ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 15 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ] ) ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 16 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ] ) ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 17 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ] ) ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 18 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ] ) ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 19 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ] ) ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 20 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ] ) ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 21 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ] ) ) ;
+                        parity [ 21 ] = _mm512_xor_si512 ( parity [ 22 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ] ) ) ;
+                        parity [ 22 ] = _mm512_xor_si512 ( parity [ 23 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ] ) ) ;
+                        parity [ 23 ] = _mm512_xor_si512 ( parity [ 24 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 23 ] ) ) ;
+                        parity [ 24 ] = _mm512_xor_si512 ( parity [ 25 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 24 ] ) ) ;
+                        parity [ 25 ] = _mm512_xor_si512 ( parity [ 26 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 25 ] ) ) ;
+                        parity [ 26 ] = _mm512_xor_si512 ( parity [ 27 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 26 ] ) ) ;
+                        parity [ 27 ] = _mm512_xor_si512 ( parity [ 28 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 27 ] ) ) ;
+                        parity [ 28 ] = _mm512_xor_si512 ( parity [ 29 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 28 ] ) ) ;
+                        parity [ 29 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 29 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 10 ] [ curPos ], parity [ 10 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 11 ] [ curPos ], parity [ 11 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 12 ] [ curPos ], parity [ 12 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 13 ] [ curPos ], parity [ 13 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 14 ] [ curPos ], parity [ 14 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 15 ] [ curPos ], parity [ 15 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 16 ] [ curPos ], parity [ 16 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 17 ] [ curPos ], parity [ 17 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 18 ] [ curPos ], parity [ 18 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 19 ] [ curPos ], parity [ 19 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 20 ] [ curPos ], parity [ 20 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 21 ] [ curPos ], parity [ 21 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 22 ] [ curPos ], parity [ 22 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 23 ] [ curPos ], parity [ 23 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 24 ] [ curPos ], parity [ 24 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 25 ] [ curPos ], parity [ 25 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 26 ] [ curPos ], parity [ 26 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 27 ] [ curPos ], parity [ 27 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 28 ] [ curPos ], parity [ 28 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 29 ] [ curPos ], parity [ 29 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_31vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 31 ], taps [ 31 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
+        taps [ 26 ] = _mm512_set1_epi8 ( g_tbls [ 26 ] ) ;
+        taps [ 27 ] = _mm512_set1_epi8 ( g_tbls [ 27 ] ) ;
+        taps [ 28 ] = _mm512_set1_epi8 ( g_tbls [ 28 ] ) ;
+        taps [ 29 ] = _mm512_set1_epi8 ( g_tbls [ 29 ] ) ;
+        taps [ 30 ] = _mm512_set1_epi8 ( g_tbls [ 30 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 31, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+                parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
+                parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
+                parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
+                parity [ 14 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ]) ;
+                parity [ 15 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ]) ;
+                parity [ 16 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ]) ;
+                parity [ 17 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ]) ;
+                parity [ 18 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ]) ;
+                parity [ 19 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ]) ;
+                parity [ 20 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ]) ;
+                parity [ 21 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ]) ;
+                parity [ 22 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ]) ;
+                parity [ 23 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 23 ]) ;
+                parity [ 24 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 24 ]) ;
+                parity [ 25 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 25 ]) ;
+                parity [ 26 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 26 ]) ;
+                parity [ 27 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 27 ]) ;
+                parity [ 28 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 28 ]) ;
+                parity [ 29 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 29 ]) ;
+                parity [ 30 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 30 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 31, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 10 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ] ) ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 11 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ] ) ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 12 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ] ) ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 13 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ] ) ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 14 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ] ) ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 15 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ] ) ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 16 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ] ) ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 17 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ] ) ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 18 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ] ) ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 19 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ] ) ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 20 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ] ) ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 21 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ] ) ) ;
+                        parity [ 21 ] = _mm512_xor_si512 ( parity [ 22 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ] ) ) ;
+                        parity [ 22 ] = _mm512_xor_si512 ( parity [ 23 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ] ) ) ;
+                        parity [ 23 ] = _mm512_xor_si512 ( parity [ 24 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 23 ] ) ) ;
+                        parity [ 24 ] = _mm512_xor_si512 ( parity [ 25 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 24 ] ) ) ;
+                        parity [ 25 ] = _mm512_xor_si512 ( parity [ 26 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 25 ] ) ) ;
+                        parity [ 26 ] = _mm512_xor_si512 ( parity [ 27 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 26 ] ) ) ;
+                        parity [ 27 ] = _mm512_xor_si512 ( parity [ 28 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 27 ] ) ) ;
+                        parity [ 28 ] = _mm512_xor_si512 ( parity [ 29 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 28 ] ) ) ;
+                        parity [ 29 ] = _mm512_xor_si512 ( parity [ 30 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 29 ] ) ) ;
+                        parity [ 30 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 30 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 10 ] [ curPos ], parity [ 10 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 11 ] [ curPos ], parity [ 11 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 12 ] [ curPos ], parity [ 12 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 13 ] [ curPos ], parity [ 13 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 14 ] [ curPos ], parity [ 14 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 15 ] [ curPos ], parity [ 15 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 16 ] [ curPos ], parity [ 16 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 17 ] [ curPos ], parity [ 17 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 18 ] [ curPos ], parity [ 18 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 19 ] [ curPos ], parity [ 19 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 20 ] [ curPos ], parity [ 20 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 21 ] [ curPos ], parity [ 21 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 22 ] [ curPos ], parity [ 22 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 23 ] [ curPos ], parity [ 23 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 24 ] [ curPos ], parity [ 24 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 25 ] [ curPos ], parity [ 25 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 26 ] [ curPos ], parity [ 26 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 27 ] [ curPos ], parity [ 27 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 28 ] [ curPos ], parity [ 28 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 29 ] [ curPos ], parity [ 29 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 30 ] [ curPos ], parity [ 30 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+int gf_32vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+        unsigned char ** dest)
+{
+        int curSym, curPos ;                          // Loop counters
+        __m512i parity [ 32 ], taps [ 32 ], par_vec ;
+        __m512i data_vec, matVec, vreg ;
+        unsigned char * pp = ( unsigned char * ) &par_vec ; 
+        pp += 60 ;
+
+        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
+        taps [ 26 ] = _mm512_set1_epi8 ( g_tbls [ 26 ] ) ;
+        taps [ 27 ] = _mm512_set1_epi8 ( g_tbls [ 27 ] ) ;
+        taps [ 28 ] = _mm512_set1_epi8 ( g_tbls [ 28 ] ) ;
+        taps [ 29 ] = _mm512_set1_epi8 ( g_tbls [ 29 ] ) ;
+        taps [ 30 ] = _mm512_set1_epi8 ( g_tbls [ 30 ] ) ;
+        taps [ 31 ] = _mm512_set1_epi8 ( g_tbls [ 31 ] ) ;
+
+        for ( curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
+              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                L1Enc(data_vec, 32, par_vec ) ;
+                parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
+                parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
+                parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
+                parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
+                parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
+                parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
+                parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
+                parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
+                parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
+                parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
+                parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
+                parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
+                parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
+                parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
+                parity [ 14 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ]) ;
+                parity [ 15 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ]) ;
+                parity [ 16 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ]) ;
+                parity [ 17 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ]) ;
+                parity [ 18 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ]) ;
+                parity [ 19 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ]) ;
+                parity [ 20 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ]) ;
+                parity [ 21 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ]) ;
+                parity [ 22 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ]) ;
+                parity [ 23 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 23 ]) ;
+                parity [ 24 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 24 ]) ;
+                parity [ 25 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 25 ]) ;
+                parity [ 26 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 26 ]) ;
+                parity [ 27 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 27 ]) ;
+                parity [ 28 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 28 ]) ;
+                parity [ 29 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 29 ]) ;
+                parity [ 30 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 30 ]) ;
+                parity [ 31 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 31 ]) ;
+
+                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                {
+                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
+                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        L1Enc(data_vec, 32, par_vec ) ;
+                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
+                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ] ) ) ;
+                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ] ) ) ;
+                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 4 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ] ) ) ;
+                        parity [ 4 ] = _mm512_xor_si512 ( parity [ 5 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ] ) ) ;
+                        parity [ 5 ] = _mm512_xor_si512 ( parity [ 6 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ] ) ) ;
+                        parity [ 6 ] = _mm512_xor_si512 ( parity [ 7 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ] ) ) ;
+                        parity [ 7 ] = _mm512_xor_si512 ( parity [ 8 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ] ) ) ;
+                        parity [ 8 ] = _mm512_xor_si512 ( parity [ 9 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ] ) ) ;
+                        parity [ 9 ] = _mm512_xor_si512 ( parity [ 10 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ] ) ) ;
+                        parity [ 10 ] = _mm512_xor_si512 ( parity [ 11 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ] ) ) ;
+                        parity [ 11 ] = _mm512_xor_si512 ( parity [ 12 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ] ) ) ;
+                        parity [ 12 ] = _mm512_xor_si512 ( parity [ 13 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ] ) ) ;
+                        parity [ 13 ] = _mm512_xor_si512 ( parity [ 14 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ] ) ) ;
+                        parity [ 14 ] = _mm512_xor_si512 ( parity [ 15 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ] ) ) ;
+                        parity [ 15 ] = _mm512_xor_si512 ( parity [ 16 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ] ) ) ;
+                        parity [ 16 ] = _mm512_xor_si512 ( parity [ 17 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ] ) ) ;
+                        parity [ 17 ] = _mm512_xor_si512 ( parity [ 18 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ] ) ) ;
+                        parity [ 18 ] = _mm512_xor_si512 ( parity [ 19 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ] ) ) ;
+                        parity [ 19 ] = _mm512_xor_si512 ( parity [ 20 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ] ) ) ;
+                        parity [ 20 ] = _mm512_xor_si512 ( parity [ 21 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ] ) ) ;
+                        parity [ 21 ] = _mm512_xor_si512 ( parity [ 22 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ] ) ) ;
+                        parity [ 22 ] = _mm512_xor_si512 ( parity [ 23 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ] ) ) ;
+                        parity [ 23 ] = _mm512_xor_si512 ( parity [ 24 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 23 ] ) ) ;
+                        parity [ 24 ] = _mm512_xor_si512 ( parity [ 25 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 24 ] ) ) ;
+                        parity [ 25 ] = _mm512_xor_si512 ( parity [ 26 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 25 ] ) ) ;
+                        parity [ 26 ] = _mm512_xor_si512 ( parity [ 27 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 26 ] ) ) ;
+                        parity [ 27 ] = _mm512_xor_si512 ( parity [ 28 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 27 ] ) ) ;
+                        parity [ 28 ] = _mm512_xor_si512 ( parity [ 29 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 28 ] ) ) ;
+                        parity [ 29 ] = _mm512_xor_si512 ( parity [ 30 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 29 ] ) ) ;
+                        parity [ 30 ] = _mm512_xor_si512 ( parity [ 31 ],
+                                       _mm512_gf2p8mul_epi8(data_vec, taps [ 30 ] ) ) ;
+                        parity [ 31 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 31 ]) ;
+                }
+
+                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 4 ] [ curPos ], parity [ 4 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 5 ] [ curPos ], parity [ 5 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 6 ] [ curPos ], parity [ 6 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 7 ] [ curPos ], parity [ 7 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 8 ] [ curPos ], parity [ 8 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 9 ] [ curPos ], parity [ 9 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 10 ] [ curPos ], parity [ 10 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 11 ] [ curPos ], parity [ 11 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 12 ] [ curPos ], parity [ 12 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 13 ] [ curPos ], parity [ 13 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 14 ] [ curPos ], parity [ 14 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 15 ] [ curPos ], parity [ 15 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 16 ] [ curPos ], parity [ 16 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 17 ] [ curPos ], parity [ 17 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 18 ] [ curPos ], parity [ 18 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 19 ] [ curPos ], parity [ 19 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 20 ] [ curPos ], parity [ 20 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 21 ] [ curPos ], parity [ 21 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 22 ] [ curPos ], parity [ 22 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 23 ] [ curPos ], parity [ 23 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 24 ] [ curPos ], parity [ 24 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 25 ] [ curPos ], parity [ 25 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 26 ] [ curPos ], parity [ 26 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 27 ] [ curPos ], parity [ 27 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 28 ] [ curPos ], parity [ 28 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 29 ] [ curPos ], parity [ 29 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 30 ] [ curPos ], parity [ 30 ] ) ;
+                _mm512_store_si512( (__m512i *) &dest [ 31 ] [ curPos ], parity [ 31 ] ) ;
+        }
+        return ( curPos ) ;
+}
+
+void pc_encode_data_avx512_gfni_1b(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
+        unsigned char **coding)
+{
+        switch (rows) {
+        case 2: gf_2vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 3: gf_3vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 4: gf_4vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 5: gf_5vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 6: gf_6vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 7: gf_7vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 8: gf_8vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 9: gf_9vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 10: gf_10vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 11: gf_11vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 12: gf_12vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 13: gf_13vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 14: gf_14vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 15: gf_15vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 16: gf_16vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 17: gf_17vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 18: gf_18vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 19: gf_19vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 20: gf_20vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 21: gf_21vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 22: gf_22vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 23: gf_23vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 24: gf_24vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 25: gf_25vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 26: gf_26vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 27: gf_27vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 28: gf_28vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 29: gf_29vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 30: gf_30vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 31: gf_31vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        case 32: gf_32vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+                 break ;
+        }
+}
+int pc_decode_data_avx512_gfni_1b(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
+        unsigned char **coding, int retries)
+{
+        int newPos = 0, retry = 0 ;
+        while ( ( newPos < len ) && ( retry++ < retries ) )
+        {
+
+                switch (rows) {
+                case 2: newPos = gf_2vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 3: newPos = gf_3vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 4: newPos = gf_4vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 5: newPos = gf_5vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 6: newPos = gf_6vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 7: newPos = gf_7vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 8: newPos = gf_8vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 9: newPos = gf_9vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 10: newPos = gf_10vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 11: newPos = gf_11vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 12: newPos = gf_12vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 13: newPos = gf_13vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 14: newPos = gf_14vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 15: newPos = gf_15vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 16: newPos = gf_16vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 17: newPos = gf_17vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 18: newPos = gf_18vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 19: newPos = gf_19vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 20: newPos = gf_20vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 21: newPos = gf_21vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 22: newPos = gf_22vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 23: newPos = gf_23vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 24: newPos = gf_24vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 25: newPos = gf_25vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 26: newPos = gf_26vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 27: newPos = gf_27vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 28: newPos = gf_28vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 29: newPos = gf_29vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 30: newPos = gf_30vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 31: newPos = gf_31vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                case 32: newPos = gf_32vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                         break ;
+                }
+                if ( newPos < len )
+                {
+                        if ( pc_correct_AVX512_GFNI_1b ( newPos, k, rows, data, coding, 64 ) )
+                        {
+                                return ( newPos ) ;
+                        }
+
+                }
+        }
+        return ( newPos ) ;
+}
