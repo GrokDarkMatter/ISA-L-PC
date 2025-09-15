@@ -849,6 +849,8 @@ int PGZ_1b_AVX512_GFNI ( unsigned char * S, int p, unsigned char * keyEq )
        unsigned char SMat [ PC_MAX_ERRS * PC_MAX_ERRS ], SMat_inv [ PC_MAX_ERRS * PC_MAX_ERRS ] ;
         int i,j ;
 
+        memset ( keyEq, 0, p / 2 ) ;
+
        // For each potential size, create and find Hankel matrix that will invert
         for ( int mSize = ( p / 2 ) ; mSize >= 2 ; mSize -- )
         {

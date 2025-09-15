@@ -464,7 +464,7 @@ void TestPAPIbm ( void )
                 }
 
                 // Workload
-                for ( int i = 0 ; i < 1 ; i ++ )
+                for ( int i = 0 ; i < 1000 ; i ++ )
                 {
                         len = PGZ_1b_AVX512_GFNI ( S, lenPoly, keyEq ) ;
                 }
