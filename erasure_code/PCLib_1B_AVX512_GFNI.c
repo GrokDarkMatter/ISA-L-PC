@@ -751,7 +751,7 @@ int berlekamp_massey_1b_AVX512_GFNI(unsigned char *syndromes, int length, unsign
         }
         else
         {
-            unsigned char q = gf_div_AVX512_GFNI(d, old_d);
+            unsigned char q = gf_div_1b_AVX512_GFNI(d, old_d);
             memcpy(temp, lambda, length + 1 + 31);
 
             // SIMD update: lambda[j + m] ^= gf_mul(q, b[j]) using AVX-512 GF2P8AFFINE
@@ -790,7 +790,7 @@ int pc_verify_multiple_errors_1b_AVX512_GFNI ( unsigned char * S, unsigned char 
         unsigned char errVal [ PC_MAX_ERRS ] ;
 
         // Find roots, exit if mismatch with expected roots
-        int nroots = find_roots_AVX512_GFNI ( keyEq, roots, mSize );
+        int nroots = find_roots_1b_AVX512_GFNI ( keyEq, roots, mSize );
         if ( nroots != mSize )
         {
                 printf ( "Bad roots expected %d got %d\n", mSize, nroots ) ;
@@ -798,13 +798,13 @@ int pc_verify_multiple_errors_1b_AVX512_GFNI ( unsigned char * S, unsigned char 
         }
 
         // Compute the error values
-        if ( pc_compute_error_values_AVX512_GFNI ( mSize, S, roots, errVal ) == 0 )
+        if ( pc_compute_error_values_1b_AVX512_GFNI ( mSize, S, roots, errVal ) == 0 )
         {
                 return 0 ;
         }
 
         // Verify all syndromes are correct
-        if ( pc_verify_syndromes_AVX512_GFNI ( S, p, mSize, roots, errVal ) == 0 )
+        if ( pc_verify_syndromes_1b_AVX512_GFNI ( S, p, mSize, roots, errVal ) == 0 )
         {
                 return 0 ;
         }
@@ -892,7 +892,7 @@ int pc_correct_1b_AVX512_GFNI ( int newPos, int k, int p,
                 return 1 ;
         }
 
-        mSize = PGZ_AVX512_GFNI ( S, p, keyEq ) ;
+        mSize = PGZ_1b_AVX512_GFNI( S, p, keyEq ) ;
 
         if ( mSize > 1 )
         {
@@ -900,4 +900,16 @@ int pc_correct_1b_AVX512_GFNI ( int newPos, int k, int p,
         }
         return 0 ;
 }
+
+int pc_encode_data_1b_avx512_gfni ( int len, int m, int p, unsigned char * g_tbls, 
+    unsigned char ** data, unsigned char ** coding ) 
+{
+        return 0 ;
+}
+int pc_decode_data_1b_avx512_gfni ( int len, int m, int p, unsigned char * g_tbls, 
+    unsigned char ** data, unsigned char ** coding, int retries ) 
+{
+        return 0 ;
+}
+
 

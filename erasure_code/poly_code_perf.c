@@ -52,6 +52,8 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include "ec_base.h"
 typedef unsigned char u8;
 
+#define PC_MAX_ERRS 32
+
 // Utility print routine
 void
 dump_u8xu8(unsigned char *s, int k, int m)
@@ -65,6 +67,12 @@ dump_u8xu8(unsigned char *s, int k, int m)
         }
         printf("\n");
 }
+//extern int pc_decode_data_1b_avx512_gfni ( int len, int m, int p, unsigned char * g_tbls, 
+//    unsigned char ** data, unsigned char ** coding, int retries ) ;
+//extern int pc_encode_data_1b_avx512_gfni ( int len, int m, int p, unsigned char * g_tbls, 
+//    unsigned char ** data, unsigned char ** coding ) ;
+extern int ec_encode_data_avx512_gfni ( int len, int m, int p, unsigned char * g_tbls, 
+    unsigned char ** data, unsigned char ** coding ) ;
 
 #ifdef _WIN64
 #define __builtin_prefetch(a,b,c) _mm_prefetch((const char*)(a), _MM_HINT_T0)
@@ -79,10 +87,6 @@ extern void ec_encode_data_neon ( int len, int k, int p, u8 * g_tbls, u8 ** buff
 extern void ec_encode_data_neon ( int len, int k, int p, u8 * g_tbls, u8 ** buffs, u8 ** dest ) ;
 #else
 #include <immintrin.h>
-extern void ec_encode_data_avx2_gfni ( int len, int k, int p, u8 * g_tbls, u8 ** buffs, u8 ** dest ) ;
-#include "PCLib_AVX2_GFNI.c" 
-extern void ec_encode_data_avx512_gfni ( int len, int k, int p, u8 * g_tbls, u8 ** buffs, u8 ** dest ) ;
-#include "PCLib_AVX512_GFNI.c"
 #include "PCLib_1B_AVX512_GFNI.c"
 extern void gf_gen_poly ( unsigned char *, int ) ;
 extern int find_roots ( unsigned char * S, unsigned char * roots, int lenPoly ) ;
@@ -216,14 +220,14 @@ void TestPAPIRoots ( void )
                 CPI = ( double ) values[ 0 ] / values[ 1 ] ;
                 printf ( "find_roots_sca %2d %11lld cycles %11lld instructions CPI %.3lf\n", lenPoly, values [ 0 ], values [ 1 ], CPI ) ;
 
-                int rootCount2 = find_roots_AVX512_GFNI ( keyEq, roots, lenPoly ) ; // Run once to fill in Vandermonde
+                int rootCount2 = find_roots_1b_AVX512_GFNI ( keyEq, roots, lenPoly ) ; // Run once to fill in Vandermonde
                 if ( ( ret = PAPI_start ( event_set ) ) != PAPI_OK) 
                 {
                         handle_error(ret);
                 }
 
                 // Workload
-                rootCount = find_roots_AVX512_GFNI ( keyEq, roots, lenPoly ) ;
+                rootCount = find_roots_1b_AVX512_GFNI ( keyEq, roots, lenPoly ) ;
 
                 if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
                 {
@@ -281,7 +285,7 @@ void TestPAPIInv ( void )
                 }
 
                 // Workload
-                ret = gf_invert_matrix_AVX512_GFNI ( in_mat, out_mat, lenPoly ) ;
+                ret = gf_invert_matrix_1b_AVX512_GFNI ( in_mat, out_mat, lenPoly ) ;
 
                 if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK)
                 {
@@ -531,7 +535,7 @@ void TestPAPIbm ( void )
                 // Workload
                 for ( int i = 0 ; i < 1000 ; i ++ )
                 {
-                        bmLen = berlekamp_massey_AVX512_GFNI ( S, lenPoly, bmKeyEq ) ;
+                        bmLen = berlekamp_massey_1b_AVX512_GFNI ( S, lenPoly, bmKeyEq ) ;
                 }
 
                 if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
@@ -569,14 +573,6 @@ usage(const char *app_name)
                 "  -p <val>  Number of parity buffers\n"
                 "  -2 <val>  If 1 then AVX2 testing\n",
                 app_name);
-}
-
-void
-ec_encode_perf(int m, int k, u8 *a, u8 *g_tbls, u8 **buffs, struct perf *start)
-{
-        ec_init_tables(k, m - k, &a[k * k], g_tbls);
-        BENCHMARK(start, BENCHMARK_TIME,
-                  ec_encode_data(TEST_LEN(m), k, m - k, g_tbls, buffs, &buffs[k]));
 }
 
 int
@@ -638,7 +634,7 @@ exit:
 
 #define FIELD_SIZE 256
 
-void inject_errors_in_place(unsigned char **data, int index, int num_errors, unsigned char *error_positions, uint8_t *original_values)
+void inject_errors_in_place_1b(unsigned char **data, int index, int num_errors, unsigned char *error_positions, uint8_t *original_values)
 {
     for (int i = 0; i < num_errors; i++)
     {
@@ -649,7 +645,7 @@ void inject_errors_in_place(unsigned char **data, int index, int num_errors, uns
     }
 }
 
-int verify_correction_in_place(unsigned char **data, int index, int num_errors, unsigned char *error_positions, uint8_t *original_values)
+int verify_correction_in_place_1b(unsigned char **data, int index, int num_errors, unsigned char *error_positions, uint8_t *original_values)
 {
     for (int i = 0; i < num_errors; i++)
     {
@@ -662,7 +658,7 @@ int verify_correction_in_place(unsigned char **data, int index, int num_errors, 
     return 1;
 }
 
-int test_pgz_decoder ( int index, int m, int p, unsigned char * g_tbls,
+int test_pgz_decoder_1b ( int index, int m, int p, unsigned char * g_tbls,
                 unsigned char ** data, unsigned char ** coding, int avx2 )
 {
     int successes = 0, total_tests = 0;
@@ -677,21 +673,14 @@ int test_pgz_decoder ( int index, int m, int p, unsigned char * g_tbls,
             {
                 error_positions[i] = start + i;
             }
-            inject_errors_in_place(data, index, num_errors, error_positions, original_values);
+            inject_errors_in_place_1b ( data, index, num_errors, error_positions, original_values );
 #ifdef __aarch64__
             pc_decode_data_neon(TEST_LEN(m), m, p, g_tbls, data, coding, 1);
 #else
-            if ( avx2 == 0 )
-            {
-                    pc_decode_data_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
-            }
-            else
-            {
-                    pc_decode_data_avx2_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding, 1) ;
-            }
-#endif
+            pc_decode_data_1b_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
 
-            if (verify_correction_in_place(data, index, num_errors, error_positions, original_values))
+#endif
+           if ( verify_correction_in_place_1b(data, index, num_errors, error_positions, original_values ) )
             {
                 successes++;
             }
@@ -721,22 +710,16 @@ int test_pgz_decoder ( int index, int m, int p, unsigned char * g_tbls,
                 error_positions[i] = available[idx];
                 available[idx] = available[m- 1 - i];
             }
-            inject_errors_in_place(data, index, num_errors, error_positions, original_values);
+            inject_errors_in_place_1b(data, index, num_errors, error_positions, original_values);
 
 #ifdef __aarch64__
             pc_decode_data_neon(TEST_LEN(m), m, p, g_tbls, data, coding, 1);
 #else
-            if ( avx2 == 0 )
-            {
-                    pc_decode_data_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
-            }
-            else
-            {
-                    pc_decode_data_avx2_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
-            }
+
+            pc_decode_data_1b_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
 #endif
 
-            if (verify_correction_in_place(data, index, num_errors, error_positions, original_values))
+            if (verify_correction_in_place_1b(data, index, num_errors, error_positions, original_values))
             {
                 successes++;
             }
@@ -810,16 +793,12 @@ main(int argc, char *argv[])
         nerrs = p ;
         m = k + p ;
 
-#ifndef NOPAPI
         // Do early performance testing
-        if ( avx2 == 0 )
-        {
-                TestPAPIRoots () ;
-                TestPAPIInv   () ;
-                TestPAPI1b    () ;
-                TestPAPIbm    () ;
-        }
-#endif
+
+        TestPAPIRoots () ;
+        TestPAPIInv   () ;
+        TestPAPI1b    () ;
+        TestPAPIbm    () ;
         if (m > MMAX)
         {
                 printf("Number of total buffers (data and parity) cannot be higher than %d\n",
@@ -882,14 +861,8 @@ main(int argc, char *argv[])
 #ifdef __aarch64__
         printf ( "Testing ARM64-NEON\n" ) ;
 #else
-        if ( avx2 == 0 )
-        {
-                printf ( "Testing AVX512-GFNI\n" ) ;
-        }
-        else
-        {
-                printf ( "Testing AVX2-GFNI\n" ) ;
-        }
+
+        printf ( "Testing AVX512-GFNI\n" ) ;
 #endif
 
         // Perform the baseline benchmark
@@ -900,16 +873,8 @@ main(int argc, char *argv[])
         BENCHMARK(&start, BENCHMARK_TIME,
                   ec_encode_data_neon(TEST_LEN(m), k, p, g_tbls, buffs, &buffs[k]));
 #else
-        if ( avx2 == 0 )
-        {
-                BENCHMARK(&start, BENCHMARK_TIME,
-                        ec_encode_data_avx512_gfni(TEST_LEN(m), k, p, g_tbls, buffs, &buffs[k]));
-        }
-        else
-        {
-                BENCHMARK(&start, BENCHMARK_TIME,
-                        ec_encode_data_avx2_gfni(TEST_LEN(m), k, p, g_tbls, buffs, &buffs[k]));
-        }
+        BENCHMARK(&start, BENCHMARK_TIME,
+            ec_encode_data_avx512_gfni(TEST_LEN(m), k, p, g_tbls, buffs, &buffs[k]));
 #endif
         printf("erasure_code_encode" TEST_TYPE_STR ": k=%d p=%d ", k, p);
         perf_print(start, (long long) (TEST_LEN(m)) * (m));
@@ -922,16 +887,8 @@ main(int argc, char *argv[])
         BENCHMARK(&start, BENCHMARK_TIME,
                   pc_encode_data_neon(TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs));
 #else
-        if ( avx2 == 0 )
-        {
-                BENCHMARK(&start, BENCHMARK_TIME,
-                        pc_encode_data_avx512_gfni(TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs));
-        }
-        else
-        {
-                BENCHMARK(&start, BENCHMARK_TIME,
-                        pc_encode_data_avx2_gfni(TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs));
-        }
+        BENCHMARK(&start, BENCHMARK_TIME,
+                pc_encode_data_1b_avx512_gfni(TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs));
 #endif
         for (i = 0; i < p; i++) {
                 if (0 != memcmp(buffs[k+i], temp_buffs[i], TEST_LEN(m) ) ) {
@@ -951,16 +908,8 @@ main(int argc, char *argv[])
         BENCHMARK(&start, BENCHMARK_TIME,
                   ec_encode_data_neon(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs));
 #else
-        if ( avx2 == 0 )
-        {
-                BENCHMARK(&start, BENCHMARK_TIME,
-                        ec_encode_data_avx512_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs));
-        }
-        else
-        {
-                BENCHMARK(&start, BENCHMARK_TIME,
-                        ec_encode_data_avx2_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs));
-        }
+        BENCHMARK(&start, BENCHMARK_TIME,
+                ec_encode_data_avx512_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs));
 #endif
         printf("dot_prod_decode" TEST_TYPE_STR ":     k=%d p=%d ", m, p );
         perf_print(start, (long long) (TEST_LEN(m)) * (m));
@@ -988,21 +937,13 @@ main(int argc, char *argv[])
         BENCHMARK(&start, BENCHMARK_TIME,
                   pc_decode_data_neon(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 1));
 #else
-        if ( avx2 == 0 )
-        {
-                BENCHMARK(&start, BENCHMARK_TIME,
-                        pc_decode_data_avx512_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 1));
-        }
-        else
-        {
-                BENCHMARK(&start, BENCHMARK_TIME,
-                        pc_decode_data_avx2_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 1));
-        }
+        BENCHMARK(&start, BENCHMARK_TIME,
+                pc_decode_data_1b_avx512_gfni(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 1));
 #endif
         printf("polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p );
         perf_print(start, (long long) (TEST_LEN(m)) * (m));
 
-        if ( test_pgz_decoder ( 0, m, p, g_tbls, buffs, temp_buffs, avx2 ) == 0 )
+        if ( test_pgz_decoder_1b ( 0, m, p, g_tbls, buffs, temp_buffs, avx2 ) == 0 )
         {
                 printf ( "Decoder failed\n" ) ;
                 goto exit ;
@@ -1014,15 +955,7 @@ main(int argc, char *argv[])
                 handle_error(ret);
         }
         // Workload
-        if ( avx2 == 0 )
-        {
-                ec_encode_data_avx512_gfni ( TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs ) ;
-        }
-        else
-        {
-                ec_encode_data_avx2_gfni ( TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs ) ;
-
-        }
+        ec_encode_data_avx512_gfni ( TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs ) ;
 
         long long values[ 2 ];
         if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
@@ -1042,16 +975,7 @@ main(int argc, char *argv[])
                 handle_error ( ret ) ;
         }
         // Workload
-        if ( avx2 == 0 )
-        {
-                pc_encode_data_avx512_gfni( TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs);
-        }
-        else
-        {
-                pc_encode_data_avx2_gfni( TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs);
-
-        }
-
+        pc_encode_data_1b_avx512_gfni( TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs);
         if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
         {
                 handle_error ( ret ) ;
@@ -1066,17 +990,9 @@ main(int argc, char *argv[])
                 handle_error(ret);
         }
 
-        // Workload
-        if ( avx2 == 0 )
-        {
-                ec_encode_data_avx512_gfni( TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs ); 
-        }
-        else
-        {
-                ec_encode_data_avx2_gfni( TEST_LEN( m ), m, p, g_tbls, buffs, temp_buffs ) ;
-        }
+        ec_encode_data_avx512_gfni( TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs ); 
 
-        if ((ret = PAPI_stop(event_set, values)) != PAPI_OK)
+                if ((ret = PAPI_stop(event_set, values)) != PAPI_OK)
         {
                 handle_error(ret);
         }
@@ -1092,15 +1008,8 @@ main(int argc, char *argv[])
         }
 
         // Workload
-        if ( avx2 == 0 )
-        {
-                //pc_decode_data_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 1 ) ;
-                gf_4vect_pss_avx512_gfni_2d ( TEST_LEN(m), m, g_tbls, buffs, temp_buffs, 0 ) ;
-        }
-        else
-        {
-                pc_decode_data_avx2_gfni ( TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 1 ) ;
-        }
+        pc_decode_data_1b_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 1 ) ;
+        //gf_4vect_pss_avx512_gfni_2d ( TEST_LEN(m), m, g_tbls, buffs, temp_buffs, 0 ) ;
 
         if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
         {
