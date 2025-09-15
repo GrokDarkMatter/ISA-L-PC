@@ -887,7 +887,7 @@ int pc_correct_1b_AVX512_GFNI ( int newPos, int k, int p,
         }
 
         // Check to see if a single error can be verified
-        if ( pc_verify_single_error_AVX512_GFNI ( S, data, k, p, newPos, offSet ) )
+        if ( pc_verify_single_error_1b_AVX512_GFNI ( S, data, k, p, newPos, offSet ) )
         {
                 return 1 ;
         }
@@ -896,7 +896,7 @@ int pc_correct_1b_AVX512_GFNI ( int newPos, int k, int p,
 
         if ( mSize > 1 )
         {
-                return pc_verify_multiple_errors_AVX512_GFNI ( S, data, mSize, k, p, newPos, offSet, keyEq ) ;
+                return pc_verify_multiple_errors_1b_AVX512_GFNI ( S, data, mSize, k, p, newPos, offSet, keyEq ) ;
         }
         return 0 ;
 }
