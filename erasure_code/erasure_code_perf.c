@@ -68,6 +68,7 @@ dump_u8xu8(unsigned char *s, int k, int m)
 
 #ifdef _WIN64
 #define __builtin_prefetch(a,b,c) _mm_prefetch((const char*)(a), _MM_HINT_T0)
+#define _popcnt64 __popcnt64
 #define NOPAPI 1
 #endif
 #ifdef __aarch64__
@@ -340,11 +341,11 @@ void TestPAPI1b ( void )
         }
 
         // Build the power table
-        pc_bpow ( 3 ) ;
+        pc_bpow_1b ( 3 ) ;
         // Build the log table
-        pc_blog () ;
+        pc_blog_1b () ;
         // Build the inverse table
-        pc_binv () ;
+        pc_binv_1b () ;
         //printf ( "Inverse of 3 is %d\n", pc_itab [ 3 ] ) ;
         //printf ( "%d times 3 is %d\n", pc_itab [ 3 ], pc_mul_1b ( pc_itab [ 3 ], 3 ) ) ;
 
@@ -354,10 +355,10 @@ void TestPAPI1b ( void )
                 //printf ( "RSR matrix\n" ) ;
                 //dump_u8xu8 ( a, 2, 255 ) ;
                 //pc_bvan2 () ;
-                pc_bvan ( a, lenPoly ) ;
+                pc_bvan_1b ( a, lenPoly ) ;
 
                 pc_gen_poly_matrix_1b ( a, 255, 255 - lenPoly ) ;
-                pc_bmat ( a, lenPoly ) ;
+                pc_bmat_1b ( a, lenPoly ) ;
 
                 memset ( a, 0, 255 ) ;
                 memset ( &a [ 255 - lenPoly - 1 ], 1, 1 ) ;
@@ -1093,7 +1094,8 @@ main(int argc, char *argv[])
         // Workload
         if ( avx2 == 0 )
         {
-                pc_decode_data_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 1 ) ;
+                //pc_decode_data_avx512_gfni ( TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 1 ) ;
+                gf_4vect_pss_avx512_gfni_2d ( TEST_LEN(m), m, g_tbls, buffs, temp_buffs, 0 ) ;
         }
         else
         {
