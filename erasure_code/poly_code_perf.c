@@ -841,8 +841,8 @@ main(int argc, char *argv[])
         // Make random data
         for (i = 0; i < k; i++)
                 for (j = 0; j < TEST_LEN(m); j++)
-                        buffs[ i ][ j ] = 0 ; //rand() ;
-        memset ( buffs [ k - 1 ], 1, TEST_LEN(m) ) ;
+                        buffs[ i ][ j ] = rand() ;
+        //memset ( buffs [ k - 3 ], 2, TEST_LEN(m) ) ;
         //printf ( "memset [ k-1 ]\n" ) ;
         //dump_u8xu8 ( ( unsigned char * ) buffs [ k - 1 ], 1,16 ) ;
 
