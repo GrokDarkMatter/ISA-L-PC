@@ -632,7 +632,7 @@ void inject_errors_in_place_1b(unsigned char **data, int index, int num_errors, 
         int pos = error_positions[i];
         original_values[i] = data[pos][index];
         uint8_t error = (rand() % (FIELD_SIZE - 1)) + 1;
-       data[pos][index] = data[pos][index] ^ error;
+        data[pos][index] = data[pos][index] ^ error;
     }
 }
 
@@ -663,10 +663,11 @@ int test_pgz_decoder_1b ( int index, int m, int p, unsigned char * g_tbls,
             for (int i = 0; i < (p/2); i++)
             {
                 error_positions[i] = start + i;
+                //printf ( "Error pos [ %d ] = %d\n", i, start+i ) ;
             }
             inject_errors_in_place_1b ( data, index, num_errors, error_positions, original_values );
             int done = pc_decode_data_avx512_gfni_1b ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
-            printf ( "PGZ decoder done = %d\n", done ) ;
+            //printf ( "PGZ decoder done = %d\n", done ) ;
 
            if ( verify_correction_in_place_1b(data, index, num_errors, error_positions, original_values ) )
             {
@@ -696,6 +697,7 @@ int test_pgz_decoder_1b ( int index, int m, int p, unsigned char * g_tbls,
             {
                 int idx = rand() % (m - i);
                 error_positions[i] = available[idx];
+                //printf ( "Error pos [ %d ] = %d\n", i, error_positions [ i ] ) ;
                 available[idx] = available[m- 1 - i];
             }
             inject_errors_in_place_1b(data, index, num_errors, error_positions, original_values);
@@ -840,8 +842,8 @@ main(int argc, char *argv[])
                 for (j = 0; j < TEST_LEN(m); j++)
                         buffs[ i ][ j ] = 0 ;
         memset ( buffs [ k - 1 ], 1, TEST_LEN(m) ) ;
-        printf ( "memset [ k-1 ]\n" ) ;
-        dump_u8xu8 ( ( unsigned char * ) buffs [ k - 1 ], 1,16 ) ;
+        //printf ( "memset [ k-1 ]\n" ) ;
+        //dump_u8xu8 ( ( unsigned char * ) buffs [ k - 1 ], 1,16 ) ;
         // Print test type
 #ifdef __aarch64__
         printf ( "Testing ARM64-NEON\n" ) ;
@@ -853,8 +855,8 @@ main(int argc, char *argv[])
         // Perform the baseline benchmark
         pc_gen_poly_matrix_1b ( a, m, k ) ;
         ec_init_tables ( k, m - k, &a[k * k], g_tbls);
-        printf ( "data [ k-1 ]\n" ) ;
-        dump_u8xu8 ( ( unsigned char * ) buffs [ k - 1 ], 1,16 ) ;
+        //printf ( "data [ k-1 ]\n" ) ;
+        //dump_u8xu8 ( ( unsigned char * ) buffs [ k - 1 ], 1,16 ) ;
 
         BENCHMARK(&start, BENCHMARK_TIME,
             ec_encode_data_avx512_gfni(TEST_LEN(m), k, p, g_tbls, buffs, &buffs[k]));
@@ -862,19 +864,20 @@ main(int argc, char *argv[])
         printf("erasure_code_encode" TEST_TYPE_STR ": k=%d p=%d ", k, p);
         perf_print(start, (long long) (TEST_LEN(m)) * (m));
 
+        unsigned char LFSRTab [ 32 ] ;
         // Test intrinsics lfsr
-        pc_gen_poly_1b ( g_tbls, p ) ;
+        pc_gen_poly_1b ( LFSRTab, p ) ;
         //ec_init_tables ( p, 1, a, g_tbls ) ;
-        printf ( "Tables for pc_encode\n" ) ;
-        dump_u8xu8 ( g_tbls, 1, p ) ;
-#ifdef NDEF
+        //printf ( "Tables for pc_encode\n" ) ;
+        //dump_u8xu8 ( LFSRTab, 1, p ) ;
+
         BENCHMARK(&start, BENCHMARK_TIME,
-                pc_encode_data_avx512_gfni_1b(TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs));
-#endif
+                pc_encode_data_avx512_gfni_1b(TEST_LEN(m), k, p, LFSRTab, buffs, temp_buffs));
+
         //pc_encode_data_avx512_gfni_1b(TEST_LEN(m), k, p, g_tbls, buffs, &buffs [ k ] ) ;
-        printf ( "data [ %d ] before encode\n", k - 1 ) ;
-        dump_u8xu8 ( ( unsigned char * ) buffs [ k - 1 ], 1,16 ) ;
-        pc_encode_data_avx512_gfni_1b(64, k, p, g_tbls, buffs, &buffs [ k ] ) ;
+        //printf ( "data [ %d ] before encode\n", k - 1 ) ;
+        //dump_u8xu8 ( ( unsigned char * ) buffs [ k - 1 ], 1,16 ) ;
+        //pc_encode_data_avx512_gfni_1b(64, k, p, LFSRTab, buffs, &buffs [ k ] ) ;
 
         printf("polynomial_code_pls" TEST_TYPE_STR ": k=%d p=%d ", k, p );
         perf_print(start, (long long) (TEST_LEN(m)) * (m));
@@ -902,28 +905,29 @@ main(int argc, char *argv[])
         }
 #endif
         // Now benchmark parallel syndrome sequencer - First create power vector
+        unsigned char pwrTab [ 32 ] ;
         i = 3 ;
         for ( j = p - 2 ; j >= 0 ; j -- )
         {
-                g_tbls [ j ] = i ;
+                pwrTab [ j ] = i ;
                 i = pc_mul_1b ( i, 3 ) ;
         }
 
         //ec_init_tables ( p - 1, 1, a, g_tbls ) ;
-        printf ( "g_tbls\n" ) ;
-        dump_u8xu8 ( g_tbls, 1, p - 1 ) ;
-#ifdef NDEF
+        //printf ( "pwrTab\n" ) ;
+        //dump_u8xu8 ( pwrTab, 1, p - 1 ) ;
+
         BENCHMARK(&start, BENCHMARK_TIME,
-                pc_decode_data_avx512_gfni_1b(TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 1));
-#endif
-        printf ( "datae [ k-1 ]\n" ) ;
-        dump_u8xu8 ( ( unsigned char * ) buffs [ k - 1 ], 1, 16 ) ;
-        int done = pc_decode_data_avx512_gfni_1b(64, m, p, g_tbls, buffs, temp_buffs, 1);
-        if ( done == 0 ) exit ( 1 ) ;
+                pc_decode_data_avx512_gfni_1b(TEST_LEN(m), m, p, pwrTab, buffs, temp_buffs, 1));
+
+        //printf ( "datae [ k-1 ]\n" ) ;
+        //dump_u8xu8 ( ( unsigned char * ) buffs [ k - 1 ], 1, 16 ) ;
+        //int done = pc_decode_data_avx512_gfni_1b(64, m, p, pwrTab, buffs, temp_buffs, 1);
+        //if ( done == 0 ) exit ( 1 ) ;
         printf("polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p );
         perf_print(start, (long long) (TEST_LEN(m)) * (m));
 
-        printf ( "Length decoded = %x TEST_LEN(m) = %x\n", done, TEST_LEN(m) ) ;
+        //printf ( "Length decoded = %x TEST_LEN(m) = %x\n", done, TEST_LEN(m) ) ;
         //for (i = 0; i < p; i++) {
         //        if (0 != memcmp(z0, temp_buffs[i], TEST_LEN(m) ) ) {
         //                printf("Fail zero compare (%d, %d, %d, %d) - ", m, k, p, i);
@@ -933,7 +937,7 @@ main(int argc, char *argv[])
         //       }
         //}
 
-        if ( test_pgz_decoder_1b ( 0, m, p, g_tbls, buffs, temp_buffs, avx2 ) == 0 )
+        if ( test_pgz_decoder_1b ( 0, m, p, pwrTab, buffs, temp_buffs, avx2 ) == 0 )
         {
                 printf ( "Decoder failed\n" ) ;
                 goto exit ;
@@ -965,7 +969,7 @@ main(int argc, char *argv[])
                 handle_error ( ret ) ;
         }
         // Workload
-        pc_encode_data_avx512_gfni_1b( TEST_LEN(m), k, p, g_tbls, buffs, temp_buffs);
+        pc_encode_data_avx512_gfni_1b( TEST_LEN(m), k, p, LFSRTab, buffs, &buffs [ k - 1] );
         if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
         {
                 handle_error ( ret ) ;
@@ -998,7 +1002,7 @@ main(int argc, char *argv[])
         }
 
         // Workload
-        pc_decode_data_avx512_gfni_1b ( TEST_LEN(m), m, p, g_tbls, buffs, temp_buffs, 1 ) ;
+        int complete = pc_decode_data_avx512_gfni_1b ( TEST_LEN(m), m, p, pwrTab, buffs, temp_buffs, 1 ) ;
         //gf_4vect_pss_avx512_gfni_2d ( TEST_LEN(m), m, g_tbls, buffs, temp_buffs, 0 ) ;
 
         if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
@@ -1008,6 +1012,8 @@ main(int argc, char *argv[])
 
         CPI = ( double ) values[ 0 ] / values[ 1 ] ;
         BPC = ( double ) ( TEST_LEN(m) * m ) / values [ 0 ] ;
+
+        printf ( "Completed = %d tot = %d\n", complete, TEST_LEN(m) ) ;
 
         printf ( "PC_Decode_data %11lld cycles %11lld instructions CPI %.3lf BPC %.3lf\n", values[0], values[1], CPI, BPC ) ;
 
