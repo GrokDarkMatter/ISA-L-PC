@@ -803,12 +803,12 @@ main(int argc, char *argv[])
         }
 
         // Initialize the Vandermonde matrix
-        pc_gen_rsr_matrix_1b ( a, p ) ;
-        pc_bvan_1b ( a, p ) ;
+        pc_gen_rsr_matrix_1b ( a, 4 ) ;
+        pc_bvan_1b ( a, 4 ) ;
 
         // Initialize the encoding matrix
-        pc_gen_poly_matrix_1b ( a, 255, 255 - p ) ;
-        pc_bmat_1b ( a, p ) ;
+        pc_gen_poly_matrix_1b ( a, 255, 255 - 4 ) ;
+        pc_bmat_1b ( a, 4 ) ;
 
         // Print output header
         printf("Testing with %u data buffers and %u parity buffers\n", k, p ) ;
