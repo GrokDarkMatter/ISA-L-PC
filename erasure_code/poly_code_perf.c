@@ -355,10 +355,12 @@ void TestPAPI1b ( void )
                 pc_gen_poly_matrix_1b ( a, 255, 255 - lenPoly ) ;
                 pc_bmat_1b ( a, lenPoly ) ;
 
-                memset ( a, 0, 255 ) ;
-                memset ( &a [ 255 - lenPoly - 1 ], 1, 1 ) ;
+                // Initialize with a single bit for testing
+                memset ( a, 0, 256 ) ;
+                memset ( &a [ 255 - lenPoly ], 1, 1 ) ;
 
-                for ( int pos = 0 ; pos < 255 ; pos ++ )
+                // If the test above works, then test with random data
+                for ( int pos = 1 ; pos < 256 ; pos ++ )
                 {
                         a [ pos ] = rand() ;
                 }
@@ -371,7 +373,7 @@ void TestPAPI1b ( void )
                 // Workload
                 for ( int i = 0 ; i < 1000 ; i ++ )
                 {
-                        pc_encoder1b ( a, &a [ 255 - lenPoly ], lenPoly ) ;
+                        pc_encoder1b ( a, &a [ 256 - lenPoly ], lenPoly ) ;
                 }
 
                 if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK)

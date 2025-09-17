@@ -260,6 +260,7 @@ void pc_bvan_1b ( unsigned char * vals, int p )
     for ( int curP = 0 ; curP < p ; curP ++ )
     {
         unsigned char * eDest = ( unsigned char * ) &Vand1b [ curP ] ;
+        *eDest = 0 ;
         eDest ++ ;
         memcpy (  ( unsigned char * ) eDest, &vals [ curP * ( 255 ) ], 255 ) ;
         unsigned char * extra = ( unsigned char * ) &Vand1b [ curP ] ;
