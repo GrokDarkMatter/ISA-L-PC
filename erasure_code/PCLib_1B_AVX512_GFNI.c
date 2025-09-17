@@ -9,7 +9,7 @@ static __m512i Vand2 [ 2 ] [ 4 ] ;
 pvec = _mm512_xor_si512 ( pvec, pvec ) ; \
 for ( int curP = 0 ; curP < p ; curP ++ ) \
 { \
-        matVec = _mm512_load_si512 ( &EncMat [ curP ] [ 0 ]) ; \
+        matVec = _mm512_load_si512 ( &EncMat [ curP ] [ 3 ]) ; \
         vreg = _mm512_gf2p8mul_epi8 ( vec, matVec ) ; \
         __m256i low = _mm512_castsi512_si256(vreg); \
         __m256i high = _mm512_extracti64x4_epi64(vreg, 1); \
@@ -30,7 +30,7 @@ vec = _mm512_xor_si512 ( vec, pvec ) ;
 #define L1Dec(vec,p,err,syn) \
 for ( int curP = 0 ; curP < p ; curP ++ ) \
 { \
-        matVec = _mm512_load_si512 ( &Vand1b [ curP ] [ 0 ]) ; \
+        matVec = _mm512_load_si512 ( &Vand1b [ curP ] [ 3 ]) ; \
         vreg = _mm512_gf2p8mul_epi8 ( vec, matVec ) ; \
         __m256i low = _mm512_castsi512_si256(vreg); \
         __m256i high = _mm512_extracti64x4_epi64(vreg, 1); \
@@ -45,7 +45,9 @@ for ( int curP = 0 ; curP < p ; curP ++ ) \
         result_64 ^= result_64 >> 16 ; \
         result_64 ^= result_64 >> 8 ; \
         syn [ curP ] = ( unsigned char ) result_64 ; \
-        if ( syn [ curP ] != 0 ) err = 1 ; \
+        if ( syn [ curP ] != 0 ) {\
+            printf ( "syn[%d]=%d\n", curP, syn[curP] ) ;\
+            err = 1 ;} \
 } 
 
 
@@ -233,6 +235,8 @@ void pc_gen_rsr_matrix_1b(unsigned char *a, int k)
                         p = pc_mul_1b(p, gen);
                 }
                 gen = pc_mul_1b(gen, 3);
+                printf ( "Vand row %d\n", i ) ;
+                dump_u8xu8 ( &a[ 255*i ], 16, 16 ) ;
         }
 }
 
@@ -241,9 +245,13 @@ void pc_bmat_1b ( unsigned char * vals, int p )
 {
     for ( int curP = 0 ; curP < p ; curP ++ )
     {
-        memcpy ( ( unsigned char * ) &EncMat [ curP ], &vals [ curP * ( 255 - p ) ], 255 - p ) ;
+        unsigned char * eDest = ( unsigned char * ) &EncMat [ curP ] ;
+        eDest ++ ;
+        memcpy ( ( unsigned char * ) eDest, &vals [ curP * ( 255 - p ) ], 255 - p ) ;
         unsigned char * extra = ( unsigned char * ) &EncMat [ curP ] ;
-        memset ( extra + 255 - p, 0, p ) ;
+        memset ( extra + 256 - p, 0, p ) ;
+        printf ( "Encmat %d\n", curP ) ;
+        dump_u8xu8 ( ( unsigned char * ) &EncMat [ curP ] [ 3 ], 4, 16 ) ;
     }
 }
 
@@ -252,9 +260,13 @@ void pc_bvan_1b ( unsigned char * vals, int p )
 {
     for ( int curP = 0 ; curP < p ; curP ++ )
     {
-        memcpy (  ( unsigned char * ) &Vand1b [ curP ], &vals [ curP * ( 255 ) ], 255 ) ;
+        unsigned char * eDest = ( unsigned char * ) &Vand1b [ curP ] ;
+        eDest ++ ;
+        memcpy (  ( unsigned char * ) eDest, &vals [ curP * ( 255 ) ], 255 ) ;
         unsigned char * extra = ( unsigned char * ) &Vand1b [ curP ] ;
-        extra [ 255 ] = 0 ;
+        //extra [ 255 ] = 0 ;
+        printf ( "Vand1b %d\n", curP ) ;
+        dump_u8xu8 ( ( unsigned char * ) &Vand1b [ curP ] [ 3 ], 4, 16 ) ;
     }
 }
 
@@ -1096,9 +1108,9 @@ int gf_4vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 4 ], taps [ 3 ] ; //, matVec, vreg ;
+        __m512i parity [ 4 ], taps [ 3 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -1109,8 +1121,12 @@ int gf_4vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) 
+                {
+                    printf ( "Err1 pss\n" ) ;
+                    return curPos ;
+                }
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1118,10 +1134,19 @@ int gf_4vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        printf ( "Data vec\n" ) ;
+                        dump_u8xu8 ( ( unsigned char * ) &data [ curSym ] [ curPos ], 1, 64 ) ;
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+                      if ( curSym < ( k - 4 ) )
+                      {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) 
+                            {
+                                printf ( "Err2 pss curSym = %d k = %d\n", curSym, k ) ;
+                                return curPos ;
+                            }
+                      }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -5237,7 +5262,7 @@ int gf_4vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 4 ], taps [ 4 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -5250,7 +5275,10 @@ int gf_4vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 4, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+                _mm512_store_si512 ( ( __m512i * ) &data [ 0 ] [ curPos ], data_vec ) ;
+                //printf ( "DataVec1\n" ) ;
+                //dump_u8xu8 ( ( unsigned char * ) &data_vec, 1, 64 ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -5260,7 +5288,10 @@ int gf_4vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 4, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                //printf ( "DataVec2\n" ) ;
+                //dump_u8xu8 ( ( unsigned char * ) &data_vec, 1, 64 ) ;
+                       _mm512_store_si512 ( ( __m512i * ) &data [ curSym ] [ curPos ], data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
