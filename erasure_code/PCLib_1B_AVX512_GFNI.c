@@ -49,123 +49,6 @@ for ( int curP = 0 ; curP < p ; curP ++ ) \
             err = 1 ;} \
 } 
 
-
-int gf_4vect_pss_avx512_gfni_2d(int len, int k, unsigned char *g_tbls, unsigned char **data,
-        unsigned char ** dest, int offSet)
-{
-        int curSym, curPos ;                          // Loop counters
-        __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 4 ], taps [ 3 ] ;            // Parity registers
-        __m512i data_vec ;
-        unsigned char err = 0 ;
-        unsigned char syn [ 32 ] ;
-      __m512i matVec, vreg ;
-
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-
-        for ( curPos = offSet ; curPos < len ; curPos += 64 )
-        {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 )
-                {
-                    return curPos ;
-                }
-                parity [ 0 ] = data_vec ;
-                parity [ 1 ] = data_vec ;
-                parity [ 2 ] = data_vec ;
-                parity [ 3 ] = data_vec ;
-
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
-                {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        L1Dec( data_vec, 4, err, syn ) ;
-                        if ( err != 0 )
-                        {
-                            return curPos ;
-                        }
-
-                        parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
-                        parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 1 ], taps [ 1 ], 0) ;
-                        parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 2 ], taps [ 2 ], 0) ;
-                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
-                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
-                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
-                        parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
-                }
-
-                data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
-                data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
-                data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
-                mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
-                if ( !_ktestz_mask8_u8 ( mask, mask ) )
-                {
-                        _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
-                        _mm512_store_si512( (__m512i *) &dest [ 1 ] [ 0 ], parity [ 1 ] ) ;
-                        _mm512_store_si512( (__m512i *) &dest [ 2 ] [ 0 ], parity [ 2 ] ) ;
-                        _mm512_store_si512( (__m512i *) &dest [ 3 ] [ 0 ], parity [ 3 ] ) ;
-                        return ( curPos ) ;
-                }
-        }
-        return ( curPos ) ;
-}
-
-int gf_4vect_pls_avx512_gfni_2d(int len, int k, unsigned char *g_tbls, unsigned char **data,
-        unsigned char ** dest)
-{
-        int curSym, curPos ;                          // Loop counters
-        __m512i parity [ 4 ], taps [ 4 ] ;          // Parity registers
-        __m512i data_vec, par_vec ;
-        unsigned char * pp = ( unsigned char * ) &par_vec + 64 - 4 ;
-      __m512i matVec, vreg ;
-
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 0 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 0 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 0 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 0 ) ) );
-
-        for ( curPos = 0 ; curPos < len ; curPos += 64 )
-        {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 4, par_vec ) ;
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
-                {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
-                        //L1Enc(data_vec, 4, par_vec ) ;
-                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
-                                       _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
-                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ],
-                                       _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0 )  ) ;
-                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
-                                       _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0 )  ) ;
-                        parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                        //printf ( "PLS Parity\n" ) ;
-                        //dump_u8xu8 ( ( unsigned char * ) &parity [ 0 ], 1, 16 ) ;
-                        //dump_u8xu8 ( ( unsigned char * ) &parity [ 1 ], 1, 16 ) ;
-                        //dump_u8xu8 ( ( unsigned char * ) &parity [ 2 ], 1, 16 ) ;
-                        //dump_u8xu8 ( ( unsigned char * ) &parity [ 3 ], 1, 16 ) ;
-                }
-
-                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
-                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
-                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
-                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
-        }
-        return ( curPos ) ;
-}
-
 // Multiply two bytes using the hardware GF multiply
 unsigned char pc_mul_1b ( unsigned char a, unsigned char b) 
 {
@@ -263,8 +146,6 @@ void pc_bvan_1b ( unsigned char * vals, int p )
         *eDest = 0 ;
         eDest ++ ;
         memcpy (  ( unsigned char * ) eDest, &vals [ curP * ( 255 ) ], 255 ) ;
-        unsigned char * extra = ( unsigned char * ) &Vand1b [ curP ] ;
-        //extra [ 255 ] = 0 ;
         //printf ( "Vand1b %d\n", curP ) ;
         //dump_u8xu8 ( ( unsigned char * ) &Vand1b [ curP ] [ 3 ], 4, 16 ) ;
     }
@@ -965,7 +846,6 @@ int pc_correct_AVX512_GFNI_1b ( int newPos, int k, int p,
         return 0 ;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////
 /**********************************************************************
 Copyright (c) 2025 Michael H. Anderson. All rights reserved.
 This software includes contributions protected by
@@ -1014,9 +894,9 @@ int gf_2vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 2 ], taps [ 1 ] ; //, matVec, vreg ;
+        __m512i parity [ 2 ], taps [ 1 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -1025,8 +905,8 @@ int gf_2vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
 
@@ -1034,8 +914,12 @@ int gf_2vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 2 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
@@ -1058,9 +942,9 @@ int gf_3vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 3 ], taps [ 2 ] ; //, matVec, vreg ;
+        __m512i parity [ 3 ], taps [ 2 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -1070,8 +954,8 @@ int gf_3vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1080,8 +964,12 @@ int gf_3vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 3 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1122,11 +1010,7 @@ int gf_4vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) 
-                {
-                    printf ( "Err1 pss\n" ) ;
-                    return curPos ;
-                }
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1134,19 +1018,14 @@ int gf_4vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        //printf ( "Data vec\n" ) ;
-                        //dump_u8xu8 ( ( unsigned char * ) &data [ curSym ] [ curPos ], 1, 64 ) ;
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                      if ( curSym < ( k - 4 ) )
-                      {
+
+                        if ( curSym < ( k - 4 ) )
+                        {
                             L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) 
-                            {
-                                printf ( "Err2 pss curSym = %d k = %d\n", curSym, k ) ;
-                                return curPos ;
-                            }
-                      }
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1177,9 +1056,9 @@ int gf_5vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 5 ], taps [ 4 ] ; //, matVec, vreg ;
+        __m512i parity [ 5 ], taps [ 4 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -1191,8 +1070,8 @@ int gf_5vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1203,8 +1082,12 @@ int gf_5vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 5 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1239,9 +1122,9 @@ int gf_6vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 6 ], taps [ 5 ] ; //, matVec, vreg ;
+        __m512i parity [ 6 ], taps [ 5 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -1254,8 +1137,8 @@ int gf_6vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1267,8 +1150,12 @@ int gf_6vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 6 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1307,9 +1194,9 @@ int gf_7vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 7 ], taps [ 6 ] ; //, matVec, vreg ;
+        __m512i parity [ 7 ], taps [ 6 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -1323,8 +1210,8 @@ int gf_7vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1337,8 +1224,12 @@ int gf_7vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 7 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1381,9 +1272,9 @@ int gf_8vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 8 ], taps [ 7 ] ; //, matVec, vreg ;
+        __m512i parity [ 8 ], taps [ 7 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -1398,8 +1289,8 @@ int gf_8vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1413,8 +1304,12 @@ int gf_8vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 8 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1461,9 +1356,9 @@ int gf_9vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 9 ], taps [ 8 ] ; //, matVec, vreg ;
+        __m512i parity [ 9 ], taps [ 8 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -1479,8 +1374,8 @@ int gf_9vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1495,8 +1390,12 @@ int gf_9vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 9 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1547,9 +1446,9 @@ int gf_10vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 10 ], taps [ 9 ] ; //, matVec, vreg ;
+        __m512i parity [ 10 ], taps [ 9 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -1566,8 +1465,8 @@ int gf_10vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1583,8 +1482,12 @@ int gf_10vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 10 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1639,9 +1542,9 @@ int gf_11vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 11 ], taps [ 10 ] ; //, matVec, vreg ;
+        __m512i parity [ 11 ], taps [ 10 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -1659,8 +1562,8 @@ int gf_11vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1677,8 +1580,12 @@ int gf_11vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 11 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1737,9 +1644,9 @@ int gf_12vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 12 ], taps [ 11 ] ; //, matVec, vreg ;
+        __m512i parity [ 12 ], taps [ 11 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -1758,8 +1665,8 @@ int gf_12vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1777,8 +1684,12 @@ int gf_12vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 12 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1841,9 +1752,9 @@ int gf_13vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 13 ], taps [ 12 ] ; //, matVec, vreg ;
+        __m512i parity [ 13 ], taps [ 12 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -1863,8 +1774,8 @@ int gf_13vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1883,8 +1794,12 @@ int gf_13vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 13 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1951,9 +1866,9 @@ int gf_14vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 14 ], taps [ 13 ] ; //, matVec, vreg ;
+        __m512i parity [ 14 ], taps [ 13 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -1974,8 +1889,8 @@ int gf_14vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1995,8 +1910,12 @@ int gf_14vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 14 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -2067,9 +1986,9 @@ int gf_15vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 15 ], taps [ 14 ] ; //, matVec, vreg ;
+        __m512i parity [ 15 ], taps [ 14 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -2091,8 +2010,8 @@ int gf_15vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -2113,8 +2032,12 @@ int gf_15vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 15 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -2189,9 +2112,9 @@ int gf_16vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 16 ], taps [ 15 ] ; //, matVec, vreg ;
+        __m512i parity [ 16 ], taps [ 15 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -2214,8 +2137,8 @@ int gf_16vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -2237,8 +2160,12 @@ int gf_16vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 16 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -2317,9 +2244,9 @@ int gf_17vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 17 ], taps [ 16 ] ; //, matVec, vreg ;
+        __m512i parity [ 17 ], taps [ 16 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -2343,8 +2270,8 @@ int gf_17vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -2367,8 +2294,12 @@ int gf_17vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 17 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -2451,9 +2382,9 @@ int gf_18vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 18 ], taps [ 17 ] ; //, matVec, vreg ;
+        __m512i parity [ 18 ], taps [ 17 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -2478,8 +2409,8 @@ int gf_18vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -2503,8 +2434,12 @@ int gf_18vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 18 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -2591,9 +2526,9 @@ int gf_19vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 19 ], taps [ 18 ] ; //, matVec, vreg ;
+        __m512i parity [ 19 ], taps [ 18 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -2619,8 +2554,8 @@ int gf_19vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -2645,8 +2580,12 @@ int gf_19vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 19 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -2737,9 +2676,9 @@ int gf_20vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 20 ], taps [ 19 ] ; //, matVec, vreg ;
+        __m512i parity [ 20 ], taps [ 19 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -2766,8 +2705,8 @@ int gf_20vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -2793,8 +2732,12 @@ int gf_20vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 20 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -2889,9 +2832,9 @@ int gf_21vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 21 ], taps [ 20 ] ; //, matVec, vreg ;
+        __m512i parity [ 21 ], taps [ 20 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -2919,8 +2862,8 @@ int gf_21vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -2947,8 +2890,12 @@ int gf_21vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 21 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -3047,9 +2994,9 @@ int gf_22vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 22 ], taps [ 21 ] ; //, matVec, vreg ;
+        __m512i parity [ 22 ], taps [ 21 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -3078,8 +3025,8 @@ int gf_22vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -3107,8 +3054,12 @@ int gf_22vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 22 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -3211,9 +3162,9 @@ int gf_23vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 23 ], taps [ 22 ] ; //, matVec, vreg ;
+        __m512i parity [ 23 ], taps [ 22 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -3243,8 +3194,8 @@ int gf_23vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -3273,8 +3224,12 @@ int gf_23vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 23 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -3381,9 +3336,9 @@ int gf_24vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 24 ], taps [ 23 ] ; //, matVec, vreg ;
+        __m512i parity [ 24 ], taps [ 23 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -3414,8 +3369,8 @@ int gf_24vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -3445,8 +3400,12 @@ int gf_24vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 24 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -3557,9 +3516,9 @@ int gf_25vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 25 ], taps [ 24 ] ; //, matVec, vreg ;
+        __m512i parity [ 25 ], taps [ 24 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -3591,8 +3550,8 @@ int gf_25vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -3623,8 +3582,12 @@ int gf_25vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 25 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -3739,9 +3702,9 @@ int gf_26vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 26 ], taps [ 25 ] ; //, matVec, vreg ;
+        __m512i parity [ 26 ], taps [ 25 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -3774,8 +3737,8 @@ int gf_26vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -3807,8 +3770,12 @@ int gf_26vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 26 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -3927,9 +3894,9 @@ int gf_27vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 27 ], taps [ 26 ] ; //, matVec, vreg ;
+        __m512i parity [ 27 ], taps [ 26 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -3963,8 +3930,8 @@ int gf_27vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -3997,8 +3964,12 @@ int gf_27vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 27 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -4121,9 +4092,9 @@ int gf_28vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 28 ], taps [ 27 ] ; //, matVec, vreg ;
+        __m512i parity [ 28 ], taps [ 27 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -4158,8 +4129,8 @@ int gf_28vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -4193,8 +4164,12 @@ int gf_28vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 28 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -4321,9 +4296,9 @@ int gf_29vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 29 ], taps [ 28 ] ; //, matVec, vreg ;
+        __m512i parity [ 29 ], taps [ 28 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -4359,8 +4334,8 @@ int gf_29vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -4395,8 +4370,12 @@ int gf_29vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 29 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -4527,9 +4506,9 @@ int gf_30vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 30 ], taps [ 29 ] ; //, matVec, vreg ;
+        __m512i parity [ 30 ], taps [ 29 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -4566,8 +4545,8 @@ int gf_30vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -4603,8 +4582,12 @@ int gf_30vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 30 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -4739,9 +4722,9 @@ int gf_31vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 31 ], taps [ 30 ] ; //, matVec, vreg ;
+        __m512i parity [ 31 ], taps [ 30 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -4779,8 +4762,8 @@ int gf_31vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -4817,8 +4800,12 @@ int gf_31vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 31 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -4957,9 +4944,9 @@ int gf_32vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        //unsigned char err = 0, syn [ 4 ] ;
+        unsigned char err = 0, syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
-        __m512i parity [ 32 ], taps [ 31 ] ; //, matVec, vreg ;
+        __m512i parity [ 32 ], taps [ 31 ], matVec, vreg ;
         __m512i data_vec ;
 
         taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
@@ -4998,8 +4985,8 @@ int gf_32vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Dec(data_vec, 4, err, syn ) ;
-                //if ( err != 0 ) return curPos ;
+                L1Dec(data_vec, 4, err, syn ) ;
+                if ( err != 0 ) return curPos ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -5037,8 +5024,12 @@ int gf_32vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Dec(data_vec, 4, err, syn ) ;
-                        //if ( err != 0 ) return curPos ;
+
+                        if ( curSym < ( k - 32 ) )
+                        {
+                            L1Dec(data_vec, 4, err, syn ) ;
+                            if ( err != 0 ) return curPos ;
+                        }
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -5183,7 +5174,7 @@ int gf_2vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 2 ], taps [ 2 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -5194,7 +5185,8 @@ int gf_2vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 2, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
 
@@ -5202,7 +5194,8 @@ int gf_2vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 2, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -5220,7 +5213,7 @@ int gf_3vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 3 ], taps [ 3 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -5232,7 +5225,8 @@ int gf_3vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 3, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -5241,7 +5235,8 @@ int gf_3vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 3, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -5311,7 +5306,7 @@ int gf_5vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 5 ], taps [ 5 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -5325,7 +5320,8 @@ int gf_5vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 5, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -5336,7 +5332,8 @@ int gf_5vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 5, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -5363,7 +5360,7 @@ int gf_6vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 6 ], taps [ 6 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -5378,7 +5375,8 @@ int gf_6vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 6, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -5390,7 +5388,8 @@ int gf_6vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 6, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -5420,7 +5419,7 @@ int gf_7vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 7 ], taps [ 7 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -5436,7 +5435,8 @@ int gf_7vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 7, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -5449,7 +5449,8 @@ int gf_7vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 7, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -5482,7 +5483,7 @@ int gf_8vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 8 ], taps [ 8 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -5499,7 +5500,8 @@ int gf_8vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 8, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -5513,7 +5515,8 @@ int gf_8vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 8, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -5549,7 +5552,7 @@ int gf_9vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 9 ], taps [ 9 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -5567,7 +5570,8 @@ int gf_9vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 9, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -5582,7 +5586,8 @@ int gf_9vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 9, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -5621,7 +5626,7 @@ int gf_10vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 10 ], taps [ 10 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -5640,7 +5645,8 @@ int gf_10vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 10, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -5656,7 +5662,8 @@ int gf_10vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 10, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -5698,7 +5705,7 @@ int gf_11vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 11 ], taps [ 11 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -5718,7 +5725,8 @@ int gf_11vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 11, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -5735,7 +5743,8 @@ int gf_11vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 11, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -5780,7 +5789,7 @@ int gf_12vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 12 ], taps [ 12 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -5801,7 +5810,8 @@ int gf_12vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 12, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -5819,7 +5829,8 @@ int gf_12vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 12, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -5867,7 +5878,7 @@ int gf_13vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 13 ], taps [ 13 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -5889,7 +5900,8 @@ int gf_13vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 13, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -5908,7 +5920,8 @@ int gf_13vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 13, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -5959,7 +5972,7 @@ int gf_14vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 14 ], taps [ 14 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -5982,7 +5995,8 @@ int gf_14vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 14, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -6002,7 +6016,8 @@ int gf_14vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 14, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -6056,7 +6071,7 @@ int gf_15vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 15 ], taps [ 15 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -6080,7 +6095,8 @@ int gf_15vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 15, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -6101,7 +6117,8 @@ int gf_15vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 15, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -6158,7 +6175,7 @@ int gf_16vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 16 ], taps [ 16 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -6183,7 +6200,8 @@ int gf_16vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 16, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -6205,7 +6223,8 @@ int gf_16vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 16, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -6265,7 +6284,7 @@ int gf_17vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 17 ], taps [ 17 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -6291,7 +6310,8 @@ int gf_17vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 17, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -6314,7 +6334,8 @@ int gf_17vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 17, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -6377,7 +6398,7 @@ int gf_18vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 18 ], taps [ 18 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -6404,7 +6425,8 @@ int gf_18vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 18, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -6428,7 +6450,8 @@ int gf_18vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 18, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -6494,7 +6517,7 @@ int gf_19vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 19 ], taps [ 19 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -6522,7 +6545,8 @@ int gf_19vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 19, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -6547,7 +6571,8 @@ int gf_19vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 19, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -6616,7 +6641,7 @@ int gf_20vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 20 ], taps [ 20 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -6645,7 +6670,8 @@ int gf_20vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 20, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -6671,7 +6697,8 @@ int gf_20vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 20, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -6743,7 +6770,7 @@ int gf_21vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 21 ], taps [ 21 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -6773,7 +6800,8 @@ int gf_21vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 21, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -6800,7 +6828,8 @@ int gf_21vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 21, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -6875,7 +6904,7 @@ int gf_22vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 22 ], taps [ 22 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -6906,7 +6935,8 @@ int gf_22vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 22, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -6934,7 +6964,8 @@ int gf_22vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 22, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -7012,7 +7043,7 @@ int gf_23vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 23 ], taps [ 23 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -7044,7 +7075,8 @@ int gf_23vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 23, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -7073,7 +7105,8 @@ int gf_23vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 23, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -7154,7 +7187,7 @@ int gf_24vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 24 ], taps [ 24 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -7187,7 +7220,8 @@ int gf_24vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 24, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -7217,7 +7251,8 @@ int gf_24vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 24, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -7301,7 +7336,7 @@ int gf_25vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 25 ], taps [ 25 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -7335,7 +7370,8 @@ int gf_25vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 25, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -7366,7 +7402,8 @@ int gf_25vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 25, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -7453,7 +7490,7 @@ int gf_26vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 26 ], taps [ 26 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -7488,7 +7525,8 @@ int gf_26vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 26, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -7520,7 +7558,8 @@ int gf_26vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 26, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -7610,7 +7649,7 @@ int gf_27vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 27 ], taps [ 27 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -7646,7 +7685,8 @@ int gf_27vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 27, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -7679,7 +7719,8 @@ int gf_27vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 27, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -7772,7 +7813,7 @@ int gf_28vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 28 ], taps [ 28 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -7809,7 +7850,8 @@ int gf_28vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 28, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -7843,7 +7885,8 @@ int gf_28vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 28, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -7939,7 +7982,7 @@ int gf_29vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 29 ], taps [ 29 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -7977,7 +8020,8 @@ int gf_29vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 29, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -8012,7 +8056,8 @@ int gf_29vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 29, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -8111,7 +8156,7 @@ int gf_30vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 30 ], taps [ 30 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -8150,7 +8195,8 @@ int gf_30vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 30, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -8186,7 +8232,8 @@ int gf_30vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 30, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -8288,7 +8335,7 @@ int gf_31vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 31 ], taps [ 31 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -8328,7 +8375,8 @@ int gf_31vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 31, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -8365,7 +8413,8 @@ int gf_31vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 31, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -8470,7 +8519,7 @@ int gf_32vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 {
         int curSym, curPos ;                          // Loop counters
         __m512i parity [ 32 ], taps [ 32 ], par_vec ;
-        __m512i data_vec ; //, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -8511,7 +8560,8 @@ int gf_32vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         {
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
-                //L1Enc(data_vec, 32, par_vec ) ;
+                L1Enc(data_vec, 4, par_vec ) ;
+               _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -8549,7 +8599,8 @@ int gf_32vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 {
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        //L1Enc(data_vec, 32, par_vec ) ;
+                        L1Enc(data_vec, 4, par_vec ) ;
+                       _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;

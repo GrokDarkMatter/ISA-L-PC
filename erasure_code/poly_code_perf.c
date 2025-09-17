@@ -563,8 +563,7 @@ usage(const char *app_name)
                 "Usage: %s [options]\n"
                 "  -h        Help\n"
                 "  -k <val>  Number of source buffers\n"
-                "  -p <val>  Number of parity buffers\n"
-                "  -2 <val>  If 1 then AVX2 testing\n",
+                "  -p <val>  Number of parity buffers\n",
                 app_name);
 }
 
@@ -736,8 +735,6 @@ main(int argc, char *argv[])
 
         struct perf start;
 
-        u8 avx2=0;
-
         /* Set default parameters */
         k = 12;
         p = 8;
@@ -749,10 +746,6 @@ main(int argc, char *argv[])
                         k = atoi(argv[++i]);
                 } else if (strcmp(argv[i], "-p") == 0) {
                         p = atoi(argv[++i]);
-#ifndef __aarch64__
-                } else if (strcmp(argv[i], "-2") == 0) {
-                        avx2 = atoi(argv[++i]);
-#endif
                 } else if (strcmp(argv[i], "-h") == 0) {
                         usage(argv[0]);
                         return 0;
