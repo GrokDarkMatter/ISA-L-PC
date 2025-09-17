@@ -6,7 +6,6 @@ static __m512i Vand2 [ 2 ] [ 4 ] ;
 #endif
 
 #define L1Enc(vec,p,pvec) \
-pvec = _mm512_xor_si512 ( pvec, pvec ) ; \
 for ( int curP = 0 ; curP < p ; curP ++ ) \
 { \
         matVec = _mm512_load_si512 ( &EncMat [ curP ] [ 3 ]) ; \
@@ -25,7 +24,7 @@ for ( int curP = 0 ; curP < p ; curP ++ ) \
         result_64 ^= result_64 >> 8 ; \
         pp [ curP ] = ( unsigned char ) result_64 ; \
 } \
-vec = _mm512_xor_si512 ( vec, pvec ) ;
+vec = _mm512_mask_blend_epi32 ( 0x8000, vec, pvec ) ; 
 
 #define L1Dec(vec,p,err,syn) \
 for ( int curP = 0 ; curP < p ; curP ++ ) \
@@ -152,11 +151,11 @@ int gf_4vect_pls_avx512_gfni_2d(int len, int k, unsigned char *g_tbls, unsigned 
                         parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ],
                                        _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0 )  ) ;
                         parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                        printf ( "PLS Parity\n" ) ;
-                        dump_u8xu8 ( ( unsigned char * ) &parity [ 0 ], 1, 16 ) ;
-                        dump_u8xu8 ( ( unsigned char * ) &parity [ 1 ], 1, 16 ) ;
-                        dump_u8xu8 ( ( unsigned char * ) &parity [ 2 ], 1, 16 ) ;
-                        dump_u8xu8 ( ( unsigned char * ) &parity [ 3 ], 1, 16 ) ;
+                        //printf ( "PLS Parity\n" ) ;
+                        //dump_u8xu8 ( ( unsigned char * ) &parity [ 0 ], 1, 16 ) ;
+                        //dump_u8xu8 ( ( unsigned char * ) &parity [ 1 ], 1, 16 ) ;
+                        //dump_u8xu8 ( ( unsigned char * ) &parity [ 2 ], 1, 16 ) ;
+                        //dump_u8xu8 ( ( unsigned char * ) &parity [ 3 ], 1, 16 ) ;
                 }
 
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
@@ -235,8 +234,8 @@ void pc_gen_rsr_matrix_1b(unsigned char *a, int k)
                         p = pc_mul_1b(p, gen);
                 }
                 gen = pc_mul_1b(gen, 3);
-                printf ( "Vand row %d\n", i ) ;
-                dump_u8xu8 ( &a[ 255*i ], 16, 16 ) ;
+                //printf ( "Vand row %d\n", i ) ;
+                //dump_u8xu8 ( &a[ 255*i ], 16, 16 ) ;
         }
 }
 
@@ -250,8 +249,8 @@ void pc_bmat_1b ( unsigned char * vals, int p )
         memcpy ( ( unsigned char * ) eDest, &vals [ curP * ( 255 - p ) ], 255 - p ) ;
         unsigned char * extra = ( unsigned char * ) &EncMat [ curP ] ;
         memset ( extra + 256 - p, 0, p ) ;
-        printf ( "Encmat %d\n", curP ) ;
-        dump_u8xu8 ( ( unsigned char * ) &EncMat [ curP ] [ 3 ], 4, 16 ) ;
+        //printf ( "Encmat %d\n", curP ) ;
+        //dump_u8xu8 ( ( unsigned char * ) &EncMat [ curP ] [ 3 ], 4, 16 ) ;
     }
 }
 
@@ -265,8 +264,8 @@ void pc_bvan_1b ( unsigned char * vals, int p )
         memcpy (  ( unsigned char * ) eDest, &vals [ curP * ( 255 ) ], 255 ) ;
         unsigned char * extra = ( unsigned char * ) &Vand1b [ curP ] ;
         //extra [ 255 ] = 0 ;
-        printf ( "Vand1b %d\n", curP ) ;
-        dump_u8xu8 ( ( unsigned char * ) &Vand1b [ curP ] [ 3 ], 4, 16 ) ;
+        //printf ( "Vand1b %d\n", curP ) ;
+        //dump_u8xu8 ( ( unsigned char * ) &Vand1b [ curP ] [ 3 ], 4, 16 ) ;
     }
 }
 
@@ -1134,8 +1133,8 @@ int gf_4vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        printf ( "Data vec\n" ) ;
-                        dump_u8xu8 ( ( unsigned char * ) &data [ curSym ] [ curPos ], 1, 64 ) ;
+                        //printf ( "Data vec\n" ) ;
+                        //dump_u8xu8 ( ( unsigned char * ) &data [ curSym ] [ curPos ], 1, 64 ) ;
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                       if ( curSym < ( k - 4 ) )
