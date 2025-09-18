@@ -1,9 +1,51 @@
+/**********************************************************************
+Copyright (c) 2025 Michael H. Anderson. All rights reserved.
+This software includes contributions protected by
+U.S. Patents 11,848,686 and 12,341,532.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted for non-commercial evaluation purposes
+only, provided that the following conditions are met:
+
+Redistributions of source code must retain the above copyright notices,
+patent notices, this list of conditions, and the following disclaimer.
+
+Redistributions in binary form must reproduce the above copyright notices,
+patent notices, this list of conditions, and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+Neither the name of Michael H. Anderson, nor the names
+of his contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+Commercial deployment or use of this software requires a separate license
+from the copyright holders and patent owners.
+
+In other words, this code is provided solely for the purposes of
+evaluation and is not licensed or intended to be licensed or used as part of
+or in connection with any commercial or non-commercial use other than evaluation
+of the potential for a license from Michael H. Anderson. Neither Michael H. Anderson
+nor any affiliated person grants any express or implied rights under any patents,
+copyrights, trademarks, or trade secret information. No content may be copied,
+stored, or utilized in any way without express written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restrictions
+**********************************************************************/
+
 static unsigned char pc_ptab_1b [ 256 ], pc_ltab_1b [ 256 ], pc_itab_1b [ 256 ] ;
 static __m512i EncMat [ 255 ] [ 4 ] ;
-static __m512i Vand1b [  32 ] [ 4 ] ;
-#ifdef NDEF
-static __m512i Vand2 [ 2 ] [ 4 ] ;
-#endif
+static __m512i Vand1b [ 255 ] [ 4 ] ;
 
 #define L1Enc(vec,p,pvec) \
 for ( int curP = 0 ; curP < p ; curP ++ ) \
@@ -44,9 +86,7 @@ for ( int curP = 0 ; curP < p ; curP ++ ) \
         result_64 ^= result_64 >> 16 ; \
         result_64 ^= result_64 >> 8 ; \
         syn [ curP ] = ( unsigned char ) result_64 ; \
-        if ( syn [ curP ] != 0 ) {\
-            printf ( "syn[%d]=%d\n", curP, syn[curP] ) ;\
-            err = 1 ;} \
+        if ( syn [ curP ] != 0 ) err = 1 ; \
 } 
 
 // Multiply two bytes using the hardware GF multiply
@@ -111,9 +151,10 @@ void pc_gen_rsr_matrix_1b(unsigned char *a, int k)
         for (i = k-1; i>=0; i--)
         {
                 p = 1;
-                for ( j = 0; j <= 255 ; j++ )
+                for ( j = 0; j < 255 ; j++ )
                 {
-                        a[255 * i + (255 - j - 1)] = p;
+                        int idx = ( 255 * i ) + ( 255 - j - 1 ) ;
+                        a [ idx ] = p;
                         p = pc_mul_1b(p, gen);
                 }
                 gen = pc_mul_1b(gen, 3);
@@ -915,11 +956,8 @@ int gf_2vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 2 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
@@ -965,11 +1003,8 @@ int gf_3vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 3 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1021,11 +1056,8 @@ int gf_4vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 4 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1083,11 +1115,8 @@ int gf_5vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 5 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1151,11 +1180,8 @@ int gf_6vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 6 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1225,11 +1251,8 @@ int gf_7vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 7 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1305,11 +1328,8 @@ int gf_8vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 8 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1391,11 +1411,8 @@ int gf_9vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 9 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1483,11 +1500,8 @@ int gf_10vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 10 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1581,11 +1595,8 @@ int gf_11vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 11 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1685,11 +1696,8 @@ int gf_12vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 12 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1795,11 +1803,8 @@ int gf_13vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 13 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1911,11 +1916,8 @@ int gf_14vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 14 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -2033,11 +2035,8 @@ int gf_15vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 15 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -2161,11 +2160,8 @@ int gf_16vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 16 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -2295,11 +2291,8 @@ int gf_17vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 17 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -2435,11 +2428,8 @@ int gf_18vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 18 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -2581,11 +2571,8 @@ int gf_19vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 19 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -2733,11 +2720,8 @@ int gf_20vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 20 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -2891,11 +2875,8 @@ int gf_21vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 21 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -3055,11 +3036,8 @@ int gf_22vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 22 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -3225,11 +3203,8 @@ int gf_23vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 23 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -3401,11 +3376,8 @@ int gf_24vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 24 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -3583,11 +3555,8 @@ int gf_25vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 25 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -3771,11 +3740,8 @@ int gf_26vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 26 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -3965,11 +3931,8 @@ int gf_27vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 27 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -4165,11 +4128,8 @@ int gf_28vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 28 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -4371,11 +4331,8 @@ int gf_29vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 29 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -4583,11 +4540,8 @@ int gf_30vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 30 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -4801,11 +4755,8 @@ int gf_31vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 31 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -5025,11 +4976,8 @@ int gf_32vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
 
-                        if ( curSym < ( k - 32 ) )
-                        {
-                            L1Dec(data_vec, 4, err, syn ) ;
-                            if ( err != 0 ) return curPos ;
-                        }
+                        L1Dec(data_vec, 4, err, syn ) ;
+                        if ( err != 0 ) return curPos ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;

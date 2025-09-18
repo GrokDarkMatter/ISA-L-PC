@@ -70,6 +70,8 @@ dump_u8xu8(unsigned char *s, int k, int m)
 extern int ec_encode_data_avx512_gfni ( int len, int m, int p, unsigned char * g_tbls, 
     unsigned char ** data, unsigned char ** coding ) ;
 
+#define NOPAPI 1
+
 #ifdef _WIN64
 #define __builtin_prefetch(a,b,c) _mm_prefetch((const char*)(a), _MM_HINT_T0)
 #define _popcnt64 __popcnt64
@@ -775,12 +777,12 @@ main(int argc, char *argv[])
         m = k + p ;
 
         // Do early performance testing
-
+#ifndef NOPAPI
         TestPAPIRoots () ;
         TestPAPIInv   () ;
         TestPAPI1b    () ;
         TestPAPIbm    () ;
-
+#endif
         // Build the power, log and inverse tables
         pc_bpow_1b ( 3 ) ;
         pc_blog_1b () ;
@@ -795,7 +797,7 @@ main(int argc, char *argv[])
 
         // Create memory for encoding matrices
         //a = malloc ( MMAX * ( KMAX*2 ) ) ;
-        a = malloc ( sizeof ( EncMat ) ) ;
+        a = malloc ( sizeof ( Vand1b ) ) ;
         if ( a == NULL )
         {
                 printf("Error allocating a\n") ;
@@ -804,6 +806,7 @@ main(int argc, char *argv[])
 
         // Initialize the Vandermonde matrix
         pc_gen_rsr_matrix_1b ( a, 4 ) ;
+  
         pc_bvan_1b ( a, 4 ) ;
 
         // Initialize the encoding matrix
@@ -1019,10 +1022,11 @@ exit:
         free ( a ) ;
         for (i = 0; i < TEST_SOURCES; i++)
         {
-                aligned_free ( buffs[ i ] ) ;
-                aligned_free ( temp_buffs[ i ] ) ;
+                //aligned_free ( buffs[ i ] ) ;
+                //aligned_free ( temp_buffs[ i ] ) ;
         }
-        aligned_free ( g_tbls ) ;
+        //aligned_free ( g_tbls ) ;        printf ( "sizeof EncMat = %d\n", sizeof ( EncMat )) ;
+
         return ret;
 }
 
