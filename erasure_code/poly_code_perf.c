@@ -637,6 +637,7 @@ void inject_errors_in_place_1b(unsigned char **data, int index, int num_errors, 
         original_values[i] = data[pos][index];
         uint8_t error = (rand() % (FIELD_SIZE - 1)) + 1;
         data[pos][index] = data[pos][index] ^ error;
+        data[pos][index+1] = data[pos][index+1] ^ error;
     }
 }
 
@@ -674,7 +675,7 @@ int test_pgz_decoder_1b ( int index, int m, int p, unsigned char * g_tbls,
             pc_decode_data_avx512_gfni_1b ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
             //printf ( "PGZ decoder done = %d\n", done ) ;
 
-           if ( verify_correction_in_place_1b(data, index, num_errors, error_positions, original_values ) )
+            if ( verify_correction_in_place_1b(data, index, num_errors, error_positions, original_values ) )
             {
                 successes++;
             }

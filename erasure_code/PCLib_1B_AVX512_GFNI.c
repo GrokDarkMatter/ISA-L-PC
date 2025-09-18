@@ -755,6 +755,44 @@ int berlekamp_massey_1b_AVX512_GFNI(unsigned char *syndromes, int length, unsign
     return L;
 }
 
+int pc_verify_multiple_errors_l1 ( unsigned char * S, int mSize, unsigned char * keyEq, 
+        __m512i * vec, unsigned char * vecAdr ) 
+{
+        unsigned char roots [ PC_MAX_ERRS ] = {0} ;
+        unsigned char errVal [ PC_MAX_ERRS ] ;
+
+        // Find roots, exit if mismatch with expected roots
+        int nroots = find_roots_1b_AVX512_GFNI ( keyEq, roots, mSize );
+        if ( nroots != mSize )
+        {
+                printf ( "Bad roots expected %d got %d\n", mSize, nroots ) ;
+                return 0 ;
+        }
+
+        // Compute the error values
+        if ( pc_compute_error_values_1b_AVX512_GFNI ( mSize, S, roots, errVal ) == 0 )
+        {
+                printf ( "Error values exit\n" ) ;
+                return 0 ;
+        }
+
+        // Verify all syndromes are correct
+        if ( pc_verify_syndromes_1b_AVX512_GFNI ( S, 4, mSize, roots, errVal ) == 0 )
+        {
+                printf ( "Syndromes exit\n" ) ;
+                return 0 ;
+        }
+
+        for ( int i = 0 ; i < mSize ; i ++ )
+        {
+                // Good correction
+                printf ( "Good correction roots [ %d ] = %d errVal = %d\n", i, 63 - roots [ i ], errVal [ i ] ) ;
+                vecAdr [ 63 - roots [ i ] ] ^= errVal [ i ] ;
+                unsigned char * vecAdd = ( unsigned char * ) vec ;
+                vecAdd [ 63 - roots [ i ] ] ^= errVal [ i ] ;
+        }
+        return 1 ;
+}
 // Attempt to detect multiple error locations and values
 int pc_verify_multiple_errors_1b_AVX512_GFNI ( unsigned char * S, unsigned char ** data, int mSize, int k,
         int p, int newPos, int offSet, unsigned char * keyEq )
@@ -915,6 +953,7 @@ int pc_verify_single_error_1b_1L ( __m512i * vec, unsigned char * memVec, unsign
         {
                 if ( pc_mul_1b ( S [ i - 1 ], pVal ) != S [ i ] )
                 {
+                        printf ( "Single error failed\n" ) ;
                         return 0 ;
                 }
         }
@@ -929,8 +968,8 @@ void L1Correct ( __m512i * vec, int k, unsigned char * S_in, unsigned char * mem
 {
         unsigned char S [ 4 ] ;
 
-        //int i, mSize  ;
-        //unsigned char keyEq [ PC_MAX_ERRS + 1 ] = { 0 } ;
+        int mSize  ;
+        unsigned char keyEq [ PC_MAX_ERRS + 1 ] = { 0 } ;
 
         // Reverse terms to match PC_Correct
         S [ 0 ] = S_in [ 3 ] ;
@@ -943,14 +982,15 @@ void L1Correct ( __m512i * vec, int k, unsigned char * S_in, unsigned char * mem
         {
                 return ;
         }
-#ifdef NDEF
-        mSize = PGZ_1b_AVX512_GFNI( S, p, keyEq ) ;
+
+        mSize = PGZ_1b_AVX512_GFNI( S, 4, keyEq ) ;
 
         if ( mSize > 1 )
         {
-                return pc_verify_multiple_errors_1b_AVX512_GFNI ( S, data, mSize, k, p, newPos, offSet, keyEq ) ;
+                printf ( "Found good matrix size=%d\n", mSize ) ;
+                pc_verify_multiple_errors_l1 ( S, mSize, keyEq, vec, memVec ) ;
         }
-#endif
+
         return ;
 }
 
