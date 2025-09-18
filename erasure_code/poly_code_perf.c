@@ -116,8 +116,8 @@ extern void ec_encode_data_neon ( int len, int k, int p, u8 * g_tbls, u8 ** buff
 
 #define BAD_MATRIX -1
 
-#ifndef NOPAPI
 #include <papi.h>
+
 void handle_error(int code)
 {
     fprintf ( stderr, "PAPI error: %s\n", PAPI_strerror ( code ) ) ;
@@ -164,6 +164,7 @@ int InitPAPI ( void )
         }
         return event_set ;
 }
+#ifndef NOPAPI
 
 void TestPAPIRoots ( void )
 {
@@ -653,7 +654,7 @@ int verify_correction_in_place_1b(unsigned char **data, int index, int num_error
 }
 
 int test_pgz_decoder_1b ( int index, int m, int p, unsigned char * g_tbls,
-                unsigned char ** data, unsigned char ** coding, int avx2 )
+                unsigned char ** data, unsigned char ** coding )
 {
     int successes = 0, total_tests = 0;
 
@@ -688,7 +689,7 @@ int test_pgz_decoder_1b ( int index, int m, int p, unsigned char * g_tbls,
 
     for (int num_errors = 1; num_errors <= (p/2) ; num_errors++)
     {
-        for (int trial = 0; trial < 1000; trial++)
+        for (int trial = 0; trial < 1000000; trial++)
         {
             uint8_t error_positions[16];
             uint8_t original_values[16];
@@ -924,14 +925,14 @@ main(int argc, char *argv[])
                         //goto exit;
                }
         }
-#ifdef NDEF
-        if ( test_pgz_decoder_1b ( 0, m, p, pwrTab, buffs, temp_buffs, avx2 ) == 0 )
+
+        if ( test_pgz_decoder_1b ( 0, m, p, pwrTab, buffs, temp_buffs ) == 0 )
         {
                 printf ( "Decoder failed\n" ) ;
                 goto exit ;
         }
-#endif
-#ifndef NOPAPI
+
+//#ifndef NOPAPI
         int event_set = InitPAPI () ; //PAPI_NULL, event_code ;
         if ( ( ret = PAPI_start ( event_set ) ) != PAPI_OK ) 
         {
@@ -1012,7 +1013,7 @@ main(int argc, char *argv[])
         PAPI_cleanup_eventset ( event_set ) ;
         PAPI_destroy_eventset ( &event_set ) ;
         PAPI_shutdown ();
-#endif
+//#endif
         printf (" done all: Pass\n" ) ;
         fflush ( stdout ) ;
 

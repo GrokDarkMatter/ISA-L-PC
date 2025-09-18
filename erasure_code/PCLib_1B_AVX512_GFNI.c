@@ -69,6 +69,7 @@ for ( int curP = 0 ; curP < p ; curP ++ ) \
 vec = _mm512_mask_blend_epi32 ( 0x8000, vec, pvec ) ; 
 
 #define L1Dec(vec,p,err,syn) \
+err = 0 ;\
 for ( int curP = 0 ; curP < p ; curP ++ ) \
 { \
         matVec = _mm512_load_si512 ( &Vand1b [ curP ] [ 3 ]) ; \
@@ -887,6 +888,72 @@ int pc_correct_AVX512_GFNI_1b ( int newPos, int k, int p,
         return 0 ;
 }
 
+// Assume there is a single error and try to correct, see if syndromes match
+int pc_verify_single_error_1b_1L ( __m512i * vec, unsigned char * memVec, unsigned char * S, int k )
+{
+        // LSB has parity, for single error this equals error value
+        unsigned char eVal = S [ 0 ] ;
+
+        // Compute error location is log2(syndrome[1]/syndrome[0])
+        unsigned char eLoc = S [ 1 ] ;
+        unsigned char pVal = pc_mul_1b ( eLoc, pc_itab_1b [ eVal ] ) ;
+        eLoc = pc_ltab_1b [ pVal ] % 255 ;
+
+        printf ( "Syndromes\n" ) ;
+        dump_u8xu8 ( S, 1, 4 ) ;
+        printf ( "1L Eloc = %d\n", eLoc ) ;
+
+        // Verify error location is reasonable
+        if ( eLoc > 63 )
+        {
+                printf ( "Eloc out of range k = %d\n", k ) ;
+                return 0 ;
+        }
+
+        // Now verify that the error can be used to produce the remaining syndromes
+        for ( int i = 2 ; i < 4 ; i ++ )
+        {
+                if ( pc_mul_1b ( S [ i - 1 ], pVal ) != S [ i ] )
+                {
+                        return 0 ;
+                }
+        }
+        // Good correction
+        memVec [ 63 - eLoc ] ^= eVal ;
+        unsigned char * vecAdr = ( unsigned char * ) vec ;
+        vecAdr [ 63 - eLoc ] ^= eVal ;
+        return 1 ;
+}
+
+void L1Correct ( __m512i * vec, int k, unsigned char * S_in, unsigned char * memVec ) 
+{
+        unsigned char S [ 4 ] ;
+
+        //int i, mSize  ;
+        //unsigned char keyEq [ PC_MAX_ERRS + 1 ] = { 0 } ;
+
+        // Reverse terms to match PC_Correct
+        S [ 0 ] = S_in [ 3 ] ;
+        S [ 1 ] = S_in [ 2 ] ;
+        S [ 2 ] = S_in [ 1 ] ;
+        S [ 3 ] = S_in [ 0 ] ;
+
+        // Check to see if a single error can be verified
+        if ( pc_verify_single_error_1b_1L ( vec, memVec, S, k+4 ) )
+        {
+                return ;
+        }
+#ifdef NDEF
+        mSize = PGZ_1b_AVX512_GFNI( S, p, keyEq ) ;
+
+        if ( mSize > 1 )
+        {
+                return pc_verify_multiple_errors_1b_AVX512_GFNI ( S, data, mSize, k, p, newPos, offSet, keyEq ) ;
+        }
+#endif
+        return ;
+}
+
 /**********************************************************************
 Copyright (c) 2025 Michael H. Anderson. All rights reserved.
 This software includes contributions protected by
@@ -944,20 +1011,21 @@ int gf_2vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
@@ -990,21 +1058,22 @@ int gf_3vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1042,10 +1111,11 @@ int gf_4vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1053,11 +1123,11 @@ int gf_4vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1100,10 +1170,11 @@ int gf_5vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1112,11 +1183,11 @@ int gf_5vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1164,10 +1235,11 @@ int gf_6vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1177,11 +1249,11 @@ int gf_6vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1234,10 +1306,11 @@ int gf_7vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1248,11 +1321,11 @@ int gf_7vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1310,10 +1383,11 @@ int gf_8vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1325,11 +1399,11 @@ int gf_8vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1392,10 +1466,11 @@ int gf_9vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1408,11 +1483,11 @@ int gf_9vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1480,10 +1555,11 @@ int gf_10vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1497,11 +1573,11 @@ int gf_10vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1574,10 +1650,11 @@ int gf_11vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1592,11 +1669,11 @@ int gf_11vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1674,10 +1751,11 @@ int gf_12vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1693,11 +1771,11 @@ int gf_12vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1780,10 +1858,11 @@ int gf_13vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1800,11 +1879,11 @@ int gf_13vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -1892,10 +1971,11 @@ int gf_14vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1913,11 +1993,11 @@ int gf_14vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -2010,10 +2090,11 @@ int gf_15vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -2032,11 +2113,11 @@ int gf_15vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -2134,10 +2215,11 @@ int gf_16vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -2157,11 +2239,11 @@ int gf_16vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -2264,10 +2346,11 @@ int gf_17vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -2288,11 +2371,11 @@ int gf_17vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -2400,10 +2483,11 @@ int gf_18vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -2425,11 +2509,11 @@ int gf_18vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -2542,10 +2626,11 @@ int gf_19vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -2568,11 +2653,11 @@ int gf_19vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -2690,10 +2775,11 @@ int gf_20vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -2717,11 +2803,11 @@ int gf_20vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -2844,10 +2930,11 @@ int gf_21vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -2872,11 +2959,11 @@ int gf_21vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -3004,10 +3091,11 @@ int gf_22vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -3033,11 +3121,11 @@ int gf_22vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -3170,10 +3258,11 @@ int gf_23vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -3200,11 +3289,11 @@ int gf_23vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -3342,10 +3431,11 @@ int gf_24vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -3373,11 +3463,11 @@ int gf_24vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -3520,10 +3610,11 @@ int gf_25vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -3552,11 +3643,11 @@ int gf_25vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -3704,10 +3795,11 @@ int gf_26vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -3737,11 +3829,11 @@ int gf_26vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -3894,10 +3986,11 @@ int gf_27vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -3928,11 +4021,11 @@ int gf_27vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -4090,10 +4183,11 @@ int gf_28vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -4125,11 +4219,11 @@ int gf_28vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -4292,10 +4386,11 @@ int gf_29vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -4328,11 +4423,11 @@ int gf_29vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -4500,10 +4595,11 @@ int gf_30vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -4537,11 +4633,11 @@ int gf_30vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -4714,10 +4810,11 @@ int gf_31vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -4752,11 +4849,11 @@ int gf_31vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
@@ -4934,10 +5031,11 @@ int gf_32vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
+                data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+              __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
                 L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) return curPos ;
+                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -4973,11 +5071,11 @@ int gf_32vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                      __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) return curPos ;
+                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
