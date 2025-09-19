@@ -1034,9 +1034,10 @@ exit:
         return ret;
 }
 #else
-void main ( void )
+#include <stdio.h>
+int main ( void )
 {
-    exit 0 ;
+    printf ( "No support for multi-level encoding on ARM64/NEON\n" ) ;
 }
 #endif
 
