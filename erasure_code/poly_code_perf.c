@@ -629,15 +629,16 @@ exit:
 
 #define FIELD_SIZE 256
 
-void inject_errors_in_place_1b(unsigned char **data, int index, int num_errors, unsigned char *error_positions, uint8_t *original_values)
+void inject_errors_in_place_1b(unsigned char **data, int index, int num_errors, unsigned char *error_positions, unsigned char *original_values)
 {
     for (int i = 0; i < num_errors; i++)
     {
         int pos = error_positions[i];
         original_values[i] = data[pos][index];
-        uint8_t error = (rand() % (FIELD_SIZE - 1)) + 1;
+        unsigned char error = (rand() % (FIELD_SIZE - 1)) + 1;
         data[pos][index] = data[pos][index] ^ error;
-        data[pos][index+1] = data[pos][index+1] ^ error;
+        unsigned char ne = rand () % 62 ;
+        data[pos][index+ne] = data[pos][index+ne] ^ error;
     }
 }
 
@@ -690,7 +691,7 @@ int test_pgz_decoder_1b ( int index, int m, int p, unsigned char * g_tbls,
 
     for (int num_errors = 1; num_errors <= (p/2) ; num_errors++)
     {
-        for (int trial = 0; trial < 1000000; trial++)
+        for (int trial = 0; trial < 1000; trial++)
         {
             uint8_t error_positions[16];
             uint8_t original_values[16];

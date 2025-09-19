@@ -786,7 +786,6 @@ int pc_verify_multiple_errors_l1 ( unsigned char * S, int mSize, unsigned char *
         for ( int i = 0 ; i < mSize ; i ++ )
         {
                 // Good correction
-                printf ( "Good correction roots [ %d ] = %d errVal = %d\n", i, 63 - roots [ i ], errVal [ i ] ) ;
                 vecAdr [ 63 - roots [ i ] ] ^= errVal [ i ] ;
                 unsigned char * vecAdd = ( unsigned char * ) vec ;
                 vecAdd [ 63 - roots [ i ] ] ^= errVal [ i ] ;
@@ -937,14 +936,10 @@ int pc_verify_single_error_1b_1L ( __m512i * vec, unsigned char * memVec, unsign
         unsigned char pVal = pc_mul_1b ( eLoc, pc_itab_1b [ eVal ] ) ;
         eLoc = pc_ltab_1b [ pVal ] % 255 ;
 
-        printf ( "Syndromes\n" ) ;
-        dump_u8xu8 ( S, 1, 4 ) ;
-        printf ( "1L Eloc = %d\n", eLoc ) ;
-
         // Verify error location is reasonable
         if ( eLoc > 63 )
         {
-                printf ( "Eloc out of range k = %d\n", k ) ;
+                //printf ( "Eloc out of range k = %d\n", k ) ;
                 return 0 ;
         }
 
@@ -953,7 +948,6 @@ int pc_verify_single_error_1b_1L ( __m512i * vec, unsigned char * memVec, unsign
         {
                 if ( pc_mul_1b ( S [ i - 1 ], pVal ) != S [ i ] )
                 {
-                        printf ( "Single error failed\n" ) ;
                         return 0 ;
                 }
         }
@@ -987,7 +981,6 @@ void L1Correct ( __m512i * vec, int k, unsigned char * S_in, unsigned char * mem
 
         if ( mSize > 1 )
         {
-                printf ( "Found good matrix size=%d\n", mSize ) ;
                 pc_verify_multiple_errors_l1 ( S, mSize, keyEq, vec, memVec ) ;
         }
 
