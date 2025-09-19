@@ -1027,12 +1027,16 @@ exit:
         free ( a ) ;
         for (i = 0; i < TEST_SOURCES; i++)
         {
-                //aligned_free ( buffs[ i ] ) ;
-                //aligned_free ( temp_buffs[ i ] ) ;
+                aligned_free ( buffs[ i ] ) ;
+                aligned_free ( temp_buffs[ i ] ) ;
         }
-        //aligned_free ( g_tbls ) ;        printf ( "sizeof EncMat = %d\n", sizeof ( EncMat )) ;
-
+        aligned_free ( g_tbls ) ; 
         return ret;
+}
+#else
+void main ( void )
+{
+    exit 0 ;
 }
 #endif
 
