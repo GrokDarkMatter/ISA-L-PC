@@ -47,6 +47,7 @@ static unsigned char pc_ptab_1b [ 256 ], pc_ltab_1b [ 256 ], pc_itab_1b [ 256 ] 
 static __m512i EncMat [ 255 ] [ 4 ] ;
 static __m512i Vand1b [ 255 ] [ 4 ] ;
 
+// Level 1 encoder for bytes that are sequential in memory
 #define L1Enc(vec,p,pvec) \
 for ( int curP = 0 ; curP < p ; curP ++ ) \
 { \
@@ -68,6 +69,7 @@ for ( int curP = 0 ; curP < p ; curP ++ ) \
 } \
 vec = _mm512_mask_blend_epi32 ( 0x8000, vec, pvec ) ; 
 
+// Level 1 decoder for bytes that are sequential in memory
 #define L1Dec(vec,p,err,syn) \
 err = 0 ;\
 for ( int curP = 0 ; curP < p ; curP ++ ) \
@@ -143,6 +145,7 @@ void  pc_binv_1b ( void )
     }
 }
 
+// Generate Reed Solomon matrix in reverse (LSB terms to the right)
 void pc_gen_rsr_matrix_1b(unsigned char *a, int k)
 {
         int i, j;
@@ -193,7 +196,7 @@ void pc_bvan_1b ( unsigned char * vals, int p )
     }
 }
 
-// Encode using the Vandermonde matrix
+// Encode using the Vandermonde matrix, do the whole 255 byte codeword
 void pc_encoder1b ( unsigned char * codeWord, unsigned char * par, int p ) 
 {
     __m512i codeWordvec [ 4 ], encMatvec [ 4 ], vreg [ 4 ] ;
@@ -253,7 +256,7 @@ void pc_encoder1b ( unsigned char * codeWord, unsigned char * par, int p )
     }
 }
 
-// Encode using the Vandermonde matrix
+// Decode using the Vandermonde matrix, do a whole 255 element row at once
 void pc_decoder1b ( unsigned char * codeWord, unsigned char * syn, int p ) 
 {
     __m512i codeWordvec [ 4 ], vanMatvec [ 4 ], vreg [ 4 ] ;
@@ -343,7 +346,7 @@ int find_roots_1b ( unsigned char * keyEq, unsigned char * roots, int mSize )
         return rootCount ;
 }
 
-
+// Produce the Generator Polynomial
 void pc_gen_poly_1b( unsigned char *p, int rank)
 {
         int c, alpha, cr ; // Loop variables
@@ -369,6 +372,7 @@ void pc_gen_poly_1b( unsigned char *p, int rank)
         }
 }
 
+// Produce the matrix that corresponds to LFSR
 void pc_gen_poly_matrix_1b(unsigned char *a, int m, int k)
 {
         int i, j, par, over, lpos ;
@@ -401,8 +405,9 @@ void pc_gen_poly_matrix_1b(unsigned char *a, int m, int k)
                 // Now do the LSB of the LFSR to finish
                 lfsr [ par - 1 ] = pc_mul_1b ( over, taps [ par - 1 ] ) ;
         }
-    }
+}
 
+// Simlate division with multiplication by inverse
 unsigned char gf_div_1b_AVX512_GFNI ( unsigned char a, unsigned char b )
 {
         return pc_mul_1b ( a, pc_itab_1b [ b ] ) ;
@@ -426,7 +431,7 @@ int pc_pow_1b_AVX512_GFNI ( unsigned char base, unsigned char Power )
         return computedPow ;
 }
 
-// Assume there is a single error and try to correct, see if syndromes match
+// Assume there is a single error and try to correct, verify syndromes match
 int pc_verify_single_error_1b_AVX512_GFNI ( unsigned char * S, unsigned char ** data, int k, int p,
         int newPos, int offSet )
 {
@@ -463,6 +468,7 @@ int pc_verify_single_error_1b_AVX512_GFNI ( unsigned char * S, unsigned char ** 
         return 1 ;
 }
 
+// Invert matrix with vector assist
 int gf_invert_matrix_1b_AVX512_GFNI(unsigned char *in_mat, unsigned char *out_mat, const int n)
 {
         __m512i multVal512 ;
@@ -541,6 +547,7 @@ int gf_invert_matrix_1b_AVX512_GFNI(unsigned char *in_mat, unsigned char *out_ma
         return 0 ;
 }
 
+// Find roots with vector assist
 int find_roots_1b_AVX512_GFNI(unsigned char *keyEq, unsigned char *roots, int mSize)
 {
         static __m512i Vandermonde [ 16 ] [ 4 ] ;
@@ -689,11 +696,8 @@ int pc_verify_syndromes_1b_AVX512_GFNI ( unsigned char * S, int p, int mSize, un
         return 1 ;
 }
 
-// Affine table from ec_base.h: 256 * 8-byte matrices for GF(256) multiplication
-static const uint64_t gf_table_gfni[256];  // Assume defined in ec_base.h
-
 // syndromes: array of length 'length' (typically 2t), syndromes[0] = S1, [1] = S2, etc.
-// lambda: caller-allocated array of size at least (length + 1 + 31), filled with locator poly coeffs. Padded for SIMD.
+// lambda: caller-allocated array of size at least (length + 1 + 31), filled with locator poly coeffs. 
 // Returns: degree L of the error locator polynomial.
 // Note: Assumes length <= 32 for AVX-512 (32-byte vectors); extend loops for larger lengths.
 int berlekamp_massey_1b_AVX512_GFNI(unsigned char *syndromes, int length, unsigned char *lambda)
@@ -755,6 +759,7 @@ int berlekamp_massey_1b_AVX512_GFNI(unsigned char *syndromes, int length, unsign
     return L;
 }
 
+// Find roots and error values, verify with syndromes, level 1
 int pc_verify_multiple_errors_l1 ( unsigned char * S, int mSize, unsigned char * keyEq, 
         __m512i * vec, unsigned char * vecAdr ) 
 {
@@ -792,7 +797,8 @@ int pc_verify_multiple_errors_l1 ( unsigned char * S, int mSize, unsigned char *
         }
         return 1 ;
 }
-// Attempt to detect multiple error locations and values
+
+// Attempt to detect multiple error locations and values, level 2
 int pc_verify_multiple_errors_1b_AVX512_GFNI ( unsigned char * S, unsigned char ** data, int mSize, int k,
         int p, int newPos, int offSet, unsigned char * keyEq )
 {
@@ -958,6 +964,7 @@ int pc_verify_single_error_1b_1L ( __m512i * vec, unsigned char * memVec, unsign
         return 1 ;
 }
 
+// Correct error detected on Level 1
 void L1Correct ( __m512i * vec, int k, unsigned char * S_in, unsigned char * memVec ) 
 {
         unsigned char S [ 4 ] ;
