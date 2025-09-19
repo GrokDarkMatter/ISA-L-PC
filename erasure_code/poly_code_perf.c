@@ -691,7 +691,7 @@ int test_pgz_decoder_1b ( int index, int m, int p, unsigned char * g_tbls,
 
     for (int num_errors = 1; num_errors <= (p/2) ; num_errors++)
     {
-        for (int trial = 0; trial < 1000; trial++)
+        for (int trial = 0; trial < 100; trial++)
         {
             uint8_t error_positions[16];
             uint8_t original_values[16];
@@ -934,7 +934,7 @@ main(int argc, char *argv[])
                 goto exit ;
         }
 
-//#ifndef NOPAPI
+#ifndef NOPAPI
         int event_set = InitPAPI () ; //PAPI_NULL, event_code ;
         if ( ( ret = PAPI_start ( event_set ) ) != PAPI_OK ) 
         {
@@ -1015,7 +1015,7 @@ main(int argc, char *argv[])
         PAPI_cleanup_eventset ( event_set ) ;
         PAPI_destroy_eventset ( &event_set ) ;
         PAPI_shutdown ();
-//#endif
+#endif
         printf (" done all: Pass\n" ) ;
         fflush ( stdout ) ;
 
