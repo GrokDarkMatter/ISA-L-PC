@@ -44,6 +44,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restrictions
 **********************************************************************/
 
+#ifndef __aarch64__
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> // for memset, memcmp
@@ -1032,4 +1034,5 @@ exit:
 
         return ret;
 }
+#endif
 
