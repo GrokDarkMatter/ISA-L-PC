@@ -1054,7 +1054,8 @@ int gf_2vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -1102,7 +1103,8 @@ int gf_3vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -1156,7 +1158,8 @@ int gf_4vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -1216,7 +1219,8 @@ int gf_5vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -1282,7 +1286,8 @@ int gf_6vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -1354,7 +1359,8 @@ int gf_7vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -1432,7 +1438,8 @@ int gf_8vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -1516,7 +1523,8 @@ int gf_9vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -1606,7 +1614,8 @@ int gf_10vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -1702,7 +1711,8 @@ int gf_11vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -1804,7 +1814,8 @@ int gf_12vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -1912,7 +1923,8 @@ int gf_13vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -2026,7 +2038,8 @@ int gf_14vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -2146,7 +2159,8 @@ int gf_15vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -2272,7 +2286,8 @@ int gf_16vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -2404,7 +2419,8 @@ int gf_17vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -2542,7 +2558,8 @@ int gf_18vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -2686,7 +2703,8 @@ int gf_19vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -2836,7 +2854,8 @@ int gf_20vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -2992,7 +3011,8 @@ int gf_21vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -3154,7 +3174,8 @@ int gf_22vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -3322,7 +3343,8 @@ int gf_23vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -3496,7 +3518,8 @@ int gf_24vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -3676,7 +3699,8 @@ int gf_25vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -3862,7 +3886,8 @@ int gf_26vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -4054,7 +4079,8 @@ int gf_27vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -4252,7 +4278,8 @@ int gf_28vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -4456,7 +4483,8 @@ int gf_29vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -4666,7 +4694,8 @@ int gf_30vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -4882,7 +4911,8 @@ int gf_31vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
@@ -5104,7 +5134,8 @@ int gf_32vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
-                        cwAdr = &data [ curSym ] [ curPos ] ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ]
+;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         L1Dec(data_vec, 4, err, syn ) ;
