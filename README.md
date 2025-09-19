@@ -9,6 +9,16 @@ Fortunately, modern vector processors—with SIMD (Single Instruction, Multiple 
 
 This shift minimizes overhead via vector processing while empowering developers to embed resilience into applications, from AI workloads to databases. As detailed in U.S. Patent 11,848,686, parallel multipliers and syndrome sequencers in SIMD cores streamline Galois field operations, making high-speed ECC feasible for exascale systems. As SDC threats intensify, embracing vector processor solutions isn't optional—it's the key to unbreakable, efficient data ecosystems.
 
+### New 2 Dimensional Reed Solomon Library Available
+
+In the era of exabyte-scale data centers, silent data corruption (SDC) lurks as an invisible saboteur, silently corrupting "cold" archives—those vast troves of infrequently accessed but mission-critical data like backups, logs, and historical datasets. A 2023 Google study revealed SDC rates climbing to 1 in 500 drives annually in hyperscale environments, while Meta's reports highlight how bit flips from cosmic rays, hardware wear, or firmware bugs can cascade into catastrophic losses during rare reads. For data centers drowning in petabytes of cold storage, where verification is sporadic, these undetected errors threaten compliance, AI training integrity, and recovery from disasters like ransomware.
+
+Enter a potent weapon: two-dimensional Reed-Solomon (2D-RS) encoding, an ECC powerhouse that improves upon legacy tape technologies for disk and cloud resilience. My new open-source library, ISA-L-PC, delivers exactly this—leveraging Intel's GFNI instructions for blazing-fast SIMD acceleration. It applies RS(64,60) encoding within blocks for intra-level correction, then layers a flexible RS code (up to 255 symbols) across blocks for inter-level fortification. With full source code, you can tweak both levels to any valid 8-bit configuration, tailoring protection to your workload.
+
+Drawing from the LTO-9 technical paper's rigorous analysis, this 2D-RS approach yields 10X UBER improvements over single-level codes—pushing uncorrectable bit error rates to 10^-20, or 12+ NINES of durability. Even with degraded channels (think debris-clogged reads or flaky disks), it sustains 10^-19 UBER at input rates 99X higher than legacy systems, outshining HDDs by two orders of magnitude in cold data scenarios. No more latent sector panics; this blankets end-to-end protection against write errors, media defects, and aging.
+
+Ideal for data centers stockpiling cold data, ISA-L-PC embeds resilience without hardware overhauls—perfect for erasure-coded archives or AI data lakes. The techniques are patented (e.g., U.S. Patent 11,848,686 and others), but licensed at reasonable rates for commercial use. Download, evaluate it free today, and fortify your ecosystem against SDC's stealth.
+
 POLYNOMIAL ENCODING
 -------------------
 
