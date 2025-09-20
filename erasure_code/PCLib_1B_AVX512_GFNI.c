@@ -1038,7 +1038,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restrictions
 **********************************************************************/
-int gf_2vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+
+// 2D Parallel Syndrome Sequencer for P1 = 2 and P2 = 4 Codewords
+int gf_2vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -1047,34 +1049,48 @@ int gf_2vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         __m512i parity [ 2 ], taps [ 1 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
                         parity [ 1 ] = _mm512_xor_si512 ( parity [ 1 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -1085,7 +1101,8 @@ int gf_2vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         return ( curPos ) ;
 }
 
-int gf_3vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 3 and P2 = 4 Codewords
+int gf_3vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -1094,29 +1111,40 @@ int gf_3vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         __m512i parity [ 3 ], taps [ 2 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 0 ], data_vec ) ;
@@ -1124,9 +1152,12 @@ int gf_3vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                         parity [ 2 ] = _mm512_xor_si512 ( parity [ 2 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -1138,7 +1169,8 @@ int gf_3vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         return ( curPos ) ;
 }
 
-int gf_4vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 4 and P2 = 4 Codewords
+int gf_4vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -1147,31 +1179,42 @@ int gf_4vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         __m512i parity [ 4 ], taps [ 3 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
                 parity [ 3 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -1181,10 +1224,13 @@ int gf_4vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                         parity [ 3 ] = _mm512_xor_si512 ( parity [ 3 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -1197,7 +1243,8 @@ int gf_4vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         return ( curPos ) ;
 }
 
-int gf_5vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 5 and P2 = 4 Codewords
+int gf_5vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -1206,33 +1253,44 @@ int gf_5vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         __m512i parity [ 5 ], taps [ 4 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
                 parity [ 3 ] = data_vec ;
                 parity [ 4 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -1244,11 +1302,14 @@ int gf_5vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                         parity [ 4 ] = _mm512_xor_si512 ( parity [ 4 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -1262,7 +1323,8 @@ int gf_5vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         return ( curPos ) ;
 }
 
-int gf_6vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 6 and P2 = 4 Codewords
+int gf_6vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -1271,19 +1333,26 @@ int gf_6vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         __m512i parity [ 6 ], taps [ 5 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1291,15 +1360,19 @@ int gf_6vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 parity [ 4 ] = data_vec ;
                 parity [ 5 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -1313,12 +1386,15 @@ int gf_6vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                         parity [ 5 ] = _mm512_xor_si512 ( parity [ 5 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 4 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -1333,7 +1409,8 @@ int gf_6vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         return ( curPos ) ;
 }
 
-int gf_7vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 7 and P2 = 4 Codewords
+int gf_7vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -1342,20 +1419,27 @@ int gf_7vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         __m512i parity [ 7 ], taps [ 6 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1364,15 +1448,19 @@ int gf_7vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 parity [ 5 ] = data_vec ;
                 parity [ 6 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -1388,6 +1476,7 @@ int gf_7vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                         parity [ 6 ] = _mm512_xor_si512 ( parity [ 6 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -1395,6 +1484,8 @@ int gf_7vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 5 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -1410,7 +1501,8 @@ int gf_7vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         return ( curPos ) ;
 }
 
-int gf_8vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 8 and P2 = 4 Codewords
+int gf_8vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -1419,21 +1511,28 @@ int gf_8vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         __m512i parity [ 8 ], taps [ 7 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1443,15 +1542,19 @@ int gf_8vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 parity [ 6 ] = data_vec ;
                 parity [ 7 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -1469,6 +1572,7 @@ int gf_8vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                         parity [ 7 ] = _mm512_xor_si512 ( parity [ 7 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -1477,6 +1581,8 @@ int gf_8vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 6 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -1493,7 +1599,8 @@ int gf_8vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         return ( curPos ) ;
 }
 
-int gf_9vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 9 and P2 = 4 Codewords
+int gf_9vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -1502,22 +1609,29 @@ int gf_9vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         __m512i parity [ 9 ], taps [ 8 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1528,15 +1642,19 @@ int gf_9vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 parity [ 7 ] = data_vec ;
                 parity [ 8 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -1556,6 +1674,7 @@ int gf_9vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                         parity [ 8 ] = _mm512_xor_si512 ( parity [ 8 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -1565,6 +1684,8 @@ int gf_9vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 7 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -1582,7 +1703,8 @@ int gf_9vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         return ( curPos ) ;
 }
 
-int gf_10vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 10 and P2 = 4 Codewords
+int gf_10vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -1591,23 +1713,30 @@ int gf_10vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 10 ], taps [ 9 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1619,15 +1748,19 @@ int gf_10vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 8 ] = data_vec ;
                 parity [ 9 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -1649,6 +1782,7 @@ int gf_10vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 9 ] = _mm512_xor_si512 ( parity [ 9 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -1659,6 +1793,8 @@ int gf_10vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 8 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -1677,7 +1813,8 @@ int gf_10vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_11vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 11 and P2 = 4 Codewords
+int gf_11vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -1686,24 +1823,31 @@ int gf_11vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 11 ], taps [ 10 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1716,15 +1860,19 @@ int gf_11vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 9 ] = data_vec ;
                 parity [ 10 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -1748,6 +1896,7 @@ int gf_11vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 10 ] = _mm512_xor_si512 ( parity [ 10 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -1759,6 +1908,8 @@ int gf_11vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 9 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -1778,7 +1929,8 @@ int gf_11vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_12vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 12 and P2 = 4 Codewords
+int gf_12vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -1787,25 +1939,32 @@ int gf_12vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 12 ], taps [ 11 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1819,15 +1978,19 @@ int gf_12vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 10 ] = data_vec ;
                 parity [ 11 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -1853,6 +2016,7 @@ int gf_12vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 11 ] = _mm512_xor_si512 ( parity [ 11 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -1865,6 +2029,8 @@ int gf_12vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 10 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -1885,7 +2051,8 @@ int gf_12vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_13vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 13 and P2 = 4 Codewords
+int gf_13vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -1894,26 +2061,33 @@ int gf_13vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 13 ], taps [ 12 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -1928,15 +2102,19 @@ int gf_13vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 11 ] = data_vec ;
                 parity [ 12 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -1964,6 +2142,7 @@ int gf_13vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 12 ] = _mm512_xor_si512 ( parity [ 12 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -1977,6 +2156,8 @@ int gf_13vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 11 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -1998,7 +2179,8 @@ int gf_13vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_14vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 14 and P2 = 4 Codewords
+int gf_14vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -2007,27 +2189,34 @@ int gf_14vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 14 ], taps [ 13 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -2043,15 +2232,19 @@ int gf_14vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 12 ] = data_vec ;
                 parity [ 13 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -2081,6 +2274,7 @@ int gf_14vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 13 ] = _mm512_xor_si512 ( parity [ 13 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -2095,6 +2289,8 @@ int gf_14vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 12 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -2117,7 +2313,8 @@ int gf_14vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_15vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 15 and P2 = 4 Codewords
+int gf_15vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -2126,28 +2323,35 @@ int gf_15vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 15 ], taps [ 14 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -2164,15 +2368,19 @@ int gf_15vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 13 ] = data_vec ;
                 parity [ 14 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -2204,6 +2412,7 @@ int gf_15vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 14 ] = _mm512_xor_si512 ( parity [ 14 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -2219,6 +2428,8 @@ int gf_15vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 13 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -2242,7 +2453,8 @@ int gf_15vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_16vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 16 and P2 = 4 Codewords
+int gf_16vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -2251,29 +2463,36 @@ int gf_16vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 16 ], taps [ 15 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -2291,15 +2510,19 @@ int gf_16vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 14 ] = data_vec ;
                 parity [ 15 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -2333,6 +2556,7 @@ int gf_16vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 15 ] = _mm512_xor_si512 ( parity [ 15 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -2349,6 +2573,8 @@ int gf_16vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 14 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -2373,7 +2599,8 @@ int gf_16vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_17vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 17 and P2 = 4 Codewords
+int gf_17vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -2382,30 +2609,37 @@ int gf_17vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 17 ], taps [ 16 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -2424,15 +2658,19 @@ int gf_17vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 15 ] = data_vec ;
                 parity [ 16 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -2468,6 +2706,7 @@ int gf_17vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 16 ] = _mm512_xor_si512 ( parity [ 16 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -2485,6 +2724,8 @@ int gf_17vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 15 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -2510,7 +2751,8 @@ int gf_17vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_18vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 18 and P2 = 4 Codewords
+int gf_18vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -2519,31 +2761,38 @@ int gf_18vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 18 ], taps [ 17 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -2563,15 +2812,19 @@ int gf_18vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 16 ] = data_vec ;
                 parity [ 17 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -2609,6 +2862,7 @@ int gf_18vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 17 ] = _mm512_xor_si512 ( parity [ 17 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -2627,6 +2881,8 @@ int gf_18vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 16 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -2653,7 +2909,8 @@ int gf_18vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_19vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 19 and P2 = 4 Codewords
+int gf_19vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -2662,32 +2919,39 @@ int gf_19vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 19 ], taps [ 18 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -2708,15 +2972,19 @@ int gf_19vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 17 ] = data_vec ;
                 parity [ 18 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -2756,6 +3024,7 @@ int gf_19vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 18 ] = _mm512_xor_si512 ( parity [ 18 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -2775,6 +3044,8 @@ int gf_19vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 17 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -2802,7 +3073,8 @@ int gf_19vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_20vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 20 and P2 = 4 Codewords
+int gf_20vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -2811,33 +3083,40 @@ int gf_20vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 20 ], taps [ 19 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -2859,15 +3138,19 @@ int gf_20vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 18 ] = data_vec ;
                 parity [ 19 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -2909,6 +3192,7 @@ int gf_20vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 19 ] = _mm512_xor_si512 ( parity [ 19 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -2929,6 +3213,8 @@ int gf_20vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 18 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -2957,7 +3243,8 @@ int gf_20vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_21vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 21 and P2 = 4 Codewords
+int gf_21vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -2966,34 +3253,41 @@ int gf_21vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 21 ], taps [ 20 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -3016,15 +3310,19 @@ int gf_21vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 19 ] = data_vec ;
                 parity [ 20 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -3068,6 +3366,7 @@ int gf_21vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 20 ] = _mm512_xor_si512 ( parity [ 20 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -3089,6 +3388,8 @@ int gf_21vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 19 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -3118,7 +3419,8 @@ int gf_21vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_22vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 22 and P2 = 4 Codewords
+int gf_22vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -3127,35 +3429,42 @@ int gf_22vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 22 ], taps [ 21 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -3179,15 +3488,19 @@ int gf_22vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 20 ] = data_vec ;
                 parity [ 21 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -3233,6 +3546,7 @@ int gf_22vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 21 ] = _mm512_xor_si512 ( parity [ 21 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -3255,6 +3569,8 @@ int gf_22vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 20 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -3285,7 +3601,8 @@ int gf_22vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_23vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 23 and P2 = 4 Codewords
+int gf_23vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -3294,36 +3611,43 @@ int gf_23vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 23 ], taps [ 22 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
-        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( tapVal [ 21 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -3348,15 +3672,19 @@ int gf_23vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 21 ] = data_vec ;
                 parity [ 22 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -3404,6 +3732,7 @@ int gf_23vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 22 ] = _mm512_xor_si512 ( parity [ 22 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -3427,6 +3756,8 @@ int gf_23vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 21 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 22 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -3458,7 +3789,8 @@ int gf_23vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_24vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 24 and P2 = 4 Codewords
+int gf_24vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -3467,37 +3799,44 @@ int gf_24vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 24 ], taps [ 23 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
-        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
-        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( tapVal [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( tapVal [ 22 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -3523,15 +3862,19 @@ int gf_24vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 22 ] = data_vec ;
                 parity [ 23 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -3581,6 +3924,7 @@ int gf_24vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 23 ] = _mm512_xor_si512 ( parity [ 23 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -3605,6 +3949,8 @@ int gf_24vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 22 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 23 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -3637,7 +3983,8 @@ int gf_24vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_25vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 25 and P2 = 4 Codewords
+int gf_25vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -3646,38 +3993,45 @@ int gf_25vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 25 ], taps [ 24 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
-        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
-        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
-        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( tapVal [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( tapVal [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( tapVal [ 23 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -3704,15 +4058,19 @@ int gf_25vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 23 ] = data_vec ;
                 parity [ 24 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -3764,6 +4122,7 @@ int gf_25vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 24 ] = _mm512_xor_si512 ( parity [ 24 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -3789,6 +4148,8 @@ int gf_25vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 23 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 24 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -3822,7 +4183,8 @@ int gf_25vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_26vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 26 and P2 = 4 Codewords
+int gf_26vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -3831,39 +4193,46 @@ int gf_26vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 26 ], taps [ 25 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
-        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
-        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
-        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
-        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( tapVal [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( tapVal [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( tapVal [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( tapVal [ 24 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -3891,15 +4260,19 @@ int gf_26vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 24 ] = data_vec ;
                 parity [ 25 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -3953,6 +4326,7 @@ int gf_26vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 25 ] = _mm512_xor_si512 ( parity [ 25 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -3979,6 +4353,8 @@ int gf_26vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 24 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 25 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -4013,7 +4389,8 @@ int gf_26vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_27vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 27 and P2 = 4 Codewords
+int gf_27vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -4022,40 +4399,47 @@ int gf_27vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 27 ], taps [ 26 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
-        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
-        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
-        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
-        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
-        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( tapVal [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( tapVal [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( tapVal [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( tapVal [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( tapVal [ 25 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -4084,15 +4468,19 @@ int gf_27vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 25 ] = data_vec ;
                 parity [ 26 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -4148,6 +4536,7 @@ int gf_27vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 26 ] = _mm512_xor_si512 ( parity [ 26 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -4175,6 +4564,8 @@ int gf_27vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 25 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 26 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -4210,7 +4601,8 @@ int gf_27vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_28vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 28 and P2 = 4 Codewords
+int gf_28vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -4219,41 +4611,48 @@ int gf_28vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 28 ], taps [ 27 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
-        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
-        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
-        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
-        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
-        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
-        taps [ 26 ] = _mm512_set1_epi8 ( g_tbls [ 26 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( tapVal [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( tapVal [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( tapVal [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( tapVal [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( tapVal [ 25 ] ) ;
+        taps [ 26 ] = _mm512_set1_epi8 ( tapVal [ 26 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -4283,15 +4682,19 @@ int gf_28vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 26 ] = data_vec ;
                 parity [ 27 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -4349,6 +4752,7 @@ int gf_28vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 27 ] = _mm512_xor_si512 ( parity [ 27 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -4377,6 +4781,8 @@ int gf_28vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 26 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 27 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -4413,7 +4819,8 @@ int gf_28vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_29vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 29 and P2 = 4 Codewords
+int gf_29vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -4422,42 +4829,49 @@ int gf_29vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 29 ], taps [ 28 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
-        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
-        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
-        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
-        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
-        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
-        taps [ 26 ] = _mm512_set1_epi8 ( g_tbls [ 26 ] ) ;
-        taps [ 27 ] = _mm512_set1_epi8 ( g_tbls [ 27 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( tapVal [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( tapVal [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( tapVal [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( tapVal [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( tapVal [ 25 ] ) ;
+        taps [ 26 ] = _mm512_set1_epi8 ( tapVal [ 26 ] ) ;
+        taps [ 27 ] = _mm512_set1_epi8 ( tapVal [ 27 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -4488,15 +4902,19 @@ int gf_29vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 27 ] = data_vec ;
                 parity [ 28 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -4556,6 +4974,7 @@ int gf_29vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 28 ] = _mm512_xor_si512 ( parity [ 28 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -4585,6 +5004,8 @@ int gf_29vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 27 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 28 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -4622,7 +5043,8 @@ int gf_29vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_30vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 30 and P2 = 4 Codewords
+int gf_30vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -4631,43 +5053,50 @@ int gf_30vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 30 ], taps [ 29 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
-        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
-        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
-        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
-        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
-        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
-        taps [ 26 ] = _mm512_set1_epi8 ( g_tbls [ 26 ] ) ;
-        taps [ 27 ] = _mm512_set1_epi8 ( g_tbls [ 27 ] ) ;
-        taps [ 28 ] = _mm512_set1_epi8 ( g_tbls [ 28 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( tapVal [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( tapVal [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( tapVal [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( tapVal [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( tapVal [ 25 ] ) ;
+        taps [ 26 ] = _mm512_set1_epi8 ( tapVal [ 26 ] ) ;
+        taps [ 27 ] = _mm512_set1_epi8 ( tapVal [ 27 ] ) ;
+        taps [ 28 ] = _mm512_set1_epi8 ( tapVal [ 28 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -4699,15 +5128,19 @@ int gf_30vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 28 ] = data_vec ;
                 parity [ 29 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -4769,6 +5202,7 @@ int gf_30vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 29 ] = _mm512_xor_si512 ( parity [ 29 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -4799,6 +5233,8 @@ int gf_30vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 28 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 29 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -4837,7 +5273,8 @@ int gf_30vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_31vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 31 and P2 = 4 Codewords
+int gf_31vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -4846,44 +5283,51 @@ int gf_31vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 31 ], taps [ 30 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
-        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
-        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
-        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
-        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
-        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
-        taps [ 26 ] = _mm512_set1_epi8 ( g_tbls [ 26 ] ) ;
-        taps [ 27 ] = _mm512_set1_epi8 ( g_tbls [ 27 ] ) ;
-        taps [ 28 ] = _mm512_set1_epi8 ( g_tbls [ 28 ] ) ;
-        taps [ 29 ] = _mm512_set1_epi8 ( g_tbls [ 29 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( tapVal [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( tapVal [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( tapVal [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( tapVal [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( tapVal [ 25 ] ) ;
+        taps [ 26 ] = _mm512_set1_epi8 ( tapVal [ 26 ] ) ;
+        taps [ 27 ] = _mm512_set1_epi8 ( tapVal [ 27 ] ) ;
+        taps [ 28 ] = _mm512_set1_epi8 ( tapVal [ 28 ] ) ;
+        taps [ 29 ] = _mm512_set1_epi8 ( tapVal [ 29 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -4916,15 +5360,19 @@ int gf_31vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 29 ] = data_vec ;
                 parity [ 30 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -4988,6 +5436,7 @@ int gf_31vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 30 ] = _mm512_xor_si512 ( parity [ 30 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -5019,6 +5468,8 @@ int gf_31vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 29 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 30 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -5058,7 +5509,8 @@ int gf_31vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_32vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel Syndrome Sequencer for P1 = 32 and P2 = 4 Codewords
+int gf_32vect_pss_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -5067,45 +5519,52 @@ int gf_32vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         __m512i parity [ 32 ], taps [ 31 ], matVec, vreg ;
         __m512i data_vec ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
-        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
-        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
-        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
-        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
-        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
-        taps [ 26 ] = _mm512_set1_epi8 ( g_tbls [ 26 ] ) ;
-        taps [ 27 ] = _mm512_set1_epi8 ( g_tbls [ 27 ] ) ;
-        taps [ 28 ] = _mm512_set1_epi8 ( g_tbls [ 28 ] ) ;
-        taps [ 29 ] = _mm512_set1_epi8 ( g_tbls [ 29 ] ) ;
-        taps [ 30 ] = _mm512_set1_epi8 ( g_tbls [ 30 ] ) ;
+        // Initialize the taps to the passed in power values to create parallel multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( tapVal [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( tapVal [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( tapVal [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( tapVal [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( tapVal [ 25 ] ) ;
+        taps [ 26 ] = _mm512_set1_epi8 ( tapVal [ 26 ] ) ;
+        taps [ 27 ] = _mm512_set1_epi8 ( tapVal [ 27 ] ) ;
+        taps [ 28 ] = _mm512_set1_epi8 ( tapVal [ 28 ] ) ;
+        taps [ 29 ] = _mm512_set1_epi8 ( tapVal [ 29 ] ) ;
+        taps [ 30 ] = _mm512_set1_epi8 ( tapVal [ 30 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
+
+                // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, err, syn ) ;
                 if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+
+                // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
                 parity [ 2 ] = data_vec ;
@@ -5139,15 +5598,19 @@ int gf_32vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 30 ] = data_vec ;
                 parity [ 31 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Get codeword address and load 64 bytes
                         cwAdr = &data [ curSym ] [ curPos ]
 ;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
+                        // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, err, syn ) ;
                         if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
+                        // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(parity [ 1 ], taps [ 1 ]) ;
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(parity [ 2 ], taps [ 2 ]) ;
@@ -5213,6 +5676,7 @@ int gf_32vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 31 ] = _mm512_xor_si512 ( parity [ 31 ], data_vec ) ;
                 }
 
+                // Verify Syndromes are zero for Level 2
                 data_vec = _mm512_or_si512 ( parity [ 0 ], parity [ 1 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 2 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 3 ] ) ;
@@ -5245,6 +5709,8 @@ int gf_32vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 30 ] ) ;
                 data_vec = _mm512_or_si512 ( data_vec, parity [ 31 ] ) ;
                 mask = _mm512_test_epi64_mask ( data_vec, data_vec ) ;
+
+                // Store syndromes and exit function on non-zero Level 2 syndrome
                 if ( !_ktestz_mask8_u8 ( mask, mask ) ) 
                 {
                         _mm512_store_si512( (__m512i *) &dest [ 0 ] [ 0 ], parity [ 0 ] ) ;
@@ -5286,74 +5752,111 @@ int gf_32vect_pss_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 
-int gf_2vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 2 and P2 = 4 Codewords
+int gf_2vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 2 ], taps [ 2 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
                         parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
         }
         return ( curPos ) ;
 }
 
-int gf_3vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 3 and P2 = 4 Codewords
+int gf_3vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 3 ], taps [ 3 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -5362,6 +5865,7 @@ int gf_3vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                         parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -5369,37 +5873,55 @@ int gf_3vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         return ( curPos ) ;
 }
 
-int gf_4vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 4 and P2 = 4 Codewords
+int gf_4vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 4 ], taps [ 4 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
                 parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -5410,6 +5932,7 @@ int gf_4vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                         parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -5418,39 +5941,57 @@ int gf_4vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         return ( curPos ) ;
 }
 
-int gf_5vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 5 and P2 = 4 Codewords
+int gf_5vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 5 ], taps [ 5 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
                 parity [ 3 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 3 ]) ;
                 parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -5463,6 +6004,7 @@ int gf_5vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                         parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -5472,28 +6014,39 @@ int gf_5vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         return ( curPos ) ;
 }
 
-int gf_6vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 6 and P2 = 4 Codewords
+int gf_6vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 6 ], taps [ 6 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -5501,12 +6054,19 @@ int gf_6vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 parity [ 4 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 4 ]) ;
                 parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -5521,6 +6081,7 @@ int gf_6vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                         parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -5531,29 +6092,40 @@ int gf_6vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         return ( curPos ) ;
 }
 
-int gf_7vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 7 and P2 = 4 Codewords
+int gf_7vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 7 ], taps [ 7 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -5562,12 +6134,19 @@ int gf_7vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 parity [ 5 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 5 ]) ;
                 parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -5584,6 +6163,7 @@ int gf_7vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                         parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -5595,30 +6175,41 @@ int gf_7vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         return ( curPos ) ;
 }
 
-int gf_8vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 8 and P2 = 4 Codewords
+int gf_8vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 8 ], taps [ 8 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -5628,12 +6219,19 @@ int gf_8vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 parity [ 6 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 6 ]) ;
                 parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -5652,6 +6250,7 @@ int gf_8vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                         parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -5664,31 +6263,42 @@ int gf_8vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         return ( curPos ) ;
 }
 
-int gf_9vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 9 and P2 = 4 Codewords
+int gf_9vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 9 ], taps [ 9 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -5699,12 +6309,19 @@ int gf_9vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                 parity [ 7 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 7 ]) ;
                 parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -5725,6 +6342,7 @@ int gf_9vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
                         parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -5738,32 +6356,43 @@ int gf_9vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned 
         return ( curPos ) ;
 }
 
-int gf_10vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 10 and P2 = 4 Codewords
+int gf_10vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 10 ], taps [ 10 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -5775,12 +6404,19 @@ int gf_10vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 8 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 8 ]) ;
                 parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -5803,6 +6439,7 @@ int gf_10vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -5817,33 +6454,44 @@ int gf_10vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_11vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 11 and P2 = 4 Codewords
+int gf_11vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 11 ], taps [ 11 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -5856,12 +6504,19 @@ int gf_11vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 9 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 9 ]) ;
                 parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -5886,6 +6541,7 @@ int gf_11vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -5901,34 +6557,45 @@ int gf_11vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_12vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 12 and P2 = 4 Codewords
+int gf_12vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 12 ], taps [ 12 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -5942,12 +6609,19 @@ int gf_12vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 10 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 10 ]) ;
                 parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -5974,6 +6648,7 @@ int gf_12vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -5990,35 +6665,46 @@ int gf_12vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_13vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 13 and P2 = 4 Codewords
+int gf_13vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 13 ], taps [ 13 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -6033,12 +6719,19 @@ int gf_13vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 11 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 11 ]) ;
                 parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -6067,6 +6760,7 @@ int gf_13vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -6084,36 +6778,47 @@ int gf_13vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_14vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 14 and P2 = 4 Codewords
+int gf_14vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 14 ], taps [ 14 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -6129,12 +6834,19 @@ int gf_14vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 12 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 12 ]) ;
                 parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -6165,6 +6877,7 @@ int gf_14vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -6183,37 +6896,48 @@ int gf_14vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_15vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 15 and P2 = 4 Codewords
+int gf_15vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 15 ], taps [ 15 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -6230,12 +6954,19 @@ int gf_15vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 13 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 13 ]) ;
                 parity [ 14 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -6268,6 +6999,7 @@ int gf_15vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 14 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -6287,38 +7019,49 @@ int gf_15vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_16vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 16 and P2 = 4 Codewords
+int gf_16vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 16 ], taps [ 16 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -6336,12 +7079,19 @@ int gf_16vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 14 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 14 ]) ;
                 parity [ 15 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -6376,6 +7126,7 @@ int gf_16vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 15 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -6396,39 +7147,50 @@ int gf_16vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_17vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 17 and P2 = 4 Codewords
+int gf_17vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 17 ], taps [ 17 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -6447,12 +7209,19 @@ int gf_17vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 15 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 15 ]) ;
                 parity [ 16 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -6489,6 +7258,7 @@ int gf_17vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 16 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -6510,40 +7280,51 @@ int gf_17vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_18vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 18 and P2 = 4 Codewords
+int gf_18vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 18 ], taps [ 18 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -6563,12 +7344,19 @@ int gf_18vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 16 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 16 ]) ;
                 parity [ 17 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -6607,6 +7395,7 @@ int gf_18vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 17 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -6629,41 +7418,52 @@ int gf_18vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_19vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 19 and P2 = 4 Codewords
+int gf_19vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 19 ], taps [ 19 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -6684,12 +7484,19 @@ int gf_19vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 17 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 17 ]) ;
                 parity [ 18 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -6730,6 +7537,7 @@ int gf_19vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 18 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -6753,42 +7561,53 @@ int gf_19vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_20vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 20 and P2 = 4 Codewords
+int gf_20vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 20 ], taps [ 20 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -6810,12 +7629,19 @@ int gf_20vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 18 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 18 ]) ;
                 parity [ 19 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -6858,6 +7684,7 @@ int gf_20vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 19 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -6882,43 +7709,54 @@ int gf_20vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_21vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 21 and P2 = 4 Codewords
+int gf_21vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 21 ], taps [ 21 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -6941,12 +7779,19 @@ int gf_21vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 19 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 19 ]) ;
                 parity [ 20 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -6991,6 +7836,7 @@ int gf_21vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 20 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -7016,44 +7862,55 @@ int gf_21vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_22vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 22 and P2 = 4 Codewords
+int gf_22vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 22 ], taps [ 22 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
-        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( tapVal [ 21 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -7077,12 +7934,19 @@ int gf_22vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 20 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 20 ]) ;
                 parity [ 21 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -7129,6 +7993,7 @@ int gf_22vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 21 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -7155,45 +8020,56 @@ int gf_22vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_23vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 23 and P2 = 4 Codewords
+int gf_23vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 23 ], taps [ 23 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
-        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
-        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( tapVal [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( tapVal [ 22 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -7218,12 +8094,19 @@ int gf_23vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 21 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 21 ]) ;
                 parity [ 22 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -7272,6 +8155,7 @@ int gf_23vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 22 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -7299,46 +8183,57 @@ int gf_23vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_24vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 24 and P2 = 4 Codewords
+int gf_24vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 24 ], taps [ 24 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
-        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
-        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
-        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( tapVal [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( tapVal [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( tapVal [ 23 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -7364,12 +8259,19 @@ int gf_24vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 22 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 22 ]) ;
                 parity [ 23 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 23 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -7420,6 +8322,7 @@ int gf_24vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 23 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 23 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -7448,47 +8351,58 @@ int gf_24vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_25vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 25 and P2 = 4 Codewords
+int gf_25vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 25 ], taps [ 25 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
-        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
-        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
-        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
-        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( tapVal [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( tapVal [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( tapVal [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( tapVal [ 24 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -7515,12 +8429,19 @@ int gf_25vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 23 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 23 ]) ;
                 parity [ 24 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 24 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -7573,6 +8494,7 @@ int gf_25vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 24 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 24 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -7602,48 +8524,59 @@ int gf_25vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_26vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 26 and P2 = 4 Codewords
+int gf_26vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 26 ], taps [ 26 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
-        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
-        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
-        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
-        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
-        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( tapVal [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( tapVal [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( tapVal [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( tapVal [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( tapVal [ 25 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -7671,12 +8604,19 @@ int gf_26vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 24 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 24 ]) ;
                 parity [ 25 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 25 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -7731,6 +8671,7 @@ int gf_26vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 25 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 25 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -7761,49 +8702,60 @@ int gf_26vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_27vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 27 and P2 = 4 Codewords
+int gf_27vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 27 ], taps [ 27 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
-        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
-        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
-        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
-        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
-        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
-        taps [ 26 ] = _mm512_set1_epi8 ( g_tbls [ 26 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( tapVal [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( tapVal [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( tapVal [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( tapVal [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( tapVal [ 25 ] ) ;
+        taps [ 26 ] = _mm512_set1_epi8 ( tapVal [ 26 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -7832,12 +8784,19 @@ int gf_27vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 25 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 25 ]) ;
                 parity [ 26 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 26 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -7894,6 +8853,7 @@ int gf_27vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 26 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 26 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -7925,50 +8885,61 @@ int gf_27vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_28vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 28 and P2 = 4 Codewords
+int gf_28vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 28 ], taps [ 28 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
-        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
-        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
-        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
-        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
-        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
-        taps [ 26 ] = _mm512_set1_epi8 ( g_tbls [ 26 ] ) ;
-        taps [ 27 ] = _mm512_set1_epi8 ( g_tbls [ 27 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( tapVal [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( tapVal [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( tapVal [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( tapVal [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( tapVal [ 25 ] ) ;
+        taps [ 26 ] = _mm512_set1_epi8 ( tapVal [ 26 ] ) ;
+        taps [ 27 ] = _mm512_set1_epi8 ( tapVal [ 27 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -7998,12 +8969,19 @@ int gf_28vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 26 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 26 ]) ;
                 parity [ 27 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 27 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -8062,6 +9040,7 @@ int gf_28vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 27 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 27 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -8094,51 +9073,62 @@ int gf_28vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_29vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 29 and P2 = 4 Codewords
+int gf_29vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 29 ], taps [ 29 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
-        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
-        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
-        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
-        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
-        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
-        taps [ 26 ] = _mm512_set1_epi8 ( g_tbls [ 26 ] ) ;
-        taps [ 27 ] = _mm512_set1_epi8 ( g_tbls [ 27 ] ) ;
-        taps [ 28 ] = _mm512_set1_epi8 ( g_tbls [ 28 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( tapVal [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( tapVal [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( tapVal [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( tapVal [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( tapVal [ 25 ] ) ;
+        taps [ 26 ] = _mm512_set1_epi8 ( tapVal [ 26 ] ) ;
+        taps [ 27 ] = _mm512_set1_epi8 ( tapVal [ 27 ] ) ;
+        taps [ 28 ] = _mm512_set1_epi8 ( tapVal [ 28 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -8169,12 +9159,19 @@ int gf_29vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 27 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 27 ]) ;
                 parity [ 28 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 28 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -8235,6 +9232,7 @@ int gf_29vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 28 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 28 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -8268,52 +9266,63 @@ int gf_29vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_30vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 30 and P2 = 4 Codewords
+int gf_30vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 30 ], taps [ 30 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
-        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
-        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
-        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
-        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
-        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
-        taps [ 26 ] = _mm512_set1_epi8 ( g_tbls [ 26 ] ) ;
-        taps [ 27 ] = _mm512_set1_epi8 ( g_tbls [ 27 ] ) ;
-        taps [ 28 ] = _mm512_set1_epi8 ( g_tbls [ 28 ] ) ;
-        taps [ 29 ] = _mm512_set1_epi8 ( g_tbls [ 29 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( tapVal [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( tapVal [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( tapVal [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( tapVal [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( tapVal [ 25 ] ) ;
+        taps [ 26 ] = _mm512_set1_epi8 ( tapVal [ 26 ] ) ;
+        taps [ 27 ] = _mm512_set1_epi8 ( tapVal [ 27 ] ) ;
+        taps [ 28 ] = _mm512_set1_epi8 ( tapVal [ 28 ] ) ;
+        taps [ 29 ] = _mm512_set1_epi8 ( tapVal [ 29 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -8345,12 +9354,19 @@ int gf_30vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 28 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 28 ]) ;
                 parity [ 29 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 29 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -8413,6 +9429,7 @@ int gf_30vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 29 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 29 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -8447,53 +9464,64 @@ int gf_30vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_31vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 31 and P2 = 4 Codewords
+int gf_31vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 31 ], taps [ 31 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
-        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
-        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
-        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
-        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
-        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
-        taps [ 26 ] = _mm512_set1_epi8 ( g_tbls [ 26 ] ) ;
-        taps [ 27 ] = _mm512_set1_epi8 ( g_tbls [ 27 ] ) ;
-        taps [ 28 ] = _mm512_set1_epi8 ( g_tbls [ 28 ] ) ;
-        taps [ 29 ] = _mm512_set1_epi8 ( g_tbls [ 29 ] ) ;
-        taps [ 30 ] = _mm512_set1_epi8 ( g_tbls [ 30 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( tapVal [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( tapVal [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( tapVal [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( tapVal [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( tapVal [ 25 ] ) ;
+        taps [ 26 ] = _mm512_set1_epi8 ( tapVal [ 26 ] ) ;
+        taps [ 27 ] = _mm512_set1_epi8 ( tapVal [ 27 ] ) ;
+        taps [ 28 ] = _mm512_set1_epi8 ( tapVal [ 28 ] ) ;
+        taps [ 29 ] = _mm512_set1_epi8 ( tapVal [ 29 ] ) ;
+        taps [ 30 ] = _mm512_set1_epi8 ( tapVal [ 30 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -8526,12 +9554,19 @@ int gf_31vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 29 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 29 ]) ;
                 parity [ 30 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 30 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -8596,6 +9631,7 @@ int gf_31vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 30 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 30 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -8631,54 +9667,65 @@ int gf_31vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-int gf_32vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned char **data,
+// 2D Parallel LFSR Sequencer for P1 = 32 and P2 = 4 Codewords
+int gf_32vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned char **data,
         unsigned char ** dest)
 {
-        int curSym, curPos ;                          // Loop counters
+        int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 32 ], taps [ 32 ], par_vec ;
-        __m512i data_vec, matVec, vreg ;
+        __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+
+        // Compute location for Level1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
-        taps [ 0 ] = _mm512_set1_epi8 ( g_tbls [ 0 ] ) ;
-        taps [ 1 ] = _mm512_set1_epi8 ( g_tbls [ 1 ] ) ;
-        taps [ 2 ] = _mm512_set1_epi8 ( g_tbls [ 2 ] ) ;
-        taps [ 3 ] = _mm512_set1_epi8 ( g_tbls [ 3 ] ) ;
-        taps [ 4 ] = _mm512_set1_epi8 ( g_tbls [ 4 ] ) ;
-        taps [ 5 ] = _mm512_set1_epi8 ( g_tbls [ 5 ] ) ;
-        taps [ 6 ] = _mm512_set1_epi8 ( g_tbls [ 6 ] ) ;
-        taps [ 7 ] = _mm512_set1_epi8 ( g_tbls [ 7 ] ) ;
-        taps [ 8 ] = _mm512_set1_epi8 ( g_tbls [ 8 ] ) ;
-        taps [ 9 ] = _mm512_set1_epi8 ( g_tbls [ 9 ] ) ;
-        taps [ 10 ] = _mm512_set1_epi8 ( g_tbls [ 10 ] ) ;
-        taps [ 11 ] = _mm512_set1_epi8 ( g_tbls [ 11 ] ) ;
-        taps [ 12 ] = _mm512_set1_epi8 ( g_tbls [ 12 ] ) ;
-        taps [ 13 ] = _mm512_set1_epi8 ( g_tbls [ 13 ] ) ;
-        taps [ 14 ] = _mm512_set1_epi8 ( g_tbls [ 14 ] ) ;
-        taps [ 15 ] = _mm512_set1_epi8 ( g_tbls [ 15 ] ) ;
-        taps [ 16 ] = _mm512_set1_epi8 ( g_tbls [ 16 ] ) ;
-        taps [ 17 ] = _mm512_set1_epi8 ( g_tbls [ 17 ] ) ;
-        taps [ 18 ] = _mm512_set1_epi8 ( g_tbls [ 18 ] ) ;
-        taps [ 19 ] = _mm512_set1_epi8 ( g_tbls [ 19 ] ) ;
-        taps [ 20 ] = _mm512_set1_epi8 ( g_tbls [ 20 ] ) ;
-        taps [ 21 ] = _mm512_set1_epi8 ( g_tbls [ 21 ] ) ;
-        taps [ 22 ] = _mm512_set1_epi8 ( g_tbls [ 22 ] ) ;
-        taps [ 23 ] = _mm512_set1_epi8 ( g_tbls [ 23 ] ) ;
-        taps [ 24 ] = _mm512_set1_epi8 ( g_tbls [ 24 ] ) ;
-        taps [ 25 ] = _mm512_set1_epi8 ( g_tbls [ 25 ] ) ;
-        taps [ 26 ] = _mm512_set1_epi8 ( g_tbls [ 26 ] ) ;
-        taps [ 27 ] = _mm512_set1_epi8 ( g_tbls [ 27 ] ) ;
-        taps [ 28 ] = _mm512_set1_epi8 ( g_tbls [ 28 ] ) ;
-        taps [ 29 ] = _mm512_set1_epi8 ( g_tbls [ 29 ] ) ;
-        taps [ 30 ] = _mm512_set1_epi8 ( g_tbls [ 30 ] ) ;
-        taps [ 31 ] = _mm512_set1_epi8 ( g_tbls [ 31 ] ) ;
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
+        taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
+        taps [ 1 ] = _mm512_set1_epi8 ( tapVal [ 1 ] ) ;
+        taps [ 2 ] = _mm512_set1_epi8 ( tapVal [ 2 ] ) ;
+        taps [ 3 ] = _mm512_set1_epi8 ( tapVal [ 3 ] ) ;
+        taps [ 4 ] = _mm512_set1_epi8 ( tapVal [ 4 ] ) ;
+        taps [ 5 ] = _mm512_set1_epi8 ( tapVal [ 5 ] ) ;
+        taps [ 6 ] = _mm512_set1_epi8 ( tapVal [ 6 ] ) ;
+        taps [ 7 ] = _mm512_set1_epi8 ( tapVal [ 7 ] ) ;
+        taps [ 8 ] = _mm512_set1_epi8 ( tapVal [ 8 ] ) ;
+        taps [ 9 ] = _mm512_set1_epi8 ( tapVal [ 9 ] ) ;
+        taps [ 10 ] = _mm512_set1_epi8 ( tapVal [ 10 ] ) ;
+        taps [ 11 ] = _mm512_set1_epi8 ( tapVal [ 11 ] ) ;
+        taps [ 12 ] = _mm512_set1_epi8 ( tapVal [ 12 ] ) ;
+        taps [ 13 ] = _mm512_set1_epi8 ( tapVal [ 13 ] ) ;
+        taps [ 14 ] = _mm512_set1_epi8 ( tapVal [ 14 ] ) ;
+        taps [ 15 ] = _mm512_set1_epi8 ( tapVal [ 15 ] ) ;
+        taps [ 16 ] = _mm512_set1_epi8 ( tapVal [ 16 ] ) ;
+        taps [ 17 ] = _mm512_set1_epi8 ( tapVal [ 17 ] ) ;
+        taps [ 18 ] = _mm512_set1_epi8 ( tapVal [ 18 ] ) ;
+        taps [ 19 ] = _mm512_set1_epi8 ( tapVal [ 19 ] ) ;
+        taps [ 20 ] = _mm512_set1_epi8 ( tapVal [ 20 ] ) ;
+        taps [ 21 ] = _mm512_set1_epi8 ( tapVal [ 21 ] ) ;
+        taps [ 22 ] = _mm512_set1_epi8 ( tapVal [ 22 ] ) ;
+        taps [ 23 ] = _mm512_set1_epi8 ( tapVal [ 23 ] ) ;
+        taps [ 24 ] = _mm512_set1_epi8 ( tapVal [ 24 ] ) ;
+        taps [ 25 ] = _mm512_set1_epi8 ( tapVal [ 25 ] ) ;
+        taps [ 26 ] = _mm512_set1_epi8 ( tapVal [ 26 ] ) ;
+        taps [ 27 ] = _mm512_set1_epi8 ( tapVal [ 27 ] ) ;
+        taps [ 28 ] = _mm512_set1_epi8 ( tapVal [ 28 ] ) ;
+        taps [ 29 ] = _mm512_set1_epi8 ( tapVal [ 29 ] ) ;
+        taps [ 30 ] = _mm512_set1_epi8 ( tapVal [ 30 ] ) ;
+        taps [ 31 ] = _mm512_set1_epi8 ( tapVal [ 31 ] ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                // Load 64 bytes of Original Data
                 data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+
+                // Encode Level 1 using Vector Multiplier for symbol 0
                 L1Enc(data_vec, 4, par_vec ) ;
+                // Store L1 computed parity back to memory
                _mm512_mask_storeu_epi32 ( &data [ 0 ] [ curPos ], 0x8000, data_vec ) ;
+
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ]) ;
                 parity [ 1 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 1 ]) ;
                 parity [ 2 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 2 ]) ;
@@ -8712,12 +9759,19 @@ int gf_32vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 30 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 30 ]) ;
                 parity [ 31 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 31 ]) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load 64 bytes of Original Data
                         data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Encode level 1 for 1..k symbols using Vector Multiplier
                         L1Enc(data_vec, 4, par_vec ) ;
+                        // Store L1 computed parity back to memory
                        _mm512_mask_storeu_epi32 ( &data [ curSym ] [ curPos ], 0x8000, data_vec ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
                                        _mm512_gf2p8mul_epi8(data_vec, taps [ 0 ] ) ) ;
@@ -8784,6 +9838,7 @@ int gf_32vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
                         parity [ 31 ] = _mm512_gf2p8mul_epi8(data_vec, taps [ 31 ]) ;
                 }
 
+                 // Store Level 2 parity back to memory
                 _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
                 _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
@@ -8820,75 +9875,75 @@ int gf_32vect_pls_avx512_gfni_1b(int len, int k, unsigned char *g_tbls, unsigned
         return ( curPos ) ;
 }
 
-void pc_encode_data_avx512_gfni_1b(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
+void pc_encode_data_avx512_gfni_1b(int len, int k, int rows, unsigned char *tapVal, unsigned char **data,
         unsigned char **coding)
 {
         switch (rows) {
-        case 2: gf_2vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 2: gf_2vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 3: gf_3vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 3: gf_3vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 4: gf_4vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 4: gf_4vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 5: gf_5vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 5: gf_5vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 6: gf_6vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 6: gf_6vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 7: gf_7vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 7: gf_7vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 8: gf_8vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 8: gf_8vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 9: gf_9vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 9: gf_9vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 10: gf_10vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 10: gf_10vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 11: gf_11vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 11: gf_11vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 12: gf_12vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 12: gf_12vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 13: gf_13vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 13: gf_13vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 14: gf_14vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 14: gf_14vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 15: gf_15vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 15: gf_15vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 16: gf_16vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 16: gf_16vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 17: gf_17vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 17: gf_17vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 18: gf_18vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 18: gf_18vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 19: gf_19vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 19: gf_19vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 20: gf_20vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 20: gf_20vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 21: gf_21vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 21: gf_21vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 22: gf_22vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 22: gf_22vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 23: gf_23vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 23: gf_23vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 24: gf_24vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 24: gf_24vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 25: gf_25vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 25: gf_25vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 26: gf_26vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 26: gf_26vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 27: gf_27vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 27: gf_27vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 28: gf_28vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 28: gf_28vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 29: gf_29vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 29: gf_29vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 30: gf_30vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 30: gf_30vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 31: gf_31vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 31: gf_31vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
-        case 32: gf_32vect_pls_avx512_gfni_1b(len, k, g_tbls, data, coding);
+        case 32: gf_32vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
         }
 }
-int pc_decode_data_avx512_gfni_1b(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
+int pc_decode_data_avx512_gfni_1b(int len, int k, int rows, unsigned char *tapVal, unsigned char **data,
         unsigned char **coding, int retries)
 {
         int newPos = 0, retry = 0 ;
@@ -8896,67 +9951,67 @@ int pc_decode_data_avx512_gfni_1b(int len, int k, int rows, unsigned char *g_tbl
         {
 
                 switch (rows) {
-                case 2: newPos = gf_2vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 2: newPos = gf_2vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 3: newPos = gf_3vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 3: newPos = gf_3vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 4: newPos = gf_4vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 4: newPos = gf_4vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 5: newPos = gf_5vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 5: newPos = gf_5vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 6: newPos = gf_6vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 6: newPos = gf_6vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 7: newPos = gf_7vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 7: newPos = gf_7vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 8: newPos = gf_8vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 8: newPos = gf_8vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 9: newPos = gf_9vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 9: newPos = gf_9vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 10: newPos = gf_10vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 10: newPos = gf_10vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 11: newPos = gf_11vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 11: newPos = gf_11vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 12: newPos = gf_12vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 12: newPos = gf_12vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 13: newPos = gf_13vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 13: newPos = gf_13vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 14: newPos = gf_14vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 14: newPos = gf_14vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 15: newPos = gf_15vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 15: newPos = gf_15vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 16: newPos = gf_16vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 16: newPos = gf_16vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 17: newPos = gf_17vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 17: newPos = gf_17vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 18: newPos = gf_18vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 18: newPos = gf_18vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 19: newPos = gf_19vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 19: newPos = gf_19vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 20: newPos = gf_20vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 20: newPos = gf_20vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 21: newPos = gf_21vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 21: newPos = gf_21vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 22: newPos = gf_22vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 22: newPos = gf_22vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 23: newPos = gf_23vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 23: newPos = gf_23vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 24: newPos = gf_24vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 24: newPos = gf_24vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 25: newPos = gf_25vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 25: newPos = gf_25vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 26: newPos = gf_26vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 26: newPos = gf_26vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 27: newPos = gf_27vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 27: newPos = gf_27vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 28: newPos = gf_28vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 28: newPos = gf_28vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 29: newPos = gf_29vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 29: newPos = gf_29vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 30: newPos = gf_30vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 30: newPos = gf_30vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 31: newPos = gf_31vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 31: newPos = gf_31vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
-                case 32: newPos = gf_32vect_pss_avx512_gfni_1b(len, k, g_tbls, data, coding, newPos);
+                case 32: newPos = gf_32vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
                 }
                 if ( newPos < len )
