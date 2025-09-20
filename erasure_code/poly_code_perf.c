@@ -87,7 +87,7 @@ extern void ec_encode_data_neon ( int len, int k, int p, u8 * g_tbls, u8 ** buff
 extern void ec_encode_data_neon ( int len, int k, int p, u8 * g_tbls, u8 ** buffs, u8 ** dest ) ;
 #else
 #include <immintrin.h>
-#include "PCLib_1B_AVX512_GFNI.c"
+#include "PCLib_2D_AVX512_GFNI.c"
 #endif
 
 #ifndef GT_L3_CACHE
@@ -187,7 +187,7 @@ void TestPAPIRoots ( void )
         {
                 int rootCount = 0 ;
                 unsigned char S [ 16 ], keyEq [ 16 ] ;
-                pc_gen_poly_1b ( S, lenPoly ) ;
+                pc_gen_poly_2d ( S, lenPoly ) ;
                 //printf ( "Generator poly\n" ) ;
                 //dump_u8xu8 ( S, 1, lenPoly ) ;
 
@@ -202,7 +202,7 @@ void TestPAPIRoots ( void )
                 }
 
                 // Workload
-                rootCount = find_roots_1b ( keyEq, roots, lenPoly ) ;
+                rootCount = find_roots_2d ( keyEq, roots, lenPoly ) ;
 
                 if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
                 {
@@ -216,14 +216,14 @@ void TestPAPIRoots ( void )
                 CPI = ( double ) values[ 0 ] / values[ 1 ] ;
                 printf ( "find_roots_sca %2d %11lld cycles %11lld instructions CPI %.3lf\n", lenPoly, values [ 0 ], values [ 1 ], CPI ) ;
 
-                int rootCount2 = find_roots_1b_AVX512_GFNI ( keyEq, roots, lenPoly ) ; // Run once to fill in Vandermonde
+                int rootCount2 = find_roots_2d_AVX512_GFNI ( keyEq, roots, lenPoly ) ; // Run once to fill in Vandermonde
                 if ( ( ret = PAPI_start ( event_set ) ) != PAPI_OK) 
                 {
                         handle_error(ret);
                 }
 
                 // Workload
-                rootCount = find_roots_1b_AVX512_GFNI ( keyEq, roots, lenPoly ) ;
+                rootCount = find_roots_2d_AVX512_GFNI ( keyEq, roots, lenPoly ) ;
 
                 if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
                 {
@@ -281,7 +281,7 @@ void TestPAPIInv ( void )
                 }
 
                 // Workload
-                ret = gf_invert_matrix_1b_AVX512_GFNI ( in_mat, out_mat, lenPoly ) ;
+                ret = gf_invert_matrix_2d_AVX512_GFNI ( in_mat, out_mat, lenPoly ) ;
 
                 if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK)
                 {
@@ -341,24 +341,24 @@ void TestPAPI1b ( void )
         }
 
         // Build the power table
-        pc_bpow_1b ( 3 ) ;
+        pc_bpow_2d ( 3 ) ;
         // Build the log table
-        pc_blog_1b () ;
+        pc_blog_2d () ;
         // Build the inverse table
-        pc_binv_1b () ;
+        pc_binv_2d () ;
         //printf ( "Inverse of 3 is %d\n", pc_itab [ 3 ] ) ;
-        //printf ( "%d times 3 is %d\n", pc_itab [ 3 ], pc_mul_1b ( pc_itab [ 3 ], 3 ) ) ;
+        //printf ( "%d times 3 is %d\n", pc_itab [ 3 ], pc_mul_2d ( pc_itab [ 3 ], 3 ) ) ;
 
         for ( int lenPoly = 2 ; lenPoly <= 32 ; lenPoly ++ )
         {
-                pc_gen_rsr_matrix_1b ( a, lenPoly ) ;
+                pc_gen_rsr_matrix_2d ( a, lenPoly ) ;
                 //printf ( "RSR matrix\n" ) ;
                 //dump_u8xu8 ( a, 2, 255 ) ;
                 //pc_bvan2 () ;
-                pc_bvan_1b ( a, lenPoly ) ;
+                pc_bvan_2d ( a, lenPoly ) ;
 
-                pc_gen_poly_matrix_1b ( a, 255, 255 - lenPoly ) ;
-                pc_bmat_1b ( a, lenPoly ) ;
+                pc_gen_poly_matrix_2d ( a, 255, 255 - lenPoly ) ;
+                pc_bmat_2d ( a, lenPoly ) ;
 
                 // Initialize with a single bit for testing
                 memset ( a, 0, 256 ) ;
@@ -392,7 +392,7 @@ void TestPAPI1b ( void )
                 CPI = ( double ) values [ 0 ] / values [ 1 ] ;
                 double BPC = ( 255 - lenPoly ) * 1000 ;
                 BPC /= values [ 0 ] ;
-                printf ( "Encoder_1b %2d %11lld cycles %11lld instructions CPI %.3lf BPC %.3lf\n", lenPoly,
+                printf ( "Encoder_2d %2d %11lld cycles %11lld instructions CPI %.3lf BPC %.3lf\n", lenPoly,
                          values [ 0 ] / 1000, values [ 1 ] / 1000, CPI, BPC ) ;
 
                 if ( ( ret = PAPI_start ( event_set)) != PAPI_OK )
@@ -426,7 +426,7 @@ void TestPAPI1b ( void )
                 CPI = ( double ) values[ 0 ] / values [ 1 ] ;
                 BPC = ( 255 - lenPoly ) * 1000 ;
                 BPC /= values [ 0 ] ;
-                printf ( "Decoder_1b %2d %11lld cycles %11lld instructions CPI %.3lf BPC %.3lf\n", lenPoly, 
+                printf ( "Decoder_2d %2d %11lld cycles %11lld instructions CPI %.3lf BPC %.3lf\n", lenPoly, 
                         values [ 0 ] / 1000, values [ 1 ] /1000, CPI, BPC ) ;
         }
         free ( a ) ;
@@ -473,7 +473,7 @@ void TestPAPIbm ( void )
                 // Workload
                 for ( int i = 0 ; i < 1000 ; i ++ )
                 {
-                        len = PGZ_1b_AVX512_GFNI ( S, lenPoly, keyEq ) ;
+                        len = PGZ_2d_AVX512_GFNI ( S, lenPoly, keyEq ) ;
                 }
 
                 if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK)
@@ -496,7 +496,7 @@ void TestPAPIbm ( void )
                 // Workload
                 for ( int i = 0 ; i < 1000 ; i ++ )
                 {
-                        bmLen = berlekamp_massey_1b_AVX512_GFNI ( S, lenPoly, bmKeyEq ) ;
+                        bmLen = berlekamp_massey_2d_AVX512_GFNI ( S, lenPoly, bmKeyEq ) ;
                 }
 
                 if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK)
@@ -533,7 +533,7 @@ void TestPAPIbm ( void )
                 // Workload
                 for ( int i = 0 ; i < 1000 ; i ++ )
                 {
-                        bmLen = berlekamp_massey_1b_AVX512_GFNI ( S, lenPoly, bmKeyEq ) ;
+                        bmLen = berlekamp_massey_2d_AVX512_GFNI ( S, lenPoly, bmKeyEq ) ;
                 }
 
                 if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
@@ -631,7 +631,7 @@ exit:
 
 #define FIELD_SIZE 256
 
-void inject_errors_in_place_1b(unsigned char **data, int index, int num_errors, unsigned char *error_positions, unsigned char *original_values)
+void inject_errors_in_place_2d(unsigned char **data, int index, int num_errors, unsigned char *error_positions, unsigned char *original_values)
 {
     for (int i = 0; i < num_errors; i++)
     {
@@ -644,7 +644,7 @@ void inject_errors_in_place_1b(unsigned char **data, int index, int num_errors, 
     }
 }
 
-int verify_correction_in_place_1b(unsigned char **data, int index, int num_errors, unsigned char *error_positions, uint8_t *original_values)
+int verify_correction_in_place_2d(unsigned char **data, int index, int num_errors, unsigned char *error_positions, uint8_t *original_values)
 {
     for (int i = 0; i < num_errors; i++)
     {
@@ -657,7 +657,7 @@ int verify_correction_in_place_1b(unsigned char **data, int index, int num_error
     return 1;
 }
 
-int test_pgz_decoder_1b ( int index, int m, int p, unsigned char * g_tbls,
+int test_pgz_decoder_2d ( int index, int m, int p, unsigned char * g_tbls,
                 unsigned char ** data, unsigned char ** coding )
 {
     int successes = 0, total_tests = 0;
@@ -673,12 +673,12 @@ int test_pgz_decoder_1b ( int index, int m, int p, unsigned char * g_tbls,
                 error_positions[i] = start + i;
                 //printf ( "Error pos [ %d ] = %d\n", i, start+i ) ;
             }
-            inject_errors_in_place_1b ( data, index, num_errors, error_positions, original_values );
+            inject_errors_in_place_2d ( data, index, num_errors, error_positions, original_values );
             
-            pc_decode_data_avx512_gfni_1b ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
+            pc_decode_data_avx512_gfni_2d ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
             //printf ( "PGZ decoder done = %d\n", done ) ;
 
-            if ( verify_correction_in_place_1b(data, index, num_errors, error_positions, original_values ) )
+            if ( verify_correction_in_place_2d(data, index, num_errors, error_positions, original_values ) )
             {
                 successes++;
             }
@@ -709,11 +709,11 @@ int test_pgz_decoder_1b ( int index, int m, int p, unsigned char * g_tbls,
                 //printf ( "Error pos [ %d ] = %d\n", i, error_positions [ i ] ) ;
                 available[idx] = available[m- 1 - i];
             }
-            inject_errors_in_place_1b(data, index, num_errors, error_positions, original_values);
+            inject_errors_in_place_2d(data, index, num_errors, error_positions, original_values);
 
-            pc_decode_data_avx512_gfni_1b ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
+            pc_decode_data_avx512_gfni_2d ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
 
-            if (verify_correction_in_place_1b(data, index, num_errors, error_positions, original_values))
+            if (verify_correction_in_place_2d(data, index, num_errors, error_positions, original_values))
             {
                 successes++;
             }
@@ -789,9 +789,9 @@ main(int argc, char *argv[])
         TestPAPIbm    () ;
 #endif
         // Build the power, log and inverse tables
-        pc_bpow_1b ( 3 ) ;
-        pc_blog_1b () ;
-        pc_binv_1b () ;
+        pc_bpow_2d ( 3 ) ;
+        pc_blog_2d () ;
+        pc_binv_2d () ;
 
         if (m > MMAX)
         {
@@ -810,13 +810,13 @@ main(int argc, char *argv[])
         }
 
         // Initialize the Vandermonde matrix
-        pc_gen_rsr_matrix_1b ( a, 4 ) ;
+        pc_gen_rsr_matrix_2d ( a, 4 ) ;
   
-        pc_bvan_1b ( a, 4 ) ;
+        pc_bvan_2d ( a, 4 ) ;
 
         // Initialize the encoding matrix
-        pc_gen_poly_matrix_1b ( a, 255, 255 - 4 ) ;
-        pc_bmat_1b ( a, 4 ) ;
+        pc_gen_poly_matrix_2d ( a, 255, 255 - 4 ) ;
+        pc_bmat_2d ( a, 4 ) ;
 
         // Print output header
         printf("Testing with %u data buffers and %u parity buffers\n", k, p ) ;
@@ -879,11 +879,11 @@ main(int argc, char *argv[])
 
         unsigned char LFSRTab [ 32 ] ;
         // Test intrinsics lfsr
-        pc_gen_poly_1b ( LFSRTab, p ) ;
+        pc_gen_poly_2d ( LFSRTab, p ) ;
         //dump_u8xu8 ( LFSRTab, 1, 4 ) ;
         BENCHMARK(&start, BENCHMARK_TIME,
-                pc_encode_data_avx512_gfni_1b(TEST_LEN(m), k, p, LFSRTab, buffs, &buffs [ k ]));
-                //pc_encode_data_avx512_gfni_1b(64, k, p, LFSRTab, buffs, &buffs [ k ]);
+                pc_encode_data_avx512_gfni_2d(TEST_LEN(m), k, p, LFSRTab, buffs, &buffs [ k ]));
+                //pc_encode_data_avx512_gfni_2d(64, k, p, LFSRTab, buffs, &buffs [ k ]);
 
         printf("polynomial_code_pls" TEST_TYPE_STR ": k=%d p=%d ", k, p );
         perf_print(start, (long long) (TEST_LEN(m)) * (m));
@@ -905,14 +905,14 @@ main(int argc, char *argv[])
         for ( j = p - 2 ; j >= 0 ; j -- )
         {
                 pwrTab [ j ] = i ;
-                i = pc_mul_1b ( i, 3 ) ;
+                i = pc_mul_2d ( i, 3 ) ;
         }
 
         int done ;
         //printf ( "Before Benchmark\n" ) ;
         BENCHMARK(&start, BENCHMARK_TIME,
-                done=pc_decode_data_avx512_gfni_1b(TEST_LEN(m), m, p, pwrTab, buffs, temp_buffs, 1));
-        //        done=pc_decode_data_avx512_gfni_1b(64, m, p, pwrTab, buffs, temp_buffs, 1);
+                done=pc_decode_data_avx512_gfni_2d(TEST_LEN(m), m, p, pwrTab, buffs, temp_buffs, 1));
+        //        done=pc_decode_data_avx512_gfni_2d(64, m, p, pwrTab, buffs, temp_buffs, 1);
         //printf ( "After benchmark\n" ) ;
 
         printf("polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p );
@@ -930,7 +930,7 @@ main(int argc, char *argv[])
                }
         }
 
-        if ( test_pgz_decoder_1b ( 0, m, p, pwrTab, buffs, temp_buffs ) == 0 )
+        if ( test_pgz_decoder_2d ( 0, m, p, pwrTab, buffs, temp_buffs ) == 0 )
         {
                 printf ( "Decoder failed\n" ) ;
                 goto exit ;
@@ -964,8 +964,8 @@ main(int argc, char *argv[])
         }
         // Workload
         //printf ( "Second encode\n" ) ;
-        //pc_encode_data_avx512_gfni_1b( TEST_LEN(m), k, p, LFSRTab, buffs, &buffs [ k ] );
-        pc_encode_data_avx512_gfni_1b( TEST_LEN(m), k, p, LFSRTab, buffs, &buffs [ k ] );
+        //pc_encode_data_avx512_gfni_2d( TEST_LEN(m), k, p, LFSRTab, buffs, &buffs [ k ] );
+        pc_encode_data_avx512_gfni_2d( TEST_LEN(m), k, p, LFSRTab, buffs, &buffs [ k ] );
 
         if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
         {
@@ -999,7 +999,7 @@ main(int argc, char *argv[])
         }
 
         // Workload
-        int complete = pc_decode_data_avx512_gfni_1b ( TEST_LEN(m), m, p, pwrTab, buffs, &buffs [ k ], 1 ) ;
+        int complete = pc_decode_data_avx512_gfni_2d ( TEST_LEN(m), m, p, pwrTab, buffs, &buffs [ k ], 1 ) ;
         //gf_4vect_pss_avx512_gfni_2d ( TEST_LEN(m), m, g_tbls, buffs, temp_buffs, 0 ) ;
 
         if ( ( ret = PAPI_stop ( event_set, values ) ) != PAPI_OK )
