@@ -5760,7 +5760,7 @@ int gf_2vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned 
         __m512i parity [ 2 ], taps [ 2 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -5818,7 +5818,7 @@ int gf_3vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned 
         __m512i parity [ 3 ], taps [ 3 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -5881,7 +5881,7 @@ int gf_4vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned 
         __m512i parity [ 4 ], taps [ 4 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -5949,7 +5949,7 @@ int gf_5vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned 
         __m512i parity [ 5 ], taps [ 5 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -6022,7 +6022,7 @@ int gf_6vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned 
         __m512i parity [ 6 ], taps [ 6 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -6100,7 +6100,7 @@ int gf_7vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned 
         __m512i parity [ 7 ], taps [ 7 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -6183,7 +6183,7 @@ int gf_8vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned 
         __m512i parity [ 8 ], taps [ 8 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -6271,7 +6271,7 @@ int gf_9vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned 
         __m512i parity [ 9 ], taps [ 9 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -6364,7 +6364,7 @@ int gf_10vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 10 ], taps [ 10 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -6462,7 +6462,7 @@ int gf_11vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 11 ], taps [ 11 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -6565,7 +6565,7 @@ int gf_12vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 12 ], taps [ 12 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -6673,7 +6673,7 @@ int gf_13vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 13 ], taps [ 13 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -6786,7 +6786,7 @@ int gf_14vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 14 ], taps [ 14 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -6904,7 +6904,7 @@ int gf_15vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 15 ], taps [ 15 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -7027,7 +7027,7 @@ int gf_16vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 16 ], taps [ 16 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -7155,7 +7155,7 @@ int gf_17vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 17 ], taps [ 17 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -7288,7 +7288,7 @@ int gf_18vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 18 ], taps [ 18 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -7426,7 +7426,7 @@ int gf_19vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 19 ], taps [ 19 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -7569,7 +7569,7 @@ int gf_20vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 20 ], taps [ 20 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -7717,7 +7717,7 @@ int gf_21vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 21 ], taps [ 21 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -7870,7 +7870,7 @@ int gf_22vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 22 ], taps [ 22 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -8028,7 +8028,7 @@ int gf_23vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 23 ], taps [ 23 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -8191,7 +8191,7 @@ int gf_24vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 24 ], taps [ 24 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -8359,7 +8359,7 @@ int gf_25vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 25 ], taps [ 25 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -8532,7 +8532,7 @@ int gf_26vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 26 ], taps [ 26 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -8710,7 +8710,7 @@ int gf_27vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 27 ], taps [ 27 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -8893,7 +8893,7 @@ int gf_28vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 28 ], taps [ 28 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -9081,7 +9081,7 @@ int gf_29vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 29 ], taps [ 29 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -9274,7 +9274,7 @@ int gf_30vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 30 ], taps [ 30 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -9472,7 +9472,7 @@ int gf_31vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 31 ], taps [ 31 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -9675,7 +9675,7 @@ int gf_32vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         __m512i parity [ 32 ], taps [ 32 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
 
-        // Compute location for Level1 parity in zmm register
+        // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
         pp += 60 ;
 
@@ -9875,10 +9875,12 @@ int gf_32vect_pls_avx512_gfni_1b(int len, int k, unsigned char *tapVal, unsigned
         return ( curPos ) ;
 }
 
-void pc_encode_data_avx512_gfni_1b(int len, int k, int rows, unsigned char *tapVal, unsigned char **data,
+// Single function to access each unrolled Encode for Level 2
+void pc_encode_data_avx512_gfni_1b(int len, int k, int parities, unsigned char *tapVal, unsigned char **data,
         unsigned char **coding)
 {
-        switch (rows) {
+        switch ( parities )
+        {
         case 2: gf_2vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
                  break ;
         case 3: gf_3vect_pls_avx512_gfni_1b(len, k, tapVal, data, coding);
@@ -9943,14 +9945,15 @@ void pc_encode_data_avx512_gfni_1b(int len, int k, int rows, unsigned char *tapV
                  break ;
         }
 }
-int pc_decode_data_avx512_gfni_1b(int len, int k, int rows, unsigned char *tapVal, unsigned char **data,
+// Single function to access each unrolled Decode for Level 2
+int pc_decode_data_avx512_gfni_1b(int len, int k, int parities, unsigned char *tapVal, unsigned char **data,
         unsigned char **coding, int retries)
 {
         int newPos = 0, retry = 0 ;
         while ( ( newPos < len ) && ( retry++ < retries ) )
         {
-
-                switch (rows) {
+                switch ( parities )
+                {
                 case 2: newPos = gf_2vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
                 case 3: newPos = gf_3vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
@@ -10014,13 +10017,13 @@ int pc_decode_data_avx512_gfni_1b(int len, int k, int rows, unsigned char *tapVa
                 case 32: newPos = gf_32vect_pss_avx512_gfni_1b(len, k, tapVal, data, coding, newPos);
                          break ;
                 }
+                // Check to see if error correction required for Level 2
                 if ( newPos < len )
                 {
-                        if ( pc_correct_AVX512_GFNI_1b ( newPos, k, rows, data, coding, 64 ) )
+                        if ( pc_correct_AVX512_GFNI_1b ( newPos, k, parities, data, coding, 64 ) )
                         {
                                 return ( newPos ) ;
                         }
-
                 }
         }
         return ( newPos ) ;
