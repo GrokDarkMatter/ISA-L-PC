@@ -880,7 +880,6 @@ int PGZ_2d_AVX512_GFNI ( unsigned char * S, int p, unsigned char * keyEq )
                 }
         }
         return 0 ;
-
 }
 
 // Syndromes are non-zero, try to calculate error location and data values
