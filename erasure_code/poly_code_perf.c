@@ -640,8 +640,10 @@ void inject_errors_in_place_2d(unsigned char **data, int index, int num_errors, 
         original_values[i] = data[pos][index];
         unsigned char error = (rand() % (FIELD_SIZE - 1)) + 1;
         data[pos][index] = data[pos][index] ^ error;
+        //printf ( "Injecting data [%d][%d] with %x\n", pos, index, error ) ;
         unsigned char ne = rand () % 62 ;
-        data[pos][index+ne] = data[pos][index+ne] ^ error;
+        //data[pos][index+ne] = data[pos][index+ne] ^ error;
+        //printf ( "Injecting data [%d][%d] with %x\n", pos, index+ne, error ) ;
     }
 }
 
@@ -677,7 +679,7 @@ int test_pgz_decoder_2d ( int index, int m, int p, unsigned char * g_tbls,
             inject_errors_in_place_2d ( data, index, num_errors, error_positions, original_values );
             
             //pc_decode_data_avx512_gfni_2d ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
-            pc_decode_data_avx512_gfni_2d ( 64, m, p, g_tbls, data, coding, 1 ) ;
+            pc_decode_data_avx512_gfni_2d ( 64, m, p, g_tbls, data, coding, 2 ) ;
             //printf ( "PGZ decoder done = %d\n", done ) ;
 
             if ( verify_correction_in_place_2d(data, index, num_errors, error_positions, original_values ) )

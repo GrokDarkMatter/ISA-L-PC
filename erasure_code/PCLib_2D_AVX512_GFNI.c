@@ -674,8 +674,7 @@ int pc_compute_error_values_2d_AVX512_GFNI ( int mSize, unsigned char * S, unsig
         {
                 for ( j = 0 ; j < mSize ; j ++ )
                 {
-                        //Mat [ i * mSize + j ] = pc_pow_2d_AVX512_GFNI ( base, roots [ j ] ) ;
-                        Mat [ i * mSize + j ] = pc_ptab_2d [ roots [ j ] ]  ;
+                        Mat [ i * mSize + j ] = pc_pow_2d_AVX512_GFNI ( base, roots [ j ] ) ;
                 }
                 base = pc_mul_2d ( base, 3 ) ;
         }
@@ -1008,7 +1007,7 @@ void L1Correct ( __m512i * vec, int k, unsigned char * S_in, unsigned char * mem
 
         int mSize  ;
         unsigned char keyEq [ PC_MAX_ERRS + 1 ] = { 0 } ;
-
+#ifdef NDEF
         // Reverse terms to match PC_Correct
         S [ 0 ] = S_in [ 3 ] ;
         S [ 1 ] = S_in [ 2 ] ;
@@ -1027,7 +1026,7 @@ void L1Correct ( __m512i * vec, int k, unsigned char * S_in, unsigned char * mem
         {
                 pc_verify_multiple_errors_l1 ( S, mSize, keyEq, vec, memVec ) ;
         }
-
+#endif
         return ;
 }
 /**********************************************************************
