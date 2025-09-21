@@ -674,7 +674,8 @@ int pc_compute_error_values_2d_AVX512_GFNI ( int mSize, unsigned char * S, unsig
         {
                 for ( j = 0 ; j < mSize ; j ++ )
                 {
-                        Mat [ i * mSize + j ] = pc_pow_2d_AVX512_GFNI ( base, roots [ j ] ) ;
+                        //Mat [ i * mSize + j ] = pc_pow_2d_AVX512_GFNI ( base, roots [ j ] ) ;
+                        Mat [ i * mSize + j ] = pc_ptab_2d [ roots [ j ] ]  ;
                 }
                 base = pc_mul_2d ( base, 3 ) ;
         }
