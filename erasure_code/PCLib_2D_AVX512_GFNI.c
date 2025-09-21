@@ -61,6 +61,43 @@ for ( int curP = 0 ; curP < p ; curP ++ ) \
         __m128i xored128 = _mm_xor_si128(low128, high128); \
         __m128i perm = _mm_shuffle_epi32(xored128, _MM_SHUFFLE(3, 2, 3, 2)); \
         __m128i xored64 = _mm_xor_si128(xored128, perm); \
+        xored64 = _mm_clmulepi64_si128(xored64, maskP, 0x00);\
+        pp [ curP ] = _mm_extract_epi8 ( xored64, 7 ) ;\
+} \
+vec = _mm512_mask_blend_epi32 ( 0x8000, vec, pvec ) ;
+
+// Level 1 decoder for bytes that are sequential in memory
+#define L1Dec(vec,p,syn) \
+for ( int curP = 0 ; curP < p ; curP ++ ) \
+{ \
+        matVec = _mm512_load_si512 ( &Vand1b [ curP ] [ 3 ]) ; \
+        vreg = _mm512_gf2p8mul_epi8 ( vec, matVec ) ; \
+        __m256i low = _mm512_castsi512_si256(vreg); \
+        __m256i high = _mm512_extracti64x4_epi64(vreg, 1); \
+        __m256i xored = _mm256_xor_si256(low, high); \
+        __m128i low128 = _mm256_castsi256_si128(xored); \
+        __m128i high128 = _mm256_extracti128_si256(xored, 1); \
+        __m128i xored128 = _mm_xor_si128(low128, high128); \
+        __m128i perm = _mm_shuffle_epi32(xored128, _MM_SHUFFLE(3, 2, 3, 2)); \
+        __m128i xored64 = _mm_xor_si128(xored128, perm); \
+        xored64 = _mm_clmulepi64_si128(xored64, maskP, 0x00);\
+        syn [ curP ] = _mm_extract_epi8 ( xored64, 7 ) ;\
+}
+
+// Old version with more summing instead of pclmulqdq
+#define L1EncV(vec,p,pvec) \
+for ( int curP = 0 ; curP < p ; curP ++ ) \
+{ \
+        matVec = _mm512_load_si512 ( &EncMat [ curP ] [ 3 ]) ; \
+        vreg = _mm512_gf2p8mul_epi8 ( vec, matVec ) ; \
+        __m256i low = _mm512_castsi512_si256(vreg); \
+        __m256i high = _mm512_extracti64x4_epi64(vreg, 1); \
+        __m256i xored = _mm256_xor_si256(low, high); \
+        __m128i low128 = _mm256_castsi256_si128(xored); \
+        __m128i high128 = _mm256_extracti128_si256(xored, 1); \
+        __m128i xored128 = _mm_xor_si128(low128, high128); \
+        __m128i perm = _mm_shuffle_epi32(xored128, _MM_SHUFFLE(3, 2, 3, 2)); \
+        __m128i xored64 = _mm_xor_si128(xored128, perm); \
         uint64_t result_64 = _mm_cvtsi128_si64(xored64); \
         result_64 ^= result_64 >> 32 ; \
         result_64 ^= result_64 >> 16 ; \
@@ -69,8 +106,8 @@ for ( int curP = 0 ; curP < p ; curP ++ ) \
 } \
 vec = _mm512_mask_blend_epi32 ( 0x8000, vec, pvec ) ; 
 
-// Level 1 decoder for bytes that are sequential in memory
-#define L1Dec(vec,p,err,syn) \
+// Old version with more summing and err flag instead of pclmulqdq
+#define L1DecV(vec,p,err,syn) \
 err = 0 ;\
 for ( int curP = 0 ; curP < p ; curP ++ ) \
 { \
@@ -88,8 +125,8 @@ for ( int curP = 0 ; curP < p ; curP ++ ) \
         result_64 ^= result_64 >> 32 ; \
         result_64 ^= result_64 >> 16 ; \
         result_64 ^= result_64 >> 8 ; \
-        syn [ curP ] = ( unsigned char ) result_64 ; \
-        if ( syn [ curP ] != 0 ) err = 1 ; \
+        syn [ curP ] = ( unsigned char ) result_64 ;\
+        if ( syn [ curP ] != 0 ) err = 1 ;\
 } 
 
 // Multiply two bytes using the hardware GF multiply
@@ -1043,10 +1080,11 @@ int gf_2vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 2 ], taps [ 1 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -1060,8 +1098,8 @@ int gf_2vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -1076,8 +1114,8 @@ int gf_2vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -1105,10 +1143,11 @@ int gf_3vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 3 ], taps [ 2 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -1123,8 +1162,8 @@ int gf_3vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -1140,8 +1179,8 @@ int gf_3vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -1173,10 +1212,11 @@ int gf_4vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 4 ], taps [ 3 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -1192,8 +1232,8 @@ int gf_4vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -1210,8 +1250,8 @@ int gf_4vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -1247,10 +1287,11 @@ int gf_5vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 5 ], taps [ 4 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -1267,8 +1308,8 @@ int gf_5vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -1286,8 +1327,8 @@ int gf_5vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -1327,10 +1368,11 @@ int gf_6vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 6 ], taps [ 5 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -1348,8 +1390,8 @@ int gf_6vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -1368,8 +1410,8 @@ int gf_6vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -1413,10 +1455,11 @@ int gf_7vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 7 ], taps [ 6 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -1435,8 +1478,8 @@ int gf_7vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -1456,8 +1499,8 @@ int gf_7vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -1505,10 +1548,11 @@ int gf_8vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 8 ], taps [ 7 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -1528,8 +1572,8 @@ int gf_8vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -1550,8 +1594,8 @@ int gf_8vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -1603,10 +1647,11 @@ int gf_9vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 9 ], taps [ 8 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -1627,8 +1672,8 @@ int gf_9vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -1650,8 +1695,8 @@ int gf_9vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -1707,10 +1752,11 @@ int gf_10vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 10 ], taps [ 9 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -1732,8 +1778,8 @@ int gf_10vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -1756,8 +1802,8 @@ int gf_10vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -1817,10 +1863,11 @@ int gf_11vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 11 ], taps [ 10 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -1843,8 +1890,8 @@ int gf_11vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -1868,8 +1915,8 @@ int gf_11vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -1933,10 +1980,11 @@ int gf_12vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 12 ], taps [ 11 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -1960,8 +2008,8 @@ int gf_12vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -1986,8 +2034,8 @@ int gf_12vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -2055,10 +2103,11 @@ int gf_13vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 13 ], taps [ 12 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -2083,8 +2132,8 @@ int gf_13vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -2110,8 +2159,8 @@ int gf_13vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -2183,10 +2232,11 @@ int gf_14vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 14 ], taps [ 13 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -2212,8 +2262,8 @@ int gf_14vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -2240,8 +2290,8 @@ int gf_14vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -2317,10 +2367,11 @@ int gf_15vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 15 ], taps [ 14 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -2347,8 +2398,8 @@ int gf_15vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -2376,8 +2427,8 @@ int gf_15vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -2457,10 +2508,11 @@ int gf_16vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 16 ], taps [ 15 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -2488,8 +2540,8 @@ int gf_16vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -2518,8 +2570,8 @@ int gf_16vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -2603,10 +2655,11 @@ int gf_17vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 17 ], taps [ 16 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -2635,8 +2688,8 @@ int gf_17vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -2666,8 +2719,8 @@ int gf_17vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -2755,10 +2808,11 @@ int gf_18vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 18 ], taps [ 17 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -2788,8 +2842,8 @@ int gf_18vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -2820,8 +2874,8 @@ int gf_18vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -2913,10 +2967,11 @@ int gf_19vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 19 ], taps [ 18 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -2947,8 +3002,8 @@ int gf_19vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -2980,8 +3035,8 @@ int gf_19vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -3077,10 +3132,11 @@ int gf_20vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 20 ], taps [ 19 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -3112,8 +3168,8 @@ int gf_20vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -3146,8 +3202,8 @@ int gf_20vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -3247,10 +3303,11 @@ int gf_21vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 21 ], taps [ 20 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -3283,8 +3340,8 @@ int gf_21vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -3318,8 +3375,8 @@ int gf_21vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -3423,10 +3480,11 @@ int gf_22vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 22 ], taps [ 21 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -3460,8 +3518,8 @@ int gf_22vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -3496,8 +3554,8 @@ int gf_22vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -3605,10 +3663,11 @@ int gf_23vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 23 ], taps [ 22 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -3643,8 +3702,8 @@ int gf_23vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -3680,8 +3739,8 @@ int gf_23vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -3793,10 +3852,11 @@ int gf_24vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 24 ], taps [ 23 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -3832,8 +3892,8 @@ int gf_24vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -3870,8 +3930,8 @@ int gf_24vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -3987,10 +4047,11 @@ int gf_25vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 25 ], taps [ 24 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -4027,8 +4088,8 @@ int gf_25vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -4066,8 +4127,8 @@ int gf_25vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -4187,10 +4248,11 @@ int gf_26vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 26 ], taps [ 25 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -4228,8 +4290,8 @@ int gf_26vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -4268,8 +4330,8 @@ int gf_26vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -4393,10 +4455,11 @@ int gf_27vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 27 ], taps [ 26 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -4435,8 +4498,8 @@ int gf_27vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -4476,8 +4539,8 @@ int gf_27vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -4605,10 +4668,11 @@ int gf_28vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 28 ], taps [ 27 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -4648,8 +4712,8 @@ int gf_28vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -4690,8 +4754,8 @@ int gf_28vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -4823,10 +4887,11 @@ int gf_29vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 29 ], taps [ 28 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -4867,8 +4932,8 @@ int gf_29vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -4910,8 +4975,8 @@ int gf_29vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -5047,10 +5112,11 @@ int gf_30vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 30 ], taps [ 29 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -5092,8 +5158,8 @@ int gf_30vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -5136,8 +5202,8 @@ int gf_30vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -5277,10 +5343,11 @@ int gf_31vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 31 ], taps [ 30 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -5323,8 +5390,8 @@ int gf_31vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -5368,8 +5435,8 @@ int gf_31vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -5513,10 +5580,11 @@ int gf_32vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
-        unsigned char err = 0, syn [ 4 ] ;
+        unsigned char syn [ 4 ] ;
         __mmask8 mask ;                               // Mask used to test for zero
         __m512i parity [ 32 ], taps [ 31 ], matVec, vreg ;
         __m512i data_vec ;
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm512_set1_epi8 ( tapVal [ 0 ] ) ;
@@ -5560,8 +5628,8 @@ int gf_32vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
               __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                 // Decode level 1 using vector multiplier for symbol 0
-                L1Dec(data_vec, 4, err, syn ) ;
-                if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                L1Dec(data_vec, 4, syn ) ;
+                if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -5606,8 +5674,8 @@ int gf_32vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
-                        L1Dec(data_vec, 4, err, syn ) ;
-                        if ( err != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        L1Dec(data_vec, 4, syn ) ;
+                        if ( ( unsigned short ) *syn != 0 ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -5758,6 +5826,7 @@ int gf_2vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 2 ], taps [ 2 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -5816,6 +5885,7 @@ int gf_3vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 3 ], taps [ 3 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -5879,6 +5949,7 @@ int gf_4vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 4 ], taps [ 4 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -5947,6 +6018,7 @@ int gf_5vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 5 ], taps [ 5 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -6020,6 +6092,7 @@ int gf_6vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 6 ], taps [ 6 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -6098,6 +6171,7 @@ int gf_7vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 7 ], taps [ 7 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -6181,6 +6255,7 @@ int gf_8vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 8 ], taps [ 8 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -6269,6 +6344,7 @@ int gf_9vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 9 ], taps [ 9 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -6362,6 +6438,7 @@ int gf_10vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 10 ], taps [ 10 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -6460,6 +6537,7 @@ int gf_11vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 11 ], taps [ 11 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -6563,6 +6641,7 @@ int gf_12vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 12 ], taps [ 12 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -6671,6 +6750,7 @@ int gf_13vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 13 ], taps [ 13 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -6784,6 +6864,7 @@ int gf_14vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 14 ], taps [ 14 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -6902,6 +6983,7 @@ int gf_15vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 15 ], taps [ 15 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -7025,6 +7107,7 @@ int gf_16vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 16 ], taps [ 16 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -7153,6 +7236,7 @@ int gf_17vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 17 ], taps [ 17 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -7286,6 +7370,7 @@ int gf_18vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 18 ], taps [ 18 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -7424,6 +7509,7 @@ int gf_19vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 19 ], taps [ 19 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -7567,6 +7653,7 @@ int gf_20vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 20 ], taps [ 20 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -7715,6 +7802,7 @@ int gf_21vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 21 ], taps [ 21 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -7868,6 +7956,7 @@ int gf_22vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 22 ], taps [ 22 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -8026,6 +8115,7 @@ int gf_23vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 23 ], taps [ 23 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -8189,6 +8279,7 @@ int gf_24vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 24 ], taps [ 24 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -8357,6 +8448,7 @@ int gf_25vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 25 ], taps [ 25 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -8530,6 +8622,7 @@ int gf_26vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 26 ], taps [ 26 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -8708,6 +8801,7 @@ int gf_27vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 27 ], taps [ 27 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -8891,6 +8985,7 @@ int gf_28vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 28 ], taps [ 28 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -9079,6 +9174,7 @@ int gf_29vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 29 ], taps [ 29 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -9272,6 +9368,7 @@ int gf_30vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 30 ], taps [ 30 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -9470,6 +9567,7 @@ int gf_31vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 31 ], taps [ 31 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 
@@ -9673,6 +9771,7 @@ int gf_32vect_pls_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         int curSym, curPos ;                                        // Loop counters
         __m512i parity [ 32 ], taps [ 32 ], par_vec ;
         __m512i data_vec, matVec, vreg ;                            // Zmm work registers
+        __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
         // Compute location for Level 1 parity in zmm register
         unsigned char * pp = ( unsigned char * ) &par_vec ; 

@@ -66,6 +66,8 @@ dump_u8xu8(unsigned char *s, int k, int m)
         printf("\n");
 }
 
+#define NOPAPI 1
+
 #ifdef _WIN64
 #define __builtin_prefetch(a,b,c) _mm_prefetch((const char*)(a), _MM_HINT_T0)
 #define _popcnt64 __popcnt64

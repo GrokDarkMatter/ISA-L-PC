@@ -118,6 +118,8 @@ extern void ec_encode_data_neon ( int len, int k, int p, u8 * g_tbls, u8 ** buff
 
 #define BAD_MATRIX -1
 
+#ifndef NOPAPI
+
 #include <papi.h>
 
 void handle_error(int code)
@@ -166,7 +168,6 @@ int InitPAPI ( void )
         }
         return event_set ;
 }
-#ifndef NOPAPI
 
 void TestPAPIRoots ( void )
 {
