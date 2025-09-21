@@ -676,7 +676,8 @@ int test_pgz_decoder_2d ( int index, int m, int p, unsigned char * g_tbls,
             }
             inject_errors_in_place_2d ( data, index, num_errors, error_positions, original_values );
             
-            pc_decode_data_avx512_gfni_2d ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
+            //pc_decode_data_avx512_gfni_2d ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
+            pc_decode_data_avx512_gfni_2d ( 64, m, p, g_tbls, data, coding, 1 ) ;
             //printf ( "PGZ decoder done = %d\n", done ) ;
 
             if ( verify_correction_in_place_2d(data, index, num_errors, error_positions, original_values ) )
@@ -694,7 +695,7 @@ int test_pgz_decoder_2d ( int index, int m, int p, unsigned char * g_tbls,
 
     for (int num_errors = 1; num_errors <= (p/2) ; num_errors++)
     {
-        for (int trial = 0; trial < 100; trial++)
+        for (int trial = 0; trial < 1000; trial++)
         {
             uint8_t error_positions[16];
             uint8_t original_values[16];
@@ -712,7 +713,8 @@ int test_pgz_decoder_2d ( int index, int m, int p, unsigned char * g_tbls,
             }
             inject_errors_in_place_2d(data, index, num_errors, error_positions, original_values);
 
-            pc_decode_data_avx512_gfni_2d ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
+            //pc_decode_data_avx512_gfni_2d ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
+            pc_decode_data_avx512_gfni_2d ( 64, m, p, g_tbls, data, coding, 1 ) ;
 
             if (verify_correction_in_place_2d(data, index, num_errors, error_positions, original_values))
             {
