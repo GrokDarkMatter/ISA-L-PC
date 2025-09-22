@@ -44,6 +44,7 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 **********************************************************************/
 extern int pc_correct ( int newPos, int k, int rows, unsigned char ** data, unsigned char ** coding, int vLen ) ;
 
+// Parallel Syndrome Sequencer for P = 2 Codewords
 int gf_2vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -52,37 +53,48 @@ int gf_2vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity1 [ 2 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 0 ], data_vec ) ;
                         parity0 [ 1 ] = _mm256_xor_si256 ( parity0 [ 1 ], data_vec ) ;
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 0 ], data_vec ) ;
                         parity1 [ 1 ] = _mm256_xor_si256 ( parity1 [ 1 ], data_vec ) ;
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -95,6 +107,7 @@ int gf_2vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 3 Codewords
 int gf_3vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -103,25 +116,32 @@ int gf_3vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity1 [ 3 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 0 ], data_vec ) ;
@@ -130,6 +150,7 @@ int gf_3vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 0 ], data_vec ) ;
@@ -138,11 +159,14 @@ int gf_3vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 2 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 2 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -157,6 +181,7 @@ int gf_3vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 4 Codewords
 int gf_4vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -165,13 +190,16 @@ int gf_4vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity1 [ 4 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -179,14 +207,18 @@ int gf_4vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
                 parity1 [ 3 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -197,6 +229,7 @@ int gf_4vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -207,6 +240,7 @@ int gf_4vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -214,6 +248,8 @@ int gf_4vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 2 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 3 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 3 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -230,6 +266,7 @@ int gf_4vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 5 Codewords
 int gf_5vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -238,14 +275,17 @@ int gf_5vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity1 [ 5 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
         taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -254,15 +294,19 @@ int gf_5vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
                 parity1 [ 3 ] = data_vec ;
                 parity1 [ 4 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -275,6 +319,7 @@ int gf_5vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -287,6 +332,7 @@ int gf_5vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -296,6 +342,8 @@ int gf_5vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 3 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 4 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 4 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -314,6 +362,7 @@ int gf_5vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 6 Codewords
 int gf_6vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -322,15 +371,18 @@ int gf_6vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity1 [ 6 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
         taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
         taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -340,6 +392,7 @@ int gf_6vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -347,9 +400,12 @@ int gf_6vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 parity1 [ 4 ] = data_vec ;
                 parity1 [ 5 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -364,6 +420,7 @@ int gf_6vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -378,6 +435,7 @@ int gf_6vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -389,6 +447,8 @@ int gf_6vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 4 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 5 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 5 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -409,6 +469,7 @@ int gf_6vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 7 Codewords
 int gf_7vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -417,6 +478,7 @@ int gf_7vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity1 [ 7 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -424,9 +486,11 @@ int gf_7vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
         taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -437,6 +501,7 @@ int gf_7vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -445,9 +510,12 @@ int gf_7vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 parity1 [ 5 ] = data_vec ;
                 parity1 [ 6 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -464,6 +532,7 @@ int gf_7vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -480,6 +549,7 @@ int gf_7vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -493,6 +563,8 @@ int gf_7vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 5 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 6 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 6 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -515,6 +587,7 @@ int gf_7vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 8 Codewords
 int gf_8vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -523,6 +596,7 @@ int gf_8vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity1 [ 8 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -531,9 +605,11 @@ int gf_8vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
         taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -545,6 +621,7 @@ int gf_8vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -554,9 +631,12 @@ int gf_8vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 parity1 [ 6 ] = data_vec ;
                 parity1 [ 7 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -575,6 +655,7 @@ int gf_8vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -593,6 +674,7 @@ int gf_8vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -608,6 +690,8 @@ int gf_8vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 6 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 7 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 7 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -632,6 +716,7 @@ int gf_8vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 9 Codewords
 int gf_9vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -640,6 +725,7 @@ int gf_9vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity1 [ 9 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -649,9 +735,11 @@ int gf_9vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
         taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -664,6 +752,7 @@ int gf_9vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -674,9 +763,12 @@ int gf_9vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 parity1 [ 7 ] = data_vec ;
                 parity1 [ 8 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -697,6 +789,7 @@ int gf_9vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -717,6 +810,7 @@ int gf_9vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -734,6 +828,8 @@ int gf_9vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 7 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 8 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 8 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -760,6 +856,7 @@ int gf_9vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 10 Codewords
 int gf_10vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -768,6 +865,7 @@ int gf_10vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 10 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -778,9 +876,11 @@ int gf_10vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
         taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -794,6 +894,7 @@ int gf_10vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -805,9 +906,12 @@ int gf_10vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 8 ] = data_vec ;
                 parity1 [ 9 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -830,6 +934,7 @@ int gf_10vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -852,6 +957,7 @@ int gf_10vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -871,6 +977,8 @@ int gf_10vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 8 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 9 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 9 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -899,6 +1007,7 @@ int gf_10vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 11 Codewords
 int gf_11vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -907,6 +1016,7 @@ int gf_11vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 11 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -918,9 +1028,11 @@ int gf_11vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
         taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -935,6 +1047,7 @@ int gf_11vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -947,9 +1060,12 @@ int gf_11vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 9 ] = data_vec ;
                 parity1 [ 10 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -974,6 +1090,7 @@ int gf_11vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -998,6 +1115,7 @@ int gf_11vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -1019,6 +1137,8 @@ int gf_11vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 9 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 10 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 10 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -1049,6 +1169,7 @@ int gf_11vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 12 Codewords
 int gf_12vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -1057,6 +1178,7 @@ int gf_12vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 12 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -1069,9 +1191,11 @@ int gf_12vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
         taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -1087,6 +1211,7 @@ int gf_12vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -1100,9 +1225,12 @@ int gf_12vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 10 ] = data_vec ;
                 parity1 [ 11 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -1129,6 +1257,7 @@ int gf_12vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -1155,6 +1284,7 @@ int gf_12vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -1178,6 +1308,8 @@ int gf_12vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 10 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 11 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 11 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -1210,6 +1342,7 @@ int gf_12vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 13 Codewords
 int gf_13vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -1218,6 +1351,7 @@ int gf_13vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 13 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -1231,9 +1365,11 @@ int gf_13vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
         taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -1250,6 +1386,7 @@ int gf_13vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -1264,9 +1401,12 @@ int gf_13vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 11 ] = data_vec ;
                 parity1 [ 12 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -1295,6 +1435,7 @@ int gf_13vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -1323,6 +1464,7 @@ int gf_13vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -1348,6 +1490,8 @@ int gf_13vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 11 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 12 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 12 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -1382,6 +1526,7 @@ int gf_13vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 14 Codewords
 int gf_14vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -1390,6 +1535,7 @@ int gf_14vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 14 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -1404,9 +1550,11 @@ int gf_14vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
         taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -1424,6 +1572,7 @@ int gf_14vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -1439,9 +1588,12 @@ int gf_14vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 12 ] = data_vec ;
                 parity1 [ 13 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -1472,6 +1624,7 @@ int gf_14vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -1502,6 +1655,7 @@ int gf_14vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -1529,6 +1683,8 @@ int gf_14vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 12 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 13 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 13 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -1565,6 +1721,7 @@ int gf_14vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 15 Codewords
 int gf_15vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -1573,6 +1730,7 @@ int gf_15vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 15 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -1588,9 +1746,11 @@ int gf_15vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
         taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -1609,6 +1769,7 @@ int gf_15vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -1625,9 +1786,12 @@ int gf_15vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 13 ] = data_vec ;
                 parity1 [ 14 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -1660,6 +1824,7 @@ int gf_15vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -1692,6 +1857,7 @@ int gf_15vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -1721,6 +1887,8 @@ int gf_15vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 13 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 14 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 14 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -1759,6 +1927,7 @@ int gf_15vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 16 Codewords
 int gf_16vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -1767,6 +1936,7 @@ int gf_16vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 16 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -1783,9 +1953,11 @@ int gf_16vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
         taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -1805,6 +1977,7 @@ int gf_16vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -1822,9 +1995,12 @@ int gf_16vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 14 ] = data_vec ;
                 parity1 [ 15 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -1859,6 +2035,7 @@ int gf_16vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -1893,6 +2070,7 @@ int gf_16vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -1924,6 +2102,8 @@ int gf_16vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 14 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 15 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 15 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -1964,6 +2144,7 @@ int gf_16vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 17 Codewords
 int gf_17vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -1972,6 +2153,7 @@ int gf_17vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 17 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -1989,9 +2171,11 @@ int gf_17vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
         taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -2012,6 +2196,7 @@ int gf_17vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -2030,9 +2215,12 @@ int gf_17vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 15 ] = data_vec ;
                 parity1 [ 16 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -2069,6 +2257,7 @@ int gf_17vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -2105,6 +2294,7 @@ int gf_17vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -2138,6 +2328,8 @@ int gf_17vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 15 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 16 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 16 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -2180,6 +2372,7 @@ int gf_17vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 18 Codewords
 int gf_18vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -2188,6 +2381,7 @@ int gf_18vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 18 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -2206,9 +2400,11 @@ int gf_18vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
         taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -2230,6 +2426,7 @@ int gf_18vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -2249,9 +2446,12 @@ int gf_18vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 16 ] = data_vec ;
                 parity1 [ 17 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -2290,6 +2490,7 @@ int gf_18vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -2328,6 +2529,7 @@ int gf_18vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -2363,6 +2565,8 @@ int gf_18vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 16 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 17 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 17 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -2407,6 +2611,7 @@ int gf_18vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 19 Codewords
 int gf_19vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -2415,6 +2620,7 @@ int gf_19vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 19 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -2434,9 +2640,11 @@ int gf_19vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
         taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -2459,6 +2667,7 @@ int gf_19vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -2479,9 +2688,12 @@ int gf_19vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 17 ] = data_vec ;
                 parity1 [ 18 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -2522,6 +2734,7 @@ int gf_19vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -2562,6 +2775,7 @@ int gf_19vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -2599,6 +2813,8 @@ int gf_19vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 17 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 18 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 18 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -2645,6 +2861,7 @@ int gf_19vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 20 Codewords
 int gf_20vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -2653,6 +2870,7 @@ int gf_20vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 20 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -2673,9 +2891,11 @@ int gf_20vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
         taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -2699,6 +2919,7 @@ int gf_20vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -2720,9 +2941,12 @@ int gf_20vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 18 ] = data_vec ;
                 parity1 [ 19 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -2765,6 +2989,7 @@ int gf_20vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -2807,6 +3032,7 @@ int gf_20vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -2846,6 +3072,8 @@ int gf_20vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 18 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 19 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 19 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -2894,6 +3122,7 @@ int gf_20vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 21 Codewords
 int gf_21vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -2902,6 +3131,7 @@ int gf_21vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 21 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -2923,9 +3153,11 @@ int gf_21vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
         taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -2950,6 +3182,7 @@ int gf_21vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -2972,9 +3205,12 @@ int gf_21vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 19 ] = data_vec ;
                 parity1 [ 20 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -3019,6 +3255,7 @@ int gf_21vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -3063,6 +3300,7 @@ int gf_21vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -3104,6 +3342,8 @@ int gf_21vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 19 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 20 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 20 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -3154,6 +3394,7 @@ int gf_21vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 22 Codewords
 int gf_22vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -3162,6 +3403,7 @@ int gf_22vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 22 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -3184,9 +3426,11 @@ int gf_22vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
         taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -3212,6 +3456,7 @@ int gf_22vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -3235,9 +3480,12 @@ int gf_22vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 20 ] = data_vec ;
                 parity1 [ 21 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -3284,6 +3532,7 @@ int gf_22vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -3330,6 +3579,7 @@ int gf_22vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -3373,6 +3623,8 @@ int gf_22vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 20 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 21 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 21 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -3425,6 +3677,7 @@ int gf_22vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 23 Codewords
 int gf_23vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -3433,6 +3686,7 @@ int gf_23vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 23 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -3456,9 +3710,11 @@ int gf_23vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
         taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -3485,6 +3741,7 @@ int gf_23vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -3509,9 +3766,12 @@ int gf_23vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 21 ] = data_vec ;
                 parity1 [ 22 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -3560,6 +3820,7 @@ int gf_23vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -3608,6 +3869,7 @@ int gf_23vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -3653,6 +3915,8 @@ int gf_23vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 21 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 22 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 22 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -3707,6 +3971,7 @@ int gf_23vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 24 Codewords
 int gf_24vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -3715,6 +3980,7 @@ int gf_24vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 24 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -3739,9 +4005,11 @@ int gf_24vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
         taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -3769,6 +4037,7 @@ int gf_24vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -3794,9 +4063,12 @@ int gf_24vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 22 ] = data_vec ;
                 parity1 [ 23 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -3847,6 +4119,7 @@ int gf_24vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -3897,6 +4170,7 @@ int gf_24vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -3944,6 +4218,8 @@ int gf_24vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 22 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 23 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 23 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -4000,6 +4276,7 @@ int gf_24vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 25 Codewords
 int gf_25vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -4008,6 +4285,7 @@ int gf_25vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 25 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -4033,9 +4311,11 @@ int gf_25vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
         taps [ 23 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 23 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -4064,6 +4344,7 @@ int gf_25vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -4090,9 +4371,12 @@ int gf_25vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 23 ] = data_vec ;
                 parity1 [ 24 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -4145,6 +4429,7 @@ int gf_25vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -4197,6 +4482,7 @@ int gf_25vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -4246,6 +4532,8 @@ int gf_25vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 23 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 24 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 24 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -4304,6 +4592,7 @@ int gf_25vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 26 Codewords
 int gf_26vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -4312,6 +4601,7 @@ int gf_26vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 26 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -4338,9 +4628,11 @@ int gf_26vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 23 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 23 * 8 ) ) ) ;
         taps [ 24 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 24 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -4370,6 +4662,7 @@ int gf_26vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -4397,9 +4690,12 @@ int gf_26vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 24 ] = data_vec ;
                 parity1 [ 25 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -4454,6 +4750,7 @@ int gf_26vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -4508,6 +4805,7 @@ int gf_26vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -4559,6 +4857,8 @@ int gf_26vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 24 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 25 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 25 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -4619,6 +4919,7 @@ int gf_26vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 27 Codewords
 int gf_27vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -4627,6 +4928,7 @@ int gf_27vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 27 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -4654,9 +4956,11 @@ int gf_27vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 24 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 24 * 8 ) ) ) ;
         taps [ 25 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 25 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -4687,6 +4991,7 @@ int gf_27vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -4715,9 +5020,12 @@ int gf_27vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 25 ] = data_vec ;
                 parity1 [ 26 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -4774,6 +5082,7 @@ int gf_27vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -4830,6 +5139,7 @@ int gf_27vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -4883,6 +5193,8 @@ int gf_27vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 25 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 26 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 26 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -4945,6 +5257,7 @@ int gf_27vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 28 Codewords
 int gf_28vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -4953,6 +5266,7 @@ int gf_28vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 28 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -4981,9 +5295,11 @@ int gf_28vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 25 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 25 * 8 ) ) ) ;
         taps [ 26 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 26 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -5015,6 +5331,7 @@ int gf_28vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -5044,9 +5361,12 @@ int gf_28vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 26 ] = data_vec ;
                 parity1 [ 27 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -5105,6 +5425,7 @@ int gf_28vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -5163,6 +5484,7 @@ int gf_28vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -5218,6 +5540,8 @@ int gf_28vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 26 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 27 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 27 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -5282,6 +5606,7 @@ int gf_28vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 29 Codewords
 int gf_29vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -5290,6 +5615,7 @@ int gf_29vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 29 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -5319,9 +5645,11 @@ int gf_29vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 26 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 26 * 8 ) ) ) ;
         taps [ 27 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 27 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -5354,6 +5682,7 @@ int gf_29vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -5384,9 +5713,12 @@ int gf_29vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 27 ] = data_vec ;
                 parity1 [ 28 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -5447,6 +5779,7 @@ int gf_29vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -5507,6 +5840,7 @@ int gf_29vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -5564,6 +5898,8 @@ int gf_29vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 27 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 28 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 28 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -5630,6 +5966,7 @@ int gf_29vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 30 Codewords
 int gf_30vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -5638,6 +5975,7 @@ int gf_30vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 30 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -5668,9 +6006,11 @@ int gf_30vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 27 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 27 * 8 ) ) ) ;
         taps [ 28 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 28 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -5704,6 +6044,7 @@ int gf_30vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -5735,9 +6076,12 @@ int gf_30vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 28 ] = data_vec ;
                 parity1 [ 29 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -5800,6 +6144,7 @@ int gf_30vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -5862,6 +6207,7 @@ int gf_30vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -5921,6 +6267,8 @@ int gf_30vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 28 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 29 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 29 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -5989,6 +6337,7 @@ int gf_30vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 31 Codewords
 int gf_31vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -5997,6 +6346,7 @@ int gf_31vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 31 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -6028,9 +6378,11 @@ int gf_31vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 28 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 28 * 8 ) ) ) ;
         taps [ 29 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 29 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -6065,6 +6417,7 @@ int gf_31vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -6097,9 +6450,12 @@ int gf_31vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 29 ] = data_vec ;
                 parity1 [ 30 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -6164,6 +6520,7 @@ int gf_31vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -6228,6 +6585,7 @@ int gf_31vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -6289,6 +6647,8 @@ int gf_31vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 29 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 30 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 30 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -6359,6 +6719,7 @@ int gf_31vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel Syndrome Sequencer for P = 32 Codewords
 int gf_32vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
@@ -6367,6 +6728,7 @@ int gf_32vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 32 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in power values to create parallel multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -6399,9 +6761,11 @@ int gf_32vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 29 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 29 * 8 ) ) ) ;
         taps [ 30 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 30 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initialize parity values to Symbol 0
                 parity0 [ 0 ] = data_vec ;
                 parity0 [ 1 ] = data_vec ;
                 parity0 [ 2 ] = data_vec ;
@@ -6437,6 +6801,7 @@ int gf_32vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initialize parity values to Symbol 0
                 parity1 [ 0 ] = data_vec ;
                 parity1 [ 1 ] = data_vec ;
                 parity1 [ 2 ] = data_vec ;
@@ -6470,9 +6835,12 @@ int gf_32vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 30 ] = data_vec ;
                 parity1 [ 31 ] = data_vec ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Process 64 bytes of original data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 0 ], taps [ 0 ], 0) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 1 ], taps [ 1 ], 0) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity0 [ 2 ], taps [ 2 ], 0) ;
@@ -6539,6 +6907,7 @@ int gf_32vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        // Update parity values using power values and Parallel Multiplier
                         parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 0 ], taps [ 0 ], 0) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 1 ], taps [ 1 ], 0) ;
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(parity1 [ 2 ], taps [ 2 ], 0) ;
@@ -6605,6 +6974,7 @@ int gf_32vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 
                 }
 
+                // Verify Syndromes are zero
                 data_vec = _mm256_or_si256 ( parity0 [ 0 ], parity1 [ 0 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 1 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 1 ] ) ;
@@ -6668,6 +7038,8 @@ int gf_32vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 30 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity0 [ 31 ] ) ;
                 data_vec = _mm256_or_si256 ( data_vec, parity1 [ 31 ] ) ;
+
+                // Store syndromes and exit function on non-zero syndrome
                 if ( !_mm256_testz_si256 ( data_vec, data_vec ) )
                 {
                         _mm256_store_si256( (__m256i *) &dest [ 0 ] [ 0 * 32 ], parity0 [ 0 ] ) ;
@@ -6741,6 +7113,7 @@ int gf_32vect_pss_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
 }
 
 
+// Parallel LFSR Sequencer for P = 2 Codewords
 int gf_2vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -6749,34 +7122,46 @@ int gf_2vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity1 [ 2 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
                         parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
                         parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -6785,6 +7170,7 @@ int gf_2vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 3 Codewords
 int gf_3vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -6793,33 +7179,44 @@ int gf_3vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity1 [ 3 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
                         parity0 [ 1 ] = _mm256_xor_si256 ( parity0 [ 2 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0 )  ) ;
                         parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -6828,6 +7225,7 @@ int gf_3vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                         parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -6838,6 +7236,7 @@ int gf_3vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 4 Codewords
 int gf_4vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -6846,28 +7245,36 @@ int gf_4vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity1 [ 4 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
         taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
                 parity0 [ 3 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
                 parity1 [ 3 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -6876,8 +7283,11 @@ int gf_4vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                         parity0 [ 2 ] = _mm256_xor_si256 ( parity0 [ 3 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0 )  ) ;
                         parity0 [ 3 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -6888,6 +7298,7 @@ int gf_4vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                         parity1 [ 3 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -6900,6 +7311,7 @@ int gf_4vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 5 Codewords
 int gf_5vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -6908,15 +7320,18 @@ int gf_5vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity1 [ 5 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
         taps [ 3 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 3 * 8 ) ) ) ;
         taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -6924,15 +7339,20 @@ int gf_5vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 parity0 [ 4 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
                 parity1 [ 3 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
                 parity1 [ 4 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -6943,8 +7363,11 @@ int gf_5vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                         parity0 [ 3 ] = _mm256_xor_si256 ( parity0 [ 4 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0 )  ) ;
                         parity0 [ 4 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -6957,6 +7380,7 @@ int gf_5vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                         parity1 [ 4 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -6971,6 +7395,7 @@ int gf_5vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 6 Codewords
 int gf_6vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -6979,6 +7404,7 @@ int gf_6vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity1 [ 6 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -6986,9 +7412,11 @@ int gf_6vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         taps [ 4 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 4 * 8 ) ) ) ;
         taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -6997,6 +7425,7 @@ int gf_6vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 parity0 [ 5 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -7004,9 +7433,13 @@ int gf_6vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 parity1 [ 4 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
                 parity1 [ 5 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -7019,8 +7452,11 @@ int gf_6vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                         parity0 [ 4 ] = _mm256_xor_si256 ( parity0 [ 5 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0 )  ) ;
                         parity0 [ 5 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -7035,6 +7471,7 @@ int gf_6vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                         parity1 [ 5 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -7051,6 +7488,7 @@ int gf_6vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 7 Codewords
 int gf_7vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -7059,6 +7497,7 @@ int gf_7vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity1 [ 7 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -7067,9 +7506,11 @@ int gf_7vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         taps [ 5 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 5 * 8 ) ) ) ;
         taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -7079,6 +7520,7 @@ int gf_7vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 parity0 [ 6 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -7087,9 +7529,13 @@ int gf_7vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 parity1 [ 5 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
                 parity1 [ 6 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -7104,8 +7550,11 @@ int gf_7vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                         parity0 [ 5 ] = _mm256_xor_si256 ( parity0 [ 6 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0 )  ) ;
                         parity0 [ 6 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -7122,6 +7571,7 @@ int gf_7vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                         parity1 [ 6 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -7140,6 +7590,7 @@ int gf_7vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 8 Codewords
 int gf_8vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -7148,6 +7599,7 @@ int gf_8vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity1 [ 8 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -7157,9 +7609,11 @@ int gf_8vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         taps [ 6 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 6 * 8 ) ) ) ;
         taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -7170,6 +7624,7 @@ int gf_8vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 parity0 [ 7 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -7179,9 +7634,13 @@ int gf_8vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 parity1 [ 6 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
                 parity1 [ 7 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -7198,8 +7657,11 @@ int gf_8vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                         parity0 [ 6 ] = _mm256_xor_si256 ( parity0 [ 7 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0 )  ) ;
                         parity0 [ 7 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -7218,6 +7680,7 @@ int gf_8vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                         parity1 [ 7 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -7238,6 +7701,7 @@ int gf_8vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 9 Codewords
 int gf_9vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -7246,6 +7710,7 @@ int gf_9vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         __m256i parity1 [ 9 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -7256,9 +7721,11 @@ int gf_9vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         taps [ 7 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 7 * 8 ) ) ) ;
         taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -7270,6 +7737,7 @@ int gf_9vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 parity0 [ 8 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -7280,9 +7748,13 @@ int gf_9vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                 parity1 [ 7 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
                 parity1 [ 8 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -7301,8 +7773,11 @@ int gf_9vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                         parity0 [ 7 ] = _mm256_xor_si256 ( parity0 [ 8 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0 )  ) ;
                         parity0 [ 8 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -7323,6 +7798,7 @@ int gf_9vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
                         parity1 [ 8 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -7345,6 +7821,7 @@ int gf_9vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char 
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 10 Codewords
 int gf_10vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -7353,6 +7830,7 @@ int gf_10vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 10 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -7364,9 +7842,11 @@ int gf_10vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 8 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 8 * 8 ) ) ) ;
         taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -7379,6 +7859,7 @@ int gf_10vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 9 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -7390,9 +7871,13 @@ int gf_10vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 8 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
                 parity1 [ 9 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -7413,8 +7898,11 @@ int gf_10vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 8 ] = _mm256_xor_si256 ( parity0 [ 9 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0 )  ) ;
                         parity0 [ 9 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -7437,6 +7925,7 @@ int gf_10vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 9 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -7461,6 +7950,7 @@ int gf_10vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 11 Codewords
 int gf_11vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -7469,6 +7959,7 @@ int gf_11vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 11 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -7481,9 +7972,11 @@ int gf_11vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 9 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 9 * 8 ) ) ) ;
         taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -7497,6 +7990,7 @@ int gf_11vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 10 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -7509,9 +8003,13 @@ int gf_11vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 9 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
                 parity1 [ 10 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -7534,8 +8032,11 @@ int gf_11vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 9 ] = _mm256_xor_si256 ( parity0 [ 10 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0 )  ) ;
                         parity0 [ 10 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -7560,6 +8061,7 @@ int gf_11vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 10 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -7586,6 +8088,7 @@ int gf_11vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 12 Codewords
 int gf_12vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -7594,6 +8097,7 @@ int gf_12vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 12 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -7607,9 +8111,11 @@ int gf_12vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 10 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 10 * 8 ) ) ) ;
         taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -7624,6 +8130,7 @@ int gf_12vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 11 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -7637,9 +8144,13 @@ int gf_12vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 10 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
                 parity1 [ 11 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -7664,8 +8175,11 @@ int gf_12vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 10 ] = _mm256_xor_si256 ( parity0 [ 11 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0 )  ) ;
                         parity0 [ 11 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -7692,6 +8206,7 @@ int gf_12vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 11 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -7720,6 +8235,7 @@ int gf_12vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 13 Codewords
 int gf_13vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -7728,6 +8244,7 @@ int gf_13vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 13 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -7742,9 +8259,11 @@ int gf_13vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 11 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 11 * 8 ) ) ) ;
         taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -7760,6 +8279,7 @@ int gf_13vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 12 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 12 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -7774,9 +8294,13 @@ int gf_13vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 11 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0) ;
                 parity1 [ 12 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 12 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -7803,8 +8327,11 @@ int gf_13vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 11 ] = _mm256_xor_si256 ( parity0 [ 12 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0 )  ) ;
                         parity0 [ 12 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 12 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -7833,6 +8360,7 @@ int gf_13vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 12 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 12 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -7863,6 +8391,7 @@ int gf_13vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 14 Codewords
 int gf_14vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -7871,6 +8400,7 @@ int gf_14vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 14 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -7886,9 +8416,11 @@ int gf_14vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 12 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 12 * 8 ) ) ) ;
         taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -7905,6 +8437,7 @@ int gf_14vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 13 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 13 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -7920,9 +8453,13 @@ int gf_14vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 12 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 12 ], 0) ;
                 parity1 [ 13 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 13 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -7951,8 +8488,11 @@ int gf_14vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 12 ] = _mm256_xor_si256 ( parity0 [ 13 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 12 ], 0 )  ) ;
                         parity0 [ 13 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 13 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -7983,6 +8523,7 @@ int gf_14vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 13 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 13 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -8015,6 +8556,7 @@ int gf_14vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 15 Codewords
 int gf_15vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -8023,6 +8565,7 @@ int gf_15vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 15 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -8039,9 +8582,11 @@ int gf_15vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 13 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 13 * 8 ) ) ) ;
         taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -8059,6 +8604,7 @@ int gf_15vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 14 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 14 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -8075,9 +8621,13 @@ int gf_15vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 13 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 13 ], 0) ;
                 parity1 [ 14 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 14 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -8108,8 +8658,11 @@ int gf_15vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 13 ] = _mm256_xor_si256 ( parity0 [ 14 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 13 ], 0 )  ) ;
                         parity0 [ 14 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 14 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -8142,6 +8695,7 @@ int gf_15vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 14 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 14 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -8176,6 +8730,7 @@ int gf_15vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 16 Codewords
 int gf_16vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -8184,6 +8739,7 @@ int gf_16vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 16 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -8201,9 +8757,11 @@ int gf_16vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 14 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 14 * 8 ) ) ) ;
         taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -8222,6 +8780,7 @@ int gf_16vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 15 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 15 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -8239,9 +8798,13 @@ int gf_16vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 14 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 14 ], 0) ;
                 parity1 [ 15 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 15 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -8274,8 +8837,11 @@ int gf_16vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 14 ] = _mm256_xor_si256 ( parity0 [ 15 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 14 ], 0 )  ) ;
                         parity0 [ 15 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 15 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -8310,6 +8876,7 @@ int gf_16vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 15 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 15 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -8346,6 +8913,7 @@ int gf_16vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 17 Codewords
 int gf_17vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -8354,6 +8922,7 @@ int gf_17vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 17 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -8372,9 +8941,11 @@ int gf_17vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 15 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 15 * 8 ) ) ) ;
         taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -8394,6 +8965,7 @@ int gf_17vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 16 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 16 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -8412,9 +8984,13 @@ int gf_17vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 15 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 15 ], 0) ;
                 parity1 [ 16 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 16 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -8449,8 +9025,11 @@ int gf_17vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 15 ] = _mm256_xor_si256 ( parity0 [ 16 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 15 ], 0 )  ) ;
                         parity0 [ 16 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 16 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -8487,6 +9066,7 @@ int gf_17vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 16 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 16 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -8525,6 +9105,7 @@ int gf_17vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 18 Codewords
 int gf_18vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -8533,6 +9114,7 @@ int gf_18vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 18 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -8552,9 +9134,11 @@ int gf_18vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 16 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 16 * 8 ) ) ) ;
         taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -8575,6 +9159,7 @@ int gf_18vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 17 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 17 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -8594,9 +9179,13 @@ int gf_18vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 16 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 16 ], 0) ;
                 parity1 [ 17 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 17 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -8633,8 +9222,11 @@ int gf_18vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 16 ] = _mm256_xor_si256 ( parity0 [ 17 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 16 ], 0 )  ) ;
                         parity0 [ 17 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 17 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -8673,6 +9265,7 @@ int gf_18vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 17 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 17 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -8713,6 +9306,7 @@ int gf_18vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 19 Codewords
 int gf_19vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -8721,6 +9315,7 @@ int gf_19vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 19 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -8741,9 +9336,11 @@ int gf_19vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 17 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 17 * 8 ) ) ) ;
         taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -8765,6 +9362,7 @@ int gf_19vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 18 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 18 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -8785,9 +9383,13 @@ int gf_19vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 17 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 17 ], 0) ;
                 parity1 [ 18 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 18 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -8826,8 +9428,11 @@ int gf_19vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 17 ] = _mm256_xor_si256 ( parity0 [ 18 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 17 ], 0 )  ) ;
                         parity0 [ 18 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 18 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -8868,6 +9473,7 @@ int gf_19vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 18 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 18 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -8910,6 +9516,7 @@ int gf_19vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 20 Codewords
 int gf_20vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -8918,6 +9525,7 @@ int gf_20vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 20 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -8939,9 +9547,11 @@ int gf_20vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 18 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 18 * 8 ) ) ) ;
         taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -8964,6 +9574,7 @@ int gf_20vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 19 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 19 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -8985,9 +9596,13 @@ int gf_20vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 18 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 18 ], 0) ;
                 parity1 [ 19 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 19 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -9028,8 +9643,11 @@ int gf_20vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 18 ] = _mm256_xor_si256 ( parity0 [ 19 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 18 ], 0 )  ) ;
                         parity0 [ 19 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 19 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -9072,6 +9690,7 @@ int gf_20vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 19 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 19 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -9116,6 +9735,7 @@ int gf_20vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 21 Codewords
 int gf_21vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -9124,6 +9744,7 @@ int gf_21vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 21 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -9146,9 +9767,11 @@ int gf_21vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 19 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 19 * 8 ) ) ) ;
         taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -9172,6 +9795,7 @@ int gf_21vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 20 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 20 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -9194,9 +9818,13 @@ int gf_21vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 19 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 19 ], 0) ;
                 parity1 [ 20 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 20 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -9239,8 +9867,11 @@ int gf_21vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 19 ] = _mm256_xor_si256 ( parity0 [ 20 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 19 ], 0 )  ) ;
                         parity0 [ 20 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 20 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -9285,6 +9916,7 @@ int gf_21vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 20 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 20 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -9331,6 +9963,7 @@ int gf_21vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 22 Codewords
 int gf_22vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -9339,6 +9972,7 @@ int gf_22vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 22 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -9362,9 +9996,11 @@ int gf_22vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 20 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 20 * 8 ) ) ) ;
         taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -9389,6 +10025,7 @@ int gf_22vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 21 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 21 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -9412,9 +10049,13 @@ int gf_22vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 20 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 20 ], 0) ;
                 parity1 [ 21 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 21 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -9459,8 +10100,11 @@ int gf_22vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 20 ] = _mm256_xor_si256 ( parity0 [ 21 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 20 ], 0 )  ) ;
                         parity0 [ 21 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 21 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -9507,6 +10151,7 @@ int gf_22vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 21 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 21 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -9555,6 +10200,7 @@ int gf_22vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 23 Codewords
 int gf_23vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -9563,6 +10209,7 @@ int gf_23vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 23 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -9587,9 +10234,11 @@ int gf_23vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 21 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 21 * 8 ) ) ) ;
         taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -9615,6 +10264,7 @@ int gf_23vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 22 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 22 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -9639,9 +10289,13 @@ int gf_23vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 21 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 21 ], 0) ;
                 parity1 [ 22 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 22 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -9688,8 +10342,11 @@ int gf_23vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 21 ] = _mm256_xor_si256 ( parity0 [ 22 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 21 ], 0 )  ) ;
                         parity0 [ 22 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 22 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -9738,6 +10395,7 @@ int gf_23vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 22 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 22 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -9788,6 +10446,7 @@ int gf_23vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 24 Codewords
 int gf_24vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -9796,6 +10455,7 @@ int gf_24vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 24 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -9821,9 +10481,11 @@ int gf_24vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 22 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 22 * 8 ) ) ) ;
         taps [ 23 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 23 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -9850,6 +10512,7 @@ int gf_24vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 23 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 23 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -9875,9 +10538,13 @@ int gf_24vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 22 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 22 ], 0) ;
                 parity1 [ 23 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 23 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -9926,8 +10593,11 @@ int gf_24vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 22 ] = _mm256_xor_si256 ( parity0 [ 23 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 22 ], 0 )  ) ;
                         parity0 [ 23 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 23 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -9978,6 +10648,7 @@ int gf_24vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 23 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 23 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -10030,6 +10701,7 @@ int gf_24vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 25 Codewords
 int gf_25vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -10038,6 +10710,7 @@ int gf_25vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 25 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -10064,9 +10737,11 @@ int gf_25vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 23 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 23 * 8 ) ) ) ;
         taps [ 24 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 24 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -10094,6 +10769,7 @@ int gf_25vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 24 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 24 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -10120,9 +10796,13 @@ int gf_25vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 23 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 23 ], 0) ;
                 parity1 [ 24 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 24 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -10173,8 +10853,11 @@ int gf_25vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 23 ] = _mm256_xor_si256 ( parity0 [ 24 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 23 ], 0 )  ) ;
                         parity0 [ 24 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 24 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -10227,6 +10910,7 @@ int gf_25vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 24 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 24 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -10281,6 +10965,7 @@ int gf_25vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 26 Codewords
 int gf_26vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -10289,6 +10974,7 @@ int gf_26vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 26 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -10316,9 +11002,11 @@ int gf_26vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 24 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 24 * 8 ) ) ) ;
         taps [ 25 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 25 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -10347,6 +11035,7 @@ int gf_26vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 25 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 25 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -10374,9 +11063,13 @@ int gf_26vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 24 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 24 ], 0) ;
                 parity1 [ 25 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 25 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -10429,8 +11122,11 @@ int gf_26vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 24 ] = _mm256_xor_si256 ( parity0 [ 25 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 24 ], 0 )  ) ;
                         parity0 [ 25 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 25 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -10485,6 +11181,7 @@ int gf_26vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 25 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 25 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -10541,6 +11238,7 @@ int gf_26vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 27 Codewords
 int gf_27vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -10549,6 +11247,7 @@ int gf_27vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 27 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -10577,9 +11276,11 @@ int gf_27vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 25 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 25 * 8 ) ) ) ;
         taps [ 26 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 26 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -10609,6 +11310,7 @@ int gf_27vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 26 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 26 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -10637,9 +11339,13 @@ int gf_27vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 25 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 25 ], 0) ;
                 parity1 [ 26 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 26 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -10694,8 +11400,11 @@ int gf_27vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 25 ] = _mm256_xor_si256 ( parity0 [ 26 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 25 ], 0 )  ) ;
                         parity0 [ 26 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 26 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -10752,6 +11461,7 @@ int gf_27vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 26 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 26 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -10810,6 +11520,7 @@ int gf_27vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 28 Codewords
 int gf_28vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -10818,6 +11529,7 @@ int gf_28vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 28 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -10847,9 +11559,11 @@ int gf_28vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 26 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 26 * 8 ) ) ) ;
         taps [ 27 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 27 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -10880,6 +11594,7 @@ int gf_28vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 27 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 27 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -10909,9 +11624,13 @@ int gf_28vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 26 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 26 ], 0) ;
                 parity1 [ 27 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 27 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -10968,8 +11687,11 @@ int gf_28vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 26 ] = _mm256_xor_si256 ( parity0 [ 27 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 26 ], 0 )  ) ;
                         parity0 [ 27 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 27 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -11028,6 +11750,7 @@ int gf_28vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 27 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 27 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -11088,6 +11811,7 @@ int gf_28vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 29 Codewords
 int gf_29vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -11096,6 +11820,7 @@ int gf_29vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 29 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -11126,9 +11851,11 @@ int gf_29vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 27 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 27 * 8 ) ) ) ;
         taps [ 28 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 28 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -11160,6 +11887,7 @@ int gf_29vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 28 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 28 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -11190,9 +11918,13 @@ int gf_29vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 27 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 27 ], 0) ;
                 parity1 [ 28 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 28 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -11251,8 +11983,11 @@ int gf_29vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 27 ] = _mm256_xor_si256 ( parity0 [ 28 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 27 ], 0 )  ) ;
                         parity0 [ 28 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 28 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -11313,6 +12048,7 @@ int gf_29vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 28 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 28 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -11375,6 +12111,7 @@ int gf_29vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 30 Codewords
 int gf_30vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -11383,6 +12120,7 @@ int gf_30vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 30 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -11414,9 +12152,11 @@ int gf_30vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 28 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 28 * 8 ) ) ) ;
         taps [ 29 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 29 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -11449,6 +12189,7 @@ int gf_30vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 29 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 29 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -11480,9 +12221,13 @@ int gf_30vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 28 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 28 ], 0) ;
                 parity1 [ 29 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 29 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -11543,8 +12288,11 @@ int gf_30vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 28 ] = _mm256_xor_si256 ( parity0 [ 29 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 28 ], 0 )  ) ;
                         parity0 [ 29 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 29 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -11607,6 +12355,7 @@ int gf_30vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 29 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 29 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -11671,6 +12420,7 @@ int gf_30vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 31 Codewords
 int gf_31vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -11679,6 +12429,7 @@ int gf_31vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 31 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -11711,9 +12462,11 @@ int gf_31vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 29 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 29 * 8 ) ) ) ;
         taps [ 30 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 30 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -11747,6 +12500,7 @@ int gf_31vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 30 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 30 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -11779,9 +12533,13 @@ int gf_31vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 29 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 29 ], 0) ;
                 parity1 [ 30 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 30 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -11844,8 +12602,11 @@ int gf_31vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 29 ] = _mm256_xor_si256 ( parity0 [ 30 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 29 ], 0 )  ) ;
                         parity0 [ 30 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 30 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -11910,6 +12671,7 @@ int gf_31vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 30 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 30 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;
@@ -11976,6 +12738,7 @@ int gf_31vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         return ( curPos ) ;
 }
 
+// Parallel LFSR Sequencer for P = 32 Codewords
 int gf_32vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest)
 {
@@ -11984,6 +12747,7 @@ int gf_32vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         __m256i parity1 [ 32 ] ;
         __m256i data_vec ;
 
+        // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 0 * 8 ) ) ) ;
         taps [ 1 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 1 * 8 ) ) ) ;
         taps [ 2 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 2 * 8 ) ) ) ;
@@ -12017,9 +12781,11 @@ int gf_32vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
         taps [ 30 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 30 * 8 ) ) ) ;
         taps [ 31 ] = _mm256_set1_epi64x( *( uint64_t * ) ( g_tbls + ( 31 * 8 ) ) ) ;
 
+        // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 0 * 32 ] ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity0 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity0 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity0 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -12054,6 +12820,7 @@ int gf_32vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity0 [ 31 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 31 ], 0) ;
                 data_vec = _mm256_load_si256( (__m256i *) &data [ 0 ] [ curPos + 1 * 32 ] ) ;
               __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                // Initalize Parallel Multipliers with Generator Polynomial values
                 parity1 [ 0 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity1 [ 1 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
                 parity1 [ 2 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
@@ -12087,9 +12854,13 @@ int gf_32vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                 parity1 [ 30 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 30 ], 0) ;
                 parity1 [ 31 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 31 ], 0) ;
 
+                // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 0 * 32 ] ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity0 [ 0 ] ) ;
                         parity0 [ 0 ] = _mm256_xor_si256 ( parity0 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -12154,8 +12925,11 @@ int gf_32vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity0 [ 30 ] = _mm256_xor_si256 ( parity0 [ 31 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 30 ], 0 )  ) ;
                         parity0 [ 31 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 31 ], 0) ;
+                        // Load Original Data
                         data_vec = _mm256_load_si256( (__m256i *) &data [ curSym ] [ curPos + 1 * 32 ] ) ;
                       __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+
+                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm256_xor_si256( data_vec, parity1 [ 0 ] ) ;
                         parity1 [ 0 ] = _mm256_xor_si256 ( parity1 [ 1 ],
                                        _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0 )  ) ;
@@ -12222,6 +12996,7 @@ int gf_32vect_pls_avx2_gfni(int len, int k, unsigned char *g_tbls, unsigned char
                         parity1 [ 31 ] = _mm256_gf2p8affine_epi64_epi8(data_vec, taps [ 31 ], 0) ;
                 }
 
+                 // Store parity back to memory
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 0 * 32 ], parity0 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 0 ] [ curPos + 1 * 32 ], parity1 [ 0 ] ) ;
                 _mm256_store_si256( (__m256i *) &dest [ 1 ] [ curPos + 0 * 32 ], parity0 [ 1 ] ) ;

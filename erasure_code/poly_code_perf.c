@@ -641,7 +641,7 @@ void inject_errors_in_place_2d(unsigned char **data, int index, int num_errors, 
         unsigned char error = (rand() % (FIELD_SIZE - 1)) + 1;
         data[pos][index] = data[pos][index] ^ error;
         //printf ( "Injecting data [%d][%d] with %x\n", pos, index, error ) ;
-        unsigned char ne = rand () % 62 ;
+        //unsigned char ne = rand () % 62 ;
         //data[pos][index+ne] = data[pos][index+ne] ^ error;
         //printf ( "Injecting data [%d][%d] with %x\n", pos, index+ne, error ) ;
     }
@@ -748,9 +748,9 @@ main(int argc, char *argv[])
         struct perf start;
 
         /* Set default parameters */
-        k = 12;
-        p = 8;
-        nerrs = 4;
+        k = 223;
+        p = 32;
+        nerrs = 32;
 
         /* Parse arguments */
         for (i = 1; i < argc; i++) {

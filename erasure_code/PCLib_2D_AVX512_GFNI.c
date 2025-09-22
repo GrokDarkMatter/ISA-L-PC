@@ -669,6 +669,7 @@ int pc_compute_error_values_2d_AVX512_GFNI ( int mSize, unsigned char * S, unsig
         {
                 Mat [ i ] = 1 ;
         }
+
         unsigned char base = 3 ;
         for ( i = 1 ; i < mSize ; i ++ )
         {
