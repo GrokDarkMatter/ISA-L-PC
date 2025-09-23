@@ -658,17 +658,29 @@ int pc_compute_error_values_2d_AVX512_GFNI ( int mSize, unsigned char * S, unsig
         unsigned char Mat_inv [ PC_MAX_ERRS * PC_MAX_ERRS ] ;
 
         // Find error values by building and inverting Vandemonde
+        memset ( Mat, 1, mSize ) ;
+#ifdef NDEF
         for ( i = 0 ; i < mSize ; i ++ )
         {
                 Mat [ i ] = 1 ;
         }
-
+#endif
         unsigned char base = 3 ;
+        unsigned char baseVec [ PC_MAX_ERRS ], matVal [ PC_MAX_ERRS ] ;
         for ( i = 1 ; i < mSize ; i ++ )
         {
                 for ( j = 0 ; j < mSize ; j ++ )
                 {
-                        Mat [ i * mSize + j ] = pc_pow_2d_AVX512_GFNI ( base, roots [ j ] ) ;
+                        if ( i == 1 )
+                        {
+                                baseVec [ j ] = pc_ptab_2d [ roots [ j ] ] ;
+                                matVal [ j ] = baseVec [ j ] ;
+                                //printf ( "pow_2d = %x baseVec [ %d ] = %x\n", pc_pow_2d_AVX512_GFNI ( base, roots [ j ] ), j, baseVec [ j ] ) ;
+                        }
+                        //Mat [ i * mSize + j ] = pc_pow_2d_AVX512_GFNI ( base, roots [ j ] ) ;
+                        Mat [ i * mSize + j ] = matVal [ j ] ;
+                        //printf ( "pow_2d = %x matVec [ %d ] = %x\n", pc_pow_2d_AVX512_GFNI ( base, roots [ j ] ), j, matVal [ j ] ) ;
+                        matVal [ j ] = pc_mul_2d ( matVal [ j ], baseVec [ j ] ) ;
                 }
                 base = pc_mul_2d ( base, 3 ) ;
         }
@@ -1007,14 +1019,14 @@ void L1Correct ( __m512i * vec, int CurSym, int k, unsigned char * S_in, unsigne
         S [ 1 ] = S_in [ 2 ] ;
         S [ 2 ] = S_in [ 1 ] ;
         S [ 3 ] = S_in [ 0 ] ;
-
+#ifdef NDEF
+ 
         // Check to see if a single error can be verified
         if ( pc_verify_single_error_2d_1L ( vec, memVec, S, k+4 ) )
         {
                 return ;
         }
-
-        mSize = PGZ_2d_AVX512_GFNI( S, 4, keyEq ) ;
+       mSize = PGZ_2d_AVX512_GFNI( S, 4, keyEq ) ;
 
         if ( mSize > 1 )
         {
@@ -1026,6 +1038,7 @@ void L1Correct ( __m512i * vec, int CurSym, int k, unsigned char * S_in, unsigne
                         return ;
                 }
         }
+#endif
         return ;
 }
 /**********************************************************************
