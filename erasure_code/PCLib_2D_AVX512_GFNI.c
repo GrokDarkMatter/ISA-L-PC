@@ -711,14 +711,28 @@ int pc_verify_syndromes_2d_AVX512_GFNI ( unsigned char * S, int p, int mSize, un
 
         // Verify syndromes across each power row
         unsigned char base = 1 ;
+        unsigned char baseVec [ PC_MAX_ERRS ], matVal [ PC_MAX_ERRS ] ;
         for ( i = 0 ; i < p ; i++ )
         {
                 sum = 0 ;
                 for ( j = 0 ; j < mSize ; j ++ )
                 {
                         // Scale up the data value based on location
-                        unsigned char termVal = pc_mul_2d ( errVal [ j ], pc_pow_2d_AVX512_GFNI ( base, roots [ j ] ) ) ;
+                        switch ( i )
+                        {
+                                case 0: baseVec [ j ] = 1 ;
+                                        matVal [ j ] = 1 ;
+                                        break ;
+                                case 1: baseVec [ j ] = pc_ptab_2d [ roots [ j ] ] ;
+                                        matVal [ j ] = baseVec [ j ] ;
+                                        break ;
+                        }
+                        //unsigned char termVal = pc_mul_2d ( errVal [ j ], pc_pow_2d_AVX512_GFNI ( base, roots [ j ] ) ) ;
+                        unsigned char termVal = pc_mul_2d ( errVal [ j ], matVal [ j ] ) ;
+                        //printf ( "pow_2d = %x matVal [ %d ] = %x\n", pc_pow_2d_AVX512_GFNI ( base, roots [ j ] ), j, matVal [ j ] ) ;
+
                         sum ^= termVal ;
+                        matVal [ j ] = pc_mul_2d ( matVal [ j ], baseVec [ j ] ) ;
                 }
 
                 // Verify we reproduced the syndrome
