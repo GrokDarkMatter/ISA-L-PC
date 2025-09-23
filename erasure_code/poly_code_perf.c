@@ -72,7 +72,7 @@ dump_u8xu8(unsigned char *s, int k, int m)
 extern int ec_encode_data_avx512_gfni ( int len, int m, int p, unsigned char * g_tbls, 
     unsigned char ** data, unsigned char ** coding ) ;
 
-#define NOPAPI 1
+//#define NOPAPI 1
 
 #ifdef _WIN64
 #define __builtin_prefetch(a,b,c) _mm_prefetch((const char*)(a), _MM_HINT_T0)

@@ -237,6 +237,7 @@ void pc_bvan_2d ( unsigned char * vals, int p )
 void pc_encoder1b ( unsigned char * codeWord, unsigned char * par, int p ) 
 {
     __m512i codeWordvec [ 4 ], encMatvec [ 4 ], vreg [ 4 ] ;
+    __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
     // Load the entire codeword into 4 vector registers
     codeWordvec [ 0 ] = _mm512_loadu_si512 ( codeWord + 0 * 64 ) ;
@@ -282,13 +283,8 @@ void pc_encoder1b ( unsigned char * codeWord, unsigned char * par, int p )
         // Shuffle 128-bit to 64-bit using permute
         __m128i perm = _mm_shuffle_epi32(xored128, _MM_SHUFFLE(3, 2, 3, 2));
         __m128i xored64 = _mm_xor_si128(xored128, perm);
-
-        // Reduce 64-bit to 32-bit
-        uint64_t result_64 = _mm_cvtsi128_si64(xored64);
-        result_64 ^= result_64 >> 32 ;
-        result_64 ^= result_64 >> 16 ;
-        result_64 ^= result_64 >> 8 ;
-        par [ curP ] = ( unsigned char ) result_64 ;
+        xored64 = _mm_clmulepi64_si128(xored64, maskP, 0x00) ;
+        par [ curP ] = _mm_extract_epi8 ( xored64, 7 ) ;
         //printf ( "Par [ %d ] = %d\n", curP, par [ curP ] ) ;
     }
 }
@@ -297,6 +293,7 @@ void pc_encoder1b ( unsigned char * codeWord, unsigned char * par, int p )
 void pc_decoder1b ( unsigned char * codeWord, unsigned char * syn, int p ) 
 {
     __m512i codeWordvec [ 4 ], vanMatvec [ 4 ], vreg [ 4 ] ;
+    __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
 
     // Load the whole codeword into vector registers
     codeWordvec [ 0 ] = _mm512_loadu_si512 ( codeWord + 0 * 64 ) ;
@@ -346,12 +343,8 @@ void pc_decoder1b ( unsigned char * codeWord, unsigned char * syn, int p )
         __m128i perm = _mm_shuffle_epi32(xored128, _MM_SHUFFLE(3, 2, 3, 2));
         __m128i xored64 = _mm_xor_si128(xored128, perm);
 
-        // Reduce 64-bit to 32-bit
-        uint64_t result_64 = _mm_cvtsi128_si64(xored64);
-        result_64 ^= result_64 >> 32 ;
-        result_64 ^= result_64 >> 16 ;
-        result_64 ^= result_64 >> 8 ;
-        syn [ curP ] = ( unsigned char ) result_64 ;
+        xored64 = _mm_clmulepi64_si128(xored64, maskP, 0x00) ;
+        syn [ curP ] = _mm_extract_epi8 ( xored64, 7 ) ;
     }
 }
 
