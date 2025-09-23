@@ -1029,7 +1029,7 @@ void L1Correct ( __m512i * vec, int CurSym, int k, unsigned char * S_in, unsigne
                 {
                         // If decode failed set codeword to zero so syndromes are OK
                         *vec = _mm512_setzero_si512() ;
-                        ErrLoc [ NumErrs++ ] = CurSym ;
+                        ErrLoc [ NumErrs++ ] = k - CurSym - 1 ;
                         return ;
                 }
         }
