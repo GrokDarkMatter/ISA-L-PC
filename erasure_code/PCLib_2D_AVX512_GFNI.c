@@ -44,8 +44,8 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 **********************************************************************/
 
 static unsigned char pc_ptab_2d [ 256 ], pc_ltab_2d [ 256 ], pc_itab_2d [ 256 ] ;
-static __m512i EncMat [ 255 ] [ 4 ] ;
-static __m512i Vand1b [ 255 ] [ 4 ] ;
+static __m512i EncMat [ 255 ] [ 4 ], Vand1b [ 255 ] [ 4 ] ;
+static unsigned char NumErrs, ErrLoc [ 32 ] ;
 
 // Level 1 encoder for bytes that are sequential in memory
 #define L1Enc(vec,p,pvec) \
@@ -1002,13 +1002,13 @@ int pc_verify_single_error_2d_1L ( __m512i * vec, unsigned char * memVec, unsign
 }
 
 // Correct error detected on Level 1
-void L1Correct ( __m512i * vec, int k, unsigned char * S_in, unsigned char * memVec ) 
+void L1Correct ( __m512i * vec, int CurSym, int k, unsigned char * S_in, unsigned char * memVec ) 
 {
         unsigned char S [ 4 ] ;
 
         int mSize  ;
         unsigned char keyEq [ PC_MAX_ERRS + 1 ] = { 0 } ;
-#ifdef NDEF
+
         // Reverse terms to match PC_Correct
         S [ 0 ] = S_in [ 3 ] ;
         S [ 1 ] = S_in [ 2 ] ;
@@ -1025,9 +1025,14 @@ void L1Correct ( __m512i * vec, int k, unsigned char * S_in, unsigned char * mem
 
         if ( mSize > 1 )
         {
-                pc_verify_multiple_errors_l1 ( S, mSize, keyEq, vec, memVec ) ;
+                if ( pc_verify_multiple_errors_l1 ( S, mSize, keyEq, vec, memVec ) == 0 )
+                {
+                        // If decode failed set codeword to zero so syndromes are OK
+                        *vec = _mm512_setzero_si512() ;
+                        ErrLoc [ NumErrs++ ] = CurSym ;
+                        return ;
+                }
         }
-#endif
         return ;
 }
 /**********************************************************************
@@ -1092,6 +1097,7 @@ int gf_2vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -1099,7 +1105,7 @@ int gf_2vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -1115,7 +1121,7 @@ int gf_2vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -1156,6 +1162,7 @@ int gf_3vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -1163,7 +1170,7 @@ int gf_3vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -1180,7 +1187,7 @@ int gf_3vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -1226,6 +1233,7 @@ int gf_4vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -1233,7 +1241,7 @@ int gf_4vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -1251,7 +1259,7 @@ int gf_4vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -1302,6 +1310,7 @@ int gf_5vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -1309,7 +1318,7 @@ int gf_5vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -1328,7 +1337,7 @@ int gf_5vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -1384,6 +1393,7 @@ int gf_6vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -1391,7 +1401,7 @@ int gf_6vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -1411,7 +1421,7 @@ int gf_6vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -1472,6 +1482,7 @@ int gf_7vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -1479,7 +1490,7 @@ int gf_7vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -1500,7 +1511,7 @@ int gf_7vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -1566,6 +1577,7 @@ int gf_8vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -1573,7 +1585,7 @@ int gf_8vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -1595,7 +1607,7 @@ int gf_8vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -1666,6 +1678,7 @@ int gf_9vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -1673,7 +1686,7 @@ int gf_9vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -1696,7 +1709,7 @@ int gf_9vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -1772,6 +1785,7 @@ int gf_10vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -1779,7 +1793,7 @@ int gf_10vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -1803,7 +1817,7 @@ int gf_10vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -1884,6 +1898,7 @@ int gf_11vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -1891,7 +1906,7 @@ int gf_11vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -1916,7 +1931,7 @@ int gf_11vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -2002,6 +2017,7 @@ int gf_12vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -2009,7 +2025,7 @@ int gf_12vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -2035,7 +2051,7 @@ int gf_12vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -2126,6 +2142,7 @@ int gf_13vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -2133,7 +2150,7 @@ int gf_13vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -2160,7 +2177,7 @@ int gf_13vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -2256,6 +2273,7 @@ int gf_14vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -2263,7 +2281,7 @@ int gf_14vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -2291,7 +2309,7 @@ int gf_14vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -2392,6 +2410,7 @@ int gf_15vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -2399,7 +2418,7 @@ int gf_15vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -2428,7 +2447,7 @@ int gf_15vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -2534,6 +2553,7 @@ int gf_16vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -2541,7 +2561,7 @@ int gf_16vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -2571,7 +2591,7 @@ int gf_16vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -2682,6 +2702,7 @@ int gf_17vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -2689,7 +2710,7 @@ int gf_17vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -2720,7 +2741,7 @@ int gf_17vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -2836,6 +2857,7 @@ int gf_18vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -2843,7 +2865,7 @@ int gf_18vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -2875,7 +2897,7 @@ int gf_18vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -2996,6 +3018,7 @@ int gf_19vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -3003,7 +3026,7 @@ int gf_19vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -3036,7 +3059,7 @@ int gf_19vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -3162,6 +3185,7 @@ int gf_20vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -3169,7 +3193,7 @@ int gf_20vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -3203,7 +3227,7 @@ int gf_20vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -3334,6 +3358,7 @@ int gf_21vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -3341,7 +3366,7 @@ int gf_21vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -3376,7 +3401,7 @@ int gf_21vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -3512,6 +3537,7 @@ int gf_22vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -3519,7 +3545,7 @@ int gf_22vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -3555,7 +3581,7 @@ int gf_22vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -3696,6 +3722,7 @@ int gf_23vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -3703,7 +3730,7 @@ int gf_23vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -3740,7 +3767,7 @@ int gf_23vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -3886,6 +3913,7 @@ int gf_24vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -3893,7 +3921,7 @@ int gf_24vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -3931,7 +3959,7 @@ int gf_24vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -4082,6 +4110,7 @@ int gf_25vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -4089,7 +4118,7 @@ int gf_25vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -4128,7 +4157,7 @@ int gf_25vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -4284,6 +4313,7 @@ int gf_26vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -4291,7 +4321,7 @@ int gf_26vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -4331,7 +4361,7 @@ int gf_26vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -4492,6 +4522,7 @@ int gf_27vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -4499,7 +4530,7 @@ int gf_27vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -4540,7 +4571,7 @@ int gf_27vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -4706,6 +4737,7 @@ int gf_28vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -4713,7 +4745,7 @@ int gf_28vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -4755,7 +4787,7 @@ int gf_28vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -4926,6 +4958,7 @@ int gf_29vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -4933,7 +4966,7 @@ int gf_29vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -4976,7 +5009,7 @@ int gf_29vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -5152,6 +5185,7 @@ int gf_30vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -5159,7 +5193,7 @@ int gf_30vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -5203,7 +5237,7 @@ int gf_30vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -5384,6 +5418,7 @@ int gf_31vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -5391,7 +5426,7 @@ int gf_31vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -5436,7 +5471,7 @@ int gf_31vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
@@ -5622,6 +5657,7 @@ int gf_32vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
         {
+                NumErrs = 0 ;
                 // Get codeword address and load 64 bytes
                 unsigned char * cwAdr = &data [ 0 ] [ curPos ] ;
                 data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
@@ -5629,7 +5665,7 @@ int gf_32vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                 // Decode level 1 using vector multiplier for symbol 0
                 L1Dec(data_vec, 4, syn ) ;
-                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                if ( *( uint32_t * )syn ) L1Correct ( &data_vec, 0, k, syn, cwAdr ) ;
 
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
@@ -5675,7 +5711,7 @@ int gf_32vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
 
                         // Decode level 1 for 1..k symbols
                         L1Dec(data_vec, 4, syn ) ;
-                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, k, syn, cwAdr ) ;
+                        if ( *( uint32_t * )syn ) L1Correct ( &data_vec, curSym, k, syn, cwAdr ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8mul_epi8(parity [ 0 ], taps [ 0 ]) ;
