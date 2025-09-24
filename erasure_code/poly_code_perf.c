@@ -635,36 +635,46 @@ exit:
 void inject_errors_in_place_2d(unsigned char **data, unsigned char *offsets, int d1Len, int num_errors, 
         unsigned char *error_positions, unsigned char *original_values)
 {
-    int index = offsets [ 0 ] ;
-    for (int i = 0; i < num_errors; i++)
-    {
-        int pos = error_positions[i];
-        original_values[i] = data[pos][index];
-        unsigned char error = (rand() % (FIELD_SIZE - 1)) + 1;
-        data[pos][index] = data[pos][index] ^ error;
-        //printf ( "Injecting data [%d][%d] with %x\n", pos, index, error ) ;
-        //unsigned char ne = rand () % 62 ;
-        //data[pos][index+ne] = data[pos][index+ne] ^ error;
-        //printf ( "Injecting data [%d][%d] with %x\n", pos, index+ne, error ) ;
-    }
+        for ( int curLen = 0 ; curLen < d1Len ; curLen ++ )
+        {
+                int index = offsets [ curLen ] ;
+                for ( int i = 0; i < num_errors; i++ )
+                {
+                        int pos = error_positions [ i ] ;
+                        int opos = i + ( curLen * num_errors ) ;
+                        original_values[ opos ] = data[ pos ][ index ] ;
+                        //printf ( "Original opos = %d val = %x\n", opos, data [ pos ] [ index ] ) ;
+                        unsigned char error = ( rand() % ( FIELD_SIZE - 1 )) + 1 ;
+                        data[ pos ][ index ] = data[ pos ][ index ] ^ error;
+                        //printf ( "Injecting data [%d][%d] with %x i = %d\n", pos, index, error, i ) ;
+                }
+        }
+        //dump_u8xu8 ( original_values, 1, d1Len * num_errors ) ;
 }
 
 int verify_correction_in_place_2d(unsigned char **data, unsigned char * offSets, int d1Len, int num_errors, 
         unsigned char *error_positions, uint8_t *original_values)
 {
-    int index = offSets [ 0 ] ;
-    for (int i = 0; i < num_errors; i++)
-    {
-        if (data[error_positions[i]][index] != original_values[i])
+        for ( int curLen = 0 ; curLen < d1Len ; curLen ++ )
         {
-            printf ( "Error data= %d orig = %d\n", data[error_positions[i]][index], original_values[i] ) ;
-            return 0;
+                int index = offSets [ curLen ] ;
+                for ( int i = 0; i < num_errors; i++ )
+                {
+                        //printf ( "Checking error %d position %d offset %d\n", i, error_positions [ i ], index ) ;
+                        //if ( data[ error_positions[ i ] ][ index ] != original_values [ i + ( curLen * d1Len ) ] )
+                        if ( data[ error_positions[ i ] ][ index ] != original_values [ i + ( curLen * num_errors ) ] )
+                        {
+                                printf ( "Error data= %d orig = %d\n", data[ error_positions[ i ] ] [ index ],
+                                          original_values [ i + ( curLen * num_errors ) ] ) ;
+                                          //riginal_values [ i + ( curLen * d1Len ) ] ) ;
+                                return 0;
+                        }
+                }
+                return 1;
         }
-    }
-    return 1;
 }
 
-#define MAX_ELEN 3
+#define MAX_ELEN 16
 #define MAX_ERRS 32
 
 // Make a non repeating list of listSize random values between 0 and fieldSize - 1
@@ -691,89 +701,77 @@ void make_norepeat_rand ( int listSize, int fieldSize, unsigned char * list )
 int test_decoder_2d ( int index, int m, int p, unsigned char * powVals,
          unsigned char ** data, unsigned char ** coding )
 {
-    int successes = 0, total_tests = 0 ;
-    unsigned char offSets [ MAX_ELEN ] ;
-    offSets [ 0 ] = 0 ;
-    for ( int d1Len = 1 ; d1Len <= MAX_ELEN ; d1Len ++ )
-    {
-        printf ( "Testing Level1 Error Count %d\n", d1Len ) ;
-        printf ( "Testing L2Cont Error Count " ) ;
-        for (int num_errors = 1; num_errors <= (p/2); num_errors++)
+        int successes = 0, total_tests = 0 ;
+        unsigned char offSets [ MAX_ELEN ] ;
+        offSets [ 0 ] = 0 ;
+        for ( int d1Len = 1 ; d1Len <= MAX_ELEN ; d1Len ++ )
         {
-                printf ( "%d ", num_errors ) ;
-                for (int start = 0; start < m - p; start++)
+                printf ( "Testing Level1 Error Count %d\n", d1Len ) ;
+                printf ( "Testing L2Cont Error Count " ) ;
+                for (int num_errors = 1; num_errors <= (p/2); num_errors++)
                 {
-                unsigned char error_positions[MAX_ERRS * MAX_ELEN];
-                uint8_t original_values[MAX_ERRS * MAX_ELEN];
-                for (int i = 0; i < (p/2); i++)
-                {
-                        for ( int len = 0 ; len < MAX_ELEN ; len ++ )
+                        printf ( "%d ", num_errors ) ;
+                        for (int start = 0; start < m - p; start++)
                         {
-                                error_positions[i] = start + i;
+                        unsigned char error_positions[MAX_ERRS * MAX_ELEN];
+                        uint8_t original_values[MAX_ERRS * MAX_ELEN];
+                        for (int i = 0; i < (p/2); i++)
+                        {
+                                for ( int len = 0 ; len < MAX_ELEN ; len ++ )
+                                {
+                                        error_positions[i] = start + i;
+                                }
+                                //printf ( "Error pos [ %d ] = %d\n", i, start+i ) ;
                         }
-                        //printf ( "Error pos [ %d ] = %d\n", i, start+i ) ;
-                }
-                inject_errors_in_place_2d ( data, offSets, d1Len, num_errors, error_positions, original_values );
-                
-                //pc_decode_data_avx512_gfni_2d ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
-                pc_decode_data_avx512_gfni_2d ( 64, m, p, powVals, data, coding, 2 ) ;
-                //printf ( "PGZ decoder done = %d\n", done ) ;
-
-                if ( verify_correction_in_place_2d(data, offSets, d1Len, num_errors, error_positions, original_values ) )
-                {
-                        successes++;
-                }
-                else
-                {
-                        printf("Failed: Sequential, %d errors at %d\n", num_errors, start);
-                        return 0 ;
-                }
-                total_tests++;
-                }
-        }
-        printf ( "\n" ) ;
-        printf ( "Testing L2Rand Error Count " ) ;
-        for (int num_errors = 1; num_errors <= (p/2) ; num_errors++)
-        {
-                printf ( "%d ", num_errors ) ;
-                for (int trial = 0; trial < 1000; trial++)
-                {
-                uint8_t error_positions[MAX_ERRS * MAX_ELEN];
-                uint8_t original_values[MAX_ERRS * MAX_ELEN];
-#ifdef NDEF
-                int available[FIELD_SIZE] ;
-                for (int i = 0; i < m; i++)
-                {
-                        available[i] = i;
-                }
-                for (int i = 0; i < num_errors; i++)
-                {
-                        int idx = rand() % (m - i);
-                        error_positions[i] = available[idx];
-                        //printf ( "Error pos [ %d ] = %d\n", i, error_positions [ i ] ) ;
-                        available[idx] = available[m- 1 - i];
-                }
-#endif
-                        make_norepeat_rand ( num_errors, m, error_positions ) ;
-                        inject_errors_in_place_2d(data, offSets, d1Len, num_errors, error_positions, original_values);
-
+                        make_norepeat_rand ( d1Len, 64, offSets ) ;
+                        inject_errors_in_place_2d ( data, offSets, d1Len, num_errors, error_positions, original_values );
+                        
                         //pc_decode_data_avx512_gfni_2d ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
-                        pc_decode_data_avx512_gfni_2d ( 64, m, p, powVals, data, coding, 1 ) ;
+                        pc_decode_data_avx512_gfni_2d ( 64, m, p, powVals, data, coding, 64 ) ;
+                        //printf ( "PGZ decoder done = %d\n", done ) ;
 
-                        if (verify_correction_in_place_2d(data, offSets, d1Len, num_errors, error_positions, original_values))
+                        if ( verify_correction_in_place_2d(data, offSets, d1Len, num_errors, error_positions, original_values ) )
                         {
                                 successes++;
                         }
                         else
                         {
-                                printf("Failed: Random, %d errors, trial %d\n", num_errors, trial);
+                                printf("Failed: Sequential, %d errors at %d\n", num_errors, start);
                                 return 0 ;
                         }
                         total_tests++;
+                        }
                 }
+                printf ( "\n" ) ;
+                printf ( "Testing L2Rand Error Count " ) ;
+                for (int num_errors = 1; num_errors <= (p/2) ; num_errors++)
+                {
+                        printf ( "%d ", num_errors ) ;
+                        for (int trial = 0; trial < 1000; trial++)
+                        {
+                                uint8_t error_positions[MAX_ERRS * MAX_ELEN];
+                                uint8_t original_values[MAX_ERRS * MAX_ELEN];
+                                make_norepeat_rand ( num_errors, m, error_positions ) ;
+                                make_norepeat_rand ( d1Len, 64, offSets ) ;
+                                inject_errors_in_place_2d(data, offSets, d1Len, num_errors, error_positions, original_values);
+
+                                //pc_decode_data_avx512_gfni_2d ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
+                                pc_decode_data_avx512_gfni_2d ( 64, m, p, powVals, data, coding, 64 ) ;
+
+                                if ( verify_correction_in_place_2d ( data, offSets, d1Len, num_errors, error_positions, original_values ) )
+                                {
+                                        successes++;
+                                }
+                                else
+                                {
+                                        printf ( "Failed: Random, %d errors, trial %d\n", num_errors, trial ) ;
+                                        return 0 ;
+                                }
+                                total_tests++;
+                        }
+                }
+                printf ( "\n" ) ;
         }
-        printf ( "\n" ) ;
-    }
         printf("\nTests completed\n" ) ;
     return 1 ;
 }

@@ -495,6 +495,7 @@ int pc_verify_single_error_2d_AVX512_GFNI ( unsigned char * S, unsigned char ** 
         }
         // Good correction
         data [ k - eLoc - 1 ] [ newPos + offSet ] ^= eVal ;
+        //printf ( "Symbol %d offset %d new value %d\n", k - eLoc - 1, newPos + offSet, data [ k - eLoc - 1 ] [ newPos + offSet ] ) ;
         return 1 ;
 }
 
@@ -820,7 +821,7 @@ int berlekamp_massey_2d_AVX512_GFNI(unsigned char *syndromes, int length, unsign
 int pc_verify_multiple_errors_l1 ( unsigned char * S, int mSize, unsigned char * keyEq, 
         __m512i * vec, unsigned char * vecAdr ) 
 {
-        unsigned char roots [ PC_MAX_ERRS ] = {0} ;
+        unsigned char roots [ PC_MAX_ERRS ] = { 0 } ;
         unsigned char errVal [ PC_MAX_ERRS ] ;
 
         // Find roots, exit if mismatch with expected roots
@@ -889,6 +890,7 @@ int pc_verify_multiple_errors_2d_AVX512_GFNI ( unsigned char * S, unsigned char 
         //dump_u8xu8 ( errVal, 1, 16 ) ;
 
         // Syndromes are OK, correct the user data
+        //printf ( "Correcting %d errors\n", mSize ) ;
         for ( int i = 0 ; i < mSize ; i ++ )
         {
                 int sym = k - roots [ i ] - 1 ;
@@ -897,7 +899,9 @@ int pc_verify_multiple_errors_2d_AVX512_GFNI ( unsigned char * S, unsigned char 
                     printf ( "Error correction k = %d Sym = %d newPos = %d offset = %d\n", k, sym, newPos, offSet ) ;
                     return 0 ;
                 }
+                //printf ( "Correcting symbol %d position %d value %d\n", sym, newPos + offSet, errVal [ i ] ) ;
                 data [ sym ] [ newPos + offSet ] ^= errVal [ i ] ;
+                //printf ( "Symbol is now %d\n", data [ sym ] [ newPos + offSet ] ) ;
         }
         // Good correction
         return 1 ;
@@ -975,6 +979,7 @@ int pc_correct_AVX512_GFNI_2d ( int newPos, int k, int p,
         // Check to see if a single error can be verified
         if ( pc_verify_single_error_2d_AVX512_GFNI ( S, data, k, p, newPos, offSet ) )
         {
+                //printf ( "Single error corrected\n" ) ;
                 return 1 ;
         }
 
@@ -982,9 +987,11 @@ int pc_correct_AVX512_GFNI_2d ( int newPos, int k, int p,
 
         if ( mSize > 1 )
         {
-                return pc_verify_multiple_errors_2d_AVX512_GFNI ( S, data, mSize, k, p, newPos, offSet, keyEq ) ;
+                int result = pc_verify_multiple_errors_2d_AVX512_GFNI ( S, data, mSize, k, p, newPos, offSet, keyEq ) ;
+                //printf ( "Error result=%d\n", result ) ;
+                return result ;
         }
-        return 0 ;
+        return 1 ;
 }
 
 // Assume there is a single error and try to correct, see if syndromes match
@@ -10174,8 +10181,10 @@ int pc_decode_data_avx512_gfni_2d(int len, int k, int parities, unsigned char *t
                 // Check to see if error correction required for Level 2
                 if ( newPos < len )
                 {
-                        if ( pc_correct_AVX512_GFNI_2d ( newPos, k, parities, data, coding, 64 ) )
+                        //printf ( "Error offSet = %d retries = %d\n", newPos, retry ) ;
+                        if ( pc_correct_AVX512_GFNI_2d ( newPos, k, parities, data, coding, 64 ) == 0 )
                         {
+                                printf ( "Giving up on decoding early\n" ) ;
                                 return ( newPos ) ;
                         }
                 }
