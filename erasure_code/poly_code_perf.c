@@ -72,7 +72,7 @@ dump_u8xu8(unsigned char *s, int k, int m)
 extern int ec_encode_data_avx512_gfni ( int len, int m, int p, unsigned char * g_tbls, 
     unsigned char ** data, unsigned char ** coding ) ;
 
-//#define NOPAPI 1
+#define NOPAPI 1
 
 #ifdef _WIN64
 #define __builtin_prefetch(a,b,c) _mm_prefetch((const char*)(a), _MM_HINT_T0)
@@ -632,7 +632,8 @@ exit:
 
 #define FIELD_SIZE 256
 
-void inject_errors_in_place_2d(unsigned char **data, int index, int num_errors, unsigned char *error_positions, unsigned char *original_values)
+void inject_errors_in_place_2d(unsigned char **data, int index, int d1Len, int num_errors, 
+        unsigned char *error_positions, unsigned char *original_values)
 {
     for (int i = 0; i < num_errors; i++)
     {
@@ -647,7 +648,8 @@ void inject_errors_in_place_2d(unsigned char **data, int index, int num_errors, 
     }
 }
 
-int verify_correction_in_place_2d(unsigned char **data, int index, int num_errors, unsigned char *error_positions, uint8_t *original_values)
+int verify_correction_in_place_2d(unsigned char **data, int index, int d1Len, int num_errors, 
+        unsigned char *error_positions, uint8_t *original_values)
 {
     for (int i = 0; i < num_errors; i++)
     {
@@ -660,29 +662,37 @@ int verify_correction_in_place_2d(unsigned char **data, int index, int num_error
     return 1;
 }
 
-int test_pgz_decoder_2d ( int index, int m, int p, unsigned char * g_tbls,
-                unsigned char ** data, unsigned char ** coding )
-{
-    int successes = 0, total_tests = 0;
+#define MAX_ELEN 3
+#define MAX_ERRS 32
 
+int test_pgz_decoder_2d ( int index, int m, int p, unsigned char * powVals,
+         unsigned char ** data, unsigned char ** coding )
+{
+    int successes = 0, total_tests = 0, d1Len = 1 ;
+
+    printf ( "Testing Contig Error Count " ) ;
     for (int num_errors = 1; num_errors <= (p/2); num_errors++)
     {
-        for (int start = 0; start < m - (p/2); start++)
+        printf ( "%d ", num_errors ) ;
+        for (int start = 0; start < m - p; start++)
         {
-            unsigned char error_positions[16];
-            uint8_t original_values[16];
+            unsigned char error_positions[MAX_ERRS * MAX_ELEN];
+            uint8_t original_values[MAX_ERRS * MAX_ELEN];
             for (int i = 0; i < (p/2); i++)
             {
-                error_positions[i] = start + i;
+                for ( int len = 0 ; len < MAX_ELEN ; len ++ )
+                {
+                        error_positions[i] = start + i;
+                }
                 //printf ( "Error pos [ %d ] = %d\n", i, start+i ) ;
             }
-            inject_errors_in_place_2d ( data, index, num_errors, error_positions, original_values );
+            inject_errors_in_place_2d ( data, index, d1Len, num_errors, error_positions, original_values );
             
             //pc_decode_data_avx512_gfni_2d ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
-            pc_decode_data_avx512_gfni_2d ( 64, m, p, g_tbls, data, coding, 2 ) ;
+            pc_decode_data_avx512_gfni_2d ( 64, m, p, powVals, data, coding, 2 ) ;
             //printf ( "PGZ decoder done = %d\n", done ) ;
 
-            if ( verify_correction_in_place_2d(data, index, num_errors, error_positions, original_values ) )
+            if ( verify_correction_in_place_2d(data, index, d1Len, num_errors, error_positions, original_values ) )
             {
                 successes++;
             }
@@ -694,14 +704,16 @@ int test_pgz_decoder_2d ( int index, int m, int p, unsigned char * g_tbls,
             total_tests++;
         }
     }
-
+    printf ( "\n" ) ;
+    printf ( "Testing Random Error Count " ) ;
     for (int num_errors = 1; num_errors <= (p/2) ; num_errors++)
     {
+        printf ( "%d ", num_errors ) ;
         for (int trial = 0; trial < 1000; trial++)
         {
-            uint8_t error_positions[16];
-            uint8_t original_values[16];
-            int available[FIELD_SIZE];
+            uint8_t error_positions[MAX_ERRS * MAX_ELEN];
+            uint8_t original_values[MAX_ERRS * MAX_ELEN];
+            int available[FIELD_SIZE] ;
             for (int i = 0; i < m; i++)
             {
                 available[i] = i;
@@ -713,12 +725,12 @@ int test_pgz_decoder_2d ( int index, int m, int p, unsigned char * g_tbls,
                 //printf ( "Error pos [ %d ] = %d\n", i, error_positions [ i ] ) ;
                 available[idx] = available[m- 1 - i];
             }
-            inject_errors_in_place_2d(data, index, num_errors, error_positions, original_values);
+            inject_errors_in_place_2d(data, index, d1Len, num_errors, error_positions, original_values);
 
             //pc_decode_data_avx512_gfni_2d ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
-            pc_decode_data_avx512_gfni_2d ( 64, m, p, g_tbls, data, coding, 1 ) ;
+            pc_decode_data_avx512_gfni_2d ( 64, m, p, powVals, data, coding, 1 ) ;
 
-            if (verify_correction_in_place_2d(data, index, num_errors, error_positions, original_values))
+            if (verify_correction_in_place_2d(data, index, d1Len, num_errors, error_positions, original_values))
             {
                 successes++;
             }
@@ -731,7 +743,7 @@ int test_pgz_decoder_2d ( int index, int m, int p, unsigned char * g_tbls,
         }
     }
 
-    printf("Tests completed\n" ) ;
+    printf("\nTests completed\n" ) ;
     return 1 ;
 }
 
