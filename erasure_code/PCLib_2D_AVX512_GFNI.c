@@ -495,7 +495,8 @@ int pc_verify_single_error_2d_AVX512_GFNI ( unsigned char * S, unsigned char ** 
         }
         // Good correction
         data [ k - eLoc - 1 ] [ newPos + offSet ] ^= eVal ;
-        //printf ( "Symbol %d offset %d new value %d\n", k - eLoc - 1, newPos + offSet, data [ k - eLoc - 1 ] [ newPos + offSet ] ) ;
+        printf ( "Symbol %d offset %d Eval %d new value %d\n", k - eLoc - 1, newPos + offSet, eVal,
+                data [ k - eLoc - 1 ] [ newPos + offSet ] ) ;
         return 1 ;
 }
 
@@ -707,7 +708,7 @@ int pc_compute_error_values_2d_AVX512_GFNI ( int mSize, unsigned char * S, unsig
 int pc_verify_syndromes_2d_AVX512_GFNI ( unsigned char * S, int p, int mSize, unsigned char * roots,
         unsigned char * errVal )
 {
-        int i,j ;
+        int i, j ;
         unsigned char sum = 0 ;
 
         // Verify syndromes across each power row
@@ -736,6 +737,7 @@ int pc_verify_syndromes_2d_AVX512_GFNI ( unsigned char * S, int p, int mSize, un
                         matVal [ j ] = pc_mul_2d ( matVal [ j ], baseVec [ j ] ) ;
                 }
 
+                printf ( "sum = %x S [ %x ] = %x\n", sum, i, S [ i ] ) ;
                 // Verify we reproduced the syndrome
                 if ( sum != S [ i ] )
                 {
@@ -839,12 +841,36 @@ int pc_verify_multiple_errors_l1 ( unsigned char * S, int mSize, unsigned char *
                 return 0 ;
         }
 
-        // Verify all syndromes are correct
-        if ( pc_verify_syndromes_2d_AVX512_GFNI ( S, 4, mSize, roots, errVal ) == 0 )
+        // Verify all syndromes are correct - this test probably should be replaced with l2 decode verification-------------------------------------------------
+        // It looks like syndrome verification is worthless for identifying miscorrection - by demonstration
+        // Build a trial codeword and do a l1 decode to see if trial codeword produces 4 zero syndromes
+      __m512i trialVec = *vec ;
+        unsigned char * cwAdr = ( unsigned char * ) &trialVec ;
+        for ( int i = 0 ; i < mSize ; i ++ )
         {
-                printf ( "Syndromes exit\n" ) ;
+                // Trial correction
+                cwAdr [ 63 - roots [ i ] ] ^= errVal [ i ] ;
+        }
+      __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
+      __m512i matVec, vreg ;
+        unsigned char syn [ 4 ] ;
+        L1Dec ( trialVec, 4, syn ) ;
+
+        if ( *( uint32_t * ) syn )
+        {
+                printf ( "Codeword did not verify\n" ) ;
                 return 0 ;
         }
+        for ( int i = 0 ; i < mSize ; i ++ )
+        {
+                // Good correction
+                vecAdr [ 63 - roots [ i ] ] ^= errVal [ i ] ;
+        }
+        //if ( pc_verify_syndromes_2d_AVX512_GFNI ( S, 4, mSize, roots, errVal ) == 0 )
+        //{
+        //        printf ( "Syndromes exit\n" ) ;
+        //        return 0 ;
+        //}
 
         for ( int i = 0 ; i < mSize ; i ++ )
         {
@@ -853,6 +879,10 @@ int pc_verify_multiple_errors_l1 ( unsigned char * S, int mSize, unsigned char *
                 unsigned char * vecAdd = ( unsigned char * ) vec ;
                 vecAdd [ 63 - roots [ i ] ] ^= errVal [ i ] ;
         }
+        printf ( "Good correction L1 mSize = %d\n", mSize ) ;
+        dump_u8xu8 ( roots, 1, mSize ) ;
+        dump_u8xu8 ( errVal, 1, mSize ) ;
+        dump_u8xu8 ( vecAdr, 4, 16 ) ;
         return 1 ;
 }
 
@@ -944,7 +974,7 @@ int PGZ_2d_AVX512_GFNI ( unsigned char * S, int p, unsigned char * keyEq )
 }
 
 // Syndromes are non-zero, try to calculate error location and data values
-int pc_correct_AVX512_GFNI_2d ( int newPos, int k, int p,
+int pc_correct_AVX512_GFNI_2d_old ( int newPos, int k, int p,
     unsigned char ** data, unsigned char ** coding, int vLen )
 {
         int i, mSize  ;
@@ -967,9 +997,10 @@ int pc_correct_AVX512_GFNI_2d ( int newPos, int k, int p,
         // Verify we found a non-zero syndrome
         if ( offSet >= vLen )
         {
+                printf ( "No error found l2\n" ) ;
                 return 0 ;
         }
-
+        printf ( "L2 correct Offset = %ld\n", offSet ) ;
         // Gather up the syndromes
         for ( i = 0 ; i < p ; i ++ )
         {
@@ -979,7 +1010,7 @@ int pc_correct_AVX512_GFNI_2d ( int newPos, int k, int p,
         // Check to see if a single error can be verified
         if ( pc_verify_single_error_2d_AVX512_GFNI ( S, data, k, p, newPos, offSet ) )
         {
-                //printf ( "Single error corrected\n" ) ;
+                printf ( "Single error corrected\n" ) ;
                 return 1 ;
         }
 
@@ -988,9 +1019,27 @@ int pc_correct_AVX512_GFNI_2d ( int newPos, int k, int p,
         if ( mSize > 1 )
         {
                 int result = pc_verify_multiple_errors_2d_AVX512_GFNI ( S, data, mSize, k, p, newPos, offSet, keyEq ) ;
-                //printf ( "Error result=%d\n", result ) ;
+                printf ( "Error result=%d\n", result ) ;
                 return result ;
         }
+        return 0 ;
+}
+
+int pc_correct_AVX512_GFNI_2d ( int newPos, int k, int p,
+    unsigned char ** data, unsigned char ** coding, int vLen )
+{
+
+        printf ( "L2E Number of errors = %d\n", NumErrs ) ;
+        dump_u8xu8 ( ErrLoc, 1, NumErrs ) ;
+
+        if ( NumErrs == 1 )
+        {
+                __m512i S0 = _mm512_load_si512( (__m512i *) coding [ p - 1 ] ) ;
+                _mm512_store_si512( ( __m512i * ) data [ ErrLoc [ 0 ] ], S0 ) ;
+                printf ( "Stored S0 at data %d\n", ErrLoc [ 0 ] ) ;
+                dump_u8xu8 ( ( unsigned char * ) &S0, 4, 16 ) ;          
+        }
+
         return 1 ;
 }
 
@@ -1008,7 +1057,7 @@ int pc_verify_single_error_2d_1L ( __m512i * vec, unsigned char * memVec, unsign
         // Verify error location is reasonable
         if ( eLoc > 63 )
         {
-                //printf ( "Eloc out of range k = %d\n", k ) ;
+                printf ( "Eloc out of range k = %d\n", k ) ;
                 return 0 ;
         }
 
@@ -1017,6 +1066,7 @@ int pc_verify_single_error_2d_1L ( __m512i * vec, unsigned char * memVec, unsign
         {
                 if ( pc_mul_2d ( S [ i - 1 ], pVal ) != S [ i ] )
                 {
+                        printf ( "Syndromes don't match\n" ) ;
                         return 0 ;
                 }
         }
@@ -1040,26 +1090,28 @@ void L1Correct ( __m512i * vec, int CurSym, int k, unsigned char * S_in, unsigne
         S [ 1 ] = S_in [ 2 ] ;
         S [ 2 ] = S_in [ 1 ] ;
         S [ 3 ] = S_in [ 0 ] ;
-#ifdef NDEF
  
         // Check to see if a single error can be verified
         if ( pc_verify_single_error_2d_1L ( vec, memVec, S, k+4 ) )
         {
                 return ;
         }
-       mSize = PGZ_2d_AVX512_GFNI( S, 4, keyEq ) ;
+        mSize = PGZ_2d_AVX512_GFNI( S, 4, keyEq ) ;
 
+        printf ( "L1 mSize = %d\n", mSize ) ;
         if ( mSize > 1 )
         {
                 if ( pc_verify_multiple_errors_l1 ( S, mSize, keyEq, vec, memVec ) == 0 )
                 {
                         // If decode failed set codeword to zero so syndromes are OK
+                        printf ( "L1 Failed\n" ) ;
                         *vec = _mm512_setzero_si512() ;
-                        ErrLoc [ NumErrs++ ] = k - CurSym - 1 ;
+                        printf ( "NumErrs = %d Errloc\n", NumErrs ) ;
+                        ErrLoc [ NumErrs++ ] = CurSym ;
+                        dump_u8xu8 ( ErrLoc, 1, NumErrs ) ;
                         return ;
                 }
         }
-#endif
         return ;
 }
 /**********************************************************************
