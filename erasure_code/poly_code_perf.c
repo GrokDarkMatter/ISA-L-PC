@@ -635,8 +635,8 @@ exit:
 void inject_errors_in_place_2d(unsigned char **data, unsigned char *offsets, int d1Len, int num_errors, 
         unsigned char *error_positions, unsigned char *original_values)
 {
-        printf ( "Codeword before error injection\n" ) ;
-        dump_u8xu8 ( data [ error_positions [ 0 ] ], 4, 16 ) ;
+        //printf ( "Codeword before error injection\n" ) ;
+        //dump_u8xu8 ( data [ error_positions [ 0 ] ], 4, 16 ) ;
         for ( int curLen = 0 ; curLen < d1Len ; curLen ++ )
         {
                 int index = offsets [ curLen ] ;
@@ -648,11 +648,11 @@ void inject_errors_in_place_2d(unsigned char **data, unsigned char *offsets, int
                         //printf ( "Original opos = %d val = %x\n", opos, data [ pos ] [ index ] ) ;
                         unsigned char error = ( rand() % ( FIELD_SIZE - 1 )) + 1 ;
                         data[ pos ][ index ] = data[ pos ][ index ] ^ error;
-                        printf ( "Injecting data [%d][%d] with %x i = %d\n", pos, index, error, i ) ;
+                        //printf ( "Injecting data [%d][%d] with %x i = %d\n", pos, index, error, i ) ;
                 }
         }
-        printf ( "Codeword after error injection\n" ) ;
-        dump_u8xu8 ( data [ error_positions [ 0 ] ], 4, 16 ) ;
+        //printf ( "Codeword after error injection\n" ) ;
+        //dump_u8xu8 ( data [ error_positions [ 0 ] ], 4, 16 ) ;
         //dump_u8xu8 ( original_values, 1, d1Len * num_errors ) ;
 }
 
@@ -664,13 +664,13 @@ int verify_correction_in_place_2d(unsigned char **data, unsigned char * offSets,
                 int index = offSets [ curLen ] ;
                 for ( int i = 0; i < num_errors; i++ )
                 {
-                        printf ( "Checking error %d position %d offset %d\n", i, error_positions [ i ], index ) ;
+                        //printf ( "Checking error %d position %d offset %d\n", i, error_positions [ i ], index ) ;
                         //if ( data[ error_positions[ i ] ][ index ] != original_values [ i + ( curLen * d1Len ) ] )
                         if ( data[ error_positions[ i ] ][ index ] != original_values [ i + ( curLen * num_errors ) ] )
                         {
-                                printf ( "Error data= %d orig = %d\n", data[ error_positions[ i ] ] [ index ],
-                                          original_values [ i + ( curLen * num_errors ) ] ) ;
-                               return 0;
+                                //printf ( "Error data= %d orig = %d\n", data[ error_positions[ i ] ] [ index ],
+                                //          original_values [ i + ( curLen * num_errors ) ] ) ;
+                                return 0;
                         }
                 }
         }
@@ -711,7 +711,7 @@ int test_decoder_2d ( int index, int m, int p, unsigned char * powVals,
                 printf ( "Check matrix allocation failed\n" ) ;
                 return 0 ;
         }
-        for ( int d1Len = 3 ; d1Len <= MAX_ELEN ; d1Len ++ )
+        for ( int d1Len = 1 ; d1Len < MAX_ELEN ; d1Len ++ )
         {
                 printf ( "Testing Level1 Error Count %d\n", d1Len ) ;
                 printf ( "Testing L2Cont Error Count " ) ;
@@ -732,7 +732,10 @@ int test_decoder_2d ( int index, int m, int p, unsigned char * powVals,
                                 }
                                 make_norepeat_rand ( d1Len, 64, offSets ) ;
                                 memcpy ( checkMatrix, data [ 0 ], 64 * m ) ; // Copy original data
+                                //printf ( "Orginal data before errors\n" ) ;
+                                //test_rs_64_60 ( ( __m512i * ) &data [ 0 ] [ 0 ] ) ;
                                 inject_errors_in_place_2d ( data, offSets, d1Len, num_errors, error_positions, original_values );
+                                //test_rs_64_60 ( ( __m512i * ) &data [ 0 ] [ 0 ] ) ;
                                 
                                 //pc_decode_data_avx512_gfni_2d ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
                                 pc_decode_data_avx512_gfni_2d ( 64, m, p, powVals, data, coding, 1 ) ;

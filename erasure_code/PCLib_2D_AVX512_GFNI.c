@@ -233,6 +233,26 @@ void pc_bvan_2d ( unsigned char * vals, int p )
     }
 }
 
+#ifdef NDEF
+// Produce syndromes for a codeword the old fashioned way
+void test_rs_64_60 ( __m512i * vec )
+{
+        unsigned char sum [ 4 ] = { 0 } ;
+        for ( int i = 0 ; i < 4 ; i ++ ) // Examine 4 levels
+        {
+                unsigned char * vPnt = ( unsigned char * ) &Vand1b [ i ] [ 3 ] ;
+                unsigned char * cPnt = ( unsigned char * ) vec ;
+                for ( int j = 0 ; j < 64 ; j ++ ) // 64 bytes each level
+                {
+                        printf ( "Adding position %d %x * %x\n", j, cPnt [ j ], vPnt [ j ] ) ;
+                        sum [ i ] ^= pc_mul_2d ( cPnt [ j ], vPnt [ j ] ) ;
+                        //printf ( "Interim sum is %x\n", sum [ i ] ) ;
+                }
+                printf ( "Sum %d = %x\n", i, sum [ i ] ) ;
+        }
+}
+#endif
+
 // Encode using the Vandermonde matrix, do the whole 255 byte codeword
 void pc_encoder1b ( unsigned char * codeWord, unsigned char * par, int p ) 
 {
@@ -554,7 +574,7 @@ int gf_invert_matrix_2d_AVX512_GFNI(unsigned char *in_mat, unsigned char *out_ma
                 unsigned char temp_scalar = pc_itab_2d [ pivot ] ;
                 //printf ( "Scalar = %d\n", temp_scalar ) ;
 
-                // Scale row i by 1/pivot using GFNI affine
+                // Scale row i by 1/pivot using GFNI
                 multVal512 = _mm512_set1_epi8 ( temp_scalar ) ;
                 aug_rows [ i ]  = _mm512_gf2p8mul_epi8 ( aug_rows[ i ], multVal512 ) ;
 
@@ -661,13 +681,7 @@ int pc_compute_error_values_2d_AVX512_GFNI ( int mSize, unsigned char * S, unsig
 
         // Find error values by building and inverting Vandemonde
         memset ( Mat, 1, mSize ) ;
-#ifdef NDEF
-        for ( i = 0 ; i < mSize ; i ++ )
-        {
-                Mat [ i ] = 1 ;
-        }
-#endif
-        unsigned char base = 3 ;
+
         unsigned char baseVec [ PC_MAX_ERRS ], matVal [ PC_MAX_ERRS ] ;
         for ( i = 1 ; i < mSize ; i ++ )
         {
@@ -684,7 +698,6 @@ int pc_compute_error_values_2d_AVX512_GFNI ( int mSize, unsigned char * S, unsig
                         //printf ( "pow_2d = %x matVec [ %d ] = %x\n", pc_pow_2d_AVX512_GFNI ( base, roots [ j ] ), j, matVal [ j ] ) ;
                         matVal [ j ] = pc_mul_2d ( matVal [ j ], baseVec [ j ] ) ;
                 }
-                base = pc_mul_2d ( base, 3 ) ;
         }
         // Invert matrix and verify inversion
         if ( gf_invert_matrix_2d_AVX512_GFNI ( Mat, Mat_inv, mSize ) != 0 )
@@ -792,11 +805,11 @@ int berlekamp_massey_2d_AVX512_GFNI(unsigned char *syndromes, int length, unsign
             unsigned char q = gf_div_2d_AVX512_GFNI(d, old_d);
             memcpy(temp, lambda, length + 1 + 31);
 
-            // SIMD update: lambda[j + m] ^= gf_mul(q, b[j]) using AVX-512 GF2P8AFFINE
-            // Load and broadcast 8-byte affine matrix for q
-            __m256i matrix = _mm256_set1_epi8 (q);  // Broadcast to all 4 lanes
+            // SIMD update: lambda[j + m] ^= gf_mul(q, b[j]) using AVX-512 GFNI
+            // Load and broadcast multiplier
+            __m256i matrix = _mm256_set1_epi8 (q);  // Broadcast to all lanes
             __m256i b_vec = _mm256_loadu_si256((const __m256i *)b);
-            // Perform GF(256) multiplication: result = affine(b_vec, matrix) + 0
+            // Perform GF(256) multiplication: 
             __m256i mul_res = _mm256_gf2p8mul_epi8(b_vec, matrix);
             __m256i vec_lam = _mm256_loadu_si256((const __m256i *)&lambda[m]);
             vec_lam = _mm256_xor_si256(vec_lam, mul_res);
@@ -841,30 +854,32 @@ int pc_verify_multiple_errors_l1 ( unsigned char * S, int mSize, unsigned char *
                 return 0 ;
         }
 
-        // Verify all syndromes are correct - this test probably should be replaced with l2 decode verification-------------------------------------------------
-        // It looks like syndrome verification is worthless for identifying miscorrection - by demonstration
         // Build a trial codeword and do a l1 decode to see if trial codeword produces 4 zero syndromes
       __m512i trialVec = *vec ;
+        //printf ( "Trialvec before correction mSize = %d\n", mSize ) ;
         unsigned char * cwAdr = ( unsigned char * ) &trialVec ;
         for ( int i = 0 ; i < mSize ; i ++ )
         {
                 // Trial correction
+                //printf ( "Updating value %d with %x\n", 63 - roots [ i ], errVal [ i ] ) ;
                 cwAdr [ 63 - roots [ i ] ] ^= errVal [ i ] ;
         }
+        //printf ( "TrialVec after correction\n" ) ;
+        //test_rs_64_60 ( &trialVec ) ;
+
       __m128i maskP = _mm_set_epi64x(0ULL, 0x0101010101010101ULL);
       __m512i matVec, vreg ;
         unsigned char syn [ 4 ] ;
         L1Dec ( trialVec, 4, syn ) ;
 
+        //printf ( "TrialVec\n" ) ;
+        //dump_u8xu8 ( ( unsigned char * ) &trialVec, 4, 16 ) ;
+        //printf ( "Syndromes L1\n" ) ;
+        //dump_u8xu8 ( syn, 1, 4 ) ;
         if ( *( uint32_t * ) syn )
         {
                 printf ( "Codeword did not verify\n" ) ;
                 return 0 ;
-        }
-        for ( int i = 0 ; i < mSize ; i ++ )
-        {
-                // Good correction
-                vecAdr [ 63 - roots [ i ] ] ^= errVal [ i ] ;
         }
         //if ( pc_verify_syndromes_2d_AVX512_GFNI ( S, 4, mSize, roots, errVal ) == 0 )
         //{
@@ -879,10 +894,10 @@ int pc_verify_multiple_errors_l1 ( unsigned char * S, int mSize, unsigned char *
                 unsigned char * vecAdd = ( unsigned char * ) vec ;
                 vecAdd [ 63 - roots [ i ] ] ^= errVal [ i ] ;
         }
-        printf ( "Good correction L1 mSize = %d\n", mSize ) ;
-        dump_u8xu8 ( roots, 1, mSize ) ;
-        dump_u8xu8 ( errVal, 1, mSize ) ;
-        dump_u8xu8 ( vecAdr, 4, 16 ) ;
+        //printf ( "Good correction L1 mSize = %d\n", mSize ) ;
+        //dump_u8xu8 ( roots, 1, mSize ) ;
+        //dump_u8xu8 ( errVal, 1, mSize ) ;
+        //dump_u8xu8 ( vecAdr, 4, 16 ) ;
         return 1 ;
 }
 
@@ -1028,7 +1043,6 @@ int pc_correct_AVX512_GFNI_2d_old ( int newPos, int k, int p,
 int pc_correct_AVX512_GFNI_2d ( int newPos, int k, int p,
     unsigned char ** data, unsigned char ** coding, int vLen )
 {
-
         printf ( "L2E Number of errors = %d\n", NumErrs ) ;
         dump_u8xu8 ( ErrLoc, 1, NumErrs ) ;
 
@@ -1039,7 +1053,55 @@ int pc_correct_AVX512_GFNI_2d ( int newPos, int k, int p,
                 printf ( "Stored S0 at data %d\n", ErrLoc [ 0 ] ) ;
                 dump_u8xu8 ( ( unsigned char * ) &S0, 4, 16 ) ;          
         }
+        // Otherwise build and invert a Vandermonde matrix using ErrLoc information
+        int i, j ;
+        unsigned char Mat [ PC_MAX_ERRS * PC_MAX_ERRS ] ;
+        unsigned char Mat_inv [ PC_MAX_ERRS * PC_MAX_ERRS ] ;
 
+        // First of Vandermonde is 1's
+        memset ( Mat, 1, NumErrs ) ;
+
+        unsigned char baseVec [ PC_MAX_ERRS ], matVal [ PC_MAX_ERRS ] ;
+        for ( i = 1 ; i < NumErrs ; i ++ )
+        {
+                for ( j = 0 ; j < NumErrs ; j ++ )
+                {
+                        if ( i == 1 )
+                        {
+                                baseVec [ j ] = pc_ptab_2d [ ErrLoc [ j ] ] ;
+                                matVal [ j ] = baseVec [ j ] ;
+                                //printf ( "pow_2d = %x baseVec [ %d ] = %x\n", pc_pow_2d_AVX512_GFNI ( base, roots [ j ] ), j, baseVec [ j ] ) ;
+                        }
+                        //Mat [ i * mSize + j ] = pc_pow_2d_AVX512_GFNI ( base, roots [ j ] ) ;
+                        Mat [ i * NumErrs + j ] = matVal [ j ] ;
+                        //printf ( "pow_2d = %x matVec [ %d ] = %x\n", pc_pow_2d_AVX512_GFNI ( base, roots [ j ] ), j, matVal [ j ] ) ;
+                        matVal [ j ] = pc_mul_2d ( matVal [ j ], baseVec [ j ] ) ;
+                }
+        }
+        // Invert matrix and verify inversion
+        if ( gf_invert_matrix_2d_AVX512_GFNI ( Mat, Mat_inv, NumErrs ) != 0 )
+        {
+                printf ( "Level 2 Invert Matrix failed\n" ) ;
+                return 0 ;
+        }
+
+        __m512i errVec [ PC_MAX_ERRS ], factor1, factor2 ;
+
+        // Compute error values by summing Syndrome terms across inverted Vandermonde
+        for ( i = 0 ; i < NumErrs ; i ++ )
+        {
+                //errVal [ i ] = 0 ;
+                errVec [ i ] = _mm512_setzero_si512 () ; //_mm512_load_si512
+                for ( j = 0 ; j < NumErrs ; j ++ )
+                {
+                        //unsigned char factor = Mat_inv [ i * NumErrs + j ] ;
+                        factor1 = _mm512_set1_epi8 ( Mat_inv [ i * NumErrs + j ] ) ;
+                        factor2 = _mm512_load_si512 ( coding [ p - j - 1 ] ) ;
+                        errVec [ i ] = _mm512_xor_si512 ( errVec [ i ],
+                                _mm512_gf2p8mul_epi8 ( factor1, factor2 ) ) ;
+                         // errVal [ i ] ^= pc_mul_2d ( S [ j ], Mat_inv [ i * NumErrs + j ] ) ;
+                }
+        }
         return 1 ;
 }
 
@@ -1057,7 +1119,7 @@ int pc_verify_single_error_2d_1L ( __m512i * vec, unsigned char * memVec, unsign
         // Verify error location is reasonable
         if ( eLoc > 63 )
         {
-                printf ( "Eloc out of range k = %d\n", k ) ;
+                //printf ( "Eloc out of range k = %d\n", k ) ;
                 return 0 ;
         }
 
@@ -1066,7 +1128,7 @@ int pc_verify_single_error_2d_1L ( __m512i * vec, unsigned char * memVec, unsign
         {
                 if ( pc_mul_2d ( S [ i - 1 ], pVal ) != S [ i ] )
                 {
-                        printf ( "Syndromes don't match\n" ) ;
+                        //printf ( "Syndromes don't match\n" ) ;
                         return 0 ;
                 }
         }
@@ -1098,7 +1160,7 @@ void L1Correct ( __m512i * vec, int CurSym, int k, unsigned char * S_in, unsigne
         }
         mSize = PGZ_2d_AVX512_GFNI( S, 4, keyEq ) ;
 
-        printf ( "L1 mSize = %d\n", mSize ) ;
+        //printf ( "L1 mSize = %d\n", mSize ) ;
         if ( mSize > 1 )
         {
                 if ( pc_verify_multiple_errors_l1 ( S, mSize, keyEq, vec, memVec ) == 0 )
