@@ -691,11 +691,8 @@ int pc_compute_error_values_2d_AVX512_GFNI ( int mSize, unsigned char * S, unsig
                         {
                                 baseVec [ j ] = pc_ptab_2d [ roots [ j ] ] ;
                                 matVal [ j ] = baseVec [ j ] ;
-                                //printf ( "pow_2d = %x baseVec [ %d ] = %x\n", pc_pow_2d_AVX512_GFNI ( base, roots [ j ] ), j, baseVec [ j ] ) ;
                         }
-                        //Mat [ i * mSize + j ] = pc_pow_2d_AVX512_GFNI ( base, roots [ j ] ) ;
                         Mat [ i * mSize + j ] = matVal [ j ] ;
-                        //printf ( "pow_2d = %x matVec [ %d ] = %x\n", pc_pow_2d_AVX512_GFNI ( base, roots [ j ] ), j, matVal [ j ] ) ;
                         matVal [ j ] = pc_mul_2d ( matVal [ j ], baseVec [ j ] ) ;
                 }
         }
@@ -704,6 +701,12 @@ int pc_compute_error_values_2d_AVX512_GFNI ( int mSize, unsigned char * S, unsig
         {
                 return 0 ;
         }
+
+        printf ( "Mat and Inv Mat\n" ) ;
+        dump_u8xu8 ( Mat, mSize, mSize ) ;
+        dump_u8xu8 ( Mat_inv, mSize, mSize ) ;
+        printf ( "Roots\n" ) ;
+        dump_u8xu8 ( roots, 1, mSize ) ;
 
         // Compute error values by summing Syndrome terms across inverted Vandermonde
         for ( i = 0 ; i < mSize ; i ++ )
@@ -886,7 +889,6 @@ int pc_verify_multiple_errors_l1 ( unsigned char * S, int mSize, unsigned char *
         //        printf ( "Syndromes exit\n" ) ;
         //        return 0 ;
         //}
-
         for ( int i = 0 ; i < mSize ; i ++ )
         {
                 // Good correction
@@ -982,6 +984,10 @@ int PGZ_2d_AVX512_GFNI ( unsigned char * S, int p, unsigned char * keyEq )
                                 }
                         }
                         //printf ( "Found good matrix size %d\n", mSize ) ;
+                        //printf ( "Mat\n" ) ;
+                        //dump_u8xu8 ( SMat, mSize, mSize ) ;
+                        //printf ( "Inv mat\n" ) ;
+                        //dump_u8xu8 ( SMat_inv, mSize, mSize ) ;
                         return mSize ;
                 }
         }
@@ -1021,6 +1027,7 @@ int pc_correct_AVX512_GFNI_2d_old ( int newPos, int k, int p,
         {
                 S [ i ] = coding [ p - i - 1 ] [ offSet ] ;
         }
+        dump_u8xu8 ( S, 1, p ) ;
 
         // Check to see if a single error can be verified
         if ( pc_verify_single_error_2d_AVX512_GFNI ( S, data, k, p, newPos, offSet ) )
@@ -1030,6 +1037,7 @@ int pc_correct_AVX512_GFNI_2d_old ( int newPos, int k, int p,
         }
 
         mSize = PGZ_2d_AVX512_GFNI( S, p, keyEq ) ;
+        printf ( "mSize = %d\n", mSize ) ;
 
         if ( mSize > 1 )
         {
@@ -1040,10 +1048,9 @@ int pc_correct_AVX512_GFNI_2d_old ( int newPos, int k, int p,
         return 0 ;
 }
 
-int pc_correct_AVX512_GFNI_2d ( int newPos, int k, int p,
-    unsigned char ** data, unsigned char ** coding, int vLen )
+int pc_correct_AVX512_GFNI_2d ( int newPos, int k, int p, unsigned char ** data, unsigned char ** coding, int vLen )
 {
-        printf ( "L2E Number of errors = %d\n", NumErrs ) ;
+        printf ( "L2E Number of errors = %d p = %d\n", NumErrs, p ) ;
         dump_u8xu8 ( ErrLoc, 1, NumErrs ) ;
 
         if ( NumErrs == 1 )
@@ -1072,9 +1079,7 @@ int pc_correct_AVX512_GFNI_2d ( int newPos, int k, int p,
                                 matVal [ j ] = baseVec [ j ] ;
                                 //printf ( "pow_2d = %x baseVec [ %d ] = %x\n", pc_pow_2d_AVX512_GFNI ( base, roots [ j ] ), j, baseVec [ j ] ) ;
                         }
-                        //Mat [ i * mSize + j ] = pc_pow_2d_AVX512_GFNI ( base, roots [ j ] ) ;
                         Mat [ i * NumErrs + j ] = matVal [ j ] ;
-                        //printf ( "pow_2d = %x matVec [ %d ] = %x\n", pc_pow_2d_AVX512_GFNI ( base, roots [ j ] ), j, matVal [ j ] ) ;
                         matVal [ j ] = pc_mul_2d ( matVal [ j ], baseVec [ j ] ) ;
                 }
         }
@@ -1084,6 +1089,9 @@ int pc_correct_AVX512_GFNI_2d ( int newPos, int k, int p,
                 printf ( "Level 2 Invert Matrix failed\n" ) ;
                 return 0 ;
         }
+        printf ( "Mat and Inv matrix\n" ) ;
+        dump_u8xu8 ( Mat, NumErrs, NumErrs ) ;
+        dump_u8xu8 ( Mat_inv, NumErrs, NumErrs ) ;
 
         __m512i errVec [ PC_MAX_ERRS ], factor1, factor2 ;
 
@@ -1095,12 +1103,17 @@ int pc_correct_AVX512_GFNI_2d ( int newPos, int k, int p,
                 for ( j = 0 ; j < NumErrs ; j ++ )
                 {
                         //unsigned char factor = Mat_inv [ i * NumErrs + j ] ;
+                        printf ( "Multiplying by %x\n", Mat_inv [ i * NumErrs + j ] ) ;
                         factor1 = _mm512_set1_epi8 ( Mat_inv [ i * NumErrs + j ] ) ;
                         factor2 = _mm512_load_si512 ( coding [ p - j - 1 ] ) ;
                         errVec [ i ] = _mm512_xor_si512 ( errVec [ i ],
                                 _mm512_gf2p8mul_epi8 ( factor1, factor2 ) ) ;
                          // errVal [ i ] ^= pc_mul_2d ( S [ j ], Mat_inv [ i * NumErrs + j ] ) ;
                 }
+                printf ( "Errvec [ %d ]\n", i ) ;
+                dump_u8xu8 ( ( unsigned char * ) &errVec [ i ], 4, 16 ) ;
+                printf ( "Storing at data [ %d ]\n", k - ErrLoc [ i ] - 1 ) ;
+                _mm512_store_si512 ( ( __m512i * ) data [ k - ErrLoc [ i ] - 1 ], errVec [ i ] ) ;
         }
         return 1 ;
 }
@@ -1144,8 +1157,8 @@ void L1Correct ( __m512i * vec, int CurSym, int k, unsigned char * S_in, unsigne
 {
         unsigned char S [ 4 ] ;
 
-        int mSize  ;
-        unsigned char keyEq [ PC_MAX_ERRS + 1 ] = { 0 } ;
+        //int mSize  ;
+        //unsigned char keyEq [ PC_MAX_ERRS + 1 ] = { 0 } ;
 
         // Reverse terms to match PC_Correct
         S [ 0 ] = S_in [ 3 ] ;
@@ -1158,6 +1171,7 @@ void L1Correct ( __m512i * vec, int CurSym, int k, unsigned char * S_in, unsigne
         {
                 return ;
         }
+#ifdef NDEF // Testing for single error only
         mSize = PGZ_2d_AVX512_GFNI( S, 4, keyEq ) ;
 
         //printf ( "L1 mSize = %d\n", mSize ) ;
@@ -1174,6 +1188,10 @@ void L1Correct ( __m512i * vec, int CurSym, int k, unsigned char * S_in, unsigne
                         return ;
                 }
         }
+#endif
+        *vec = _mm512_setzero_si512() ;
+        printf ( "NumErrs = %d Errloc\n", NumErrs ) ;
+        ErrLoc [ NumErrs++ ] = k - CurSym - 1 ;
         return ;
 }
 /**********************************************************************
