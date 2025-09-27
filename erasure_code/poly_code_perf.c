@@ -783,7 +783,7 @@ int test_decoder_2d ( int index, int m, int p, unsigned char * powVals,
                                 inject_errors_in_place_2d(data, offSets, d1Len, num_errors, error_positions, original_values);
 
                                 //pc_decode_data_avx512_gfni_2d ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
-                                pc_decode_data_avx512_gfni_2d ( 64, m, p, powVals, data, coding, 64 ) ;
+                                pc_decode_data_avx512_gfni_2d ( 64, m, p, powVals, data, coding, 2 ) ;
 
                                 if ( verify_correction_in_place_2d ( data, offSets, d1Len, num_errors, error_positions, original_values ) )
                                 {

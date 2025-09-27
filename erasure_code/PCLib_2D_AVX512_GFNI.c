@@ -1056,9 +1056,12 @@ int pc_correct_AVX512_GFNI_2d ( int newPos, int k, int p, unsigned char ** data,
         if ( NumErrs == 1 )
         {
                 __m512i S0 = _mm512_load_si512( (__m512i *) coding [ p - 1 ] ) ;
-                _mm512_store_si512( ( __m512i * ) data [ ErrLoc [ 0 ] ], S0 ) ;
-                printf ( "Stored S0 at data %d\n", ErrLoc [ 0 ] ) ;
-                dump_u8xu8 ( ( unsigned char * ) &S0, 4, 16 ) ;          
+                __m512i O0 = _mm512_load_si512( ( __m512i * ) data [ k - 1 - ErrLoc [ 0 ] ] ) ;
+                S0 = _mm512_xor_si512 ( S0, O0 ) ;
+                _mm512_store_si512( ( __m512i * ) data [ k - 1 - ErrLoc [ 0 ] ], S0 ) ;
+                printf ( "Stored S0 at data %d\n", k - 1 - ErrLoc [ 0 ] ) ;
+                dump_u8xu8 ( ( unsigned char * ) &S0, 4, 16 ) ;
+                return 1 ;
         }
         // Otherwise build and invert a Vandermonde matrix using ErrLoc information
         int i, j ;
@@ -1106,12 +1109,16 @@ int pc_correct_AVX512_GFNI_2d ( int newPos, int k, int p, unsigned char ** data,
                         printf ( "Multiplying by %x\n", Mat_inv [ i * NumErrs + j ] ) ;
                         factor1 = _mm512_set1_epi8 ( Mat_inv [ i * NumErrs + j ] ) ;
                         factor2 = _mm512_load_si512 ( coding [ p - j - 1 ] ) ;
+                        //printf ( "Factor2\n" ) ;
+                        //dump_u8xu8 ( ( unsigned char * ) &factor2, 4, 16 ) ;
                         errVec [ i ] = _mm512_xor_si512 ( errVec [ i ],
                                 _mm512_gf2p8mul_epi8 ( factor1, factor2 ) ) ;
                          // errVal [ i ] ^= pc_mul_2d ( S [ j ], Mat_inv [ i * NumErrs + j ] ) ;
                 }
                 printf ( "Errvec [ %d ]\n", i ) ;
                 dump_u8xu8 ( ( unsigned char * ) &errVec [ i ], 4, 16 ) ;
+                __m512i O0 = _mm512_load_si512( ( __m512i * ) data [ k - 1 - ErrLoc [ i ] ] ) ;
+                errVec [ i ] = _mm512_xor_si512 ( errVec [ i ], O0 ) ;
                 printf ( "Storing at data [ %d ]\n", k - ErrLoc [ i ] - 1 ) ;
                 _mm512_store_si512 ( ( __m512i * ) data [ k - ErrLoc [ i ] - 1 ], errVec [ i ] ) ;
         }
@@ -1189,10 +1196,11 @@ void L1Correct ( __m512i * vec, int CurSym, int k, unsigned char * S_in, unsigne
                 }
         }
 #endif
-        *vec = _mm512_setzero_si512() ;
-        printf ( "NumErrs = %d Errloc\n", NumErrs ) ;
+        //*vec = _mm512_setzero_si512() ;
         ErrLoc [ NumErrs++ ] = k - CurSym - 1 ;
-        return ;
+        printf ( "NumErrs = %d Errloc\n", NumErrs ) ;
+        dump_u8xu8 ( ErrLoc, 1, NumErrs ) ;
+         return ;
 }
 /**********************************************************************
 Copyright (c) 2025 Michael H. Anderson. All rights reserved.
