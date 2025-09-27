@@ -639,16 +639,16 @@ void inject_errors_in_place_2d(unsigned char **data, unsigned char *offsets, int
         //dump_u8xu8 ( data [ error_positions [ 0 ] ], 4, 16 ) ;
         for ( int curLen = 0 ; curLen < d1Len ; curLen ++ )
         {
-                //int index = offsets [ curLen ] ;
-                int index = curLen ;
+                int index = offsets [ curLen ] ;
+                //int index = curLen ;
                 for ( int i = 0; i < num_errors; i++ )
                 {
                         int pos = error_positions [ i ] ;
                         int opos = i + ( curLen * num_errors ) ;
                         original_values[ opos ] = data[ pos ][ index ] ;
                         //printf ( "Original opos = %d val = %x\n", opos, data [ pos ] [ index ] ) ;
-                        //unsigned char error = ( rand() % ( FIELD_SIZE - 1 )) + 1 ;
-                        unsigned char error = curLen + 1 ;
+                        unsigned char error = ( rand() % ( FIELD_SIZE - 1 )) + 1 ;
+                        //unsigned char error = curLen + 1 ;
                         data[ pos ][ index ] = data[ pos ][ index ] ^ error;
                         //printf ( "Injecting data [%d][%d] with %x i = %d\n", pos, index, error, i ) ;
                 }
@@ -663,8 +663,8 @@ int verify_correction_in_place_2d(unsigned char **data, unsigned char * offSets,
 {
         for ( int curLen = 0 ; curLen < d1Len ; curLen ++ )
         {
-                //int index = offSets [ curLen ] ;
-                int index = curLen ;
+                int index = offSets [ curLen ] ;
+                //int index = curLen ;
                 for ( int i = 0; i < num_errors; i++ )
                 {
                         //printf ( "Checking error %d position %d offset %d\n", i, error_positions [ i ], index ) ;
@@ -937,9 +937,9 @@ main(int argc, char *argv[])
         // Make random data
         for (i = 0; i < k; i++)
                 for (j = 0; j < TEST_LEN(m); j++)
-                        buffs[ i ][ j ] = 0 ; //rand() ;
+                        buffs[ i ][ j ] = rand() ;
         //buffs [ k - 1 ] [ 59 ] = 1 ;
-        memset ( buffs [ k - 1 ], 1, 64 ) ;
+        //memset ( buffs [ k - 1 ], 1, 64 ) ;
         //memset ( buffs [ k - 3 ], 2, TEST_LEN(m) ) ;
         //printf ( "memset [ k-1 ]\n" ) ;
         //dump_u8xu8 ( ( unsigned char * ) buffs [ k - 1 ], 1,16 ) ;

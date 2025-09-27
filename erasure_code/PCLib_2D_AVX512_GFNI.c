@@ -1282,8 +1282,8 @@ int gf_2vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -1348,8 +1348,8 @@ int gf_3vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -1420,8 +1420,8 @@ int gf_4vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -1498,8 +1498,8 @@ int gf_5vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -1582,8 +1582,8 @@ int gf_6vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -1672,8 +1672,8 @@ int gf_7vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -1768,8 +1768,8 @@ int gf_8vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -1870,8 +1870,8 @@ int gf_9vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -1978,8 +1978,8 @@ int gf_10vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -2092,8 +2092,8 @@ int gf_11vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -2212,8 +2212,8 @@ int gf_12vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -2338,8 +2338,8 @@ int gf_13vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -2470,8 +2470,8 @@ int gf_14vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -2608,8 +2608,8 @@ int gf_15vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -2752,8 +2752,8 @@ int gf_16vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -2902,8 +2902,8 @@ int gf_17vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -3058,8 +3058,8 @@ int gf_18vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -3220,8 +3220,8 @@ int gf_19vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -3388,8 +3388,8 @@ int gf_20vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -3562,8 +3562,8 @@ int gf_21vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -3742,8 +3742,8 @@ int gf_22vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -3928,8 +3928,8 @@ int gf_23vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -4120,8 +4120,8 @@ int gf_24vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -4318,8 +4318,8 @@ int gf_25vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -4522,8 +4522,8 @@ int gf_26vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -4732,8 +4732,8 @@ int gf_27vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -4948,8 +4948,8 @@ int gf_28vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -5170,8 +5170,8 @@ int gf_29vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -5398,8 +5398,8 @@ int gf_30vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -5632,8 +5632,8 @@ int gf_31vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -5872,8 +5872,8 @@ int gf_32vect_pss_avx512_gfni_2d(int len, int k, unsigned char *tapVal, unsigned
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Get codeword address and load 64 bytes
-                        cwAdr = &data [ curSym ] [ curPos ]
-;                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
+                        cwAdr = &data [ curSym ] [ curPos ] ;
+                        data_vec = _mm512_load_si512( (__m512i *) cwAdr ) ;
                       __builtin_prefetch ( cwAdr + 64, 0, 3 ) ;
 
                         // Decode level 1 for 1..k symbols
@@ -10321,10 +10321,8 @@ int pc_decode_data_avx512_gfni_2d(int len, int k, int parities, unsigned char *t
                 // Check to see if error correction required for Level 2
                 if ( newPos < len )
                 {
-                        //printf ( "Error offSet = %d retries = %d\n", newPos, retry ) ;
                         if ( pc_correct_AVX512_GFNI_2d ( newPos, k, parities, data, coding, 64 ) == 0 )
                         {
-                                printf ( "Giving up on decoding early\n" ) ;
                                 return ( newPos ) ;
                         }
                 }
