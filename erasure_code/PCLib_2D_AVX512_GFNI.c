@@ -702,11 +702,11 @@ int pc_compute_error_values_2d_AVX512_GFNI ( int mSize, unsigned char * S, unsig
                 return 0 ;
         }
 
-        printf ( "Mat and Inv Mat\n" ) ;
-        dump_u8xu8 ( Mat, mSize, mSize ) ;
-        dump_u8xu8 ( Mat_inv, mSize, mSize ) ;
-        printf ( "Roots\n" ) ;
-        dump_u8xu8 ( roots, 1, mSize ) ;
+        //printf ( "Mat and Inv Mat\n" ) ;
+        //dump_u8xu8 ( Mat, mSize, mSize ) ;
+        //dump_u8xu8 ( Mat_inv, mSize, mSize ) ;
+        //printf ( "Roots\n" ) ;
+        //dump_u8xu8 ( roots, 1, mSize ) ;
 
         // Compute error values by summing Syndrome terms across inverted Vandermonde
         for ( i = 0 ; i < mSize ; i ++ )
@@ -1027,7 +1027,7 @@ int pc_correct_AVX512_GFNI_2d_old ( int newPos, int k, int p,
         {
                 S [ i ] = coding [ p - i - 1 ] [ offSet ] ;
         }
-        dump_u8xu8 ( S, 1, p ) ;
+        //dump_u8xu8 ( S, 1, p ) ;
 
         // Check to see if a single error can be verified
         if ( pc_verify_single_error_2d_AVX512_GFNI ( S, data, k, p, newPos, offSet ) )
@@ -1050,8 +1050,8 @@ int pc_correct_AVX512_GFNI_2d_old ( int newPos, int k, int p,
 
 int pc_correct_AVX512_GFNI_2d ( int newPos, int k, int p, unsigned char ** data, unsigned char ** coding, int vLen )
 {
-        printf ( "L2E Number of errors = %d p = %d\n", NumErrs, p ) ;
-        dump_u8xu8 ( ErrLoc, 1, NumErrs ) ;
+        //printf ( "L2E Number of errors = %d p = %d\n", NumErrs, p ) ;
+        //dump_u8xu8 ( ErrLoc, 1, NumErrs ) ;
 
         if ( NumErrs == 1 )
         {
@@ -1059,8 +1059,8 @@ int pc_correct_AVX512_GFNI_2d ( int newPos, int k, int p, unsigned char ** data,
                 __m512i O0 = _mm512_load_si512( ( __m512i * ) data [ k - 1 - ErrLoc [ 0 ] ] ) ;
                 S0 = _mm512_xor_si512 ( S0, O0 ) ;
                 _mm512_store_si512( ( __m512i * ) data [ k - 1 - ErrLoc [ 0 ] ], S0 ) ;
-                printf ( "Stored S0 at data %d\n", k - 1 - ErrLoc [ 0 ] ) ;
-                dump_u8xu8 ( ( unsigned char * ) &S0, 4, 16 ) ;
+                //printf ( "Stored S0 at data %d\n", k - 1 - ErrLoc [ 0 ] ) ;
+                //dump_u8xu8 ( ( unsigned char * ) &S0, 4, 16 ) ;
                 return 1 ;
         }
         // Otherwise build and invert a Vandermonde matrix using ErrLoc information
@@ -1092,9 +1092,9 @@ int pc_correct_AVX512_GFNI_2d ( int newPos, int k, int p, unsigned char ** data,
                 printf ( "Level 2 Invert Matrix failed\n" ) ;
                 return 0 ;
         }
-        printf ( "Mat and Inv matrix\n" ) ;
-        dump_u8xu8 ( Mat, NumErrs, NumErrs ) ;
-        dump_u8xu8 ( Mat_inv, NumErrs, NumErrs ) ;
+        //printf ( "Mat and Inv matrix\n" ) ;
+        //dump_u8xu8 ( Mat, NumErrs, NumErrs ) ;
+        //dump_u8xu8 ( Mat_inv, NumErrs, NumErrs ) ;
 
         __m512i errVec [ PC_MAX_ERRS ], factor1, factor2 ;
 
@@ -1106,7 +1106,7 @@ int pc_correct_AVX512_GFNI_2d ( int newPos, int k, int p, unsigned char ** data,
                 for ( j = 0 ; j < NumErrs ; j ++ )
                 {
                         //unsigned char factor = Mat_inv [ i * NumErrs + j ] ;
-                        printf ( "Multiplying by %x\n", Mat_inv [ i * NumErrs + j ] ) ;
+                        //printf ( "Multiplying by %x\n", Mat_inv [ i * NumErrs + j ] ) ;
                         factor1 = _mm512_set1_epi8 ( Mat_inv [ i * NumErrs + j ] ) ;
                         factor2 = _mm512_load_si512 ( coding [ p - j - 1 ] ) ;
                         //printf ( "Factor2\n" ) ;
@@ -1115,11 +1115,11 @@ int pc_correct_AVX512_GFNI_2d ( int newPos, int k, int p, unsigned char ** data,
                                 _mm512_gf2p8mul_epi8 ( factor1, factor2 ) ) ;
                          // errVal [ i ] ^= pc_mul_2d ( S [ j ], Mat_inv [ i * NumErrs + j ] ) ;
                 }
-                printf ( "Errvec [ %d ]\n", i ) ;
-                dump_u8xu8 ( ( unsigned char * ) &errVec [ i ], 4, 16 ) ;
+                //printf ( "Errvec [ %d ]\n", i ) ;
+                //dump_u8xu8 ( ( unsigned char * ) &errVec [ i ], 4, 16 ) ;
                 __m512i O0 = _mm512_load_si512( ( __m512i * ) data [ k - 1 - ErrLoc [ i ] ] ) ;
                 errVec [ i ] = _mm512_xor_si512 ( errVec [ i ], O0 ) ;
-                printf ( "Storing at data [ %d ]\n", k - ErrLoc [ i ] - 1 ) ;
+                //printf ( "Storing at data [ %d ]\n", k - ErrLoc [ i ] - 1 ) ;
                 _mm512_store_si512 ( ( __m512i * ) data [ k - ErrLoc [ i ] - 1 ], errVec [ i ] ) ;
         }
         return 1 ;
@@ -1198,8 +1198,8 @@ void L1Correct ( __m512i * vec, int CurSym, int k, unsigned char * S_in, unsigne
 #endif
         //*vec = _mm512_setzero_si512() ;
         ErrLoc [ NumErrs++ ] = k - CurSym - 1 ;
-        printf ( "NumErrs = %d Errloc\n", NumErrs ) ;
-        dump_u8xu8 ( ErrLoc, 1, NumErrs ) ;
+        //printf ( "NumErrs = %d Errloc\n", NumErrs ) ;
+        //dump_u8xu8 ( ErrLoc, 1, NumErrs ) ;
          return ;
 }
 /**********************************************************************

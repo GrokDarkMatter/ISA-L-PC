@@ -635,8 +635,8 @@ exit:
 void inject_errors_in_place_2d(unsigned char **data, unsigned char *offsets, int d1Len, int num_errors, 
         unsigned char *error_positions, unsigned char *original_values)
 {
-        printf ( "Codeword before error injection Error position = %d\n", error_positions [ 0 ] ) ;
-        dump_u8xu8 ( data [ error_positions [ 0 ] ], 4, 16 ) ;
+        //printf ( "Codeword before error injection Error position = %d\n", error_positions [ 0 ] ) ;
+        //dump_u8xu8 ( data [ error_positions [ 0 ] ], 4, 16 ) ;
         for ( int curLen = 0 ; curLen < d1Len ; curLen ++ )
         {
                 //int index = offsets [ curLen ] ;
@@ -650,11 +650,11 @@ void inject_errors_in_place_2d(unsigned char **data, unsigned char *offsets, int
                         //unsigned char error = ( rand() % ( FIELD_SIZE - 1 )) + 1 ;
                         unsigned char error = curLen + 1 ;
                         data[ pos ][ index ] = data[ pos ][ index ] ^ error;
-                        printf ( "Injecting data [%d][%d] with %x i = %d\n", pos, index, error, i ) ;
+                        //printf ( "Injecting data [%d][%d] with %x i = %d\n", pos, index, error, i ) ;
                 }
         }
-        printf ( "Codeword after error injection\n" ) ;
-        dump_u8xu8 ( data [ error_positions [ 0 ] ], 4, 16 ) ;
+        //printf ( "Codeword after error injection\n" ) ;
+        //dump_u8xu8 ( data [ error_positions [ 0 ] ], 4, 16 ) ;
         //dump_u8xu8 ( original_values, 1, d1Len * num_errors ) ;
 }
 
@@ -667,7 +667,7 @@ int verify_correction_in_place_2d(unsigned char **data, unsigned char * offSets,
                 int index = curLen ;
                 for ( int i = 0; i < num_errors; i++ )
                 {
-                        printf ( "Checking error %d position %d offset %d\n", i, error_positions [ i ], index ) ;
+                        //printf ( "Checking error %d position %d offset %d\n", i, error_positions [ i ], index ) ;
                         if ( data[ error_positions[ i ] ][ index ] != original_values [ i + ( curLen * num_errors ) ] )
                         {
                                 printf ( "Error data= %d orig = %d\n", data[ error_positions[ i ] ] [ index ],
@@ -713,19 +713,20 @@ int test_decoder_2d ( int index, int m, int p, unsigned char * powVals,
                 printf ( "Check matrix allocation failed\n" ) ;
                 return 0 ;
         }
-        for ( int d1Len = 2 ; d1Len < MAX_ELEN ; d1Len ++ )
+        for ( int d1Len = 1 ; d1Len < MAX_ELEN ; d1Len ++ )
         {
                 printf ( "Testing Level1 Error Count %d\n", d1Len ) ;
                 printf ( "Testing L2Cont Error Count " ) ;
                 //for (int num_errors = 1; num_errors <= (p/2); num_errors++)
-                for (int num_errors = 2; num_errors <= (p/2); num_errors++)
+                for (int num_errors = 1; num_errors <= p; num_errors++)
                 {
                         printf ( "%d ", num_errors ) ;
                         for (int start = 0; start < m - p; start++)
                         {
                                 unsigned char error_positions[MAX_ERRS * MAX_ELEN];
                                 uint8_t original_values[MAX_ERRS * MAX_ELEN];
-                                for (int i = 0; i < (p/2); i++)
+                                //for (int i = 0; i < (p/2); i++)
+                                for (int i = 0; i < p; i++)
                                 {
                                         for ( int len = 0 ; len < MAX_ELEN ; len ++ )
                                         {
@@ -736,8 +737,9 @@ int test_decoder_2d ( int index, int m, int p, unsigned char * powVals,
                                 make_norepeat_rand ( d1Len, 64, offSets ) ;
                                 memcpy ( checkMatrix, data [ 0 ], 64 * m ) ; // Copy original data
                                 inject_errors_in_place_2d ( data, offSets, d1Len, num_errors, error_positions, original_values );
-                                int done = pc_decode_data_avx512_gfni_2d ( 64, m, p, powVals, data, coding, 2 ) ;
-                                printf ( "After decode done = %d expected 64\n", done ) ;
+                                pc_decode_data_avx512_gfni_2d ( 64, m, p, powVals, data, coding, d1Len ) ;
+                                //int done = pc_decode_data_avx512_gfni_2d ( 64, m, p, powVals, data, coding, d1Len ) ;
+                                //printf ( "After decode done = %d expected 64\n", done ) ;
 
                                 if ( verify_correction_in_place_2d(data, offSets, d1Len, num_errors, error_positions, original_values ) )
                                 {
@@ -770,11 +772,11 @@ int test_decoder_2d ( int index, int m, int p, unsigned char * powVals,
                 }
                 printf ( "\n" ) ;
                 printf ( "Testing L2Rand Error Count " ) ;
-                for (int num_errors = 1; num_errors <= (p/2) ; num_errors++)
+                for (int num_errors = 1; num_errors <= p ; num_errors++)
                 {
                         printf ( "%d ", num_errors ) ;
                         //for (int trial = 0; trial < 1000; trial++)
-                        for (int trial = 0; trial < 1; trial++)
+                        for (int trial = 0; trial < 1000; trial++)
                         {
                                 uint8_t error_positions[MAX_ERRS * MAX_ELEN];
                                 uint8_t original_values[MAX_ERRS * MAX_ELEN];
@@ -783,7 +785,7 @@ int test_decoder_2d ( int index, int m, int p, unsigned char * powVals,
                                 inject_errors_in_place_2d(data, offSets, d1Len, num_errors, error_positions, original_values);
 
                                 //pc_decode_data_avx512_gfni_2d ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
-                                pc_decode_data_avx512_gfni_2d ( 64, m, p, powVals, data, coding, 2 ) ;
+                                pc_decode_data_avx512_gfni_2d ( 64, m, p, powVals, data, coding, d1Len ) ;
 
                                 if ( verify_correction_in_place_2d ( data, offSets, d1Len, num_errors, error_positions, original_values ) )
                                 {
