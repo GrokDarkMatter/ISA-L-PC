@@ -701,6 +701,27 @@ void make_norepeat_rand ( int listSize, int fieldSize, unsigned char *list )
         available[ idx ] = available[ fieldSize - 1 - i ];
     }
 }
+
+int Compare2Buffers ( unsigned char * buf1, unsigned char * buf2, int len ) 
+{
+    int loc = memcmp ( buf1, buf2, len );
+
+    if ( loc == 0 ) return 0 ;
+
+    printf ( "Comparison failed %d\n", loc );
+    for ( int c = 0; c < len/64; c++ )
+    {
+        for ( int b = 0; b < 64; b++ )
+        {
+            if ( buf1 [ c * 64 + b ] != buf2 [ c * 64 + b ] )
+            {
+                printf ( "Mismatch data [ %d ]= %x != checkMatrix [ %d ] = %x\n",
+                            c * 64 + b, buf1[ c * 64 + b ], c * 64 + b, buf2[ c * 64 + b ] );
+            }
+        }
+    }
+    return 1 ;
+}
 int test_decoder_2d ( int index, int m, int p, unsigned char *powVals,
                       unsigned char **data, unsigned char **coding )
 {
@@ -750,21 +771,11 @@ int test_decoder_2d ( int index, int m, int p, unsigned char *powVals,
                     free ( checkMatrix );
                     return 0;
                 }
-                int loc = memcmp ( checkMatrix, data[ 0 ], 64 * m );
-                if ( loc != 0 )
+                if ( Compare2Buffers ( checkMatrix, data [ 0 ], 64 * m ) )
                 {
-                    printf ( "Comparison failed %d\n", loc );
-                    for ( int c = 0; c < m; c++ )
-                    {
-                        for ( int b = 0; b < 64; b++ )
-                        {
-                            if ( data[ 0 ][ c * 64 + b ] != checkMatrix[ c * 64 + b ] )
-                            {
-                                printf ( "Mismatch data [ %d ]= %x != checkMatrix [ %d ] = %x\n",
-                                         c * 64 + b, data[ 0 ][ c * 64 + b ], c * 64 + b, checkMatrix[ c * 64 + b ] );
-                            }
-                        }
-                    }
+                    printf ( "Buffer don't compare\n" ) ;
+                    free ( checkMatrix ) ;
+                    return 0 ;
                 }
                 total_tests++;
             }
@@ -781,6 +792,7 @@ int test_decoder_2d ( int index, int m, int p, unsigned char *powVals,
                 uint8_t original_values[ MAX_ERRS * MAX_ELEN ];
                 make_norepeat_rand ( num_errors, m, error_positions );
                 make_norepeat_rand ( d1Len, 64, offSets );
+                memcpy ( checkMatrix, data[ 0 ], 64 * m ); // Copy original data
                 inject_errors_in_place_2d ( data, offSets, d1Len, num_errors, error_positions, original_values );
 
                 // pc_decode_data_avx512_gfni_2d ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
@@ -795,6 +807,13 @@ int test_decoder_2d ( int index, int m, int p, unsigned char *powVals,
                     printf ( "Failed: Random, %d errors, trial %d\n", num_errors, trial );
                     free ( checkMatrix );
                     return 0;
+                }
+
+                if ( Compare2Buffers ( checkMatrix, data [ 0 ], 64 * m ) )
+                {
+                    printf ( "Buffers don't compare\n" ) ;
+                    free ( checkMatrix ) ;
+                    return 0 ;
                 }
                 total_tests++;
             }
