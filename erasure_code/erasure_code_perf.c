@@ -76,8 +76,8 @@ void dump_u8xu8 ( unsigned char *s, int k, int m )
 #endif
 #ifdef __aarch64__
 #define NOPAPI 1
-#include "aarch64/PCLib_AARCH64_NEON.c"
 #include <arm_neon.h>
+#include "aarch64/PCLib_AARCH64_NEON.c"
 extern void ec_encode_data_neon ( int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest );
 extern void ec_encode_data_neon ( int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest );
 #else
