@@ -130,6 +130,50 @@ static unsigned char NumErrs, ErrLoc[ 32 ];
             err = 1;                                                               \
     }
 
+// Single level encoding
+int PC_SingleEncoding ( unsigned char ** data, int len, int symbols )
+{
+    __m512i matVec, vreg, CodeWord, par_Vec ;
+    __m128i maskP = _mm_set_epi64x ( 0ULL, 0x0101010101010101ULL );
+    unsigned char * pp = ( unsigned char * ) &par_Vec ;
+    pp += 60 ;
+
+    for ( int curSym = 0 ; curSym < symbols ; curSym ++ )
+    {
+        for ( int curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+            CodeWord = _mm512_load_si512 ( ( __m512i * ) &data [ curSym ] [ curPos ] ) ;
+            L1Enc( CodeWord, 4, par_Vec ) ;
+            // Store L1 computed parity back to memory
+            _mm512_mask_storeu_epi32 ( &data[ curSym ][ curPos ], 0x8000, CodeWord );
+        }
+    }
+    return 0 ;
+}
+
+// Single level decoding
+int PC_SingleDecoding ( unsigned char ** data, int len, int symbols ) 
+{
+    __m512i matVec, vreg, CodeWord ;
+    unsigned char syn [ 4 ] = { 0 } ;
+    __m128i maskP = _mm_set_epi64x ( 0ULL, 0x0101010101010101ULL );
+
+    for ( int curSym = 0 ; curSym < symbols ; curSym ++ )
+    {
+        for ( int curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+            CodeWord = _mm512_load_si512 ( ( __m512i * ) &data [ curSym ] [ curPos ] ) ;
+            L1Dec( CodeWord, 4, syn ) ;
+            // Check for zero syndromes
+            if ( *(uint32_t *) syn )
+            {
+                return 1 ;
+            }
+        }
+    }
+
+    return 0 ;
+}
 // Multiply two bytes using the hardware GF multiply
 unsigned char pc_mul_2d ( unsigned char a, unsigned char b )
 {
