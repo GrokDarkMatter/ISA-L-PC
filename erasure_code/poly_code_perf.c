@@ -1043,9 +1043,20 @@ int main ( int argc, char *argv[] )
     printf ( "polynomial_code_sen" TEST_TYPE_STR ": k=%d p=%d ", m, p );
     perf_print ( start, (long long)( TEST_LEN ( m ) ) * ( m ) );
 
-    BENCHMARK ( &start, BENCHMARK_TIME, PC_SingleEncoding ( buffs, TEST_LEN ( m ), m ) );
+    unsigned char syn [ 4 ] ;
+    BENCHMARK ( &start, BENCHMARK_TIME, done=PC_SingleDecoding ( buffs, TEST_LEN ( m ), m, syn ) );
 
     printf ( "polynomial_code_sde" TEST_TYPE_STR ": k=%d p=%d ", m, p );
+    perf_print ( start, (long long)( TEST_LEN ( m ) ) * ( m ) );
+
+    BENCHMARK ( &start, BENCHMARK_TIME, PC_SingleEncoding_u ( buffs, TEST_LEN ( m ), m ) );
+
+    printf ( "polynomial_code_senu" TEST_TYPE_STR ": k=%d p=%d ", m, p );
+    perf_print ( start, (long long)( TEST_LEN ( m ) ) * ( m ) );
+
+    BENCHMARK ( &start, BENCHMARK_TIME, done=PC_SingleDecoding_u ( buffs, TEST_LEN ( m ), m, syn ) );
+
+    printf ( "polynomial_code_sdeu" TEST_TYPE_STR ": k=%d p=%d ", m, p );
     perf_print ( start, (long long)( TEST_LEN ( m ) ) * ( m ) );
 
     if ( test_decoder_2d ( 0, m, p, pwrTab, buffs, temp_buffs ) == 0 )

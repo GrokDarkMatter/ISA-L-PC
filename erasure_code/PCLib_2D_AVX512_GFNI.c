@@ -152,10 +152,9 @@ int PC_SingleEncoding ( unsigned char ** data, int len, int symbols )
 }
 
 // Single level decoding
-int PC_SingleDecoding ( unsigned char ** data, int len, int symbols ) 
+int PC_SingleDecoding ( unsigned char ** data, int len, int symbols, unsigned char * syn ) 
 {
     __m512i matVec, vreg, CodeWord ;
-    unsigned char syn [ 4 ] = { 0 } ;
     __m128i maskP = _mm_set_epi64x ( 0ULL, 0x0101010101010101ULL );
 
     for ( int curSym = 0 ; curSym < symbols ; curSym ++ )
@@ -172,6 +171,150 @@ int PC_SingleDecoding ( unsigned char ** data, int len, int symbols )
         }
     }
 
+    return 0 ;
+}
+// Single level encoding
+int PC_SingleEncoding_u ( unsigned char ** data, int len, int symbols )
+{
+    __m512i matVec1, matVec2, matVec3, matVec4, CodeWord, par_Vec1, par_Vec2, par_Vec3, par_Vec4, pVec ;
+    __m128i maskP = _mm_set_epi64x ( 0ULL, 0x0101010101010101ULL );
+    unsigned char * pp = ( unsigned char * ) &pVec ;
+    pp += 60 ;
+
+    matVec1 = _mm512_load_si512 ( &EncMat[ 0 ][ 3 ] );
+    matVec2 = _mm512_load_si512 ( &EncMat[ 1 ][ 3 ] );
+    matVec3 = _mm512_load_si512 ( &EncMat[ 2 ][ 3 ] );
+    matVec4 = _mm512_load_si512 ( &EncMat[ 3 ][ 3 ] );
+    for ( int curSym = 0 ; curSym < symbols ; curSym ++ )
+    {
+        for ( int curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+            CodeWord = _mm512_load_si512 ( ( __m512i * ) &data [ curSym ] [ curPos ] ) ;
+                                                    \
+            par_Vec1 = _mm512_gf2p8mul_epi8 ( CodeWord, matVec1 );
+            par_Vec2 = _mm512_gf2p8mul_epi8 ( CodeWord, matVec2 );
+            par_Vec3 = _mm512_gf2p8mul_epi8 ( CodeWord, matVec3 );
+            par_Vec4 = _mm512_gf2p8mul_epi8 ( CodeWord, matVec4 );
+            __m256i low1 = _mm512_castsi512_si256 ( par_Vec1 );
+            __m256i low2 = _mm512_castsi512_si256 ( par_Vec2 );
+            __m256i low3 = _mm512_castsi512_si256 ( par_Vec3 );
+            __m256i low4 = _mm512_castsi512_si256 ( par_Vec4 );
+            __m256i high1 = _mm512_extracti64x4_epi64 ( par_Vec1, 1 );
+            __m256i high2 = _mm512_extracti64x4_epi64 ( par_Vec2, 1 );
+            __m256i high3 = _mm512_extracti64x4_epi64 ( par_Vec3, 1 );
+            __m256i high4 = _mm512_extracti64x4_epi64 ( par_Vec4, 1 );
+            __m256i xored1 = _mm256_xor_si256 ( low1, high1 );
+            __m256i xored2 = _mm256_xor_si256 ( low2, high2 );
+            __m256i xored3 = _mm256_xor_si256 ( low3, high3 );
+            __m256i xored4 = _mm256_xor_si256 ( low4, high4 );
+            __m128i low1281 = _mm256_castsi256_si128 ( xored1 );
+            __m128i low1282 = _mm256_castsi256_si128 ( xored2 );
+            __m128i low1283 = _mm256_castsi256_si128 ( xored3 );
+            __m128i low1284 = _mm256_castsi256_si128 ( xored4 );
+            __m128i high1281 = _mm256_extracti128_si256 ( xored1, 1 );
+            __m128i high1282 = _mm256_extracti128_si256 ( xored2, 1 );
+            __m128i high1283 = _mm256_extracti128_si256 ( xored3, 1 );
+            __m128i high1284 = _mm256_extracti128_si256 ( xored4, 1 );
+            __m128i xored1281 = _mm_xor_si128 ( low1281, high1281 );
+            __m128i xored1282 = _mm_xor_si128 ( low1282, high1282 );
+            __m128i xored1283 = _mm_xor_si128 ( low1283, high1283 );
+            __m128i xored1284 = _mm_xor_si128 ( low1284, high1284 );
+            __m128i perm1 = _mm_shuffle_epi32 ( xored1281, _MM_SHUFFLE ( 3, 2, 3, 2 ) );
+            __m128i perm2 = _mm_shuffle_epi32 ( xored1282, _MM_SHUFFLE ( 3, 2, 3, 2 ) );
+            __m128i perm3 = _mm_shuffle_epi32 ( xored1283, _MM_SHUFFLE ( 3, 2, 3, 2 ) );
+            __m128i perm4 = _mm_shuffle_epi32 ( xored1284, _MM_SHUFFLE ( 3, 2, 3, 2 ) );
+            __m128i xored641 = _mm_xor_si128 ( xored1281, perm1 ) ;
+            __m128i xored642 = _mm_xor_si128 ( xored1282, perm2 ) ;
+            __m128i xored643 = _mm_xor_si128 ( xored1283, perm3 ) ;
+            __m128i xored644 = _mm_xor_si128 ( xored1284, perm4 ) ;
+            xored641 = _mm_clmulepi64_si128 ( xored641, maskP, 0x00 );
+            xored642 = _mm_clmulepi64_si128 ( xored642, maskP, 0x00 );
+            xored643 = _mm_clmulepi64_si128 ( xored643, maskP, 0x00 );
+            xored644 = _mm_clmulepi64_si128 ( xored644, maskP, 0x00 );
+            pp[ 0 ] = _mm_extract_epi8 ( xored641, 7 );
+            pp[ 1 ] = _mm_extract_epi8 ( xored642, 7 );
+            pp[ 2 ] = _mm_extract_epi8 ( xored643, 7 );
+            pp[ 3 ] = _mm_extract_epi8 ( xored644, 7 );
+            CodeWord = _mm512_mask_blend_epi32 ( 0x8000, CodeWord, pVec );
+            //L1Enc( CodeWord, 4, par_Vec ) ;
+            // Store L1 computed parity back to memory
+            _mm512_mask_storeu_epi32 ( &data[ curSym ][ curPos ], 0x8000, CodeWord );
+        }
+    }
+    return 0 ;
+}
+
+// Single level decoding
+int PC_SingleDecoding_u ( unsigned char ** data, int len, int symbols, unsigned char * syn ) 
+{
+    __m512i matVec1, matVec2, matVec3, matVec4, CodeWord, vreg1, vreg2, vreg3, vreg4 ;
+    __m128i maskP = _mm_set_epi64x ( 0ULL, 0x0101010101010101ULL );
+
+    matVec1 = _mm512_load_si512 ( &Vand1b[ 0 ][ 3 ] );
+    matVec2 = _mm512_load_si512 ( &Vand1b[ 1 ][ 3 ] );
+    matVec3 = _mm512_load_si512 ( &Vand1b[ 2 ][ 3 ] );
+    matVec4 = _mm512_load_si512 ( &Vand1b[ 3 ][ 3 ] );
+
+    for ( int curSym = 0 ; curSym < symbols ; curSym ++ )
+    {
+        for ( int curPos = 0 ; curPos < len ; curPos += 64 )
+        {
+            CodeWord = _mm512_load_si512 ( ( __m512i * ) &data [ curSym ] [ curPos ] ) ;
+            //for ( int curP = 0; curP < 4; curP++ )
+            //{
+            vreg1 = _mm512_gf2p8mul_epi8 ( CodeWord, matVec1 );
+            vreg2 = _mm512_gf2p8mul_epi8 ( CodeWord, matVec2 );
+            vreg3 = _mm512_gf2p8mul_epi8 ( CodeWord, matVec3 );
+            vreg4 = _mm512_gf2p8mul_epi8 ( CodeWord, matVec4 );
+            __m256i low1 = _mm512_castsi512_si256 ( vreg1 );
+            __m256i low2 = _mm512_castsi512_si256 ( vreg2 );
+            __m256i low3 = _mm512_castsi512_si256 ( vreg3 );
+            __m256i low4 = _mm512_castsi512_si256 ( vreg4 );
+            __m256i high1 = _mm512_extracti64x4_epi64 ( vreg1, 1 );
+            __m256i high2 = _mm512_extracti64x4_epi64 ( vreg2, 1 );
+            __m256i high3 = _mm512_extracti64x4_epi64 ( vreg3, 1 );
+            __m256i high4 = _mm512_extracti64x4_epi64 ( vreg4, 1 );
+            __m256i xored1 = _mm256_xor_si256 ( low1, high1 );
+            __m256i xored2 = _mm256_xor_si256 ( low2, high2 );
+            __m256i xored3 = _mm256_xor_si256 ( low3, high3 );
+            __m256i xored4 = _mm256_xor_si256 ( low4, high4 );
+            __m128i low1281 = _mm256_castsi256_si128 ( xored1 );
+            __m128i low1282 = _mm256_castsi256_si128 ( xored2 );
+            __m128i low1283 = _mm256_castsi256_si128 ( xored3 );
+            __m128i low1284 = _mm256_castsi256_si128 ( xored4 );
+            __m128i high1281 = _mm256_extracti128_si256 ( xored1, 1 );
+            __m128i high1282 = _mm256_extracti128_si256 ( xored2, 1 );
+            __m128i high1283 = _mm256_extracti128_si256 ( xored3, 1 );
+            __m128i high1284 = _mm256_extracti128_si256 ( xored4, 1 );
+            __m128i xored1281 = _mm_xor_si128 ( low1281, high1281 );
+            __m128i xored1282 = _mm_xor_si128 ( low1282, high1282 );
+            __m128i xored1283 = _mm_xor_si128 ( low1283, high1283 );
+            __m128i xored1284 = _mm_xor_si128 ( low1284, high1284 );
+            __m128i perm1 = _mm_shuffle_epi32 ( xored1281, _MM_SHUFFLE ( 3, 2, 3, 2 ) );
+            __m128i perm2 = _mm_shuffle_epi32 ( xored1282, _MM_SHUFFLE ( 3, 2, 3, 2 ) );
+            __m128i perm3 = _mm_shuffle_epi32 ( xored1283, _MM_SHUFFLE ( 3, 2, 3, 2 ) );
+            __m128i perm4 = _mm_shuffle_epi32 ( xored1284, _MM_SHUFFLE ( 3, 2, 3, 2 ) );
+            __m128i xored641 = _mm_xor_si128 ( xored1281, perm1);
+            __m128i xored642 = _mm_xor_si128 ( xored1282, perm2 );
+            __m128i xored643 = _mm_xor_si128 ( xored1283, perm3 );
+            __m128i xored644 = _mm_xor_si128 ( xored1284, perm4 );
+            xored641 = _mm_clmulepi64_si128 ( xored641, maskP, 0x00 );
+            xored642 = _mm_clmulepi64_si128 ( xored642, maskP, 0x00 );
+            xored643 = _mm_clmulepi64_si128 ( xored643, maskP, 0x00 );
+            xored644 = _mm_clmulepi64_si128 ( xored644, maskP, 0x00 );
+            syn[ 0 ] = _mm_extract_epi8 ( xored641, 7 );
+            syn[ 1 ] = _mm_extract_epi8 ( xored642, 7 );
+            syn[ 2 ] = _mm_extract_epi8 ( xored643, 7 );
+            syn[ 3 ] = _mm_extract_epi8 ( xored644, 7 );
+            //}
+            //L1Dec( CodeWord, 4, syn ) ;
+            // Check for zero syndromes
+            if ( *(uint32_t *) syn )
+            {
+                return 1 ;
+            }
+        }
+    }
     return 0 ;
 }
 // Multiply two bytes using the hardware GF multiply
