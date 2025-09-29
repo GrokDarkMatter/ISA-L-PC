@@ -1212,7 +1212,7 @@ int pc_correct_AVX512_GFNI_2d_old ( int newPos, int k, int p,
         printf ( "No error found l2\n" );
         return 0;
     }
-    printf ( "L2 correct Offset = %ld\n", offSet );
+    //printf ( "L2 correct Offset = %ld\n", offSet );
     // Gather up the syndromes
     for ( i = 0; i < p; i++ )
     {
