@@ -7,6 +7,12 @@ Here's a summary of ISA-L vs ISA-L-PC performance: [View Performance Charts](htt
 
 Here's a summary of ISA-L vs. ISA-L-PC for ARM64: [View Performance Charts](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/ISA-LvISA-L-PC_AARCH64.pdf)
 
+If you'd like to build ISA-L-PC on Windows, here are some tips: https://github.com/GrokDarkMatter/ISA-L-PC/issues/3
+
+If you'd like to build ISA-L-PC on Linux, here are some tips: https://github.com/GrokDarkMatter/ISA-L-PC/issues/5
+
+If you'd like to build ISA-L-PC for ARM64, here are some tips: https://github.com/GrokDarkMatter/ISA-L-PC/issues/4
+
 In addition to performance, ISA-L offers both 1D and 2D Reed Solomon error encoding and decoding.
 
 ### Battling Silent Data Corruption: Empowering Reliability with Modern Vector Processors
