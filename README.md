@@ -29,6 +29,8 @@ In the era of exabyte-scale data centers, silent data corruption (SDC) lurks as 
 
 Enter a potent weapon: two-dimensional Reed-Solomon (2D-RS) encoding, an ECC powerhouse that improves upon legacy tape technologies for disk and cloud resilience. My new open-source library, ISA-L-PC, delivers exactly this—leveraging Intel's GFNI instructions for blazing-fast SIMD acceleration. It applies RS(64,60) encoding within blocks for intra-level correction, then layers a flexible RS code (up to 255 symbols) across blocks for inter-level fortification. With full source code, you can tweak both levels to any valid 8-bit configuration, tailoring protection to your workload.
 
+[LTO-9 Technical Paper](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/LTO-UBER-Technical-Paper-August-2022.pdf)
+
 Drawing from the LTO-9 technical paper's rigorous analysis, this 2D-RS approach yields 10X UBER improvements over single-level codes—pushing uncorrectable bit error rates to 10^-20, or 12+ NINES of durability. Even with degraded channels (think debris-clogged reads or flaky disks), it sustains 10^-19 UBER at input rates 99X higher than legacy systems, outshining HDDs by two orders of magnitude in cold data scenarios. No more latent sector panics; this blankets end-to-end protection against write errors, media defects, and aging.
 
 Ideal for data centers stockpiling cold data, ISA-L-PC embeds resilience without hardware overhauls—perfect for erasure-coded archives or AI data lakes. The techniques are patented (e.g., U.S. Patent 11,848,686 and others), but licensed at reasonable rates for commercial use. Download, evaluate it free today, and fortify your ecosystem against SDC's stealth.
