@@ -54,30 +54,30 @@
 
 #define TEST_MEM TEST_LEN
 
-int
-main(int argc, char *argv[])
+int main (int argc, char *argv[])
 {
-        void *buf;
-        uint32_t crc;
-        struct perf start;
+    void *buf;
+    uint32_t crc;
+    struct perf start;
 
-        printf("crc32_ieee_perf:\n");
+    printf ("crc32_ieee_perf:\n");
 
-        if (posix_memalign(&buf, 1024, TEST_LEN)) {
-                printf("alloc error: Fail");
-                return -1;
-        }
+    if (posix_memalign (&buf, 1024, TEST_LEN))
+    {
+        printf ("alloc error: Fail");
+        return -1;
+    }
 
-        printf("Start timed tests\n");
-        fflush(0);
+    printf ("Start timed tests\n");
+    fflush (0);
 
-        memset(buf, 0, TEST_LEN);
-        BENCHMARK(&start, BENCHMARK_TIME, crc = crc32_ieee(TEST_SEED, buf, TEST_LEN));
-        printf("crc32_ieee" TEST_TYPE_STR ": ");
-        perf_print(start, (long long) TEST_LEN);
+    memset (buf, 0, TEST_LEN);
+    BENCHMARK (&start, BENCHMARK_TIME, crc = crc32_ieee (TEST_SEED, buf, TEST_LEN));
+    printf ("crc32_ieee" TEST_TYPE_STR ": ");
+    perf_print (start, (long long) TEST_LEN);
 
-        printf("finish 0x%x\n", crc);
+    printf ("finish 0x%x\n", crc);
 
-        aligned_free(buf);
-        return 0;
+    aligned_free (buf);
+    return 0;
 }

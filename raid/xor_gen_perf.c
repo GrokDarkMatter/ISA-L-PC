@@ -52,44 +52,46 @@
 
 #define TEST_MEM ((TEST_SOURCES + 1) * (TEST_LEN))
 
-int
-main(int argc, char *argv[])
+int main (int argc, char *argv[])
 {
-        int i, ret, fail = 0;
-        void **buffs;
-        void *buff;
-        struct perf start;
+    int i, ret, fail = 0;
+    void **buffs;
+    void *buff;
+    struct perf start;
 
-        printf("Test xor_gen_perf\n");
+    printf ("Test xor_gen_perf\n");
 
-        ret = posix_memalign((void **) &buff, 8, sizeof(int *) * (TEST_SOURCES + 6));
-        if (ret) {
-                printf("alloc error: Fail");
-                return 1;
+    ret = posix_memalign ((void **) &buff, 8, sizeof (int *) * (TEST_SOURCES + 6));
+    if (ret)
+    {
+        printf ("alloc error: Fail");
+        return 1;
+    }
+    buffs = buff;
+
+    // Allocate the arrays
+    for (i = 0; i < TEST_SOURCES + 1; i++)
+    {
+        void *buf;
+        ret = posix_memalign (&buf, 64, TEST_LEN);
+        if (ret)
+        {
+            printf ("alloc error: Fail");
+            return 1;
         }
-        buffs = buff;
+        buffs[ i ] = buf;
+    }
 
-        // Allocate the arrays
-        for (i = 0; i < TEST_SOURCES + 1; i++) {
-                void *buf;
-                ret = posix_memalign(&buf, 64, TEST_LEN);
-                if (ret) {
-                        printf("alloc error: Fail");
-                        return 1;
-                }
-                buffs[i] = buf;
-        }
+    // Setup data
+    for (i = 0; i < TEST_SOURCES + 1; i++)
+        memset (buffs[ i ], 0, TEST_LEN);
 
-        // Setup data
-        for (i = 0; i < TEST_SOURCES + 1; i++)
-                memset(buffs[i], 0, TEST_LEN);
+    BENCHMARK (&start, BENCHMARK_TIME, xor_gen (TEST_SOURCES + 1, TEST_LEN, buffs));
+    printf ("xor_gen" TEST_TYPE_STR ": ");
+    perf_print (start, (long long) TEST_MEM);
 
-        BENCHMARK(&start, BENCHMARK_TIME, xor_gen(TEST_SOURCES + 1, TEST_LEN, buffs));
-        printf("xor_gen" TEST_TYPE_STR ": ");
-        perf_print(start, (long long) TEST_MEM);
+    for (i = 0; i < TEST_SOURCES + 1; i++)
+        aligned_free (buffs[ i ]);
 
-        for (i = 0; i < TEST_SOURCES + 1; i++)
-                aligned_free(buffs[i]);
-
-        return fail;
+    return fail;
 }

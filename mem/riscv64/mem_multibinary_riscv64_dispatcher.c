@@ -29,18 +29,16 @@
 #include "riscv64_multibinary.h"
 #include <stddef.h>
 
-extern int
-mem_zero_detect_rvv(void *buf, size_t n);
-extern int
-mem_zero_detect_base(void *buf, size_t n);
+extern int mem_zero_detect_rvv (void *buf, size_t n);
+extern int mem_zero_detect_base (void *buf, size_t n);
 
-DEFINE_INTERFACE_DISPATCHER(isal_zero_detect)
+DEFINE_INTERFACE_DISPATCHER (isal_zero_detect)
 {
 #if HAVE_RVV
-        const unsigned long hwcap = getauxval(AT_HWCAP);
-        if (hwcap & HWCAP_RV('V'))
-                return mem_zero_detect_rvv;
-        else
+    const unsigned long hwcap = getauxval (AT_HWCAP);
+    if (hwcap & HWCAP_RV ('V'))
+        return mem_zero_detect_rvv;
+    else
 #endif
-                return mem_zero_detect_base;
+        return mem_zero_detect_base;
 }

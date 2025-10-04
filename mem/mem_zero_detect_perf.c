@@ -36,25 +36,25 @@
 #define TEST_LEN      8 * 1024
 #define TEST_TYPE_STR "_warm"
 
-int
-main(int argc, char *argv[])
+int main (int argc, char *argv[])
 {
-        void *buf;
-        struct perf start;
+    void *buf;
+    struct perf start;
 
-        printf("Test mem_zero_detect_perf %d bytes\n", TEST_LEN);
+    printf ("Test mem_zero_detect_perf %d bytes\n", TEST_LEN);
 
-        if (posix_memalign(&buf, 64, TEST_LEN)) {
-                printf("alloc error: Fail");
-                return -1;
-        }
+    if (posix_memalign (&buf, 64, TEST_LEN))
+    {
+        printf ("alloc error: Fail");
+        return -1;
+    }
 
-        memset(buf, 0, TEST_LEN);
-        BENCHMARK(&start, BENCHMARK_TIME, isal_zero_detect(buf, TEST_LEN));
+    memset (buf, 0, TEST_LEN);
+    BENCHMARK (&start, BENCHMARK_TIME, isal_zero_detect (buf, TEST_LEN));
 
-        printf("mem_zero_detect_perf" TEST_TYPE_STR ": ");
-        perf_print(start, (long long) TEST_LEN);
+    printf ("mem_zero_detect_perf" TEST_TYPE_STR ": ");
+    perf_print (start, (long long) TEST_LEN);
 
-        aligned_free(buf);
-        return 0;
+    aligned_free (buf);
+    return 0;
 }

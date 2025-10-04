@@ -52,24 +52,24 @@
 #define TEST_SEED 0x1234
 #endif
 
-int
-main(int argc, char *argv[])
+int main (int argc, char *argv[])
 {
-        void *buf;
-        struct perf start;
+    void *buf;
+    struct perf start;
 
-        printf("adler32_perf:\n");
+    printf ("adler32_perf:\n");
 
-        if (posix_memalign(&buf, 1024, TEST_LEN)) {
-                printf("alloc error: Fail");
-                return -1;
-        }
-        memset(buf, 0, TEST_LEN);
+    if (posix_memalign (&buf, 1024, TEST_LEN))
+    {
+        printf ("alloc error: Fail");
+        return -1;
+    }
+    memset (buf, 0, TEST_LEN);
 
-        BENCHMARK(&start, BENCHMARK_TIME, isal_adler32(TEST_SEED, buf, TEST_LEN));
-        printf("adler32" TEST_TYPE_STR ": ");
-        perf_print(start, (long long) TEST_LEN);
+    BENCHMARK (&start, BENCHMARK_TIME, isal_adler32 (TEST_SEED, buf, TEST_LEN));
+    printf ("adler32" TEST_TYPE_STR ": ");
+    perf_print (start, (long long) TEST_LEN);
 
-        aligned_free(buf);
-        return 0;
+    aligned_free (buf);
+    return 0;
 }

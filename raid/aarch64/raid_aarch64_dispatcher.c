@@ -29,58 +29,54 @@
 #include <aarch64_multibinary.h>
 #include "raid.h"
 
-extern int
-xor_gen_neon(int, int, void **);
+extern int xor_gen_neon (int, int, void **);
 
-extern int
-xor_check_neon(int, int, void **);
+extern int xor_check_neon (int, int, void **);
 
-extern int
-pq_gen_neon(int, int, void **);
+extern int pq_gen_neon (int, int, void **);
 
-extern int
-pq_check_neon(int, int, void **);
+extern int pq_check_neon (int, int, void **);
 
-DEFINE_INTERFACE_DISPATCHER(xor_gen)
+DEFINE_INTERFACE_DISPATCHER (xor_gen)
 {
 #if defined(__linux__)
-        if (getauxval(AT_HWCAP) & HWCAP_ASIMD)
-                return xor_gen_neon;
-#elif defined(__APPLE__)
+    if (getauxval (AT_HWCAP) & HWCAP_ASIMD)
         return xor_gen_neon;
+#elif defined(__APPLE__)
+    return xor_gen_neon;
 #endif
-        return xor_gen_base;
+    return xor_gen_base;
 }
 
-DEFINE_INTERFACE_DISPATCHER(xor_check)
+DEFINE_INTERFACE_DISPATCHER (xor_check)
 {
 #if defined(__linux__)
-        if (getauxval(AT_HWCAP) & HWCAP_ASIMD)
-                return xor_check_neon;
-#elif defined(__APPLE__)
+    if (getauxval (AT_HWCAP) & HWCAP_ASIMD)
         return xor_check_neon;
+#elif defined(__APPLE__)
+    return xor_check_neon;
 #endif
-        return xor_check_base;
+    return xor_check_base;
 }
 
-DEFINE_INTERFACE_DISPATCHER(pq_gen)
+DEFINE_INTERFACE_DISPATCHER (pq_gen)
 {
 #if defined(__linux__)
-        if (getauxval(AT_HWCAP) & HWCAP_ASIMD)
-                return pq_gen_neon;
-#elif defined(__APPLE__)
+    if (getauxval (AT_HWCAP) & HWCAP_ASIMD)
         return pq_gen_neon;
+#elif defined(__APPLE__)
+    return pq_gen_neon;
 #endif
-        return pq_gen_base;
+    return pq_gen_base;
 }
 
-DEFINE_INTERFACE_DISPATCHER(pq_check)
+DEFINE_INTERFACE_DISPATCHER (pq_check)
 {
 #if defined(__linux__)
-        if (getauxval(AT_HWCAP) & HWCAP_ASIMD)
-                return pq_check_neon;
-#elif defined(__APPLE__)
+    if (getauxval (AT_HWCAP) & HWCAP_ASIMD)
         return pq_check_neon;
+#elif defined(__APPLE__)
+    return pq_check_neon;
 #endif
-        return pq_check_base;
+    return pq_check_base;
 }

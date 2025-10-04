@@ -54,38 +54,39 @@
 
 #define TEST_MEM ((TEST_SOURCES + 2) * (TEST_LEN))
 
-int
-main(int argc, char *argv[])
+int main (int argc, char *argv[])
 {
-        int i;
-        void *buffs[TEST_SOURCES + 2];
-        struct perf start;
+    int i;
+    void *buffs[ TEST_SOURCES + 2 ];
+    struct perf start;
 
-        printf("Test pq_gen_perf %d sources X %d bytes\n", TEST_SOURCES, TEST_LEN);
+    printf ("Test pq_gen_perf %d sources X %d bytes\n", TEST_SOURCES, TEST_LEN);
 
-        // Allocate the arrays
-        for (i = 0; i < TEST_SOURCES + 2; i++) {
-                int ret;
-                void *buf;
-                ret = posix_memalign(&buf, 64, TEST_LEN);
-                if (ret) {
-                        printf("alloc error: Fail");
-                        return 1;
-                }
-                buffs[i] = buf;
+    // Allocate the arrays
+    for (i = 0; i < TEST_SOURCES + 2; i++)
+    {
+        int ret;
+        void *buf;
+        ret = posix_memalign (&buf, 64, TEST_LEN);
+        if (ret)
+        {
+            printf ("alloc error: Fail");
+            return 1;
         }
+        buffs[ i ] = buf;
+    }
 
-        // Setup data
-        for (i = 0; i < TEST_SOURCES + 2; i++)
-                memset(buffs[i], 0, TEST_LEN);
+    // Setup data
+    for (i = 0; i < TEST_SOURCES + 2; i++)
+        memset (buffs[ i ], 0, TEST_LEN);
 
-        // Warm up
-        BENCHMARK(&start, BENCHMARK_TIME, pq_gen(TEST_SOURCES + 2, TEST_LEN, buffs));
-        printf("pq_gen" TEST_TYPE_STR ": ");
-        perf_print(start, (long long) TEST_MEM);
+    // Warm up
+    BENCHMARK (&start, BENCHMARK_TIME, pq_gen (TEST_SOURCES + 2, TEST_LEN, buffs));
+    printf ("pq_gen" TEST_TYPE_STR ": ");
+    perf_print (start, (long long) TEST_MEM);
 
-        for (i = 0; i < TEST_SOURCES + 2; i++)
-                aligned_free(buffs[i]);
+    for (i = 0; i < TEST_SOURCES + 2; i++)
+        aligned_free (buffs[ i ]);
 
-        return 0;
+    return 0;
 }

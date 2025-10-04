@@ -40,21 +40,21 @@
 #define _MEM_ROUTINES_H_
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-/**
- * @brief Detect if a memory region is all zero
- *
- * Zero detect function with optimizations for large blocks > 128 bytes
- *
- * @param    mem   Pointer to memory region to test
- * @param    len   Length of region in bytes
- * @returns  0     - region is all zeros
- *           other - region has non zero bytes
- */
-int
-isal_zero_detect(void *mem, size_t len);
+    /**
+     * @brief Detect if a memory region is all zero
+     *
+     * Zero detect function with optimizations for large blocks > 128 bytes
+     *
+     * @param    mem   Pointer to memory region to test
+     * @param    len   Length of region in bytes
+     * @returns  0     - region is all zeros
+     *           other - region has non zero bytes
+     */
+    int isal_zero_detect (void *mem, size_t len);
 
 #ifdef __cplusplus
 }

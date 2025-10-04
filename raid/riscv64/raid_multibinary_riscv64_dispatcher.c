@@ -28,33 +28,29 @@
 **********************************************************************/
 #include "riscv64_multibinary.h"
 
-extern int
-pq_gen_rvv(int vects, int len, void **array);
-extern int
-pq_gen_base(int vects, int len, void **array);
-extern int
-xor_gen_rvv(int vects, int len, void **array);
-extern int
-xor_gen_base(int vects, int len, void **array);
+extern int pq_gen_rvv (int vects, int len, void **array);
+extern int pq_gen_base (int vects, int len, void **array);
+extern int xor_gen_rvv (int vects, int len, void **array);
+extern int xor_gen_base (int vects, int len, void **array);
 
-DEFINE_INTERFACE_DISPATCHER(pq_gen)
+DEFINE_INTERFACE_DISPATCHER (pq_gen)
 {
 #if HAVE_RVV
-        const unsigned long hwcap = getauxval(AT_HWCAP);
-        if (hwcap & HWCAP_RV('V'))
-                return pq_gen_rvv;
-        else
+    const unsigned long hwcap = getauxval (AT_HWCAP);
+    if (hwcap & HWCAP_RV ('V'))
+        return pq_gen_rvv;
+    else
 #endif
-                return pq_gen_base;
+        return pq_gen_base;
 }
 
-DEFINE_INTERFACE_DISPATCHER(xor_gen)
+DEFINE_INTERFACE_DISPATCHER (xor_gen)
 {
 #if HAVE_RVV
-        const unsigned long hwcap = getauxval(AT_HWCAP);
-        if (hwcap & HWCAP_RV('V'))
-                return xor_gen_rvv;
-        else
+    const unsigned long hwcap = getauxval (AT_HWCAP);
+    if (hwcap & HWCAP_RV ('V'))
+        return xor_gen_rvv;
+    else
 #endif
-                return xor_gen_base;
+        return xor_gen_base;
 }

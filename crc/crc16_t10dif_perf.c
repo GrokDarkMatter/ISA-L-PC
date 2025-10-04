@@ -54,30 +54,30 @@
 
 #define TEST_MEM TEST_LEN
 
-int
-main(int argc, char *argv[])
+int main (int argc, char *argv[])
 {
-        void *buf;
-        uint16_t crc;
-        struct perf start;
+    void *buf;
+    uint16_t crc;
+    struct perf start;
 
-        printf("crc16_t10dif_perf:\n");
+    printf ("crc16_t10dif_perf:\n");
 
-        if (posix_memalign(&buf, 1024, TEST_LEN)) {
-                printf("alloc error: Fail");
-                return -1;
-        }
+    if (posix_memalign (&buf, 1024, TEST_LEN))
+    {
+        printf ("alloc error: Fail");
+        return -1;
+    }
 
-        printf("Start timed tests\n");
-        fflush(0);
+    printf ("Start timed tests\n");
+    fflush (0);
 
-        memset(buf, 0, TEST_LEN);
-        BENCHMARK(&start, BENCHMARK_TIME, crc = crc16_t10dif(TEST_SEED, buf, TEST_LEN));
-        printf("crc16_t10dif" TEST_TYPE_STR ": ");
-        perf_print(start, (long long) TEST_LEN);
+    memset (buf, 0, TEST_LEN);
+    BENCHMARK (&start, BENCHMARK_TIME, crc = crc16_t10dif (TEST_SEED, buf, TEST_LEN));
+    printf ("crc16_t10dif" TEST_TYPE_STR ": ");
+    perf_print (start, (long long) TEST_LEN);
 
-        printf("finish 0x%x\n", crc);
+    printf ("finish 0x%x\n", crc);
 
-        aligned_free(buf);
-        return 0;
+    aligned_free (buf);
+    return 0;
 }
