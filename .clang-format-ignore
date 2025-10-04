@@ -4,3 +4,8 @@ include/aarch64_label.h
 
 include/riscv64_multibinary.h
 **/riscv64/*.h
+ECPWin8g.pdf
+ECRAIDReliability.pdf
+ISA-LvISA-L-PC.pdf
+ISA-LvISA-L-PC_AARCH64.pdf
+LTO-UBER-Technical-Paper-August-2022.pdf
