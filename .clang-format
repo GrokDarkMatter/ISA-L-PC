@@ -26,7 +26,7 @@
 BasedOnStyle: LLVM
 IndentWidth: 8
 Language: Cpp
-BreakBeforeBraces: Linux
+BreakBeforeBraces: Allman
 AllowShortIfStatementsOnASingleLine: false
 IndentCaseLabels: false
 UseTab: Never
