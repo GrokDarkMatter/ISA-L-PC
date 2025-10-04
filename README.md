@@ -21,6 +21,8 @@ In addition to performance, ISA-L offers both 1D and 2D Reed Solomon error encod
 
 [On the reliability of RAID systems: An Argument for More Check Drives](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/ECRAIDReliability.pdf)
 
+
+[Our work with Baylor University - Guide to Reed Solomon Codes](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/BaylorWork-b188a16.pdf)
 ### Battling Silent Data Corruption: Empowering Reliability with Modern Vector Processors
 
 In today's data-intensive landscape, silent data corruption (SDC) poses a stealthy risk to computational integrity, where errors creep into systems undetected, potentially skewing AI models, financial calculations, or scientific simulations. CERN's groundbreaking 2007 study exposed SDC's reach, analyzing over 3,000 machines and 1.46 million device hours to uncover corruption in 1.8% of devices, stemming from hardware flaws, firmware glitches, and memory failures—resulting in 22 corrupted files across 8.7 TB of data. Hyperscalers like Meta, Google, and Microsoft now report SDC impacting one in a thousand machines in their vast fleets, fueling urgent calls for resilient solutions in cloud and AI environments.
