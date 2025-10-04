@@ -55,13 +55,15 @@
 
 typedef unsigned char u8;
 
-void gf_vect_mul_perf (u8 a, u8 *gf_const_tbl, u8 *buff1, u8 *buff2)
+void
+gf_vect_mul_perf (u8 a, u8 *gf_const_tbl, u8 *buff1, u8 *buff2)
 {
     gf_vect_mul_init (a, gf_const_tbl);
     gf_vect_mul (TEST_LEN, gf_const_tbl, buff1, buff2);
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     u8 *buff1, *buff2, gf_const_tbl[ 64 ], a = 2;
     struct perf start;

@@ -20,7 +20,8 @@ extern "C"
 #define EC_vec_xl(a, b)            vec_vsx_ld (a, b)
 #define EC_vec_permxor(va, vb, vc) __builtin_crypto_vpermxor (va, vb, vec_nor (vc, vc))
 #else
-inline vector unsigned char EC_vec_xl (int off, unsigned char *ptr)
+inline vector unsigned char
+EC_vec_xl (int off, unsigned char *ptr)
 {
     vector unsigned char vc;
     __asm__ __volatile__ ("lxvd2x %x0, %1, %2; xxswapd %x0, %x0" : "=wa"(vc) : "r"(off), "r"(ptr));
@@ -30,7 +31,8 @@ inline vector unsigned char EC_vec_xl (int off, unsigned char *ptr)
 #endif
 #else
 #if defined _ARCH_PWR8
-inline vector unsigned char EC_vec_xl (int off, unsigned char *ptr)
+inline vector unsigned char
+EC_vec_xl (int off, unsigned char *ptr)
 {
     vector unsigned char vc;
     __asm__ __volatile__ ("lxvd2x %x0, %1, %2; xxswapd %x0, %x0" : "=wa"(vc) : "r"(off), "r"(ptr));
@@ -60,7 +62,8 @@ inline vector unsigned char EC_vec_xl (int off, unsigned char *ptr)
      * @returns none
      */
 
-    void gf_vect_mul_vsx (int len, unsigned char *gftbls, unsigned char *src, unsigned char *dest);
+    void
+    gf_vect_mul_vsx (int len, unsigned char *gftbls, unsigned char *src, unsigned char *dest);
 
     /**
      * @brief GF(2^8) vector dot product. VSX version.
@@ -80,8 +83,9 @@ inline vector unsigned char EC_vec_xl (int off, unsigned char *ptr)
      * @returns none
      */
 
-    void gf_vect_dot_prod_vsx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                               unsigned char *dest);
+    void
+    gf_vect_dot_prod_vsx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                          unsigned char *dest);
 
     /**
      * @brief GF(2^8) vector dot product with two outputs. VSX version.
@@ -102,8 +106,9 @@ inline vector unsigned char EC_vec_xl (int off, unsigned char *ptr)
      * @returns none
      */
 
-    void gf_2vect_dot_prod_vsx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                unsigned char **dest);
+    void
+    gf_2vect_dot_prod_vsx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                           unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector dot product with three outputs. VSX version.
@@ -124,8 +129,9 @@ inline vector unsigned char EC_vec_xl (int off, unsigned char *ptr)
      * @returns none
      */
 
-    void gf_3vect_dot_prod_vsx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                unsigned char **dest);
+    void
+    gf_3vect_dot_prod_vsx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                           unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector dot product with four outputs. VSX version.
@@ -146,8 +152,9 @@ inline vector unsigned char EC_vec_xl (int off, unsigned char *ptr)
      * @returns none
      */
 
-    void gf_4vect_dot_prod_vsx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                unsigned char **dest);
+    void
+    gf_4vect_dot_prod_vsx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                           unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector dot product with five outputs. VSX version.
@@ -168,8 +175,9 @@ inline vector unsigned char EC_vec_xl (int off, unsigned char *ptr)
      * @returns none
      */
 
-    void gf_5vect_dot_prod_vsx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                unsigned char **dest);
+    void
+    gf_5vect_dot_prod_vsx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                           unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector dot product with six outputs. VSX version.
@@ -190,8 +198,9 @@ inline vector unsigned char EC_vec_xl (int off, unsigned char *ptr)
      * @returns none
      */
 
-    void gf_6vect_dot_prod_vsx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                unsigned char **dest);
+    void
+    gf_6vect_dot_prod_vsx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                           unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector multiply accumulate. VSX version.
@@ -214,8 +223,9 @@ inline vector unsigned char EC_vec_xl (int off, unsigned char *ptr)
      * @returns none
      */
 
-    void gf_vect_mad_vsx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                          unsigned char *dest);
+    void
+    gf_vect_mad_vsx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                     unsigned char *dest);
     /**
      * @brief GF(2^8) vector multiply with 2 accumulate. VSX version.
      *
@@ -237,8 +247,9 @@ inline vector unsigned char EC_vec_xl (int off, unsigned char *ptr)
      * @returns none
      */
 
-    void gf_2vect_mad_vsx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                           unsigned char **dest);
+    void
+    gf_2vect_mad_vsx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                      unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector multiply with 3 accumulate. VSX version.
@@ -261,8 +272,9 @@ inline vector unsigned char EC_vec_xl (int off, unsigned char *ptr)
      * @returns none
      */
 
-    void gf_3vect_mad_vsx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                           unsigned char **dest);
+    void
+    gf_3vect_mad_vsx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                      unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector multiply with 4 accumulate. VSX version.
@@ -285,8 +297,9 @@ inline vector unsigned char EC_vec_xl (int off, unsigned char *ptr)
      * @returns none
      */
 
-    void gf_4vect_mad_vsx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                           unsigned char **dest);
+    void
+    gf_4vect_mad_vsx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                      unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector multiply with 5 accumulate. VSX version.
@@ -308,8 +321,9 @@ inline vector unsigned char EC_vec_xl (int off, unsigned char *ptr)
      * @param dest   Array of pointers to destination input/outputs.
      * @returns none
      */
-    void gf_5vect_mad_vsx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                           unsigned char **dest);
+    void
+    gf_5vect_mad_vsx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                      unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector multiply with 6 accumulate. VSX version.
@@ -331,8 +345,9 @@ inline vector unsigned char EC_vec_xl (int off, unsigned char *ptr)
      * @param dest   Array of pointers to destination input/outputs.
      * @returns none
      */
-    void gf_6vect_mad_vsx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                           unsigned char **dest);
+    void
+    gf_6vect_mad_vsx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                      unsigned char **dest);
 
 #ifdef __cplusplus
 }

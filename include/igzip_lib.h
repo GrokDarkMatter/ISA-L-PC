@@ -592,8 +592,8 @@ enum
      * @param length: The length of start_stream.
      * @param histogram: The returned histogram of lit/len/dist symbols.
      */
-    void isal_update_histogram (uint8_t *in_stream, int length,
-                                struct isal_huff_histogram *histogram);
+    void
+    isal_update_histogram (uint8_t *in_stream, int length, struct isal_huff_histogram *histogram);
 
     /**
      * @brief Creates a custom huffman code for the given histograms in which
@@ -605,8 +605,9 @@ enum
      *        repeat lengths and lookback distances
      * @returns Returns a non zero value if an invalid huffman code was created.
      */
-    int isal_create_hufftables (struct isal_hufftables *hufftables,
-                                struct isal_huff_histogram *histogram);
+    int
+    isal_create_hufftables (struct isal_hufftables *hufftables,
+                            struct isal_huff_histogram *histogram);
 
     /**
      * @brief Creates a custom huffman code for the given histograms like
@@ -618,8 +619,9 @@ enum
      *        repeat lengths and lookback distances
      * @returns Returns a non zero value if an invalid huffman code was created.
      */
-    int isal_create_hufftables_subset (struct isal_hufftables *hufftables,
-                                       struct isal_huff_histogram *histogram);
+    int
+    isal_create_hufftables_subset (struct isal_hufftables *hufftables,
+                                   struct isal_huff_histogram *histogram);
 
     /**
      * @brief Initialize compression stream data structure
@@ -627,7 +629,8 @@ enum
      * @param stream Structure holding state information on the compression streams.
      * @returns none
      */
-    void isal_deflate_init (struct isal_zstream *stream);
+    void
+    isal_deflate_init (struct isal_zstream *stream);
 
     /**
      * @brief Reinitialize compression stream data structure. Performs the same
@@ -638,21 +641,24 @@ enum
      * @param stream Structure holding state information on the compression streams.
      * @returns none
      */
-    void isal_deflate_reset (struct isal_zstream *stream);
+    void
+    isal_deflate_reset (struct isal_zstream *stream);
 
     /**
      * @brief Set gzip header default values
      *
      * @param gz_hdr: Gzip header to initialize.
      */
-    void isal_gzip_header_init (struct isal_gzip_header *gz_hdr);
+    void
+    isal_gzip_header_init (struct isal_gzip_header *gz_hdr);
 
     /**
      * @brief Set zlib header default values
      *
      * @param z_hdr: zlib header to initialize.
      */
-    void isal_zlib_header_init (struct isal_zlib_header *z_hdr);
+    void
+    isal_zlib_header_init (struct isal_zlib_header *z_hdr);
 
     /**
      * @brief Write gzip header to output stream
@@ -669,7 +675,8 @@ enum
      * the minimum size required to successfully write the gzip header to the output
      * buffer.
      */
-    uint32_t isal_write_gzip_header (struct isal_zstream *stream, struct isal_gzip_header *gz_hdr);
+    uint32_t
+    isal_write_gzip_header (struct isal_zstream *stream, struct isal_gzip_header *gz_hdr);
 
     /**
      * @brief Write zlib header to output stream
@@ -686,7 +693,8 @@ enum
      * the minimum size required to successfully write the zlib header to the output
      * buffer.
      */
-    uint32_t isal_write_zlib_header (struct isal_zstream *stream, struct isal_zlib_header *z_hdr);
+    uint32_t
+    isal_write_zlib_header (struct isal_zstream *stream, struct isal_zlib_header *z_hdr);
 
     /**
      * @brief Set stream to use a new Huffman code
@@ -708,8 +716,9 @@ enum
      * due to the stream being in a state where changing the huffman code is not
      * allowed or an invalid input is provided.
      */
-    int isal_deflate_set_hufftables (struct isal_zstream *stream,
-                                     struct isal_hufftables *hufftables, int type);
+    int
+    isal_deflate_set_hufftables (struct isal_zstream *stream, struct isal_hufftables *hufftables,
+                                 int type);
 
     /**
      * @brief Initialize compression stream data structure
@@ -717,7 +726,8 @@ enum
      * @param stream Structure holding state information on the compression streams.
      * @returns none
      */
-    void isal_deflate_stateless_init (struct isal_zstream *stream);
+    void
+    isal_deflate_stateless_init (struct isal_zstream *stream);
 
     /**
      * @brief Set compression dictionary to use
@@ -733,7 +743,8 @@ enum
      * @returns COMP_OK,
      *          ISAL_INVALID_STATE (dictionary could not be set)
      */
-    int isal_deflate_set_dict (struct isal_zstream *stream, uint8_t *dict, uint32_t dict_len);
+    int
+    isal_deflate_set_dict (struct isal_zstream *stream, uint8_t *dict, uint32_t dict_len);
 
     /** @brief Structure for holding processed dictionary information */
 
@@ -765,8 +776,9 @@ enum
      * @returns COMP_OK,
      *          ISAL_INVALID_STATE (dictionary could not be processed)
      */
-    int isal_deflate_process_dict (struct isal_zstream *stream, struct isal_dict *dict_str,
-                                   uint8_t *dict, uint32_t dict_len);
+    int
+    isal_deflate_process_dict (struct isal_zstream *stream, struct isal_dict *dict_str,
+                               uint8_t *dict, uint32_t dict_len);
 
     /**
      * @brief Reset compression dictionary to use
@@ -785,7 +797,8 @@ enum
      * @returns COMP_OK,
      *          ISAL_INVALID_STATE or other (dictionary could not be reset)
      */
-    int isal_deflate_reset_dict (struct isal_zstream *stream, struct isal_dict *dict_str);
+    int
+    isal_deflate_reset_dict (struct isal_zstream *stream, struct isal_dict *dict_str);
 
     /**
      * @brief Fast data (deflate) compression for storage applications.
@@ -841,7 +854,8 @@ enum
      *         ISAL_INVALID_LEVEL (if an invalid compression level is selected),
      *         ISAL_INVALID_LEVEL_BUF (if the level buffer is not large enough).
      */
-    int isal_deflate (struct isal_zstream *stream);
+    int
+    isal_deflate (struct isal_zstream *stream);
 
     /**
      * @brief Fast data (deflate) stateless compression for storage applications.
@@ -870,7 +884,8 @@ enum
      *         ISAL_INVALID_LEVEL_BUF (if the level buffer is not large enough),
      *         STATELESS_OVERFLOW (if output buffer will not fit output).
      */
-    int isal_deflate_stateless (struct isal_zstream *stream);
+    int
+    isal_deflate_stateless (struct isal_zstream *stream);
 
     /******************************************************************************/
     /* Inflate functions */
@@ -881,7 +896,8 @@ enum
      * @param state Structure holding state information on the compression streams.
      * @returns none
      */
-    void isal_inflate_init (struct inflate_state *state);
+    void
+    isal_inflate_init (struct inflate_state *state);
 
     /**
      * @brief Reinitialize decompression state data structure
@@ -889,7 +905,8 @@ enum
      * @param state Structure holding state information on the compression streams.
      * @returns none
      */
-    void isal_inflate_reset (struct inflate_state *state);
+    void
+    isal_inflate_reset (struct inflate_state *state);
 
     /**
      * @brief Set decompression dictionary to use
@@ -904,7 +921,8 @@ enum
      * @returns COMP_OK,
      *          ISAL_INVALID_STATE (dictionary could not be set)
      */
-    int isal_inflate_set_dict (struct inflate_state *state, uint8_t *dict, uint32_t dict_len);
+    int
+    isal_inflate_set_dict (struct inflate_state *state, uint8_t *dict, uint32_t dict_len);
 
     /**
      * @brief Read and return gzip header information
@@ -927,7 +945,8 @@ enum
      *          ISAL_UNSUPPORTED_METHOD (deflate is not the compression method),
      *          ISAL_INCORRECT_CHECKSUM (gzip header checksum was incorrect)
      */
-    int isal_read_gzip_header (struct inflate_state *state, struct isal_gzip_header *gz_hdr);
+    int
+    isal_read_gzip_header (struct inflate_state *state, struct isal_gzip_header *gz_hdr);
 
     /**
      * @brief Read and return zlib header information
@@ -942,7 +961,8 @@ enum
      *          ISAL_UNSUPPORTED_METHOD (deflate is not the compression method),
      *          ISAL_INCORRECT_CHECKSUM (zlib header checksum was incorrect)
      */
-    int isal_read_zlib_header (struct inflate_state *state, struct isal_zlib_header *zlib_hdr);
+    int
+    isal_read_zlib_header (struct inflate_state *state, struct isal_zlib_header *zlib_hdr);
 
     /**
      * @brief Fast data (deflate) decompression for storage applications.
@@ -990,7 +1010,8 @@ enum
      *         ISAL_INCORRECT_CHECKSUM.
      */
 
-    int isal_inflate (struct inflate_state *state);
+    int
+    isal_inflate (struct inflate_state *state);
 
     /**
      * @brief Fast data (deflate) stateless decompression for storage applications.
@@ -1012,7 +1033,8 @@ enum
      *         ISAL_UNSUPPORTED_METHOD,
      *         ISAL_INCORRECT_CHECKSUM.
      */
-    int isal_inflate_stateless (struct inflate_state *state);
+    int
+    isal_inflate_stateless (struct inflate_state *state);
 
     /******************************************************************************/
     /* Other functions */
@@ -1029,7 +1051,8 @@ enum
      *
      * @returns 32-bit Adler-32 checksum
      */
-    uint32_t isal_adler32 (uint32_t init, const unsigned char *buf, uint64_t len);
+    uint32_t
+    isal_adler32 (uint32_t init, const unsigned char *buf, uint64_t len);
 
 #ifdef __cplusplus
 }

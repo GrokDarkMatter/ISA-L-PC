@@ -30,43 +30,63 @@
 #include "igzip_lib.h"
 #include "igzip/encode_df.h"
 
-extern uint32_t adler32_neon (uint32_t, uint8_t *, uint64_t);
-extern uint32_t adler32_base (uint32_t, uint8_t *, uint64_t);
+extern uint32_t
+adler32_neon (uint32_t, uint8_t *, uint64_t);
+extern uint32_t
+adler32_base (uint32_t, uint8_t *, uint64_t);
 
-extern void isal_deflate_body_aarch64 (struct isal_zstream *);
-extern void isal_deflate_body_base (struct isal_zstream *);
+extern void
+isal_deflate_body_aarch64 (struct isal_zstream *);
+extern void
+isal_deflate_body_base (struct isal_zstream *);
 
-extern void isal_deflate_finish_aarch64 (struct isal_zstream *);
-extern void isal_deflate_finish_base (struct isal_zstream *);
+extern void
+isal_deflate_finish_aarch64 (struct isal_zstream *);
+extern void
+isal_deflate_finish_base (struct isal_zstream *);
 
-extern void isal_deflate_icf_body_hash_hist_aarch64 (struct isal_zstream *);
-extern void isal_deflate_icf_body_hash_hist_base (struct isal_zstream *);
+extern void
+isal_deflate_icf_body_hash_hist_aarch64 (struct isal_zstream *);
+extern void
+isal_deflate_icf_body_hash_hist_base (struct isal_zstream *);
 
-extern void isal_deflate_icf_finish_hash_hist_aarch64 (struct isal_zstream *);
-extern void isal_deflate_icf_finish_hash_hist_base (struct isal_zstream *);
+extern void
+isal_deflate_icf_finish_hash_hist_aarch64 (struct isal_zstream *);
+extern void
+isal_deflate_icf_finish_hash_hist_base (struct isal_zstream *);
 
-extern void icf_body_hash1_fillgreedy_lazy (struct isal_zstream *);
+extern void
+icf_body_hash1_fillgreedy_lazy (struct isal_zstream *);
 
-extern void isal_deflate_icf_finish_hash_map_base (struct isal_zstream *);
+extern void
+isal_deflate_icf_finish_hash_map_base (struct isal_zstream *);
 
-extern void set_long_icf_fg_aarch64 (uint8_t *, uint64_t, uint64_t, struct deflate_icf *);
+extern void
+set_long_icf_fg_aarch64 (uint8_t *, uint64_t, uint64_t, struct deflate_icf *);
 
-extern struct deflate_icf *encode_deflate_icf_aarch64 (struct deflate_icf *, struct deflate_icf *,
-                                                       struct BitBuf2 *, struct hufftables_icf *);
+extern struct deflate_icf *
+encode_deflate_icf_aarch64 (struct deflate_icf *, struct deflate_icf *, struct BitBuf2 *,
+                            struct hufftables_icf *);
 
-extern void isal_update_histogram_aarch64 (uint8_t *, int, struct isal_huff_histogram *);
-extern void isal_update_histogram_base (uint8_t *, int, struct isal_huff_histogram *);
+extern void
+isal_update_histogram_aarch64 (uint8_t *, int, struct isal_huff_histogram *);
+extern void
+isal_update_histogram_base (uint8_t *, int, struct isal_huff_histogram *);
 
-extern uint64_t gen_icf_map_h1_aarch64 (struct isal_zstream *, struct deflate_icf *,
-                                        uint64_t input_size);
-extern uint64_t gen_icf_map_h1_base (struct isal_zstream *, struct deflate_icf *,
-                                     uint64_t input_size);
+extern uint64_t
+gen_icf_map_h1_aarch64 (struct isal_zstream *, struct deflate_icf *, uint64_t input_size);
+extern uint64_t
+gen_icf_map_h1_base (struct isal_zstream *, struct deflate_icf *, uint64_t input_size);
 
-extern void isal_deflate_hash_aarch64 (uint16_t *, uint32_t, uint32_t, uint8_t *, uint32_t);
-extern void isal_deflate_hash_base (uint16_t *, uint32_t, uint32_t, uint8_t *, uint32_t);
+extern void
+isal_deflate_hash_aarch64 (uint16_t *, uint32_t, uint32_t, uint8_t *, uint32_t);
+extern void
+isal_deflate_hash_base (uint16_t *, uint32_t, uint32_t, uint8_t *, uint32_t);
 
-extern int decode_huffman_code_block_stateless_aarch64 (struct inflate_state *, uint8_t *);
-extern int decode_huffman_code_block_stateless_base (struct inflate_state *, uint8_t *);
+extern int
+decode_huffman_code_block_stateless_aarch64 (struct inflate_state *, uint8_t *);
+extern int
+decode_huffman_code_block_stateless_base (struct inflate_state *, uint8_t *);
 
 DEFINE_INTERFACE_DISPATCHER (isal_adler32)
 {

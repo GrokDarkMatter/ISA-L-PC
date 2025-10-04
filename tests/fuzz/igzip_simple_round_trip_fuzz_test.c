@@ -34,7 +34,8 @@ const int trailer_size[] = {
     4, // IGZIP_ZLIB_NO_HDR
 };
 
-int LLVMFuzzerTestOneInput (const uint8_t *data, size_t size)
+int
+LLVMFuzzerTestOneInput (const uint8_t *data, size_t size)
 {
     struct inflate_state istate;
     struct isal_zstream cstate;

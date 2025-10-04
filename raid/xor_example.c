@@ -34,7 +34,8 @@
 #define TEST_SOURCES 16
 #define TEST_LEN     16 * 1024
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     int i, j, should_pass, should_fail, ret = 0;
     void *buffs[ TEST_SOURCES + 1 ] = { NULL };

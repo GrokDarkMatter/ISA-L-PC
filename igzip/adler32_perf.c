@@ -52,7 +52,8 @@
 #define TEST_SEED 0x1234
 #endif
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     void *buf;
     struct perf start;

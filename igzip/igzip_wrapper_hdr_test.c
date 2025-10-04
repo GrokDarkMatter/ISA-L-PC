@@ -49,7 +49,8 @@ enum
     MALLOC_FAILED
 };
 
-void print_error (int32_t error)
+void
+print_error (int32_t error)
 {
     printf ("Error Code %d: ", error);
     switch (error)
@@ -128,7 +129,8 @@ void print_error (int32_t error)
     }
 }
 
-void print_uint8_t (uint8_t *array, uint64_t length, char *prepend)
+void
+print_uint8_t (uint8_t *array, uint64_t length, char *prepend)
 {
     const int line_size = 16;
     int i;
@@ -157,7 +159,8 @@ void print_uint8_t (uint8_t *array, uint64_t length, char *prepend)
     printf ("\n");
 }
 
-void print_string (char *str, uint32_t str_max_len, char *prepend)
+void
+print_string (char *str, uint32_t str_max_len, char *prepend)
 {
     const int line_size = 64;
     uint32_t i = 0;
@@ -175,7 +178,8 @@ void print_string (char *str, uint32_t str_max_len, char *prepend)
     printf ("\n");
 }
 
-void print_gzip_header (struct isal_gzip_header *gz_hdr, char *prepend1, char *prepend2)
+void
+print_gzip_header (struct isal_gzip_header *gz_hdr, char *prepend1, char *prepend2)
 {
     printf ("%sText: %d, Time: 0x%08x, Xflags: 0x%x, OS: 0x%x\n", prepend1, gz_hdr->text,
             gz_hdr->time, gz_hdr->xflags, gz_hdr->os);
@@ -199,16 +203,17 @@ void print_gzip_header (struct isal_gzip_header *gz_hdr, char *prepend1, char *p
         printf ("%sComment field larger than COMMENT_SIZE_MAX\n", prepend2);
 }
 
-void print_zlib_header (struct isal_zlib_header *z_hdr, char *prepend)
+void
+print_zlib_header (struct isal_zlib_header *z_hdr, char *prepend)
 {
     printf ("%sInfo: 0x%x\n", prepend, z_hdr->info);
     printf ("%sLevel: 0x%x\n", prepend, z_hdr->level);
     printf ("%sDictionary: Flag = 0x%x, Id =0x%x\n", prepend, z_hdr->dict_flag, z_hdr->dict_id);
 }
 
-void print_gzip_final_verbose (uint8_t *hdr_buf, uint32_t hdr_buf_len,
-                               struct isal_gzip_header *gz_hdr_orig,
-                               struct isal_gzip_header *gz_hdr)
+void
+print_gzip_final_verbose (uint8_t *hdr_buf, uint32_t hdr_buf_len,
+                          struct isal_gzip_header *gz_hdr_orig, struct isal_gzip_header *gz_hdr)
 {
 #ifdef VERBOSE
     printf ("\n");
@@ -236,8 +241,9 @@ void print_gzip_final_verbose (uint8_t *hdr_buf, uint32_t hdr_buf_len,
     return;
 }
 
-void print_zlib_final_verbose (uint8_t *hdr_buf, uint32_t hdr_buf_len,
-                               struct isal_zlib_header *z_hdr_orig, struct isal_zlib_header *z_hdr)
+void
+print_zlib_final_verbose (uint8_t *hdr_buf, uint32_t hdr_buf_len,
+                          struct isal_zlib_header *z_hdr_orig, struct isal_zlib_header *z_hdr)
 {
 #ifdef VERBOSE
     printf ("\n");
@@ -265,7 +271,8 @@ void print_zlib_final_verbose (uint8_t *hdr_buf, uint32_t hdr_buf_len,
     return;
 }
 
-int gzip_header_size (struct isal_gzip_header *gz_hdr)
+int
+gzip_header_size (struct isal_gzip_header *gz_hdr)
 {
     int hdr_size = 10;
     if (gz_hdr->extra != NULL)
@@ -289,7 +296,8 @@ int gzip_header_size (struct isal_gzip_header *gz_hdr)
     return hdr_size;
 }
 
-int zlib_header_size (struct isal_zlib_header *z_hdr)
+int
+zlib_header_size (struct isal_zlib_header *z_hdr)
 {
     if (z_hdr->dict_flag)
         return 6;
@@ -297,7 +305,8 @@ int zlib_header_size (struct isal_zlib_header *z_hdr)
         return 2;
 }
 
-void rand_string (char *string, uint32_t str_len)
+void
+rand_string (char *string, uint32_t str_len)
 {
     int i;
 
@@ -310,7 +319,8 @@ void rand_string (char *string, uint32_t str_len)
     string[ str_len - 1 ] = 0;
 }
 
-void rand_buf (uint8_t *buf, uint32_t buf_len)
+void
+rand_buf (uint8_t *buf, uint32_t buf_len)
 {
     int i;
 
@@ -323,7 +333,8 @@ void rand_buf (uint8_t *buf, uint32_t buf_len)
     }
 }
 
-int malloc_gzip_header (struct isal_gzip_header *gz_hdr)
+int
+malloc_gzip_header (struct isal_gzip_header *gz_hdr)
 {
     gz_hdr->extra = NULL;
     if (gz_hdr->extra_buf_len)
@@ -359,7 +370,8 @@ int malloc_gzip_header (struct isal_gzip_header *gz_hdr)
     return 0;
 }
 
-void free_gzip_header (struct isal_gzip_header *gz_hdr)
+void
+free_gzip_header (struct isal_gzip_header *gz_hdr)
 {
     if (gz_hdr->extra != NULL)
     {
@@ -380,7 +392,8 @@ void free_gzip_header (struct isal_gzip_header *gz_hdr)
     }
 }
 
-int gen_rand_gzip_header (struct isal_gzip_header *gz_hdr)
+int
+gen_rand_gzip_header (struct isal_gzip_header *gz_hdr)
 {
     int ret = 0;
     int field_set_space = 8;
@@ -421,7 +434,8 @@ int gen_rand_gzip_header (struct isal_gzip_header *gz_hdr)
     return ret;
 }
 
-void gen_rand_zlib_header (struct isal_zlib_header *z_hdr)
+void
+gen_rand_zlib_header (struct isal_zlib_header *z_hdr)
 {
     z_hdr->info = rand () % 16;
     z_hdr->level = rand () % 4;
@@ -429,7 +443,8 @@ void gen_rand_zlib_header (struct isal_zlib_header *z_hdr)
     z_hdr->dict_id = rand ();
 }
 
-int write_gzip_header (uint8_t *hdr_buf, uint32_t hdr_buf_len, struct isal_gzip_header *gz_hdr)
+int
+write_gzip_header (uint8_t *hdr_buf, uint32_t hdr_buf_len, struct isal_gzip_header *gz_hdr)
 {
 
     struct isal_zstream stream;
@@ -471,7 +486,8 @@ int write_gzip_header (uint8_t *hdr_buf, uint32_t hdr_buf_len, struct isal_gzip_
     return 0;
 }
 
-int write_zlib_header (uint8_t *hdr_buf, uint32_t hdr_buf_len, struct isal_zlib_header *z_hdr)
+int
+write_zlib_header (uint8_t *hdr_buf, uint32_t hdr_buf_len, struct isal_zlib_header *z_hdr)
 {
     struct isal_zstream stream;
     uint32_t hdr_len = zlib_header_size (z_hdr);
@@ -511,7 +527,8 @@ int write_zlib_header (uint8_t *hdr_buf, uint32_t hdr_buf_len, struct isal_zlib_
     return 0;
 }
 
-int compare_gzip_headers (struct isal_gzip_header *gz_hdr1, struct isal_gzip_header *gz_hdr2)
+int
+compare_gzip_headers (struct isal_gzip_header *gz_hdr1, struct isal_gzip_header *gz_hdr2)
 {
     int ret = 0;
     uint32_t max_len;
@@ -562,7 +579,8 @@ int compare_gzip_headers (struct isal_gzip_header *gz_hdr1, struct isal_gzip_hea
     return ret;
 }
 
-int compare_zlib_headers (struct isal_zlib_header *z_hdr1, struct isal_zlib_header *z_hdr2)
+int
+compare_zlib_headers (struct isal_zlib_header *z_hdr1, struct isal_zlib_header *z_hdr2)
 {
     if (z_hdr1->info != z_hdr2->info)
         return INCORRECT_INFO;
@@ -579,8 +597,9 @@ int compare_zlib_headers (struct isal_zlib_header *z_hdr1, struct isal_zlib_head
     return 0;
 }
 
-int read_gzip_header_simple (uint8_t *hdr_buf, uint32_t hdr_buf_len,
-                             struct isal_gzip_header *gz_hdr_orig)
+int
+read_gzip_header_simple (uint8_t *hdr_buf, uint32_t hdr_buf_len,
+                         struct isal_gzip_header *gz_hdr_orig)
 {
 
     int ret = 0;
@@ -626,8 +645,9 @@ int read_gzip_header_simple (uint8_t *hdr_buf, uint32_t hdr_buf_len,
     return ret;
 }
 
-int read_zlib_header_simple (uint8_t *hdr_buf, uint32_t hdr_buf_len,
-                             struct isal_zlib_header *z_hdr_orig)
+int
+read_zlib_header_simple (uint8_t *hdr_buf, uint32_t hdr_buf_len,
+                         struct isal_zlib_header *z_hdr_orig)
 {
 
     int ret = 0;
@@ -659,8 +679,9 @@ int read_zlib_header_simple (uint8_t *hdr_buf, uint32_t hdr_buf_len,
     return ret;
 }
 
-int read_gzip_header_streaming (uint8_t *hdr_buf, uint32_t hdr_buf_len,
-                                struct isal_gzip_header *gz_hdr_orig)
+int
+read_gzip_header_streaming (uint8_t *hdr_buf, uint32_t hdr_buf_len,
+                            struct isal_gzip_header *gz_hdr_orig)
 {
     int ret = 0;
     uint32_t max_dec_size, dec_size, max_extra_len, extra_len;
@@ -802,8 +823,9 @@ int read_gzip_header_streaming (uint8_t *hdr_buf, uint32_t hdr_buf_len,
     return ret;
 }
 
-int read_zlib_header_streaming (uint8_t *hdr_buf, uint32_t hdr_buf_len,
-                                struct isal_zlib_header *z_hdr_orig)
+int
+read_zlib_header_streaming (uint8_t *hdr_buf, uint32_t hdr_buf_len,
+                            struct isal_zlib_header *z_hdr_orig)
 {
     int ret = ISAL_END_INPUT;
     uint32_t max_dec_size, dec_size;
@@ -847,7 +869,8 @@ int read_zlib_header_streaming (uint8_t *hdr_buf, uint32_t hdr_buf_len,
     return ret;
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     uint8_t *hdr_buf = NULL;
     uint32_t hdr_buf_len;

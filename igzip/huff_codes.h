@@ -191,7 +191,8 @@ struct hufftables_icf
  * @returns Returns the length in bits of the block with histogram hist encoded
  * with the set hufftable
  */
-uint64_t create_hufftables_icf (struct BitBuf2 *bb, struct hufftables_icf *hufftables,
-                                struct isal_mod_hist *hist, uint32_t end_of_block);
+uint64_t
+create_hufftables_icf (struct BitBuf2 *bb, struct hufftables_icf *hufftables,
+                       struct isal_mod_hist *hist, uint32_t end_of_block);
 
 #endif

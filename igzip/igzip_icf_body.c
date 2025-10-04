@@ -3,18 +3,24 @@
 #include "encode_df.h"
 #include "igzip_level_buf_structs.h"
 
-extern uint64_t gen_icf_map_lh1 (struct isal_zstream *, struct deflate_icf *, uint64_t);
-extern void set_long_icf_fg (uint8_t *, uint64_t, uint64_t, struct deflate_icf *);
-extern void isal_deflate_icf_body_lvl1 (struct isal_zstream *);
-extern void isal_deflate_icf_body_lvl2 (struct isal_zstream *);
-extern void isal_deflate_icf_body_lvl3 (struct isal_zstream *);
+extern uint64_t
+gen_icf_map_lh1 (struct isal_zstream *, struct deflate_icf *, uint64_t);
+extern void
+set_long_icf_fg (uint8_t *, uint64_t, uint64_t, struct deflate_icf *);
+extern void
+isal_deflate_icf_body_lvl1 (struct isal_zstream *);
+extern void
+isal_deflate_icf_body_lvl2 (struct isal_zstream *);
+extern void
+isal_deflate_icf_body_lvl3 (struct isal_zstream *);
 /*
 *************************************************************
 * Helper functions
 ************************************************************
 */
-static inline void write_deflate_icf (struct deflate_icf *icf, uint32_t lit_len, uint32_t lit_dist,
-                                      uint32_t extra_bits)
+static inline void
+write_deflate_icf (struct deflate_icf *icf, uint32_t lit_len, uint32_t lit_dist,
+                   uint32_t extra_bits)
 {
     /* icf->lit_len = lit_len; */
     /* icf->lit_dist = lit_dist; */
@@ -25,8 +31,9 @@ static inline void write_deflate_icf (struct deflate_icf *icf, uint32_t lit_len,
                               (extra_bits << (LIT_LEN_BIT_COUNT + DIST_LIT_BIT_COUNT)));
 }
 
-void set_long_icf_fg_base (uint8_t *next_in, uint64_t processed, uint64_t input_size,
-                           struct deflate_icf *match_lookup)
+void
+set_long_icf_fg_base (uint8_t *next_in, uint64_t processed, uint64_t input_size,
+                      struct deflate_icf *match_lookup)
 {
     uint8_t *end_processed = next_in + processed;
     uint8_t *end_in = next_in + input_size;
@@ -71,8 +78,9 @@ void set_long_icf_fg_base (uint8_t *next_in, uint64_t processed, uint64_t input_
 * Methods for generating one pass match lookup table
 ************************************************************
 */
-uint64_t gen_icf_map_h1_base (struct isal_zstream *stream, struct deflate_icf *matches_icf_lookup,
-                              uint64_t input_size)
+uint64_t
+gen_icf_map_h1_base (struct isal_zstream *stream, struct deflate_icf *matches_icf_lookup,
+                     uint64_t input_size)
 {
 
     uint32_t dist, len, extra_bits;
@@ -138,9 +146,9 @@ uint64_t gen_icf_map_h1_base (struct isal_zstream *stream, struct deflate_icf *m
 * One pass methods for parsing provided match lookup table
 ************************************************************
 */
-static struct deflate_icf *compress_icf_map_g (struct isal_zstream *stream,
-                                               struct deflate_icf *matches_next,
-                                               struct deflate_icf *matches_end)
+static struct deflate_icf *
+compress_icf_map_g (struct isal_zstream *stream, struct deflate_icf *matches_next,
+                    struct deflate_icf *matches_end)
 {
     uint32_t lit_len, lit_len2, dist;
     uint64_t code;
@@ -241,7 +249,8 @@ static struct deflate_icf *compress_icf_map_g (struct isal_zstream *stream,
 * Compression functions combining different methods
 ************************************************************
 */
-static inline void icf_body_next_state (struct isal_zstream *stream)
+static inline void
+icf_body_next_state (struct isal_zstream *stream)
 {
     struct level_buf *level_buf = (struct level_buf *) stream->level_buf;
     struct isal_zstate *state = &stream->internal_state;
@@ -254,7 +263,8 @@ static inline void icf_body_next_state (struct isal_zstream *stream)
         state->state = ZSTATE_FLUSH_READ_BUFFER;
 }
 
-void icf_body_hash1_fillgreedy_lazy (struct isal_zstream *stream)
+void
+icf_body_hash1_fillgreedy_lazy (struct isal_zstream *stream)
 {
     struct deflate_icf *matches_icf, *matches_next_icf, *matches_end_icf;
     struct deflate_icf *matches_icf_lookup;
@@ -294,7 +304,8 @@ void icf_body_hash1_fillgreedy_lazy (struct isal_zstream *stream)
     icf_body_next_state (stream);
 }
 
-void icf_body_lazyhash1_fillgreedy_greedy (struct isal_zstream *stream)
+void
+icf_body_lazyhash1_fillgreedy_greedy (struct isal_zstream *stream)
 {
     struct deflate_icf *matches_icf, *matches_next_icf, *matches_end_icf;
     struct deflate_icf *matches_icf_lookup;
@@ -334,7 +345,8 @@ void icf_body_lazyhash1_fillgreedy_greedy (struct isal_zstream *stream)
     icf_body_next_state (stream);
 }
 
-void isal_deflate_icf_body (struct isal_zstream *stream)
+void
+isal_deflate_icf_body (struct isal_zstream *stream)
 {
     switch (stream->level)
     {

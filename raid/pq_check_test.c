@@ -41,7 +41,8 @@
 #define TEST_SEED 0x1234
 #endif
 
-int ref_multi_pq (int vects, int len, void **array)
+int
+ref_multi_pq (int vects, int len, void **array)
 {
     int i, j;
     unsigned char p, q, s;
@@ -65,14 +66,16 @@ int ref_multi_pq (int vects, int len, void **array)
 
 // Generates pseudo-random data
 
-void rand_buffer (unsigned char *buf, long buffer_size)
+void
+rand_buffer (unsigned char *buf, long buffer_size)
 {
     long i;
     for (i = 0; i < buffer_size; i++)
         buf[ i ] = rand ();
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     int i, j, k, ret, fail = 0;
     void *buffs[ TEST_SOURCES + 2 ] = { NULL };

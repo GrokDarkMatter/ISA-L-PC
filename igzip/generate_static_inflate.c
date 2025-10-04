@@ -48,8 +48,9 @@ extern struct isal_hufftables hufftables_default;
  * @param footer: footer to append at the end of the table.
  * @param begin_line: string printed at beginning of new line
  */
-void fprint_uint16_table (FILE *outfile, uint16_t *table, uint64_t length, char *header,
-                          char *footer, char *begin_line)
+void
+fprint_uint16_table (FILE *outfile, uint16_t *table, uint64_t length, char *header, char *footer,
+                     char *begin_line)
 {
     int i;
     fprintf (outfile, "%s", header);
@@ -79,8 +80,9 @@ void fprint_uint16_table (FILE *outfile, uint16_t *table, uint64_t length, char 
  * @param footer: footer to append at the end of the table.
  * @param begin_line: string printed at beginning of new line
  */
-void fprint_uint32_table (FILE *outfile, uint32_t *table, uint64_t length, char *header,
-                          char *footer, char *begin_line)
+void
+fprint_uint32_table (FILE *outfile, uint32_t *table, uint64_t length, char *header, char *footer,
+                     char *begin_line)
 {
     int i;
     fprintf (outfile, "%s", header);
@@ -101,7 +103,8 @@ void fprint_uint32_table (FILE *outfile, uint32_t *table, uint64_t length, char 
     fprintf (outfile, "%s", footer);
 }
 
-void fprint_header (FILE *output_file)
+void
+fprint_header (FILE *output_file)
 {
     fprintf (output_file, "#include \"igzip_lib.h\"\n\n");
     fprintf (output_file, "#define LONG_BITS_CHECK %d\n", ISAL_DECODE_LONG_BITS);
@@ -115,7 +118,8 @@ void fprint_header (FILE *output_file)
                           "#endif\n\n");
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     struct inflate_state state;
     FILE *file;

@@ -67,7 +67,8 @@ struct crc64_desc
     uint64_t k8;
 };
 
-void gen_crc64_refl_consts (uint64_t poly, struct crc64_desc *c)
+void
+gen_crc64_refl_consts (uint64_t poly, struct crc64_desc *c)
 {
     uint64_t quotienth = 0;
     uint64_t div;
@@ -86,7 +87,8 @@ void gen_crc64_refl_consts (uint64_t poly, struct crc64_desc *c)
     c->k8 = poly << 1;
 }
 
-void gen_crc64_norm_consts (uint64_t poly, struct crc64_desc *c)
+void
+gen_crc64_norm_consts (uint64_t poly, struct crc64_desc *c)
 {
     uint64_t quotientl = 0;
     uint64_t div;
@@ -106,7 +108,8 @@ void gen_crc64_norm_consts (uint64_t poly, struct crc64_desc *c)
     c->k8 = poly;
 }
 
-uint32_t calc_xi_mod (int n)
+uint32_t
+calc_xi_mod (int n)
 {
     uint32_t rem = 0x1ul;
     int i, j;
@@ -123,7 +126,8 @@ uint32_t calc_xi_mod (int n)
     return rem;
 }
 
-uint64_t calc64_refl_xi_mod (int n, struct crc64_desc *c)
+uint64_t
+calc64_refl_xi_mod (int n, struct crc64_desc *c)
 {
     uint64_t rem = 1ull;
     int i, j;
@@ -140,7 +144,8 @@ uint64_t calc64_refl_xi_mod (int n, struct crc64_desc *c)
     return rem;
 }
 
-uint64_t calc64_norm_xi_mod (int n, struct crc64_desc *c)
+uint64_t
+calc64_norm_xi_mod (int n, struct crc64_desc *c)
 {
     uint64_t rem = 1ull;
     int i, j;
@@ -160,7 +165,8 @@ uint64_t calc64_norm_xi_mod (int n, struct crc64_desc *c)
 // Base function for crc32_iscsi_shiftx() if c++ multi-function versioning
 #ifdef __cplusplus
 
-static inline uint32_t bit_reverse32 (uint32_t x)
+static inline uint32_t
+bit_reverse32 (uint32_t x)
 {
     x = (((x & 0xaaaaaaaa) >> 1) | ((x & 0x55555555) << 1));
     x = (((x & 0xcccccccc) >> 2) | ((x & 0x33333333) << 2));
@@ -172,7 +178,8 @@ static inline uint32_t bit_reverse32 (uint32_t x)
 // Base function for crc32_iscsi_shiftx without clmul optimizations
 
 ATTRIBUTE_TARGET ("default")
-uint32_t crc32_iscsi_shiftx (uint32_t crc1, uint32_t x)
+uint32_t
+crc32_iscsi_shiftx (uint32_t crc1, uint32_t x)
 {
     int i;
     uint64_t xrev, q = 0;
@@ -194,7 +201,8 @@ uint32_t crc32_iscsi_shiftx (uint32_t crc1, uint32_t x)
 #endif // cplusplus
 
 ATTRIBUTE_TARGET ("pclmul,sse4.2")
-uint32_t crc32_iscsi_shiftx (uint32_t crc1, uint32_t x)
+uint32_t
+crc32_iscsi_shiftx (uint32_t crc1, uint32_t x)
 {
     __m128i crc1x, constx;
     uint64_t crc64;
@@ -208,7 +216,8 @@ uint32_t crc32_iscsi_shiftx (uint32_t crc1, uint32_t x)
 }
 
 ATTRIBUTE_TARGET ("pclmul,sse4.2")
-uint64_t crc64_refl_shiftx (uint64_t crc1, uint64_t x, struct crc64_desc *c)
+uint64_t
+crc64_refl_shiftx (uint64_t crc1, uint64_t x, struct crc64_desc *c)
 {
     __m128i crc1x, crc2x, crc3x, constx;
     const __m128i rk5 = _mm_loadu_si64 (&c->k5);
@@ -233,7 +242,8 @@ uint64_t crc64_refl_shiftx (uint64_t crc1, uint64_t x, struct crc64_desc *c)
 }
 
 ATTRIBUTE_TARGET ("pclmul,sse4.2")
-uint64_t crc64_norm_shiftx (uint64_t crc1, uint64_t x, struct crc64_desc *c)
+uint64_t
+crc64_norm_shiftx (uint64_t crc1, uint64_t x, struct crc64_desc *c)
 {
     __m128i crc1x, crc2x, crc3x, constx;
     const __m128i rk5 = _mm_loadu_si64 (&c->k5);
@@ -256,7 +266,8 @@ uint64_t crc64_norm_shiftx (uint64_t crc1, uint64_t x, struct crc64_desc *c)
     return _mm_extract_epi64 (crc1x, 0);
 }
 
-uint32_t crc32_iscsi_combine_4k (uint32_t *crc_array, int n)
+uint32_t
+crc32_iscsi_combine_4k (uint32_t *crc_array, int n)
 {
     const uint32_t cn4k = 0x82f89c77; // calc_xi_mod(4*1024);
     int i;
@@ -282,8 +293,9 @@ uint32_t crc32_iscsi_combine_4k (uint32_t *crc_array, int n)
             printf (".");                                                                          \
     }
 
-uint64_t test_combine64 (uint8_t *inp, size_t len, uint64_t poly, int reflected,
-                         uint64_t (*func) (uint64_t, const uint8_t *, uint64_t))
+uint64_t
+test_combine64 (uint8_t *inp, size_t len, uint64_t poly, int reflected,
+                uint64_t (*func) (uint64_t, const uint8_t *, uint64_t))
 {
 
     uint64_t crc64_init, crc64, crc64a, crc64b;
@@ -363,7 +375,8 @@ uint64_t test_combine64 (uint8_t *inp, size_t len, uint64_t poly, int reflected,
 #define NMAX      32
 #define NMAX_SIZE (NMAX * N4k)
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     int i;
     uint32_t crc, crca, crcb, crc1, crc2, crc3, crcn;

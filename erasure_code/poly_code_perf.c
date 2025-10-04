@@ -57,7 +57,8 @@ typedef unsigned char u8;
 #define PC_MAX_ERRS 32
 
 // Utility print routine
-void dump_u8xu8 (unsigned char *s, int k, int m)
+void
+dump_u8xu8 (unsigned char *s, int k, int m)
 {
     int i, j;
     for (i = 0; i < k; i++)
@@ -70,8 +71,9 @@ void dump_u8xu8 (unsigned char *s, int k, int m)
     }
     printf ("\n");
 }
-extern int ec_encode_data_avx512_gfni (int len, int m, int p, unsigned char *g_tbls,
-                                       unsigned char **data, unsigned char **coding);
+extern int
+ec_encode_data_avx512_gfni (int len, int m, int p, unsigned char *g_tbls, unsigned char **data,
+                            unsigned char **coding);
 
 #define NOPAPI 1
 
@@ -84,8 +86,10 @@ extern int ec_encode_data_avx512_gfni (int len, int m, int p, unsigned char *g_t
 #define NOPAPI 1
 #include "aarch64/PCLib_AARCH64_NEON.c"
 #include <arm_neon.h>
-extern void ec_encode_data_neon (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
-extern void ec_encode_data_neon (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
+extern void
+ec_encode_data_neon (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
+extern void
+ec_encode_data_neon (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
 #else
 #include <immintrin.h>
 #include "PCLib_2D_AVX512_GFNI.c"
@@ -123,13 +127,15 @@ extern void ec_encode_data_neon (int len, int k, int p, u8 *g_tbls, u8 **buffs, 
 
 #include <papi.h>
 
-void handle_error (int code)
+void
+handle_error (int code)
 {
     fprintf (stderr, "PAPI error: %s\n", PAPI_strerror (code));
     exit (1);
 }
 
-int InitPAPI (void)
+int
+InitPAPI (void)
 {
     int event_set = PAPI_NULL, event_code, ret;
 
@@ -170,7 +176,8 @@ int InitPAPI (void)
     return event_set;
 }
 
-void TestPAPIRoots (void)
+void
+TestPAPIRoots (void)
 {
     int event_set = PAPI_NULL, ret;
     long long values[ 2 ];
@@ -248,7 +255,8 @@ void TestPAPIRoots (void)
                 lenPoly, values[ 0 ], values[ 1 ], CPI, Speedup);
     }
 }
-void TestPAPIInv (void)
+void
+TestPAPIInv (void)
 {
 
     int event_set = PAPI_NULL, ret;
@@ -323,7 +331,8 @@ void TestPAPIInv (void)
     }
 }
 
-void TestPAPI1b (void)
+void
+TestPAPI1b (void)
 {
 
     int event_set = PAPI_NULL, ret;
@@ -437,7 +446,8 @@ void TestPAPI1b (void)
     free (a);
 }
 
-void TestPAPIbm (void)
+void
+TestPAPIbm (void)
 {
 
     int event_set = PAPI_NULL, ret, len;
@@ -566,7 +576,8 @@ void TestPAPIbm (void)
 
 #endif
 
-void usage (const char *app_name)
+void
+usage (const char *app_name)
 {
     fprintf (stderr,
              "Usage: %s [options]\n"
@@ -576,8 +587,9 @@ void usage (const char *app_name)
              app_name);
 }
 
-int ec_decode_perf (int m, int k, u8 *a, u8 *g_tbls, u8 **buffs, u8 *src_in_err, u8 *src_err_list,
-                    int nerrs, u8 **temp_buffs, struct perf *start)
+int
+ec_decode_perf (int m, int k, u8 *a, u8 *g_tbls, u8 **buffs, u8 *src_in_err, u8 *src_err_list,
+                int nerrs, u8 **temp_buffs, struct perf *start)
 {
     int i, j, r;
     u8 *b, *c, *d;
@@ -635,9 +647,9 @@ exit:
 
 #define FIELD_SIZE 256
 
-void inject_errors_in_place_2d (unsigned char **data, unsigned char *offsets, int d1Len,
-                                int num_errors, unsigned char *error_positions,
-                                unsigned char *original_values)
+void
+inject_errors_in_place_2d (unsigned char **data, unsigned char *offsets, int d1Len, int num_errors,
+                           unsigned char *error_positions, unsigned char *original_values)
 {
     // printf ( "Codeword before error injection Error position = %d\n", error_positions [ 0 ] ) ;
     // dump_u8xu8 ( data [ error_positions [ 0 ] ], 4, 16 ) ;
@@ -662,9 +674,10 @@ void inject_errors_in_place_2d (unsigned char **data, unsigned char *offsets, in
     // dump_u8xu8 ( original_values, 1, d1Len * num_errors ) ;
 }
 
-int verify_correction_in_place_2d (unsigned char **data, unsigned char *offSets, int d1Len,
-                                   int num_errors, unsigned char *error_positions,
-                                   uint8_t *original_values)
+int
+verify_correction_in_place_2d (unsigned char **data, unsigned char *offSets, int d1Len,
+                               int num_errors, unsigned char *error_positions,
+                               uint8_t *original_values)
 {
     for (int curLen = 0; curLen < d1Len; curLen++)
     {
@@ -690,7 +703,8 @@ int verify_correction_in_place_2d (unsigned char **data, unsigned char *offSets,
 #define MAX_ERRS 32
 
 // Make a non repeating list of listSize random values between 0 and fieldSize - 1
-void make_norepeat_rand (int listSize, int fieldSize, unsigned char *list)
+void
+make_norepeat_rand (int listSize, int fieldSize, unsigned char *list)
 {
 
     int available[ FIELD_SIZE ];
@@ -710,7 +724,8 @@ void make_norepeat_rand (int listSize, int fieldSize, unsigned char *list)
     }
 }
 
-int Compare2Buffers (unsigned char *buf1, unsigned char *buf2, int len)
+int
+Compare2Buffers (unsigned char *buf1, unsigned char *buf2, int len)
 {
     int loc = memcmp (buf1, buf2, len);
 
@@ -731,8 +746,9 @@ int Compare2Buffers (unsigned char *buf1, unsigned char *buf2, int len)
     }
     return 1;
 }
-int test_decoder_2d (int index, int m, int p, unsigned char *powVals, unsigned char **data,
-                     unsigned char **coding)
+int
+test_decoder_2d (int index, int m, int p, unsigned char *powVals, unsigned char **data,
+                 unsigned char **coding)
 {
     int successes = 0, total_tests = 0;
     unsigned char offSets[ MAX_ELEN ];
@@ -838,7 +854,8 @@ int test_decoder_2d (int index, int m, int p, unsigned char *powVals, unsigned c
     return 1;
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     // Work variables
     int i, j, m, k, p, nerrs, ret = -1;
@@ -1183,5 +1200,9 @@ exit:
 }
 #else
 #include <stdio.h>
-int main (void) { printf ("No support for multi-level encoding on ARM64/NEON\n"); }
+int
+main (void)
+{
+    printf ("No support for multi-level encoding on ARM64/NEON\n");
+}
 #endif

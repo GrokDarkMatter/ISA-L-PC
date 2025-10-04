@@ -90,7 +90,8 @@ extern "C"
      * @returns none
      */
 
-    void ec_init_tables (int k, int rows, unsigned char *a, unsigned char *gftbls);
+    void
+    ec_init_tables (int k, int rows, unsigned char *a, unsigned char *gftbls);
 
     /**
      * @brief Initialize tables for fast Erasure Code encode and decode, runs baseline version.
@@ -98,7 +99,8 @@ extern "C"
      * Baseline version of ec_encode_data() with same parameters.
      */
 
-    void ec_init_tables_base (int k, int rows, unsigned char *a, unsigned char *gftbls);
+    void
+    ec_init_tables_base (int k, int rows, unsigned char *a, unsigned char *gftbls);
 
     /**
      * @brief Generate or decode erasure codes on blocks of data, runs appropriate version.
@@ -122,8 +124,9 @@ extern "C"
      * @returns none
      */
 
-    void ec_encode_data (int len, int k, int rows, unsigned char *gftbls, unsigned char **data,
-                         unsigned char **coding);
+    void
+    ec_encode_data (int len, int k, int rows, unsigned char *gftbls, unsigned char **data,
+                    unsigned char **coding);
     /**
      * @brief Generate syndromes on blocks of data, runs appropriate version.
      *
@@ -146,16 +149,18 @@ extern "C"
      * @returns none
      */
 
-    int ec_decode_data (int len, int k, int rows, unsigned char *gftbls, unsigned char **data,
-                        unsigned char **coding);
+    int
+    ec_decode_data (int len, int k, int rows, unsigned char *gftbls, unsigned char **data,
+                    unsigned char **coding);
 
     /**
      * @brief Generate or decode erasure codes on blocks of data, runs baseline version.
      *
      * Baseline version of ec_encode_data() with same parameters.
      */
-    void ec_encode_data_base (int len, int srcs, int dests, unsigned char *v, unsigned char **src,
-                              unsigned char **dest);
+    void
+    ec_encode_data_base (int len, int srcs, int dests, unsigned char *v, unsigned char **src,
+                         unsigned char **dest);
 
     /**
      * @brief Generate update for encode or decode of erasure codes from single source, runs
@@ -180,8 +185,9 @@ extern "C"
      * @param coding Array of pointers to coded output buffers.
      * @returns none
      */
-    void ec_encode_data_update (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
-                                unsigned char *data, unsigned char **coding);
+    void
+    ec_encode_data_update (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
+                           unsigned char *data, unsigned char **coding);
 
     /**
      * @brief Generate update for encode or decode of erasure codes from single source.
@@ -189,8 +195,9 @@ extern "C"
      * Baseline version of ec_encode_data_update().
      */
 
-    void ec_encode_data_update_base (int len, int k, int rows, int vec_i, unsigned char *v,
-                                     unsigned char *data, unsigned char **dest);
+    void
+    ec_encode_data_update_base (int len, int k, int rows, int vec_i, unsigned char *v,
+                                unsigned char *data, unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector dot product, runs baseline version.
@@ -212,8 +219,9 @@ extern "C"
      * @returns none
      */
 
-    void gf_vect_dot_prod_base (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                unsigned char *dest);
+    void
+    gf_vect_dot_prod_base (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                           unsigned char *dest);
 
     /**
      * @brief GF(2^8) vector dot product, runs appropriate version.
@@ -235,8 +243,9 @@ extern "C"
      * @returns none
      */
 
-    void gf_vect_dot_prod (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                           unsigned char *dest);
+    void
+    gf_vect_dot_prod (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                      unsigned char *dest);
 
     /**
      * @brief GF(2^8) vector multiply accumulate, runs appropriate version.
@@ -261,8 +270,9 @@ extern "C"
      * @returns none
      */
 
-    void gf_vect_mad (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                      unsigned char *dest);
+    void
+    gf_vect_mad (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                 unsigned char *dest);
 
     /**
      * @brief GF(2^8) vector multiply accumulate, baseline version.
@@ -270,8 +280,9 @@ extern "C"
      * Baseline version of gf_vect_mad() with same parameters.
      */
 
-    void gf_vect_mad_base (int len, int vec, int vec_i, unsigned char *v, unsigned char *src,
-                           unsigned char *dest);
+    void
+    gf_vect_mad_base (int len, int vec, int vec_i, unsigned char *v, unsigned char *src,
+                      unsigned char *dest);
 
 // x86 only
 #if defined(__i386__) || defined(__x86_64__)
@@ -282,8 +293,9 @@ extern "C"
      * Arch specific version of ec_encode_data() with same parameters.
      * @requires SSE4.1
      */
-    void ec_encode_data_sse (int len, int k, int rows, unsigned char *gftbls, unsigned char **data,
-                             unsigned char **coding);
+    void
+    ec_encode_data_sse (int len, int k, int rows, unsigned char *gftbls, unsigned char **data,
+                        unsigned char **coding);
 
     /**
      * @brief Generate or decode erasure codes on blocks of data.
@@ -291,8 +303,9 @@ extern "C"
      * Arch specific version of ec_encode_data() with same parameters.
      * @requires AVX
      */
-    void ec_encode_data_avx (int len, int k, int rows, unsigned char *gftbls, unsigned char **data,
-                             unsigned char **coding);
+    void
+    ec_encode_data_avx (int len, int k, int rows, unsigned char *gftbls, unsigned char **data,
+                        unsigned char **coding);
 
     /**
      * @brief Generate or decode erasure codes on blocks of data.
@@ -300,8 +313,9 @@ extern "C"
      * Arch specific version of ec_encode_data() with same parameters.
      * @requires AVX2
      */
-    void ec_encode_data_avx2 (int len, int k, int rows, unsigned char *gftbls, unsigned char **data,
-                              unsigned char **coding);
+    void
+    ec_encode_data_avx2 (int len, int k, int rows, unsigned char *gftbls, unsigned char **data,
+                         unsigned char **coding);
 
     /**
      * @brief Generate update for encode or decode of erasure codes from single source.
@@ -310,8 +324,9 @@ extern "C"
      * @requires SSE4.1
      */
 
-    void ec_encode_data_update_sse (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
-                                    unsigned char *data, unsigned char **coding);
+    void
+    ec_encode_data_update_sse (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
+                               unsigned char *data, unsigned char **coding);
 
     /**
      * @brief Generate update for encode or decode of erasure codes from single source.
@@ -320,8 +335,9 @@ extern "C"
      * @requires AVX
      */
 
-    void ec_encode_data_update_avx (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
-                                    unsigned char *data, unsigned char **coding);
+    void
+    ec_encode_data_update_avx (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
+                               unsigned char *data, unsigned char **coding);
 
     /**
      * @brief Generate update for encode or decode of erasure codes from single source.
@@ -330,8 +346,9 @@ extern "C"
      * @requires AVX2
      */
 
-    void ec_encode_data_update_avx2 (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
-                                     unsigned char *data, unsigned char **coding);
+    void
+    ec_encode_data_update_avx2 (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
+                                unsigned char *data, unsigned char **coding);
 
     /**
      * @brief GF(2^8) vector dot product.
@@ -351,8 +368,9 @@ extern "C"
      * @returns none
      */
 
-    void gf_vect_dot_prod_sse (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                               unsigned char *dest);
+    void
+    gf_vect_dot_prod_sse (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                          unsigned char *dest);
 
     /**
      * @brief GF(2^8) vector dot product.
@@ -372,8 +390,9 @@ extern "C"
      * @returns none
      */
 
-    void gf_vect_dot_prod_avx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                               unsigned char *dest);
+    void
+    gf_vect_dot_prod_avx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                          unsigned char *dest);
 
     /**
      * @brief GF(2^8) vector dot product.
@@ -393,8 +412,9 @@ extern "C"
      * @returns none
      */
 
-    void gf_vect_dot_prod_avx2 (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                unsigned char *dest);
+    void
+    gf_vect_dot_prod_avx2 (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                           unsigned char *dest);
 
     /**
      * @brief GF(2^8) vector dot product with two outputs.
@@ -415,8 +435,9 @@ extern "C"
      * @returns none
      */
 
-    void gf_2vect_dot_prod_sse (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                unsigned char **dest);
+    void
+    gf_2vect_dot_prod_sse (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                           unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector dot product with two outputs.
@@ -437,8 +458,9 @@ extern "C"
      * @returns none
      */
 
-    void gf_2vect_dot_prod_avx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                unsigned char **dest);
+    void
+    gf_2vect_dot_prod_avx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                           unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector dot product with two outputs.
@@ -459,8 +481,9 @@ extern "C"
      * @returns none
      */
 
-    void gf_2vect_dot_prod_avx2 (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                 unsigned char **dest);
+    void
+    gf_2vect_dot_prod_avx2 (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                            unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector dot product with three outputs.
@@ -481,8 +504,9 @@ extern "C"
      * @returns none
      */
 
-    void gf_3vect_dot_prod_sse (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                unsigned char **dest);
+    void
+    gf_3vect_dot_prod_sse (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                           unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector dot product with three outputs.
@@ -503,8 +527,9 @@ extern "C"
      * @returns none
      */
 
-    void gf_3vect_dot_prod_avx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                unsigned char **dest);
+    void
+    gf_3vect_dot_prod_avx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                           unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector dot product with three outputs.
@@ -525,8 +550,9 @@ extern "C"
      * @returns none
      */
 
-    void gf_3vect_dot_prod_avx2 (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                 unsigned char **dest);
+    void
+    gf_3vect_dot_prod_avx2 (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                            unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector dot product with four outputs.
@@ -547,8 +573,9 @@ extern "C"
      * @returns none
      */
 
-    void gf_4vect_dot_prod_sse (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                unsigned char **dest);
+    void
+    gf_4vect_dot_prod_sse (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                           unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector dot product with four outputs.
@@ -569,8 +596,9 @@ extern "C"
      * @returns none
      */
 
-    void gf_4vect_dot_prod_avx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                unsigned char **dest);
+    void
+    gf_4vect_dot_prod_avx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                           unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector dot product with four outputs.
@@ -591,8 +619,9 @@ extern "C"
      * @returns none
      */
 
-    void gf_4vect_dot_prod_avx2 (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                 unsigned char **dest);
+    void
+    gf_4vect_dot_prod_avx2 (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                            unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector dot product with five outputs.
@@ -613,8 +642,9 @@ extern "C"
      * @returns none
      */
 
-    void gf_5vect_dot_prod_sse (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                unsigned char **dest);
+    void
+    gf_5vect_dot_prod_sse (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                           unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector dot product with five outputs.
@@ -635,8 +665,9 @@ extern "C"
      * @returns none
      */
 
-    void gf_5vect_dot_prod_avx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                unsigned char **dest);
+    void
+    gf_5vect_dot_prod_avx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                           unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector dot product with five outputs.
@@ -657,8 +688,9 @@ extern "C"
      * @returns none
      */
 
-    void gf_5vect_dot_prod_avx2 (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                 unsigned char **dest);
+    void
+    gf_5vect_dot_prod_avx2 (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                            unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector dot product with six outputs.
@@ -679,8 +711,9 @@ extern "C"
      * @returns none
      */
 
-    void gf_6vect_dot_prod_sse (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                unsigned char **dest);
+    void
+    gf_6vect_dot_prod_sse (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                           unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector dot product with six outputs.
@@ -701,8 +734,9 @@ extern "C"
      * @returns none
      */
 
-    void gf_6vect_dot_prod_avx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                unsigned char **dest);
+    void
+    gf_6vect_dot_prod_avx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                           unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector dot product with six outputs.
@@ -723,8 +757,9 @@ extern "C"
      * @returns none
      */
 
-    void gf_6vect_dot_prod_avx2 (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                 unsigned char **dest);
+    void
+    gf_6vect_dot_prod_avx2 (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                            unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector multiply accumulate, arch specific version.
@@ -733,8 +768,9 @@ extern "C"
      * @requires SSE4.1
      */
 
-    void gf_vect_mad_sse (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                          unsigned char *dest);
+    void
+    gf_vect_mad_sse (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                     unsigned char *dest);
     /**
      * @brief GF(2^8) vector multiply accumulate, arch specific version.
      *
@@ -742,8 +778,9 @@ extern "C"
      * @requires AVX
      */
 
-    void gf_vect_mad_avx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                          unsigned char *dest);
+    void
+    gf_vect_mad_avx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                     unsigned char *dest);
 
     /**
      * @brief GF(2^8) vector multiply accumulate, arch specific version.
@@ -752,8 +789,9 @@ extern "C"
      * @requires AVX2
      */
 
-    void gf_vect_mad_avx2 (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                           unsigned char *dest);
+    void
+    gf_vect_mad_avx2 (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                      unsigned char *dest);
 
     /**
      * @brief GF(2^8) vector multiply with 2 accumulate.  SSE version.
@@ -776,21 +814,24 @@ extern "C"
      * @returns none
      */
 
-    void gf_2vect_mad_sse (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                           unsigned char **dest);
+    void
+    gf_2vect_mad_sse (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                      unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector multiply with 2 accumulate. AVX version of gf_2vect_mad_sse().
      * @requires AVX
      */
-    void gf_2vect_mad_avx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                           unsigned char **dest);
+    void
+    gf_2vect_mad_avx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                      unsigned char **dest);
     /**
      * @brief GF(2^8) vector multiply with 2 accumulate. AVX2 version of gf_2vect_mad_sse().
      * @requires AVX2
      */
-    void gf_2vect_mad_avx2 (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                            unsigned char **dest);
+    void
+    gf_2vect_mad_avx2 (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                       unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector multiply with 3 accumulate. SSE version.
@@ -813,22 +854,25 @@ extern "C"
      * @returns none
      */
 
-    void gf_3vect_mad_sse (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                           unsigned char **dest);
+    void
+    gf_3vect_mad_sse (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                      unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector multiply with 3 accumulate. AVX version of gf_3vect_mad_sse().
      * @requires AVX
      */
-    void gf_3vect_mad_avx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                           unsigned char **dest);
+    void
+    gf_3vect_mad_avx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                      unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector multiply with 3 accumulate. AVX2 version of gf_3vect_mad_sse().
      * @requires AVX2
      */
-    void gf_3vect_mad_avx2 (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                            unsigned char **dest);
+    void
+    gf_3vect_mad_avx2 (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                       unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector multiply with 4 accumulate. SSE version.
@@ -851,61 +895,70 @@ extern "C"
      * @returns none
      */
 
-    void gf_4vect_mad_sse (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                           unsigned char **dest);
+    void
+    gf_4vect_mad_sse (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                      unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector multiply with 4 accumulate. AVX version of gf_4vect_mad_sse().
      * @requires AVX
      */
-    void gf_4vect_mad_avx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                           unsigned char **dest);
+    void
+    gf_4vect_mad_avx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                      unsigned char **dest);
     /**
      * @brief GF(2^8) vector multiply with 4 accumulate. AVX2 version of gf_4vect_mad_sse().
      * @requires AVX2
      */
-    void gf_4vect_mad_avx2 (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                            unsigned char **dest);
+    void
+    gf_4vect_mad_avx2 (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                       unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector multiply with 5 accumulate. SSE version.
      * @requires SSE4.1
      */
-    void gf_5vect_mad_sse (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                           unsigned char **dest);
+    void
+    gf_5vect_mad_sse (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                      unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector multiply with 5 accumulate. AVX version.
      * @requires AVX
      */
-    void gf_5vect_mad_avx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                           unsigned char **dest);
+    void
+    gf_5vect_mad_avx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                      unsigned char **dest);
     /**
      * @brief GF(2^8) vector multiply with 5 accumulate. AVX2 version.
      * @requires AVX2
      */
-    void gf_5vect_mad_avx2 (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                            unsigned char **dest);
+    void
+    gf_5vect_mad_avx2 (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                       unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector multiply with 6 accumulate. SSE version.
      * @requires SSE4.1
      */
-    void gf_6vect_mad_sse (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                           unsigned char **dest);
+    void
+    gf_6vect_mad_sse (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                      unsigned char **dest);
     /**
      * @brief GF(2^8) vector multiply with 6 accumulate. AVX version.
      * @requires AVX
      */
-    void gf_6vect_mad_avx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                           unsigned char **dest);
+    void
+    gf_6vect_mad_avx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                      unsigned char **dest);
 
     /**
      * @brief GF(2^8) vector multiply with 6 accumulate. AVX2 version.
      * @requires AVX2
      */
-    void gf_6vect_mad_avx2 (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                            unsigned char **dest);
+    void
+    gf_6vect_mad_avx2 (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                       unsigned char **dest);
 
 #endif
 
@@ -921,7 +974,8 @@ extern "C"
      * @returns  Product of a and b in GF(2^8)
      */
 
-    unsigned char gf_mul (unsigned char a, unsigned char b);
+    unsigned char
+    gf_mul (unsigned char a, unsigned char b);
 
     /**
      * @brief Single element GF(2^8) inverse.
@@ -930,7 +984,8 @@ extern "C"
      * @returns  Field element b such that a x b = {1}
      */
 
-    unsigned char gf_inv (unsigned char a);
+    unsigned char
+    gf_inv (unsigned char a);
 
     /**
      * @brief Generate a matrix of coefficients to be used for encoding.
@@ -956,7 +1011,8 @@ extern "C"
      * @returns  none
      */
 
-    void gf_gen_rs_matrix (unsigned char *a, int m, int k);
+    void
+    gf_gen_rs_matrix (unsigned char *a, int m, int k);
 
     /**
      * @brief Generate a matrix of coefficients to be used for encoding.
@@ -983,7 +1039,8 @@ extern "C"
      * @param k  number of columns in matrix corresponding to srcs.
      * @returns  none
      */
-    void gf_gen_rsr_matrix (unsigned char *a, int m, int k);
+    void
+    gf_gen_rsr_matrix (unsigned char *a, int m, int k);
 
     /**
      * @brief Generate a Cauchy matrix of coefficients to be used for encoding.
@@ -998,7 +1055,8 @@ extern "C"
      * @returns  none
      */
 
-    void gf_gen_cauchy1_matrix (unsigned char *a, int m, int k);
+    void
+    gf_gen_cauchy1_matrix (unsigned char *a, int m, int k);
 
     /**
      * @brief Generate a Polynomial of coefficients to be used for encoding.
@@ -1009,7 +1067,8 @@ extern "C"
      * @param rank  Number of terms, corresponds to parity count
      * @returns  none
      */
-    void gf_gen_poly (unsigned char *p, int rank);
+    void
+    gf_gen_poly (unsigned char *p, int rank);
 
     /**
      * @brief Generate a Polynomial matrix of coefficients to be used for encoding.
@@ -1021,7 +1080,8 @@ extern "C"
      * @param k  number of columns in matrix corresponding to srcs.
      * @returns  none
      */
-    void gf_gen_poly_matrix (unsigned char *a, int m, int k);
+    void
+    gf_gen_poly_matrix (unsigned char *a, int m, int k);
 
     /**
      * @brief Invert a matrix in GF(2^8)
@@ -1035,7 +1095,8 @@ extern "C"
      * @returns 0 successful, other fail on singular input matrix
      */
 
-    int gf_invert_matrix (unsigned char *in, unsigned char *out, const int n);
+    int
+    gf_invert_matrix (unsigned char *in, unsigned char *out, const int n);
 
     /*************************************************************/
 

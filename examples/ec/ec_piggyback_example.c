@@ -40,7 +40,8 @@
 typedef unsigned char u8;
 int verbose = 0;
 
-int usage (void)
+int
+usage (void)
 {
     fprintf (stderr,
              "Usage: ec_piggyback_example [options]\n"
@@ -57,7 +58,8 @@ int usage (void)
 }
 
 // Cauchy-based matrix
-void gf_gen_full_pb_cauchy_matrix (u8 *a, int m, int k)
+void
+gf_gen_full_pb_cauchy_matrix (u8 *a, int m, int k)
 {
     int i, j, p = m - k;
 
@@ -97,7 +99,8 @@ void gf_gen_full_pb_cauchy_matrix (u8 *a, int m, int k)
 }
 
 // Vandermonde based matrix - not recommended due to limits when invertable
-void gf_gen_full_pb_vand_matrix (u8 *a, int m, int k)
+void
+gf_gen_full_pb_vand_matrix (u8 *a, int m, int k)
 {
     int i, j, p = m - k;
     unsigned char q, gen = 1;
@@ -150,7 +153,8 @@ void gf_gen_full_pb_vand_matrix (u8 *a, int m, int k)
     }
 }
 
-void print_matrix (int m, int k, unsigned char *s, const char *msg)
+void
+print_matrix (int m, int k, unsigned char *s, const char *msg)
 {
     int i, j;
 
@@ -167,7 +171,8 @@ void print_matrix (int m, int k, unsigned char *s, const char *msg)
     printf ("\n");
 }
 
-void print_list (int n, unsigned char *s, const char *msg)
+void
+print_list (int n, unsigned char *s, const char *msg)
 {
     int i;
     if (!verbose)
@@ -179,19 +184,20 @@ void print_list (int n, unsigned char *s, const char *msg)
     printf ("\n");
 }
 
-static int gf_gen_decode_matrix (u8 *encode_matrix, u8 *decode_matrix, u8 *invert_matrix,
-                                 u8 *temp_matrix, u8 *decode_index, u8 *frag_err_list, int nerrs,
-                                 int k, int m);
+static int
+gf_gen_decode_matrix (u8 *encode_matrix, u8 *decode_matrix, u8 *invert_matrix, u8 *temp_matrix,
+                      u8 *decode_index, u8 *frag_err_list, int nerrs, int k, int m);
 
-static void encode_data_sparse (const int k, const int k2, const int p, const int len,
-                                u8 *g_tbls_faster, u8 **frag_ptrs, uint8_t **parity_ptrs,
-                                u8 *g_tbls)
+static void
+encode_data_sparse (const int k, const int k2, const int p, const int len, u8 *g_tbls_faster,
+                    u8 **frag_ptrs, uint8_t **parity_ptrs, u8 *g_tbls)
 {
     ec_encode_data (len / 2, k, p, g_tbls_faster, frag_ptrs, parity_ptrs);
     ec_encode_data (len / 2, k2, p, &g_tbls[ k2 * p * 32 ], frag_ptrs, &parity_ptrs[ p ]);
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     int i, j, m, c, e, ret;
     int k = 10, p = 4, len = 8 * 1024; // Default params
@@ -486,9 +492,9 @@ int main (int argc, char *argv[])
 
 // Generate decode matrix from encode matrix and erasure list
 
-static int gf_gen_decode_matrix (u8 *encode_matrix, u8 *decode_matrix, u8 *invert_matrix,
-                                 u8 *temp_matrix, u8 *decode_index, u8 *frag_err_list, int nerrs,
-                                 int k, int m)
+static int
+gf_gen_decode_matrix (u8 *encode_matrix, u8 *decode_matrix, u8 *invert_matrix, u8 *temp_matrix,
+                      u8 *decode_index, u8 *frag_err_list, int nerrs, int k, int m)
 {
     int i, j, p, r;
     int nsrcerrs = 0;

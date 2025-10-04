@@ -9,9 +9,11 @@
 
 #define DICT_LEN 32 * 1024
 
-extern void isal_deflate_hash (struct isal_zstream *stream, uint8_t *dict, int dict_len);
+extern void
+isal_deflate_hash (struct isal_zstream *stream, uint8_t *dict, int dict_len);
 
-void create_rand_data (uint8_t *data, uint32_t size)
+void
+create_rand_data (uint8_t *data, uint32_t size)
 {
     int i;
     for (i = 0; i < size; i++)
@@ -20,7 +22,8 @@ void create_rand_data (uint8_t *data, uint32_t size)
     }
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     int time = BENCHMARK_TIME;
     struct isal_zstream stream;

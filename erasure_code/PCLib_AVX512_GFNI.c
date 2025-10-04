@@ -44,13 +44,15 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 **********************************************************************/
 #define PC_MAX_ERRS 32
 
-unsigned char gf_div_AVX512_GFNI (unsigned char a, unsigned char b)
+unsigned char
+gf_div_AVX512_GFNI (unsigned char a, unsigned char b)
 {
     return gf_mul (a, gf_inv (b));
 }
 
 // Compute base ^ Power
-int pc_pow_AVX512_GFNI (unsigned char base, unsigned char Power)
+int
+pc_pow_AVX512_GFNI (unsigned char base, unsigned char Power)
 {
     // The first power is always 1
     if (Power == 0)
@@ -68,8 +70,9 @@ int pc_pow_AVX512_GFNI (unsigned char base, unsigned char Power)
 }
 
 // Assume there is a single error and try to correct, see if syndromes match
-int pc_verify_single_error_AVX512_GFNI (unsigned char *S, unsigned char **data, int k, int p,
-                                        int newPos, int offSet)
+int
+pc_verify_single_error_AVX512_GFNI (unsigned char *S, unsigned char **data, int k, int p,
+                                    int newPos, int offSet)
 {
     // LSB has parity, for single error this equals error value
     unsigned char eVal = S[ 0 ];
@@ -102,7 +105,9 @@ int pc_verify_single_error_AVX512_GFNI (unsigned char *S, unsigned char **data, 
     return 1;
 }
 
-int gf_invert_matrix_AVX512_GFNI (unsigned char *in_mat, unsigned char *out_mat, const int n)
+// Invert matrix with vector assist
+int
+gf_invert_matrix_AVX512_GFNI (unsigned char *in_mat, unsigned char *out_mat, const int n)
 {
     __m512i affineVal512;
     __m128i affineVal128;
@@ -184,7 +189,9 @@ int gf_invert_matrix_AVX512_GFNI (unsigned char *in_mat, unsigned char *out_mat,
     return 0;
 }
 
-int find_roots_AVX512_GFNI (unsigned char *keyEq, unsigned char *roots, int mSize)
+// Find rots with vector assist
+int
+find_roots_AVX512_GFNI (unsigned char *keyEq, unsigned char *roots, int mSize)
 {
     static __m512i Vandermonde[ 16 ][ 4 ];
     __m512i sum[ 4 ], temp, affineVal512;
@@ -258,8 +265,9 @@ int find_roots_AVX512_GFNI (unsigned char *keyEq, unsigned char *roots, int mSiz
 }
 
 // Compute error values using Vandermonde
-int pc_compute_error_values_AVX512_GFNI (int mSize, unsigned char *S, unsigned char *roots,
-                                         unsigned char *errVal)
+int
+pc_compute_error_values_AVX512_GFNI (int mSize, unsigned char *S, unsigned char *roots,
+                                     unsigned char *errVal)
 {
     int i, j;
     unsigned char Mat[ PC_MAX_ERRS * PC_MAX_ERRS ];
@@ -298,8 +306,9 @@ int pc_compute_error_values_AVX512_GFNI (int mSize, unsigned char *S, unsigned c
 }
 
 // Verify proposed data values and locations can generate syndromes
-int pc_verify_syndromes_AVX512_GFNI (unsigned char *S, int p, int mSize, unsigned char *roots,
-                                     unsigned char *errVal)
+int
+pc_verify_syndromes_AVX512_GFNI (unsigned char *S, int p, int mSize, unsigned char *roots,
+                                 unsigned char *errVal)
 {
     int i, j;
     unsigned char sum = 0;
@@ -334,7 +343,8 @@ static const uint64_t gf_table_gfni[ 256 ]; // Assume defined in ec_base.h
 // lambda: caller-allocated array of size at least (length + 1 + 31), filled with locator poly
 // coeffs. Padded for SIMD. Returns: degree L of the error locator polynomial. Note: Assumes length
 // <= 32 for AVX-512 (32-byte vectors); extend loops for larger lengths.
-int berlekamp_massey_AVX512_GFNI (unsigned char *syndromes, int length, unsigned char *lambda)
+int
+berlekamp_massey_AVX512_GFNI (unsigned char *syndromes, int length, unsigned char *lambda)
 {
     unsigned char b[ PC_MAX_ERRS * 2 + 1 ]; // Padded for AVX-512 (32-byte alignment)
     unsigned char temp[ PC_MAX_ERRS * 2 + 1 ];
@@ -406,8 +416,9 @@ int berlekamp_massey_AVX512_GFNI (unsigned char *syndromes, int length, unsigned
 }
 
 // Attempt to detect multiple error locations and values
-int pc_verify_multiple_errors_AVX512_GFNI (unsigned char *S, unsigned char **data, int mSize, int k,
-                                           int p, int newPos, int offSet, unsigned char *keyEq)
+int
+pc_verify_multiple_errors_AVX512_GFNI (unsigned char *S, unsigned char **data, int mSize, int k,
+                                       int p, int newPos, int offSet, unsigned char *keyEq)
 {
     unsigned char roots[ PC_MAX_ERRS ] = { 0 };
     unsigned char errVal[ PC_MAX_ERRS ];
@@ -443,7 +454,8 @@ int pc_verify_multiple_errors_AVX512_GFNI (unsigned char *S, unsigned char **dat
 }
 
 // PGZ decoding step 1, see if we can invert the matrix, if so, compute key equation
-int PGZ_AVX512_GFNI (unsigned char *S, int p, unsigned char *keyEq)
+int
+PGZ_AVX512_GFNI (unsigned char *S, int p, unsigned char *keyEq)
 {
     unsigned char SMat[ PC_MAX_ERRS * PC_MAX_ERRS ], SMat_inv[ PC_MAX_ERRS * PC_MAX_ERRS ];
     int i, j;
@@ -476,8 +488,9 @@ int PGZ_AVX512_GFNI (unsigned char *S, int p, unsigned char *keyEq)
 }
 
 // Syndromes are non-zero, try to calculate error location and data values
-int pc_correct_AVX512_GFNI (int newPos, int k, int p, unsigned char **data, unsigned char **coding,
-                            int vLen)
+int
+pc_correct_AVX512_GFNI (int newPos, int k, int p, unsigned char **data, unsigned char **coding,
+                        int vLen)
 {
     int i, mSize;
     unsigned char S[ PC_MAX_ERRS ], keyEq[ PC_MAX_ERRS + 1 ] = { 0 };
@@ -523,8 +536,9 @@ int pc_correct_AVX512_GFNI (int newPos, int k, int p, unsigned char **data, unsi
     return 0;
 }
 
-int gf_2vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                              unsigned char **dest, int offSet)
+int
+gf_2vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **dest, int offSet)
 {
     int curSym, curPos;             // Loop counters
     __mmask8 mask;                  // Mask used to test for zero
@@ -562,8 +576,9 @@ int gf_2vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned ch
     return (curPos);
 }
 
-int gf_3vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                              unsigned char **dest, int offSet)
+int
+gf_3vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **dest, int offSet)
 {
     int curSym, curPos;             // Loop counters
     __mmask8 mask;                  // Mask used to test for zero
@@ -607,8 +622,9 @@ int gf_3vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned ch
     return (curPos);
 }
 
-int gf_4vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                              unsigned char **dest, int offSet)
+int
+gf_4vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **dest, int offSet)
 {
     int curSym, curPos;             // Loop counters
     __mmask8 mask;                  // Mask used to test for zero
@@ -658,8 +674,9 @@ int gf_4vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned ch
     return (curPos);
 }
 
-int gf_5vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                              unsigned char **dest, int offSet)
+int
+gf_5vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **dest, int offSet)
 {
     int curSym, curPos;             // Loop counters
     __mmask8 mask;                  // Mask used to test for zero
@@ -715,8 +732,9 @@ int gf_5vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned ch
     return (curPos);
 }
 
-int gf_6vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                              unsigned char **dest, int offSet)
+int
+gf_6vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **dest, int offSet)
 {
     int curSym, curPos;             // Loop counters
     __mmask8 mask;                  // Mask used to test for zero
@@ -778,8 +796,9 @@ int gf_6vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned ch
     return (curPos);
 }
 
-int gf_7vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                              unsigned char **dest, int offSet)
+int
+gf_7vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **dest, int offSet)
 {
     int curSym, curPos;             // Loop counters
     __mmask8 mask;                  // Mask used to test for zero
@@ -847,8 +866,9 @@ int gf_7vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned ch
     return (curPos);
 }
 
-int gf_8vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                              unsigned char **dest, int offSet)
+int
+gf_8vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **dest, int offSet)
 {
     int curSym, curPos;             // Loop counters
     __mmask8 mask;                  // Mask used to test for zero
@@ -922,8 +942,9 @@ int gf_8vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned ch
     return (curPos);
 }
 
-int gf_9vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                              unsigned char **dest, int offSet)
+int
+gf_9vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **dest, int offSet)
 {
     int curSym, curPos;             // Loop counters
     __mmask8 mask;                  // Mask used to test for zero
@@ -1003,8 +1024,9 @@ int gf_9vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned ch
     return (curPos);
 }
 
-int gf_10vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_10vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;              // Loop counters
     __mmask8 mask;                   // Mask used to test for zero
@@ -1090,8 +1112,9 @@ int gf_10vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_11vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_11vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;               // Loop counters
     __mmask8 mask;                    // Mask used to test for zero
@@ -1183,8 +1206,9 @@ int gf_11vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_12vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_12vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;               // Loop counters
     __mmask8 mask;                    // Mask used to test for zero
@@ -1282,8 +1306,9 @@ int gf_12vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_13vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_13vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;               // Loop counters
     __mmask8 mask;                    // Mask used to test for zero
@@ -1387,8 +1412,9 @@ int gf_13vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_14vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_14vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;               // Loop counters
     __mmask8 mask;                    // Mask used to test for zero
@@ -1498,8 +1524,9 @@ int gf_14vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_15vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_15vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;               // Loop counters
     __mmask8 mask;                    // Mask used to test for zero
@@ -1615,8 +1642,9 @@ int gf_15vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_16vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_16vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;               // Loop counters
     __mmask8 mask;                    // Mask used to test for zero
@@ -1738,8 +1766,9 @@ int gf_16vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_17vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_17vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;               // Loop counters
     __mmask8 mask;                    // Mask used to test for zero
@@ -1867,8 +1896,9 @@ int gf_17vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_18vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_18vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;               // Loop counters
     __mmask8 mask;                    // Mask used to test for zero
@@ -2002,8 +2032,9 @@ int gf_18vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_19vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_19vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;               // Loop counters
     __mmask8 mask;                    // Mask used to test for zero
@@ -2143,8 +2174,9 @@ int gf_19vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_20vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_20vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;               // Loop counters
     __mmask8 mask;                    // Mask used to test for zero
@@ -2290,8 +2322,9 @@ int gf_20vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_21vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_21vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;               // Loop counters
     __mmask8 mask;                    // Mask used to test for zero
@@ -2443,8 +2476,9 @@ int gf_21vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_22vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_22vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;               // Loop counters
     __mmask8 mask;                    // Mask used to test for zero
@@ -2602,8 +2636,9 @@ int gf_22vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_23vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_23vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;               // Loop counters
     __mmask8 mask;                    // Mask used to test for zero
@@ -2767,8 +2802,9 @@ int gf_23vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_24vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_24vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;               // Loop counters
     __mmask8 mask;                    // Mask used to test for zero
@@ -2938,8 +2974,9 @@ int gf_24vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_25vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_25vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;               // Loop counters
     __mmask8 mask;                    // Mask used to test for zero
@@ -3115,8 +3152,9 @@ int gf_25vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_26vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_26vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;               // Loop counters
     __mmask8 mask;                    // Mask used to test for zero
@@ -3298,8 +3336,9 @@ int gf_26vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_27vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_27vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;               // Loop counters
     __mmask8 mask;                    // Mask used to test for zero
@@ -3487,8 +3526,9 @@ int gf_27vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_28vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_28vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;               // Loop counters
     __mmask8 mask;                    // Mask used to test for zero
@@ -3682,8 +3722,9 @@ int gf_28vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_29vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_29vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;               // Loop counters
     __mmask8 mask;                    // Mask used to test for zero
@@ -3883,8 +3924,9 @@ int gf_29vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_30vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_30vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;               // Loop counters
     __mmask8 mask;                    // Mask used to test for zero
@@ -4090,8 +4132,9 @@ int gf_30vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_31vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_31vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;               // Loop counters
     __mmask8 mask;                    // Mask used to test for zero
@@ -4303,8 +4346,9 @@ int gf_31vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_32vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest, int offSet)
+int
+gf_32vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest, int offSet)
 {
     int curSym, curPos;               // Loop counters
     __mmask8 mask;                    // Mask used to test for zero
@@ -4522,8 +4566,9 @@ int gf_32vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_2vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                              unsigned char **dest)
+int
+gf_2vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **dest)
 {
     int curSym, curPos;             // Loop counters
     __m512i parity[ 2 ], taps[ 2 ]; // Parity registers
@@ -4555,8 +4600,9 @@ int gf_2vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned ch
     return (curPos);
 }
 
-int gf_3vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                              unsigned char **dest)
+int
+gf_3vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **dest)
 {
     int curSym, curPos;             // Loop counters
     __m512i parity[ 3 ], taps[ 3 ]; // Parity registers
@@ -4593,8 +4639,9 @@ int gf_3vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned ch
     return (curPos);
 }
 
-int gf_4vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                              unsigned char **dest)
+int
+gf_4vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **dest)
 {
     int curSym, curPos;             // Loop counters
     __m512i parity[ 4 ], taps[ 4 ]; // Parity registers
@@ -4636,8 +4683,9 @@ int gf_4vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned ch
     return (curPos);
 }
 
-int gf_5vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                              unsigned char **dest)
+int
+gf_5vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **dest)
 {
     int curSym, curPos;             // Loop counters
     __m512i parity[ 5 ], taps[ 5 ]; // Parity registers
@@ -4684,8 +4732,9 @@ int gf_5vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned ch
     return (curPos);
 }
 
-int gf_6vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                              unsigned char **dest)
+int
+gf_6vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **dest)
 {
     int curSym, curPos;             // Loop counters
     __m512i parity[ 6 ], taps[ 6 ]; // Parity registers
@@ -4737,8 +4786,9 @@ int gf_6vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned ch
     return (curPos);
 }
 
-int gf_7vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                              unsigned char **dest)
+int
+gf_7vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **dest)
 {
     int curSym, curPos;             // Loop counters
     __m512i parity[ 7 ], taps[ 7 ]; // Parity registers
@@ -4795,8 +4845,9 @@ int gf_7vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned ch
     return (curPos);
 }
 
-int gf_8vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                              unsigned char **dest)
+int
+gf_8vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **dest)
 {
     int curSym, curPos;             // Loop counters
     __m512i parity[ 8 ], taps[ 8 ]; // Parity registers
@@ -4858,8 +4909,9 @@ int gf_8vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned ch
     return (curPos);
 }
 
-int gf_9vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                              unsigned char **dest)
+int
+gf_9vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **dest)
 {
     int curSym, curPos;             // Loop counters
     __m512i parity[ 9 ], taps[ 9 ]; // Parity registers
@@ -4926,8 +4978,9 @@ int gf_9vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned ch
     return (curPos);
 }
 
-int gf_10vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_10vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 10 ], taps[ 10 ]; // Parity registers
@@ -4999,8 +5052,9 @@ int gf_10vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_11vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_11vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 11 ], taps[ 11 ]; // Parity registers
@@ -5077,8 +5131,9 @@ int gf_11vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_12vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_12vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 12 ], taps[ 12 ]; // Parity registers
@@ -5160,8 +5215,9 @@ int gf_12vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_13vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_13vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 13 ], taps[ 13 ]; // Parity registers
@@ -5248,8 +5304,9 @@ int gf_13vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_14vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_14vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 14 ], taps[ 14 ]; // Parity registers
@@ -5341,8 +5398,9 @@ int gf_14vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_15vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_15vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 15 ], taps[ 15 ]; // Parity registers
@@ -5439,8 +5497,9 @@ int gf_15vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_16vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_16vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 16 ], taps[ 16 ]; // Parity registers
@@ -5542,8 +5601,9 @@ int gf_16vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_17vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_17vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 17 ], taps[ 17 ]; // Parity registers
@@ -5650,8 +5710,9 @@ int gf_17vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_18vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_18vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 18 ], taps[ 18 ]; // Parity registers
@@ -5763,8 +5824,9 @@ int gf_18vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_19vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_19vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 19 ], taps[ 19 ]; // Parity registers
@@ -5881,8 +5943,9 @@ int gf_19vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_20vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_20vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 20 ], taps[ 20 ]; // Parity registers
@@ -6004,8 +6067,9 @@ int gf_20vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_21vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_21vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 21 ], taps[ 21 ]; // Parity registers
@@ -6132,8 +6196,9 @@ int gf_21vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_22vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_22vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 22 ], taps[ 22 ]; // Parity registers
@@ -6265,8 +6330,9 @@ int gf_22vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_23vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_23vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 23 ], taps[ 23 ]; // Parity registers
@@ -6403,8 +6469,9 @@ int gf_23vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_24vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_24vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 24 ], taps[ 24 ]; // Parity registers
@@ -6546,8 +6613,9 @@ int gf_24vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_25vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_25vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 25 ], taps[ 25 ]; // Parity registers
@@ -6694,8 +6762,9 @@ int gf_25vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_26vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_26vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 26 ], taps[ 26 ]; // Parity registers
@@ -6847,8 +6916,9 @@ int gf_26vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_27vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_27vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 27 ], taps[ 27 ]; // Parity registers
@@ -7005,8 +7075,9 @@ int gf_27vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_28vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_28vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 28 ], taps[ 28 ]; // Parity registers
@@ -7168,8 +7239,9 @@ int gf_28vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_29vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_29vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 29 ], taps[ 29 ]; // Parity registers
@@ -7336,8 +7408,9 @@ int gf_29vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_30vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_30vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 30 ], taps[ 30 ]; // Parity registers
@@ -7509,8 +7582,9 @@ int gf_30vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_31vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_31vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 31 ], taps[ 31 ]; // Parity registers
@@ -7687,8 +7761,9 @@ int gf_31vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-int gf_32vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                               unsigned char **dest)
+int
+gf_32vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                           unsigned char **dest)
 {
     int curSym, curPos;               // Loop counters
     __m512i parity[ 32 ], taps[ 32 ]; // Parity registers
@@ -7870,8 +7945,9 @@ int gf_32vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned c
     return (curPos);
 }
 
-void pc_encode_data_avx512_gfni (int len, int k, int rows, unsigned char *g_tbls,
-                                 unsigned char **data, unsigned char **coding)
+void
+pc_encode_data_avx512_gfni (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
+                            unsigned char **coding)
 {
     switch (rows)
     {
@@ -7970,8 +8046,9 @@ void pc_encode_data_avx512_gfni (int len, int k, int rows, unsigned char *g_tbls
         break;
     }
 }
-int pc_decode_data_avx512_gfni (int len, int k, int rows, unsigned char *g_tbls,
-                                unsigned char **data, unsigned char **coding, int retries)
+int
+pc_decode_data_avx512_gfni (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
+                            unsigned char **coding, int retries)
 {
     int newPos = 0, retry = 0;
     while ((newPos < len) && (retry++ < retries))

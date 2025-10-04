@@ -35,7 +35,8 @@
 
 typedef unsigned char u8;
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     int i, ret = -1;
     u8 *buff1 = NULL, *buff2 = NULL, *buff3 = NULL, gf_const_tbl[ 64 ], a = 2;

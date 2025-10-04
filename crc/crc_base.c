@@ -159,7 +159,8 @@ static const uint32_t crc32_table_gzip_refl[ 256 ] = {
     0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94, 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
-uint16_t crc16_t10dif_base (uint16_t seed, uint8_t *buf, uint64_t len)
+uint16_t
+crc16_t10dif_base (uint16_t seed, uint8_t *buf, uint64_t len)
 {
     int i;
     uint16_t crc = seed;
@@ -170,7 +171,8 @@ uint16_t crc16_t10dif_base (uint16_t seed, uint8_t *buf, uint64_t len)
     return crc;
 }
 
-uint16_t crc16_t10dif_copy_base (uint16_t seed, uint8_t *dst, uint8_t *src, uint64_t len)
+uint16_t
+crc16_t10dif_copy_base (uint16_t seed, uint8_t *dst, uint8_t *src, uint64_t len)
 {
     int i;
     uint16_t crc = seed;
@@ -184,7 +186,8 @@ uint16_t crc16_t10dif_copy_base (uint16_t seed, uint8_t *dst, uint8_t *src, uint
     return crc;
 }
 
-unsigned int crc32_iscsi_base (unsigned char *buffer, int len, unsigned int crc_init)
+unsigned int
+crc32_iscsi_base (unsigned char *buffer, int len, unsigned int crc_init)
 {
     unsigned int crc;
     unsigned char *p_buf;
@@ -200,7 +203,8 @@ unsigned int crc32_iscsi_base (unsigned char *buffer, int len, unsigned int crc_
     return crc;
 }
 
-uint32_t crc32_ieee_base (uint32_t seed, uint8_t *buf, uint64_t len)
+uint32_t
+crc32_ieee_base (uint32_t seed, uint8_t *buf, uint64_t len)
 {
     unsigned int crc = ~seed;
 
@@ -213,7 +217,8 @@ uint32_t crc32_ieee_base (uint32_t seed, uint8_t *buf, uint64_t len)
     return ~crc;
 }
 
-uint32_t crc32_gzip_refl_base (uint32_t seed, uint8_t *buf, uint64_t len)
+uint32_t
+crc32_gzip_refl_base (uint32_t seed, uint8_t *buf, uint64_t len)
 {
     unsigned int crc;
     unsigned char *p_buf;

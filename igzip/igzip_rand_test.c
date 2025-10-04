@@ -140,7 +140,8 @@ struct test_options
 
 struct test_options options;
 
-void init_options (void)
+void
+init_options (void)
 {
     options.test_seed = TEST_SEED;
     options.randoms = RANDOMS;
@@ -152,7 +153,8 @@ void init_options (void)
 #endif
 }
 
-void usage (void)
+void
+usage (void)
 {
     fprintf (stderr, "Usage: igzip_rand_test [options] [FILES]\n"
                      "  -h          help, print this message\n"
@@ -163,7 +165,8 @@ void usage (void)
     exit (0);
 }
 
-size_t parse_options (int argc, char *argv[])
+size_t
+parse_options (int argc, char *argv[])
 {
     init_options ();
 #ifdef HAVE_GETOPT
@@ -202,7 +205,8 @@ size_t parse_options (int argc, char *argv[])
  * length and look back distance. The probability of a random character or a
  * repeat being chosen is semi-randomly chosen by setting max_repeat_data to be
  * differing values */
-void create_rand_repeat_data (uint8_t *data, int size)
+void
+create_rand_repeat_data (uint8_t *data, int size)
 {
     uint32_t next_data;
     uint8_t *data_start = data;
@@ -304,7 +308,8 @@ void create_rand_repeat_data (uint8_t *data, int size)
     }
 }
 
-void create_rand_dict (uint8_t *dict, uint32_t dict_len, uint8_t *buf, uint32_t buf_len)
+void
+create_rand_dict (uint8_t *dict, uint32_t dict_len, uint8_t *buf, uint32_t buf_len)
 {
     uint32_t dict_chunk_size, buf_chunk_size;
     while (dict_len > 0)
@@ -327,18 +332,21 @@ void create_rand_dict (uint8_t *dict, uint32_t dict_len, uint8_t *buf, uint32_t 
     }
 }
 
-int get_rand_data_length (void)
+int
+get_rand_data_length (void)
 {
     int max_mask = (1 << ((rand () % (MAX_BITS_COUNT - MIN_BITS_COUNT)) + MIN_BITS_COUNT)) - 1;
     return rand () & max_mask;
 }
 
-int get_rand_level (void)
+int
+get_rand_level (void)
 {
     return ISAL_DEF_MIN_LEVEL + rand () % (ISAL_DEF_MAX_LEVEL - ISAL_DEF_MIN_LEVEL + 1);
 }
 
-int get_rand_level_buf_size (int level)
+int
+get_rand_level_buf_size (int level)
 {
     int size;
     switch (level)
@@ -356,7 +364,8 @@ int get_rand_level_buf_size (int level)
     return size;
 }
 
-void print_error (int error_code)
+void
+print_error (int error_code)
 {
     switch (error_code)
     {
@@ -448,7 +457,8 @@ void print_error (int error_code)
     }
 }
 
-void print_uint8_t (uint8_t *array, uint64_t length)
+void
+print_uint8_t (uint8_t *array, uint64_t length)
 {
     const int line_size = 16;
     int i;
@@ -465,7 +475,8 @@ void print_uint8_t (uint8_t *array, uint64_t length)
     printf ("\n");
 }
 
-void log_print (char *format, ...)
+void
+log_print (char *format, ...)
 {
     va_list args;
     va_start (args, format);
@@ -476,20 +487,23 @@ void log_print (char *format, ...)
     va_end (args);
 }
 
-void log_uint8_t (uint8_t *array, uint64_t length)
+void
+log_uint8_t (uint8_t *array, uint64_t length)
 {
     if (options.verbose)
         print_uint8_t (array, length);
 }
 
-void log_error (int error_code)
+void
+log_error (int error_code)
 {
     if (options.verbose)
         print_error (error_code);
 }
 
-uint32_t check_gzip_trl (uint64_t gzip_trl, uint32_t inflate_crc, uint8_t *uncompress_buf,
-                         uint32_t uncompress_len)
+uint32_t
+check_gzip_trl (uint64_t gzip_trl, uint32_t inflate_crc, uint8_t *uncompress_buf,
+                uint32_t uncompress_len)
 {
     uint64_t trl, ret = 0;
     uint32_t crc;
@@ -503,8 +517,9 @@ uint32_t check_gzip_trl (uint64_t gzip_trl, uint32_t inflate_crc, uint8_t *uncom
     return ret;
 }
 
-uint32_t check_zlib_trl (uint32_t zlib_trl, uint32_t inflate_adler, uint8_t *uncompress_buf,
-                         uint32_t uncompress_len)
+uint32_t
+check_zlib_trl (uint32_t zlib_trl, uint32_t inflate_adler, uint8_t *uncompress_buf,
+                uint32_t uncompress_len)
 {
     uint32_t trl, ret = 0;
     uint32_t adler;
@@ -521,8 +536,9 @@ uint32_t check_zlib_trl (uint32_t zlib_trl, uint32_t inflate_adler, uint8_t *unc
     return ret;
 }
 
-int inflate_stateless_pass (uint8_t *compress_buf, uint64_t compress_len, uint8_t *uncompress_buf,
-                            uint32_t *uncompress_len, uint32_t gzip_flag)
+int
+inflate_stateless_pass (uint8_t *compress_buf, uint64_t compress_len, uint8_t *uncompress_buf,
+                        uint32_t *uncompress_len, uint32_t gzip_flag)
 {
     struct inflate_state state;
     int ret = 0, offset = 0;
@@ -602,9 +618,10 @@ int inflate_stateless_pass (uint8_t *compress_buf, uint64_t compress_len, uint8_
 }
 
 /* Check if that the state of the data stream is consistent */
-int inflate_state_valid_check (struct inflate_state *state, uint8_t *in_buf, uint32_t in_size,
-                               uint8_t *out_buf, uint32_t out_size, uint32_t in_processed,
-                               uint32_t out_processed, uint32_t data_size)
+int
+inflate_state_valid_check (struct inflate_state *state, uint8_t *in_buf, uint32_t in_size,
+                           uint8_t *out_buf, uint32_t out_size, uint32_t in_processed,
+                           uint32_t out_processed, uint32_t data_size)
 {
     uint32_t in_buffer_size, total_out, out_buffer_size;
 
@@ -639,10 +656,10 @@ int inflate_state_valid_check (struct inflate_state *state, uint8_t *in_buf, uin
  * out_processed: the amount of output data which has been decompressed and stored,
  * this does not include the data in the current out_buf
  */
-int isal_inflate_with_checks (struct inflate_state *state, uint32_t compress_len,
-                              uint32_t data_size, uint8_t *in_buf, uint32_t in_size,
-                              uint32_t in_processed, uint8_t *out_buf, uint32_t out_size,
-                              uint32_t out_processed)
+int
+isal_inflate_with_checks (struct inflate_state *state, uint32_t compress_len, uint32_t data_size,
+                          uint8_t *in_buf, uint32_t in_size, uint32_t in_processed,
+                          uint8_t *out_buf, uint32_t out_size, uint32_t out_processed)
 {
     int ret, stream_check = 0;
 
@@ -661,9 +678,10 @@ int isal_inflate_with_checks (struct inflate_state *state, uint32_t compress_len
     return ret;
 }
 
-int inflate_multi_pass (uint8_t *compress_buf, uint64_t compress_len, uint8_t *uncompress_buf,
-                        uint32_t *uncompress_len, uint32_t gzip_flag, uint8_t *dict,
-                        uint32_t dict_len, uint32_t hist_bits)
+int
+inflate_multi_pass (uint8_t *compress_buf, uint64_t compress_len, uint8_t *uncompress_buf,
+                    uint32_t *uncompress_len, uint32_t gzip_flag, uint8_t *dict, uint32_t dict_len,
+                    uint32_t hist_bits)
 {
     struct inflate_state *state = NULL;
     int ret = 0;
@@ -877,7 +895,8 @@ exit_in_multi_pass:
     return ret;
 }
 
-int inflate_ret_to_code (int ret)
+int
+inflate_ret_to_code (int ret)
 {
     switch (ret)
     {
@@ -899,8 +918,9 @@ int inflate_ret_to_code (int ret)
 }
 
 /* Inflate the  compressed data and check that the decompressed data agrees with the input data */
-int inflate_check (uint8_t *z_buf, uint32_t z_size, uint8_t *in_buf, uint32_t in_size,
-                   uint32_t gzip_flag, uint8_t *dict, uint32_t dict_len, uint32_t hist_bits)
+int
+inflate_check (uint8_t *z_buf, uint32_t z_size, uint8_t *in_buf, uint32_t in_size,
+               uint32_t gzip_flag, uint8_t *dict, uint32_t dict_len, uint32_t hist_bits)
 {
     /* Test inflate with reference inflate */
 
@@ -1017,9 +1037,10 @@ int inflate_check (uint8_t *z_buf, uint32_t z_size, uint8_t *in_buf, uint32_t in
 }
 
 /* Check if that the state of the data stream is consistent */
-int stream_valid_check (struct isal_zstream *stream, uint8_t *in_buf, uint32_t in_size,
-                        uint8_t *out_buf, uint32_t out_size, uint32_t in_processed,
-                        uint32_t out_processed, uint32_t data_size)
+int
+stream_valid_check (struct isal_zstream *stream, uint8_t *in_buf, uint32_t in_size,
+                    uint8_t *out_buf, uint32_t out_size, uint32_t in_processed,
+                    uint32_t out_processed, uint32_t data_size)
 {
     uint32_t total_in, in_buffer_size, total_out, out_buffer_size;
 
@@ -1058,10 +1079,10 @@ int stream_valid_check (struct isal_zstream *stream, uint8_t *in_buf, uint32_t i
  * out_processed: the amount of output data which has been compressed and stored,
  * this does not include the data in the current out_buf
  */
-int isal_deflate_with_checks (struct isal_zstream *stream, uint32_t data_size,
-                              uint32_t compressed_size, uint8_t *in_buf, uint32_t in_size,
-                              uint32_t in_processed, uint8_t *out_buf, uint32_t out_size,
-                              uint32_t out_processed)
+int
+isal_deflate_with_checks (struct isal_zstream *stream, uint32_t data_size, uint32_t compressed_size,
+                          uint8_t *in_buf, uint32_t in_size, uint32_t in_processed,
+                          uint8_t *out_buf, uint32_t out_size, uint32_t out_processed)
 {
     int ret, stream_check;
     struct isal_zstate *state = &stream->internal_state;
@@ -1103,8 +1124,8 @@ int isal_deflate_with_checks (struct isal_zstream *stream, uint32_t data_size,
     return ret;
 }
 
-void set_random_hufftable (struct isal_zstream *stream, int level, uint8_t *data,
-                           uint32_t data_size)
+void
+set_random_hufftable (struct isal_zstream *stream, int level, uint8_t *data, uint32_t data_size)
 {
     struct isal_hufftables *huff = hufftables;
     struct isal_huff_histogram hist;
@@ -1125,9 +1146,10 @@ void set_random_hufftable (struct isal_zstream *stream, int level, uint8_t *data
 /* Compress the input data into the output buffer where the input buffer and
  * output buffer are randomly segmented to test state information for the
  * compression*/
-int compress_multi_pass (uint8_t *data, uint32_t data_size, uint8_t *compressed_buf,
-                         uint32_t *compressed_size, uint32_t flush_type, uint32_t gzip_flag,
-                         uint32_t level, uint8_t *dict, uint32_t dict_len, uint32_t hist_bits)
+int
+compress_multi_pass (uint8_t *data, uint32_t data_size, uint8_t *compressed_buf,
+                     uint32_t *compressed_size, uint32_t flush_type, uint32_t gzip_flag,
+                     uint32_t level, uint8_t *dict, uint32_t dict_len, uint32_t hist_bits)
 {
     int ret = IGZIP_COMP_OK;
     uint8_t *in_buf = NULL, *out_buf = NULL;
@@ -1348,9 +1370,10 @@ exit_comp_multi_pass:
 }
 
 /* Compress the input data into the outbuffer in one call to isal_deflate */
-int compress_single_pass (uint8_t *data, uint32_t data_size, uint8_t *compressed_buf,
-                          uint32_t *compressed_size, uint32_t flush_type, uint32_t gzip_flag,
-                          uint32_t level, uint8_t *dict, uint32_t dict_len, uint32_t hist_bits)
+int
+compress_single_pass (uint8_t *data, uint32_t data_size, uint8_t *compressed_buf,
+                      uint32_t *compressed_size, uint32_t flush_type, uint32_t gzip_flag,
+                      uint32_t level, uint8_t *dict, uint32_t dict_len, uint32_t hist_bits)
 {
     int ret = IGZIP_COMP_OK;
     struct isal_zstream stream;
@@ -1440,10 +1463,11 @@ int compress_single_pass (uint8_t *data, uint32_t data_size, uint8_t *compressed
 /* Compress the input data repeatedly into the outbuffer
  * Compresses and verifies in place to decrease memory usage
  */
-int compress_ver_rep_buf (uint8_t *data, uint32_t data_size, uint64_t data_rep_size,
-                          uint8_t *compressed_buf, uint32_t compressed_size, uint8_t *decomp_buf,
-                          uint32_t decomp_buf_size, uint32_t flush_type, uint32_t gzip_flag,
-                          uint32_t level)
+int
+compress_ver_rep_buf (uint8_t *data, uint32_t data_size, uint64_t data_rep_size,
+                      uint8_t *compressed_buf, uint32_t compressed_size, uint8_t *decomp_buf,
+                      uint32_t decomp_buf_size, uint32_t flush_type, uint32_t gzip_flag,
+                      uint32_t level)
 {
     int ret = IGZIP_COMP_OK;
     struct isal_zstream stream;
@@ -1566,9 +1590,10 @@ int compress_ver_rep_buf (uint8_t *data, uint32_t data_size, uint64_t data_rep_s
 }
 
 /* Statelessly compress the input buffer into the output buffer */
-int compress_stateless (uint8_t *data, uint32_t data_size, uint8_t *compressed_buf,
-                        uint32_t *compressed_size, uint32_t flush_type, uint32_t gzip_flag,
-                        uint32_t level, uint32_t hist_bits)
+int
+compress_stateless (uint8_t *data, uint32_t data_size, uint8_t *compressed_buf,
+                    uint32_t *compressed_size, uint32_t flush_type, uint32_t gzip_flag,
+                    uint32_t level, uint32_t hist_bits)
 {
     int ret = IGZIP_COMP_OK;
     struct isal_zstream stream;
@@ -1680,8 +1705,9 @@ int compress_stateless (uint8_t *data, uint32_t data_size, uint8_t *compressed_b
 }
 
 /* Statelessly compress the input buffer into the output buffer */
-int compress_stateless_full_flush (uint8_t *data, uint32_t data_size, uint8_t *compressed_buf,
-                                   uint32_t *compressed_size, uint32_t level, uint32_t hist_bits)
+int
+compress_stateless_full_flush (uint8_t *data, uint32_t data_size, uint8_t *compressed_buf,
+                               uint32_t *compressed_size, uint32_t level, uint32_t hist_bits)
 {
     int ret = IGZIP_COMP_OK;
     uint8_t *in_buf = NULL, *level_buf = NULL, *out_buf = compressed_buf;
@@ -1830,8 +1856,9 @@ int compress_stateless_full_flush (uint8_t *data, uint32_t data_size, uint8_t *c
 /* Compress the input data into the output buffer where the input buffer and
  * is randomly segmented to test for independence of blocks in full flush
  * compression*/
-int compress_full_flush (uint8_t *data, uint32_t data_size, uint8_t *compressed_buf,
-                         uint32_t *compressed_size, uint32_t gzip_flag, uint32_t level)
+int
+compress_full_flush (uint8_t *data, uint32_t data_size, uint8_t *compressed_buf,
+                     uint32_t *compressed_size, uint32_t gzip_flag, uint32_t level)
 {
     int ret = IGZIP_COMP_OK;
     uint8_t *in_buf = NULL, *out_buf = compressed_buf, *level_buf = NULL;
@@ -1973,9 +2000,9 @@ int compress_full_flush (uint8_t *data, uint32_t data_size, uint8_t *compressed_
 
 /*Compress the input buffer into the output buffer, but switch the flush type in
  * the middle of the compression to test what happens*/
-int compress_swap_flush (uint8_t *data, uint32_t data_size, uint8_t *compressed_buf,
-                         uint32_t *compressed_size, uint32_t flush_type, int level,
-                         uint32_t gzip_flag)
+int
+compress_swap_flush (uint8_t *data, uint32_t data_size, uint8_t *compressed_buf,
+                     uint32_t *compressed_size, uint32_t flush_type, int level, uint32_t gzip_flag)
 {
     int ret = IGZIP_COMP_OK;
     struct isal_zstream stream;
@@ -2066,7 +2093,8 @@ int compress_swap_flush (uint8_t *data, uint32_t data_size, uint8_t *compressed_
 }
 
 /* Test deflate_stateless */
-int test_compress_stateless (uint8_t *in_data, uint32_t in_size, uint32_t flush_type)
+int
+test_compress_stateless (uint8_t *in_data, uint32_t in_size, uint32_t flush_type)
 {
     int ret = IGZIP_COMP_OK;
     uint32_t z_size, overflow, gzip_flag, level, hist_bits;
@@ -2312,7 +2340,8 @@ exit_comp_stateless:
 }
 
 /* Test deflate */
-int test_compress (uint8_t *in_buf, uint32_t in_size, uint32_t flush_type)
+int
+test_compress (uint8_t *in_buf, uint32_t in_size, uint32_t flush_type)
 {
     int ret = IGZIP_COMP_OK, fin_ret = IGZIP_COMP_OK;
     uint32_t overflow = 0, gzip_flag, level, hist_bits;
@@ -2547,7 +2576,8 @@ test_compress_cleanup:
 }
 
 /* Test swapping flush types in the middle of compression */
-int test_flush (uint8_t *in_buf, uint32_t in_size)
+int
+test_flush (uint8_t *in_buf, uint32_t in_size)
 {
     int fin_ret = IGZIP_COMP_OK, ret;
     uint32_t z_size, flush_type = 0, gzip_flag, level;
@@ -2620,7 +2650,8 @@ int test_flush (uint8_t *in_buf, uint32_t in_size)
 }
 
 /* Test there are no length distance pairs across full flushes */
-int test_full_flush (uint8_t *in_buf, uint32_t in_size)
+int
+test_full_flush (uint8_t *in_buf, uint32_t in_size)
 {
     int ret = IGZIP_COMP_OK;
     uint32_t z_size, gzip_flag, level;
@@ -2671,7 +2702,8 @@ int test_full_flush (uint8_t *in_buf, uint32_t in_size)
     return ret;
 }
 
-int test_inflate (struct vect_result *in_vector)
+int
+test_inflate (struct vect_result *in_vector)
 {
     int ret = IGZIP_COMP_OK;
     uint8_t *compress_buf = in_vector->vector, *out_buf = NULL;
@@ -2711,7 +2743,8 @@ int test_inflate (struct vect_result *in_vector)
     return ret;
 }
 
-int test_large (uint8_t *in_buf, uint32_t in_size, uint64_t large_size)
+int
+test_large (uint8_t *in_buf, uint32_t in_size, uint64_t large_size)
 {
 
     int ret = IGZIP_COMP_OK;
@@ -2766,7 +2799,8 @@ int test_large (uint8_t *in_buf, uint32_t in_size, uint64_t large_size)
 }
 
 /* Run multiple compression tests on data stored in a file */
-int test_compress_file (char *file_name)
+int
+test_compress_file (char *file_name)
 {
     int ret = IGZIP_COMP_OK;
     uint64_t in_size;
@@ -2826,8 +2860,8 @@ exit_comp_file:
     return ret;
 }
 
-int create_custom_hufftables (struct isal_hufftables *hufftables_custom, int file_count,
-                              char *files[])
+int
+create_custom_hufftables (struct isal_hufftables *hufftables_custom, int file_count, char *files[])
 {
     long int file_length;
     struct isal_huff_histogram histogram;
@@ -2891,7 +2925,8 @@ int create_custom_hufftables (struct isal_hufftables *hufftables_custom, int fil
     return isal_create_hufftables (hufftables_custom, &histogram);
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     int i = 0, j = 0, ret = 0, fin_ret = IGZIP_COMP_OK;
     uint32_t in_size = 0, offset = 0;

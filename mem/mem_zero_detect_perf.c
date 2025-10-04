@@ -36,7 +36,8 @@
 #define TEST_LEN      8 * 1024
 #define TEST_TYPE_STR "_warm"
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     void *buf;
     struct perf start;

@@ -56,7 +56,8 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #define ROWS      M_MAX
 #define COLS      K_MAX
 
-static inline uint64_t min (const uint64_t a, const uint64_t b)
+static inline uint64_t
+min (const uint64_t a, const uint64_t b)
 {
     if (a <= b)
         return a;
@@ -64,9 +65,10 @@ static inline uint64_t min (const uint64_t a, const uint64_t b)
         return b;
 }
 
-void gen_sub_matrix (unsigned char *out_matrix, const uint64_t dim, unsigned char *in_matrix,
-                     const uint64_t rows, const uint64_t cols, const uint64_t row_indicator,
-                     const uint64_t col_indicator)
+void
+gen_sub_matrix (unsigned char *out_matrix, const uint64_t dim, unsigned char *in_matrix,
+                const uint64_t rows, const uint64_t cols, const uint64_t row_indicator,
+                const uint64_t col_indicator)
 {
     uint64_t i, j, r, s;
 
@@ -87,7 +89,8 @@ void gen_sub_matrix (unsigned char *out_matrix, const uint64_t dim, unsigned cha
 }
 
 /* Gosper's Hack */
-uint64_t next_subset (uint64_t *subset, uint64_t element_count, uint64_t subsize)
+uint64_t
+next_subset (uint64_t *subset, uint64_t element_count, uint64_t subsize)
 {
     uint64_t tmp1 = *subset & -*subset;
     uint64_t tmp2 = *subset + tmp1;
@@ -102,7 +105,8 @@ uint64_t next_subset (uint64_t *subset, uint64_t element_count, uint64_t subsize
     return 0;
 }
 
-int are_submatrices_singular (unsigned char *vmatrix, const uint64_t rows, const uint64_t cols)
+int
+are_submatrices_singular (unsigned char *vmatrix, const uint64_t rows, const uint64_t cols)
 {
     unsigned char matrix[ COLS * COLS ];
     unsigned char invert_matrix[ COLS * COLS ];
@@ -130,7 +134,8 @@ int are_submatrices_singular (unsigned char *vmatrix, const uint64_t rows, const
     return 0;
 }
 
-int main (int argc, char **argv)
+int
+main (int argc, char **argv)
 {
     unsigned char vmatrix[ (ROWS + COLS) * COLS ];
     uint64_t rows, cols;

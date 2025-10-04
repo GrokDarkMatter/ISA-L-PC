@@ -42,12 +42,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restrictions
 **********************************************************************/
-extern int pc_correct (int newPos, int k, int rows, unsigned char **data, unsigned char **coding,
-                       int vLen);
+extern int
+pc_correct (int newPos, int k, int rows, unsigned char **data, unsigned char **coding, int vLen);
 
 // Parallel Syndrome Sequencer for P = 2 Codewords
-int gf_2vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                            unsigned char **dest, int offSet)
+int
+gf_2vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                        unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 2 ], taps[ 1 ];
@@ -108,8 +109,9 @@ int gf_2vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char
 }
 
 // Parallel Syndrome Sequencer for P = 3 Codewords
-int gf_3vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                            unsigned char **dest, int offSet)
+int
+gf_3vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                        unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 3 ], taps[ 2 ];
@@ -181,8 +183,9 @@ int gf_3vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char
 }
 
 // Parallel Syndrome Sequencer for P = 4 Codewords
-int gf_4vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                            unsigned char **dest, int offSet)
+int
+gf_4vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                        unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 4 ], taps[ 3 ];
@@ -265,8 +268,9 @@ int gf_4vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char
 }
 
 // Parallel Syndrome Sequencer for P = 5 Codewords
-int gf_5vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                            unsigned char **dest, int offSet)
+int
+gf_5vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                        unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 5 ], taps[ 4 ];
@@ -360,8 +364,9 @@ int gf_5vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char
 }
 
 // Parallel Syndrome Sequencer for P = 6 Codewords
-int gf_6vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                            unsigned char **dest, int offSet)
+int
+gf_6vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                        unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 6 ], taps[ 5 ];
@@ -466,8 +471,9 @@ int gf_6vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char
 }
 
 // Parallel Syndrome Sequencer for P = 7 Codewords
-int gf_7vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                            unsigned char **dest, int offSet)
+int
+gf_7vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                        unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 7 ], taps[ 6 ];
@@ -583,8 +589,9 @@ int gf_7vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char
 }
 
 // Parallel Syndrome Sequencer for P = 8 Codewords
-int gf_8vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                            unsigned char **dest, int offSet)
+int
+gf_8vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                        unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 8 ], taps[ 7 ];
@@ -711,8 +718,9 @@ int gf_8vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char
 }
 
 // Parallel Syndrome Sequencer for P = 9 Codewords
-int gf_9vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                            unsigned char **dest, int offSet)
+int
+gf_9vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                        unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 9 ], taps[ 8 ];
@@ -850,8 +858,9 @@ int gf_9vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char
 }
 
 // Parallel Syndrome Sequencer for P = 10 Codewords
-int gf_10vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_10vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 10 ], taps[ 9 ];
@@ -1000,8 +1009,9 @@ int gf_10vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel Syndrome Sequencer for P = 11 Codewords
-int gf_11vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_11vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 11 ], taps[ 10 ];
@@ -1161,8 +1171,9 @@ int gf_11vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel Syndrome Sequencer for P = 12 Codewords
-int gf_12vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_12vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 12 ], taps[ 11 ];
@@ -1333,8 +1344,9 @@ int gf_12vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel Syndrome Sequencer for P = 13 Codewords
-int gf_13vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_13vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 13 ], taps[ 12 ];
@@ -1516,8 +1528,9 @@ int gf_13vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel Syndrome Sequencer for P = 14 Codewords
-int gf_14vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_14vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 14 ], taps[ 13 ];
@@ -1710,8 +1723,9 @@ int gf_14vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel Syndrome Sequencer for P = 15 Codewords
-int gf_15vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_15vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 15 ], taps[ 14 ];
@@ -1915,8 +1929,9 @@ int gf_15vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel Syndrome Sequencer for P = 16 Codewords
-int gf_16vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_16vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 16 ], taps[ 15 ];
@@ -2131,8 +2146,9 @@ int gf_16vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel Syndrome Sequencer for P = 17 Codewords
-int gf_17vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_17vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 17 ], taps[ 16 ];
@@ -2358,8 +2374,9 @@ int gf_17vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel Syndrome Sequencer for P = 18 Codewords
-int gf_18vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_18vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 18 ], taps[ 17 ];
@@ -2596,8 +2613,9 @@ int gf_18vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel Syndrome Sequencer for P = 19 Codewords
-int gf_19vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_19vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 19 ], taps[ 18 ];
@@ -2845,8 +2863,9 @@ int gf_19vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel Syndrome Sequencer for P = 20 Codewords
-int gf_20vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_20vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 20 ], taps[ 19 ];
@@ -3105,8 +3124,9 @@ int gf_20vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel Syndrome Sequencer for P = 21 Codewords
-int gf_21vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_21vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 21 ], taps[ 20 ];
@@ -3376,8 +3396,9 @@ int gf_21vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel Syndrome Sequencer for P = 22 Codewords
-int gf_22vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_22vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 22 ], taps[ 21 ];
@@ -3658,8 +3679,9 @@ int gf_22vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel Syndrome Sequencer for P = 23 Codewords
-int gf_23vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_23vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 23 ], taps[ 22 ];
@@ -3951,8 +3973,9 @@ int gf_23vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel Syndrome Sequencer for P = 24 Codewords
-int gf_24vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_24vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 24 ], taps[ 23 ];
@@ -4255,8 +4278,9 @@ int gf_24vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel Syndrome Sequencer for P = 25 Codewords
-int gf_25vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_25vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 25 ], taps[ 24 ];
@@ -4570,8 +4594,9 @@ int gf_25vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel Syndrome Sequencer for P = 26 Codewords
-int gf_26vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_26vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 26 ], taps[ 25 ];
@@ -4896,8 +4921,9 @@ int gf_26vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel Syndrome Sequencer for P = 27 Codewords
-int gf_27vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_27vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 27 ], taps[ 26 ];
@@ -5233,8 +5259,9 @@ int gf_27vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel Syndrome Sequencer for P = 28 Codewords
-int gf_28vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_28vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 28 ], taps[ 27 ];
@@ -5581,8 +5608,9 @@ int gf_28vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel Syndrome Sequencer for P = 29 Codewords
-int gf_29vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_29vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 29 ], taps[ 28 ];
@@ -5940,8 +5968,9 @@ int gf_29vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel Syndrome Sequencer for P = 30 Codewords
-int gf_30vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_30vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 30 ], taps[ 29 ];
@@ -6310,8 +6339,9 @@ int gf_30vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel Syndrome Sequencer for P = 31 Codewords
-int gf_31vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_31vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 31 ], taps[ 30 ];
@@ -6691,8 +6721,9 @@ int gf_31vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel Syndrome Sequencer for P = 32 Codewords
-int gf_32vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest, int offSet)
+int
+gf_32vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest, int offSet)
 {
     int curSym, curPos;
     __m256i parity0[ 32 ], taps[ 31 ];
@@ -7083,8 +7114,9 @@ int gf_32vect_pss_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 2 Codewords
-int gf_2vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                            unsigned char **dest)
+int
+gf_2vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                        unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 2 ], taps[ 2 ];
@@ -7141,8 +7173,9 @@ int gf_2vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char
 }
 
 // Parallel LFSR Sequencer for P = 3 Codewords
-int gf_3vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                            unsigned char **dest)
+int
+gf_3vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                        unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 3 ], taps[ 3 ];
@@ -7208,8 +7241,9 @@ int gf_3vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char
 }
 
 // Parallel LFSR Sequencer for P = 4 Codewords
-int gf_4vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                            unsigned char **dest)
+int
+gf_4vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                        unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 4 ], taps[ 4 ];
@@ -7284,8 +7318,9 @@ int gf_4vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char
 }
 
 // Parallel LFSR Sequencer for P = 5 Codewords
-int gf_5vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                            unsigned char **dest)
+int
+gf_5vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                        unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 5 ], taps[ 5 ];
@@ -7369,8 +7404,9 @@ int gf_5vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char
 }
 
 // Parallel LFSR Sequencer for P = 6 Codewords
-int gf_6vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                            unsigned char **dest)
+int
+gf_6vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                        unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 6 ], taps[ 6 ];
@@ -7463,8 +7499,9 @@ int gf_6vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char
 }
 
 // Parallel LFSR Sequencer for P = 7 Codewords
-int gf_7vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                            unsigned char **dest)
+int
+gf_7vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                        unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 7 ], taps[ 7 ];
@@ -7566,8 +7603,9 @@ int gf_7vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char
 }
 
 // Parallel LFSR Sequencer for P = 8 Codewords
-int gf_8vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                            unsigned char **dest)
+int
+gf_8vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                        unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 8 ], taps[ 8 ];
@@ -7678,8 +7716,9 @@ int gf_8vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char
 }
 
 // Parallel LFSR Sequencer for P = 9 Codewords
-int gf_9vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                            unsigned char **dest)
+int
+gf_9vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                        unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 9 ], taps[ 9 ];
@@ -7799,8 +7838,9 @@ int gf_9vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char
 }
 
 // Parallel LFSR Sequencer for P = 10 Codewords
-int gf_10vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_10vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 10 ], taps[ 10 ];
@@ -7929,8 +7969,9 @@ int gf_10vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 11 Codewords
-int gf_11vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_11vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 11 ], taps[ 11 ];
@@ -8068,8 +8109,9 @@ int gf_11vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 12 Codewords
-int gf_12vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_12vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 12 ], taps[ 12 ];
@@ -8216,8 +8258,9 @@ int gf_12vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 13 Codewords
-int gf_13vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_13vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 13 ], taps[ 13 ];
@@ -8373,8 +8416,9 @@ int gf_13vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 14 Codewords
-int gf_14vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_14vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 14 ], taps[ 14 ];
@@ -8539,8 +8583,9 @@ int gf_14vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 15 Codewords
-int gf_15vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_15vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 15 ], taps[ 15 ];
@@ -8714,8 +8759,9 @@ int gf_15vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 16 Codewords
-int gf_16vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_16vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 16 ], taps[ 16 ];
@@ -8898,8 +8944,9 @@ int gf_16vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 17 Codewords
-int gf_17vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_17vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 17 ], taps[ 17 ];
@@ -9091,8 +9138,9 @@ int gf_17vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 18 Codewords
-int gf_18vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_18vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 18 ], taps[ 18 ];
@@ -9293,8 +9341,9 @@ int gf_18vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 19 Codewords
-int gf_19vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_19vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 19 ], taps[ 19 ];
@@ -9504,8 +9553,9 @@ int gf_19vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 20 Codewords
-int gf_20vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_20vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 20 ], taps[ 20 ];
@@ -9724,8 +9774,9 @@ int gf_20vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 21 Codewords
-int gf_21vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_21vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 21 ], taps[ 21 ];
@@ -9953,8 +10004,9 @@ int gf_21vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 22 Codewords
-int gf_22vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_22vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 22 ], taps[ 22 ];
@@ -10191,8 +10243,9 @@ int gf_22vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 23 Codewords
-int gf_23vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_23vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 23 ], taps[ 23 ];
@@ -10438,8 +10491,9 @@ int gf_23vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 24 Codewords
-int gf_24vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_24vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 24 ], taps[ 24 ];
@@ -10694,8 +10748,9 @@ int gf_24vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 25 Codewords
-int gf_25vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_25vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 25 ], taps[ 25 ];
@@ -10959,8 +11014,9 @@ int gf_25vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 26 Codewords
-int gf_26vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_26vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 26 ], taps[ 26 ];
@@ -11233,8 +11289,9 @@ int gf_26vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 27 Codewords
-int gf_27vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_27vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 27 ], taps[ 27 ];
@@ -11516,8 +11573,9 @@ int gf_27vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 28 Codewords
-int gf_28vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_28vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 28 ], taps[ 28 ];
@@ -11808,8 +11866,9 @@ int gf_28vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 29 Codewords
-int gf_29vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_29vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 29 ], taps[ 29 ];
@@ -12109,8 +12168,9 @@ int gf_29vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 30 Codewords
-int gf_30vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_30vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 30 ], taps[ 30 ];
@@ -12419,8 +12479,9 @@ int gf_30vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 31 Codewords
-int gf_31vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_31vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 31 ], taps[ 31 ];
@@ -12738,8 +12799,9 @@ int gf_31vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
 }
 
 // Parallel LFSR Sequencer for P = 32 Codewords
-int gf_32vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                             unsigned char **dest)
+int
+gf_32vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char **dest)
 {
     int curSym, curPos;
     __m256i parity0[ 32 ], taps[ 32 ];
@@ -13065,8 +13127,9 @@ int gf_32vect_pls_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned cha
     return (curPos);
 }
 
-void pc_encode_data_avx2_gfni (int len, int k, int rows, unsigned char *g_tbls,
-                               unsigned char **data, unsigned char **coding)
+void
+pc_encode_data_avx2_gfni (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **coding)
 {
     switch (rows)
     {
@@ -13165,8 +13228,9 @@ void pc_encode_data_avx2_gfni (int len, int k, int rows, unsigned char *g_tbls,
         break;
     }
 }
-int pc_decode_data_avx2_gfni (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
-                              unsigned char **coding, int retries)
+int
+pc_decode_data_avx2_gfni (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **coding, int retries)
 {
     int newPos = 0, retry = 0;
     while ((newPos < len) && (retry++ < retries))

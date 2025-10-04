@@ -7,9 +7,11 @@
 #include "igzip_lib.h"
 #include "test.h"
 
-extern int LLVMFuzzerTestOneInput (const uint8_t *data, size_t size);
+extern int
+LLVMFuzzerTestOneInput (const uint8_t *data, size_t size);
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     FILE *in = NULL;
     unsigned char *in_buf = NULL;

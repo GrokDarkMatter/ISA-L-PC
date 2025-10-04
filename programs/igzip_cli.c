@@ -184,7 +184,8 @@ struct cli_options
 
 struct cli_options global_options;
 
-void init_options (struct cli_options *options)
+void
+init_options (struct cli_options *options)
 {
     options->infile_name = NULL;
     options->infile_name_len = 0;
@@ -210,14 +211,16 @@ void init_options (struct cli_options *options)
     options->threads = 1;
 };
 
-int is_interactive (void)
+int
+is_interactive (void)
 {
     int ret;
     ret = !global_options.force && !global_options.quiet_level && isatty (fileno (stdin));
     return ret;
 }
 
-size_t get_filesize (FILE *fp)
+size_t
+get_filesize (FILE *fp)
 {
     size_t file_size;
     fpos_t pos, pos_curr;
@@ -235,7 +238,8 @@ size_t get_filesize (FILE *fp)
     return file_size;
 }
 
-int get_posix_filetime (FILE *fp, uint32_t *time)
+int
+get_posix_filetime (FILE *fp, uint32_t *time)
 {
     struct stat file_stats;
     const int ret = fstat (fileno (fp), &file_stats);
@@ -244,7 +248,8 @@ int get_posix_filetime (FILE *fp, uint32_t *time)
     return ret;
 }
 
-uint32_t set_filetime (char *file_name, uint32_t posix_time)
+uint32_t
+set_filetime (char *file_name, uint32_t posix_time)
 {
     struct utimbuf new_time;
     new_time.actime = posix_time;
@@ -252,7 +257,8 @@ uint32_t set_filetime (char *file_name, uint32_t posix_time)
     return utime (file_name, &new_time);
 }
 
-void log_print (int log_type, char *format, ...)
+void
+log_print (int log_type, char *format, ...)
 {
     va_list args;
     va_start (args, format);
@@ -279,7 +285,8 @@ void log_print (int log_type, char *format, ...)
     va_end (args);
 }
 
-int usage (int exit_code)
+int
+usage (int exit_code)
 {
     int log_type = exit_code ? WARN : INFORM;
     log_print (log_type,
@@ -309,9 +316,14 @@ int usage (int exit_code)
     exit (exit_code);
 }
 
-void print_version (void) { log_print (INFORM, "igzip command line interface %s\n", VERSION); }
+void
+print_version (void)
+{
+    log_print (INFORM, "igzip command line interface %s\n", VERSION);
+}
 
-void *malloc_safe (size_t size)
+void *
+malloc_safe (size_t size)
 {
     void *ptr = NULL;
     if (size == 0)
@@ -327,7 +339,8 @@ void *malloc_safe (size_t size)
     return ptr;
 }
 
-FILE *fopen_safe (const char *file_name, const char *mode)
+FILE *
+fopen_safe (const char *file_name, const char *mode)
 {
     FILE *file;
 
@@ -374,7 +387,8 @@ FILE *fopen_safe (const char *file_name, const char *mode)
     return file;
 }
 
-size_t fread_safe (void *buf, size_t word_size, size_t buf_size, FILE *in, char *file_name)
+size_t
+fread_safe (void *buf, size_t word_size, size_t buf_size, FILE *in, char *file_name)
 {
     size_t read_size;
     read_size = fread (buf, word_size, buf_size, in);
@@ -386,7 +400,8 @@ size_t fread_safe (void *buf, size_t word_size, size_t buf_size, FILE *in, char 
     return read_size;
 }
 
-size_t fwrite_safe (void *buf, size_t word_size, size_t buf_size, FILE *out, char *file_name)
+size_t
+fwrite_safe (void *buf, size_t word_size, size_t buf_size, FILE *out, char *file_name)
 {
     size_t write_size;
     write_size = fwrite (buf, word_size, buf_size, out);
@@ -398,7 +413,8 @@ size_t fwrite_safe (void *buf, size_t word_size, size_t buf_size, FILE *out, cha
     return write_size;
 }
 
-void open_in_file (FILE **in, char *infile_name)
+void
+open_in_file (FILE **in, char *infile_name)
 {
     *in = NULL;
     if (infile_name == NULL)
@@ -407,7 +423,8 @@ void open_in_file (FILE **in, char *infile_name)
         *in = fopen_safe (infile_name, "rb");
 }
 
-void open_out_file (FILE **out, char *outfile_name)
+void
+open_out_file (FILE **out, char *outfile_name)
 {
     *out = NULL;
     if (global_options.use_stdout)
@@ -461,18 +478,28 @@ struct thread_pool
 // Globals for thread pool
 struct thread_pool pool;
 
-static inline int pool_has_space (void) { return ((pool.head + 1) % MAX_JOBQUEUE) != pool.tail; }
+static inline int
+pool_has_space (void)
+{
+    return ((pool.head + 1) % MAX_JOBQUEUE) != pool.tail;
+}
 
-static inline int pool_has_work (void) { return (pool.queue != pool.head); }
+static inline int
+pool_has_work (void)
+{
+    return (pool.queue != pool.head);
+}
 
-int pool_get_work (void)
+int
+pool_get_work (void)
 {
     assert (pool.queue != pool.head);
     pool.queue = (pool.queue + 1) % MAX_JOBQUEUE;
     return pool.queue;
 }
 
-int pool_put_work (struct isal_zstream *stream)
+int
+pool_put_work (struct isal_zstream *stream)
 {
     pthread_mutex_lock (&pool.mutex);
     if (!pool_has_space () || pool.shutdown)
@@ -493,7 +520,8 @@ int pool_put_work (struct isal_zstream *stream)
     return 0;
 }
 
-void *thread_worker (void *none)
+void *
+thread_worker (void *none)
 {
     struct isal_zstream wstream;
     int check;
@@ -544,7 +572,8 @@ void *thread_worker (void *none)
     pthread_exit (NULL);
 }
 
-int pool_create (void)
+int
+pool_create (void)
 {
     int i;
     int nthreads = global_options.threads - 1;
@@ -559,7 +588,8 @@ int pool_create (void)
     return 0;
 }
 
-void pool_quit (void)
+void
+pool_quit (void)
 {
     int i;
     pthread_mutex_lock (&pool.mutex);
@@ -573,7 +603,8 @@ void pool_quit (void)
 
 #endif // defined(HAVE_THREADS)
 
-int compress_file (void)
+int
+compress_file (void)
 {
     FILE *in = NULL, *out = NULL;
     unsigned char *inbuf = NULL, *outbuf = NULL, *level_buf = NULL;
@@ -813,7 +844,8 @@ compress_file_cleanup:
     return (success == 0);
 }
 
-int decompress_file (void)
+int
+decompress_file (void)
 {
     FILE *in = NULL, *out = NULL;
     unsigned char *inbuf = NULL, *outbuf = NULL;
@@ -1041,7 +1073,8 @@ decompress_file_cleanup:
     return (success == 0);
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     int c;
     char optstring[] = "hcdz0123456789o:S:kfqVvNntT:";

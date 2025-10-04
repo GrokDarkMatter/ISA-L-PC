@@ -47,7 +47,8 @@
 
 typedef unsigned char u8;
 
-void matrix_mult (u8 *a, u8 *b, u8 *c, int n)
+void
+matrix_mult (u8 *a, u8 *b, u8 *c, int n)
 {
     int i, j, k;
     u8 d;
@@ -66,7 +67,8 @@ void matrix_mult (u8 *a, u8 *b, u8 *c, int n)
     }
 }
 
-void print_matrix (u8 *a, int n)
+void
+print_matrix (u8 *a, int n)
 {
     int i, j;
 
@@ -81,7 +83,8 @@ void print_matrix (u8 *a, int n)
     printf ("\n");
 }
 
-int is_ident (u8 *a, const int n)
+int
+is_ident (u8 *a, const int n)
 {
     int i, j;
     u8 c;
@@ -99,7 +102,8 @@ int is_ident (u8 *a, const int n)
     return 0;
 }
 
-int inv_test (u8 *in, u8 *inv, u8 *sav, int n)
+int
+inv_test (u8 *in, u8 *inv, u8 *sav, int n)
 {
     memcpy (sav, in, n * n);
 
@@ -127,7 +131,8 @@ int inv_test (u8 *in, u8 *inv, u8 *sav, int n)
     return 0;
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     int i, k, t;
     u8 *test_mat = NULL, *save_mat = NULL, *invr_mat = NULL;

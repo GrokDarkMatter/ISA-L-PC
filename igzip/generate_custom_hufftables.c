@@ -86,8 +86,9 @@
  * @param footer: footer to append at the end of the table.
  * @param begin_line: string printed at beginning of new line
  */
-void fprint_uint8_table (FILE *outfile, uint8_t *table, uint64_t length, char *header, char *footer,
-                         char *begin_line)
+void
+fprint_uint8_table (FILE *outfile, uint8_t *table, uint64_t length, char *header, char *footer,
+                    char *begin_line)
 {
     int i;
     fprintf (outfile, "%s", header);
@@ -117,8 +118,9 @@ void fprint_uint8_table (FILE *outfile, uint8_t *table, uint64_t length, char *h
  * @param footer: footer to append at the end of the table.
  * @param begin_line: string printed at beginning of new line
  */
-void fprint_uint16_table (FILE *outfile, uint16_t *table, uint64_t length, char *header,
-                          char *footer, char *begin_line)
+void
+fprint_uint16_table (FILE *outfile, uint16_t *table, uint64_t length, char *header, char *footer,
+                     char *begin_line)
 {
     int i;
     fprintf (outfile, "%s", header);
@@ -148,8 +150,9 @@ void fprint_uint16_table (FILE *outfile, uint16_t *table, uint64_t length, char 
  * @param footer: footer to append at the end of the table.
  * @param begin_line: string printed at beginning of new line
  */
-void fprint_uint32_table (FILE *outfile, uint32_t *table, uint64_t length, char *header,
-                          char *footer, char *begin_line)
+void
+fprint_uint32_table (FILE *outfile, uint32_t *table, uint64_t length, char *header, char *footer,
+                     char *begin_line)
 {
     int i;
     fprintf (outfile, "%s", header);
@@ -170,8 +173,8 @@ void fprint_uint32_table (FILE *outfile, uint32_t *table, uint64_t length, char 
     fprintf (outfile, "%s", footer);
 }
 
-void fprint_hufftables (FILE *output_file, char *hufftables_name,
-                        struct isal_hufftables *hufftables)
+void
+fprint_hufftables (FILE *output_file, char *hufftables_name, struct isal_hufftables *hufftables)
 {
     fprintf (output_file, "struct isal_hufftables %s = {\n\n", hufftables_name);
 
@@ -204,7 +207,8 @@ void fprint_hufftables (FILE *output_file, char *hufftables_name,
     fprintf (output_file, "};\n");
 }
 
-void fprint_header (FILE *output_file)
+void
+fprint_header (FILE *output_file)
 {
 
     fprintf (output_file, "#include <stdint.h>\n");
@@ -240,7 +244,8 @@ void fprint_header (FILE *output_file)
     fprintf (output_file, "const uint32_t zlib_trl_bytes = %d;\n", ZLIB_TRAILER_SIZE);
 }
 
-static uint32_t convert_dist_to_dist_sym (uint32_t dist)
+static uint32_t
+convert_dist_to_dist_sym (uint32_t dist)
 {
     assert (dist <= 32768 && dist > 0);
     if (dist <= 32768)
@@ -257,7 +262,8 @@ static uint32_t convert_dist_to_dist_sym (uint32_t dist)
 /**
  * @brief  Returns the deflate symbol value for a repeat length.
  */
-static uint32_t convert_length_to_len_sym (uint32_t length)
+static uint32_t
+convert_length_to_len_sym (uint32_t length)
 {
     assert (length > 2 && length < 259);
 
@@ -278,8 +284,9 @@ static uint32_t convert_length_to_len_sym (uint32_t length)
         return 285;
 }
 
-void isal_update_histogram_dict (uint8_t *start_stream, int dict_length, int length,
-                                 struct isal_huff_histogram *histogram)
+void
+isal_update_histogram_dict (uint8_t *start_stream, int dict_length, int length,
+                            struct isal_huff_histogram *histogram)
 {
     uint32_t literal = 0, hash;
     uint16_t seen, *last_seen = histogram->hash_table;
@@ -349,7 +356,8 @@ void isal_update_histogram_dict (uint8_t *start_stream, int dict_length, int len
     return;
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     long int file_length;
     int argi = 1;

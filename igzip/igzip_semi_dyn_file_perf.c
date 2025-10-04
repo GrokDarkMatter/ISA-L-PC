@@ -44,7 +44,8 @@
 #define DEFAULT_SEG_SIZE    (512 * 1024)
 #define DEFAULT_SAMPLE_SIZE (32 * 1024)
 
-int usage (void)
+int
+usage (void)
 {
     fprintf (stderr,
              "Usage: igzip_semi_dynamic [options] <infile>\n"
@@ -58,7 +59,8 @@ int usage (void)
     exit (0);
 }
 
-int str_to_i (char *s)
+int
+str_to_i (char *s)
 {
 #define ARG_MAX 32
 
@@ -91,9 +93,9 @@ int str_to_i (char *s)
     return i;
 }
 
-void semi_dyn_stateless_perf (struct isal_zstream *stream, uint8_t *inbuf, uint64_t infile_size,
-                              uint8_t *outbuf, uint64_t outbuf_size, int segment_size,
-                              int hist_size)
+void
+semi_dyn_stateless_perf (struct isal_zstream *stream, uint8_t *inbuf, uint64_t infile_size,
+                         uint8_t *outbuf, uint64_t outbuf_size, int segment_size, int hist_size)
 {
     struct isal_huff_histogram histogram;
     struct isal_hufftables hufftable;
@@ -134,8 +136,9 @@ void semi_dyn_stateless_perf (struct isal_zstream *stream, uint8_t *inbuf, uint6
     }
 }
 
-void semi_dyn_stateful_perf (struct isal_zstream *stream, uint8_t *inbuf, uint64_t infile_size,
-                             uint8_t *outbuf, uint64_t outbuf_size, int segment_size, int hist_size)
+void
+semi_dyn_stateful_perf (struct isal_zstream *stream, uint8_t *inbuf, uint64_t infile_size,
+                        uint8_t *outbuf, uint64_t outbuf_size, int segment_size, int hist_size)
 {
     struct isal_huff_histogram histogram;
     struct isal_hufftables hufftable;
@@ -176,7 +179,8 @@ void semi_dyn_stateful_perf (struct isal_zstream *stream, uint8_t *inbuf, uint64
     }
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     FILE *in = stdin, *out = NULL;
     unsigned char *inbuf, *outbuf;

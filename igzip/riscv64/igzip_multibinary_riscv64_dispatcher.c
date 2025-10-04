@@ -28,8 +28,10 @@
 **********************************************************************/
 #include "riscv64_multibinary.h"
 
-extern uint32_t adler32_rvv (uint32_t, uint8_t *, uint64_t);
-extern uint32_t adler32_base (uint32_t, uint8_t *, uint64_t);
+extern uint32_t
+adler32_rvv (uint32_t, uint8_t *, uint64_t);
+extern uint32_t
+adler32_base (uint32_t, uint8_t *, uint64_t);
 
 DEFINE_INTERFACE_DISPATCHER (isal_adler32)
 {

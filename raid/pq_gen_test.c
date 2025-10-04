@@ -44,14 +44,16 @@
 
 // Generates pseudo-random data
 
-void rand_buffer (unsigned char *buf, long buffer_size)
+void
+rand_buffer (unsigned char *buf, long buffer_size)
 {
     long i;
     for (i = 0; i < buffer_size; i++)
         buf[ i ] = rand ();
 }
 
-int dump (unsigned char *buf, int len)
+int
+dump (unsigned char *buf, int len)
 {
     int i;
     for (i = 0; i < len;)
@@ -64,7 +66,8 @@ int dump (unsigned char *buf, int len)
     return 0;
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     int i, j, k, ret = 0, fail = 0;
     void *buffs[ TEST_SOURCES + 2 ] = { NULL }; // Pointers to src and dest

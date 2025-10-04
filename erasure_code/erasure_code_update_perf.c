@@ -73,7 +73,8 @@
 
 typedef unsigned char u8;
 
-void usage (const char *app_name)
+void
+usage (const char *app_name)
 {
     fprintf (stderr,
              "Usage: %s [options]\n"
@@ -85,7 +86,8 @@ void usage (const char *app_name)
              app_name);
 }
 
-void dump (unsigned char *buf, int len)
+void
+dump (unsigned char *buf, int len)
 {
     int i;
     for (i = 0; i < len;)
@@ -97,13 +99,15 @@ void dump (unsigned char *buf, int len)
     printf ("\n");
 }
 
-void encode_update_test_ref (int m, int k, u8 *g_tbls, u8 **buffs, u8 *a)
+void
+encode_update_test_ref (int m, int k, u8 *g_tbls, u8 **buffs, u8 *a)
 {
     ec_init_tables (k, m - k, &a[ k * k ], g_tbls);
     REF_FUNCTION (TEST_LEN (m), k, m - k, g_tbls, buffs, &buffs[ k ]);
 }
 
-void encode_update_test (int m, int k, u8 *g_tbls, u8 **perf_update_buffs, u8 *a)
+void
+encode_update_test (int m, int k, u8 *g_tbls, u8 **perf_update_buffs, u8 *a)
 {
     int i;
 
@@ -116,8 +120,9 @@ void encode_update_test (int m, int k, u8 *g_tbls, u8 **perf_update_buffs, u8 *a
     }
 }
 
-int decode_test (int m, int k, u8 **update_buffs, u8 **recov, u8 *a, u8 *src_in_err,
-                 u8 *src_err_list, int nerrs, u8 *g_tbls, u8 **perf_update_buffs)
+int
+decode_test (int m, int k, u8 **update_buffs, u8 **recov, u8 *a, u8 *src_in_err, u8 *src_err_list,
+             int nerrs, u8 *g_tbls, u8 **perf_update_buffs)
 {
     int i, j, r;
     u8 b[ MMAX * KMAX ], c[ MMAX * KMAX ], d[ MMAX * KMAX ];
@@ -151,7 +156,8 @@ int decode_test (int m, int k, u8 **update_buffs, u8 **recov, u8 *a, u8 *src_in_
 }
 
 // Helper function for single source benchmark
-void encode_single_src_test (const int m, const int k, u8 *g_tbls, u8 **perf_update_buffs, u8 *a)
+void
+encode_single_src_test (const int m, const int k, u8 *g_tbls, u8 **perf_update_buffs, u8 *a)
 {
     // Make parity vects
     ec_init_tables (k, m - k, &a[ k * k ], g_tbls);
@@ -160,14 +166,15 @@ void encode_single_src_test (const int m, const int k, u8 *g_tbls, u8 **perf_upd
 }
 
 // Helper function for simple single source benchmark
-void encode_single_src_simple_test (const int m, const int k, u8 *g_tbls, u8 **perf_update_buffs,
-                                    u8 *a)
+void
+encode_single_src_simple_test (const int m, const int k, u8 *g_tbls, u8 **perf_update_buffs, u8 *a)
 {
     FUNCTION_UNDER_TEST (TEST_LEN (m), k, m - k, 0, g_tbls, perf_update_buffs[ 0 ],
                          &perf_update_buffs[ k ]);
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     int i, j, check, m, k, p, nerrs, ret = -1;
     void *buf;

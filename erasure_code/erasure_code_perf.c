@@ -53,7 +53,8 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 typedef unsigned char u8;
 
 // Utility print routine
-void dump_u8xu8 (unsigned char *s, int k, int m)
+void
+dump_u8xu8 (unsigned char *s, int k, int m)
 {
     int i, j;
     for (i = 0; i < k; i++)
@@ -78,19 +79,28 @@ void dump_u8xu8 (unsigned char *s, int k, int m)
 #define NOPAPI 1
 #include <arm_neon.h>
 #include "aarch64/PCLib_AARCH64_NEON.c"
-extern void ec_encode_data_neon (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
-extern void ec_encode_data_neon (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
+extern void
+ec_encode_data_neon (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
+extern void
+ec_encode_data_neon (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
 #else
 #include <immintrin.h>
-extern void ec_encode_data_avx2_gfni (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
+extern void
+ec_encode_data_avx2_gfni (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
 #include "PCLib_AVX2_GFNI.c"
-extern void ec_encode_data_avx512_gfni (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
+extern void
+ec_encode_data_avx512_gfni (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
 #include "PCLib_AVX512_GFNI.c"
-extern void gf_gen_poly (unsigned char *, int);
-extern int find_roots (unsigned char *S, unsigned char *roots, int lenPoly);
-extern int gf_invert_matrix (unsigned char *in_mat, unsigned char *out_mat, int size);
-extern int berlekamp_massey (unsigned char *S, int length, unsigned char *keyEq);
-extern int PGZ (unsigned char *S, int length, unsigned char *keyEq);
+extern void
+gf_gen_poly (unsigned char *, int);
+extern int
+find_roots (unsigned char *S, unsigned char *roots, int lenPoly);
+extern int
+gf_invert_matrix (unsigned char *in_mat, unsigned char *out_mat, int size);
+extern int
+berlekamp_massey (unsigned char *S, int length, unsigned char *keyEq);
+extern int
+PGZ (unsigned char *S, int length, unsigned char *keyEq);
 #endif
 
 #ifndef GT_L3_CACHE
@@ -123,13 +133,15 @@ extern int PGZ (unsigned char *S, int length, unsigned char *keyEq);
 
 #ifndef NOPAPI
 #include <papi.h>
-void handle_error (int code)
+void
+handle_error (int code)
 {
     fprintf (stderr, "PAPI error: %s\n", PAPI_strerror (code));
     exit (1);
 }
 
-int InitPAPI (void)
+int
+InitPAPI (void)
 {
     int event_set = PAPI_NULL, event_code, ret;
 
@@ -170,7 +182,8 @@ int InitPAPI (void)
     return event_set;
 }
 
-void TestPAPIRoots (void)
+void
+TestPAPIRoots (void)
 {
     int event_set = PAPI_NULL, ret;
     long long values[ 2 ];
@@ -248,7 +261,8 @@ void TestPAPIRoots (void)
                 lenPoly, values[ 0 ], values[ 1 ], CPI, Speedup);
     }
 }
-void TestPAPIInv (void)
+void
+TestPAPIInv (void)
 {
 
     int event_set = PAPI_NULL, ret;
@@ -323,7 +337,8 @@ void TestPAPIInv (void)
     }
 }
 
-void TestPAPIbm (void)
+void
+TestPAPIbm (void)
 {
 
     int event_set = PAPI_NULL, ret, len;
@@ -452,7 +467,8 @@ void TestPAPIbm (void)
 
 #endif
 
-void usage (const char *app_name)
+void
+usage (const char *app_name)
 {
     fprintf (stderr,
              "Usage: %s [options]\n"
@@ -463,15 +479,17 @@ void usage (const char *app_name)
              app_name);
 }
 
-void ec_encode_perf (int m, int k, u8 *a, u8 *g_tbls, u8 **buffs, struct perf *start)
+void
+ec_encode_perf (int m, int k, u8 *a, u8 *g_tbls, u8 **buffs, struct perf *start)
 {
     ec_init_tables (k, m - k, &a[ k * k ], g_tbls);
     BENCHMARK (start, BENCHMARK_TIME,
                ec_encode_data (TEST_LEN (m), k, m - k, g_tbls, buffs, &buffs[ k ]));
 }
 
-int ec_decode_perf (int m, int k, u8 *a, u8 *g_tbls, u8 **buffs, u8 *src_in_err, u8 *src_err_list,
-                    int nerrs, u8 **temp_buffs, struct perf *start)
+int
+ec_decode_perf (int m, int k, u8 *a, u8 *g_tbls, u8 **buffs, u8 *src_in_err, u8 *src_err_list,
+                int nerrs, u8 **temp_buffs, struct perf *start)
 {
     int i, j, r;
     u8 *b, *c, *d;
@@ -529,8 +547,9 @@ exit:
 
 #define FIELD_SIZE 256
 
-void inject_errors_in_place (unsigned char **data, int index, int num_errors,
-                             unsigned char *error_positions, uint8_t *original_values)
+void
+inject_errors_in_place (unsigned char **data, int index, int num_errors,
+                        unsigned char *error_positions, uint8_t *original_values)
 {
     for (int i = 0; i < num_errors; i++)
     {
@@ -541,8 +560,9 @@ void inject_errors_in_place (unsigned char **data, int index, int num_errors,
     }
 }
 
-int verify_correction_in_place (unsigned char **data, int index, int num_errors,
-                                unsigned char *error_positions, uint8_t *original_values)
+int
+verify_correction_in_place (unsigned char **data, int index, int num_errors,
+                            unsigned char *error_positions, uint8_t *original_values)
 {
     for (int i = 0; i < num_errors; i++)
     {
@@ -556,8 +576,9 @@ int verify_correction_in_place (unsigned char **data, int index, int num_errors,
     return 1;
 }
 
-int test_pgz_decoder (int index, int m, int p, unsigned char *g_tbls, unsigned char **data,
-                      unsigned char **coding, int avx2)
+int
+test_pgz_decoder (int index, int m, int p, unsigned char *g_tbls, unsigned char **data,
+                  unsigned char **coding, int avx2)
 {
     int successes = 0, total_tests = 0;
 
@@ -649,7 +670,8 @@ int test_pgz_decoder (int index, int m, int p, unsigned char *g_tbls, unsigned c
     return 1;
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     // Work variables
     int i, j, m, k, p, nerrs, ret = -1;

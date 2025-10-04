@@ -54,7 +54,8 @@
 
 #define TEST_MEM TEST_LEN
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     void *src, *dst;
     uint16_t crc;

@@ -60,7 +60,8 @@
 
 typedef unsigned char u8;
 
-void dump (unsigned char *buf, int len)
+void
+dump (unsigned char *buf, int len)
 {
     int i;
     for (i = 0; i < len;)
@@ -72,7 +73,8 @@ void dump (unsigned char *buf, int len)
     printf ("\n");
 }
 
-void dump_matrix (unsigned char **s, int k, int m)
+void
+dump_matrix (unsigned char **s, int k, int m)
 {
     int i, j;
     for (i = 0; i < k; i++)
@@ -86,9 +88,9 @@ void dump_matrix (unsigned char **s, int k, int m)
     printf ("\n");
 }
 
-void vect_dot_prod_perf (void (*fun_ptr) (int, int, unsigned char *, unsigned char **,
-                                          unsigned char *),
-                         u8 *g, u8 *g_tbls, u8 **buffs, u8 *dest_ref)
+void
+vect_dot_prod_perf (void (*fun_ptr) (int, int, unsigned char *, unsigned char **, unsigned char *),
+                    u8 *g, u8 *g_tbls, u8 **buffs, u8 *dest_ref)
 {
     int j;
     for (j = 0; j < TEST_SOURCES; j++)
@@ -97,7 +99,8 @@ void vect_dot_prod_perf (void (*fun_ptr) (int, int, unsigned char *, unsigned ch
     (*fun_ptr) (TEST_LEN, TEST_SOURCES, &g_tbls[ 0 ], buffs, dest_ref);
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     int i, j;
     void *buf;

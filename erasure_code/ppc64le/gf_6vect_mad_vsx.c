@@ -1,7 +1,8 @@
 #include "ec_base_vsx.h"
 
-void gf_6vect_mad_vsx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                       unsigned char **dest)
+void
+gf_6vect_mad_vsx (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                  unsigned char **dest)
 {
     unsigned char *s, *t0, *t1, *t2, *t3, *t4, *t5;
     vector unsigned char vX1, vX2, vX3, vX4;

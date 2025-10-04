@@ -29,13 +29,17 @@
 #include <aarch64_multibinary.h>
 #include "raid.h"
 
-extern int xor_gen_neon (int, int, void **);
+extern int
+xor_gen_neon (int, int, void **);
 
-extern int xor_check_neon (int, int, void **);
+extern int
+xor_check_neon (int, int, void **);
 
-extern int pq_gen_neon (int, int, void **);
+extern int
+pq_gen_neon (int, int, void **);
 
-extern int pq_check_neon (int, int, void **);
+extern int
+pq_check_neon (int, int, void **);
 
 DEFINE_INTERFACE_DISPATCHER (xor_gen)
 {

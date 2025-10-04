@@ -44,7 +44,8 @@ extern "C"
 #define MAX_ITER 8
 
     // crc64_ecma reference function, slow crc64 from the definition.
-    static inline uint64_t crc64_ecma_refl_ref (uint64_t seed, const uint8_t *buf, uint64_t len)
+    static inline uint64_t
+    crc64_ecma_refl_ref (uint64_t seed, const uint8_t *buf, uint64_t len)
     {
         uint64_t rem = ~seed;
         unsigned int i, j;
@@ -62,7 +63,8 @@ extern "C"
         return ~rem;
     }
 
-    static inline uint64_t crc64_ecma_norm_ref (uint64_t seed, const uint8_t *buf, uint64_t len)
+    static inline uint64_t
+    crc64_ecma_norm_ref (uint64_t seed, const uint8_t *buf, uint64_t len)
     {
         uint64_t rem = ~seed;
         unsigned int i, j;
@@ -81,7 +83,8 @@ extern "C"
     }
 
     // crc64_iso reference function, slow crc64 from the definition.
-    static inline uint64_t crc64_iso_refl_ref (uint64_t seed, const uint8_t *buf, uint64_t len)
+    static inline uint64_t
+    crc64_iso_refl_ref (uint64_t seed, const uint8_t *buf, uint64_t len)
     {
         uint64_t rem = ~seed;
         unsigned int i, j;
@@ -99,7 +102,8 @@ extern "C"
         return ~rem;
     }
 
-    static inline uint64_t crc64_iso_norm_ref (uint64_t seed, const uint8_t *buf, uint64_t len)
+    static inline uint64_t
+    crc64_iso_norm_ref (uint64_t seed, const uint8_t *buf, uint64_t len)
     {
         uint64_t rem = ~seed;
         unsigned int i, j;
@@ -118,7 +122,8 @@ extern "C"
     }
 
     // crc64_jones reference function, slow crc64 from the definition.
-    static inline uint64_t crc64_jones_refl_ref (uint64_t seed, const uint8_t *buf, uint64_t len)
+    static inline uint64_t
+    crc64_jones_refl_ref (uint64_t seed, const uint8_t *buf, uint64_t len)
     {
         uint64_t rem = ~seed;
         unsigned int i, j;
@@ -136,7 +141,8 @@ extern "C"
         return ~rem;
     }
 
-    static inline uint64_t crc64_jones_norm_ref (uint64_t seed, const uint8_t *buf, uint64_t len)
+    static inline uint64_t
+    crc64_jones_norm_ref (uint64_t seed, const uint8_t *buf, uint64_t len)
     {
         uint64_t rem = ~seed;
         unsigned int i, j;
@@ -155,7 +161,8 @@ extern "C"
     }
 
     // crc64_rocksoft reference function, slow crc64 from the definition.
-    static inline uint64_t crc64_rocksoft_refl_ref (uint64_t seed, const uint8_t *buf, uint64_t len)
+    static inline uint64_t
+    crc64_rocksoft_refl_ref (uint64_t seed, const uint8_t *buf, uint64_t len)
     {
         uint64_t rem = ~seed;
         unsigned int i, j;
@@ -173,7 +180,8 @@ extern "C"
         return ~rem;
     }
 
-    static inline uint64_t crc64_rocksoft_norm_ref (uint64_t seed, const uint8_t *buf, uint64_t len)
+    static inline uint64_t
+    crc64_rocksoft_norm_ref (uint64_t seed, const uint8_t *buf, uint64_t len)
     {
         uint64_t rem = ~seed;
         unsigned int i, j;

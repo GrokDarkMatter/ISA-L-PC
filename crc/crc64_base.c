@@ -565,7 +565,8 @@ static const uint64_t crc64_rocksoft_norm_table[ 256 ] = {
     0x4fc6939ccb9837e6ULL, 0xe25541a95f5101bfULL, 0xb972e5c276c36d0dULL, 0x14e137f7e20a5b54ULL
 };
 
-uint64_t crc64_ecma_refl_base (uint64_t seed, const uint8_t *buf, uint64_t len)
+uint64_t
+crc64_ecma_refl_base (uint64_t seed, const uint8_t *buf, uint64_t len)
 {
     uint64_t i, crc = ~seed;
 
@@ -578,7 +579,8 @@ uint64_t crc64_ecma_refl_base (uint64_t seed, const uint8_t *buf, uint64_t len)
     return ~crc;
 }
 
-uint64_t crc64_ecma_norm_base (uint64_t seed, const uint8_t *buf, uint64_t len)
+uint64_t
+crc64_ecma_norm_base (uint64_t seed, const uint8_t *buf, uint64_t len)
 {
     uint64_t i, crc = ~seed;
 
@@ -591,7 +593,8 @@ uint64_t crc64_ecma_norm_base (uint64_t seed, const uint8_t *buf, uint64_t len)
     return ~crc;
 }
 
-uint64_t crc64_iso_refl_base (uint64_t seed, const uint8_t *buf, uint64_t len)
+uint64_t
+crc64_iso_refl_base (uint64_t seed, const uint8_t *buf, uint64_t len)
 {
     uint64_t i, crc = ~seed;
 
@@ -604,7 +607,8 @@ uint64_t crc64_iso_refl_base (uint64_t seed, const uint8_t *buf, uint64_t len)
     return ~crc;
 }
 
-uint64_t crc64_iso_norm_base (uint64_t seed, const uint8_t *buf, uint64_t len)
+uint64_t
+crc64_iso_norm_base (uint64_t seed, const uint8_t *buf, uint64_t len)
 {
     uint64_t i, crc = ~seed;
 
@@ -617,7 +621,8 @@ uint64_t crc64_iso_norm_base (uint64_t seed, const uint8_t *buf, uint64_t len)
     return ~crc;
 }
 
-uint64_t crc64_jones_refl_base (uint64_t seed, const uint8_t *buf, uint64_t len)
+uint64_t
+crc64_jones_refl_base (uint64_t seed, const uint8_t *buf, uint64_t len)
 {
     uint64_t i, crc = ~seed;
 
@@ -630,7 +635,8 @@ uint64_t crc64_jones_refl_base (uint64_t seed, const uint8_t *buf, uint64_t len)
     return ~crc;
 }
 
-uint64_t crc64_jones_norm_base (uint64_t seed, const uint8_t *buf, uint64_t len)
+uint64_t
+crc64_jones_norm_base (uint64_t seed, const uint8_t *buf, uint64_t len)
 {
     uint64_t i, crc = ~seed;
 
@@ -643,7 +649,8 @@ uint64_t crc64_jones_norm_base (uint64_t seed, const uint8_t *buf, uint64_t len)
     return ~crc;
 }
 
-uint64_t crc64_rocksoft_refl_base (uint64_t seed, const uint8_t *buf, uint64_t len)
+uint64_t
+crc64_rocksoft_refl_base (uint64_t seed, const uint8_t *buf, uint64_t len)
 {
     uint64_t i, crc = ~seed;
 
@@ -656,7 +663,8 @@ uint64_t crc64_rocksoft_refl_base (uint64_t seed, const uint8_t *buf, uint64_t l
     return ~crc;
 }
 
-uint64_t crc64_rocksoft_norm_base (uint64_t seed, const uint8_t *buf, uint64_t len)
+uint64_t
+crc64_rocksoft_norm_base (uint64_t seed, const uint8_t *buf, uint64_t len)
 {
     uint64_t i, crc = ~seed;
 

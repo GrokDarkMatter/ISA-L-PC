@@ -58,7 +58,8 @@ u8 gff[ 256 ];
 u8 gflog[ 256 ];
 u8 gf_mul_table[ 256 * 256 ];
 
-void mk_gf_field (void)
+void
+mk_gf_field (void)
 {
     int i;
     u8 s = 1;
@@ -72,7 +73,8 @@ void mk_gf_field (void)
     }
 }
 
-void mk_gf_mul_table (u8 *table)
+void
+mk_gf_mul_table (u8 *table)
 {
     // Populate a single table with all multiply combinations for a fast,
     // single-table lookup of GF(2^8) multiply at the expense of memory.
@@ -82,7 +84,8 @@ void mk_gf_mul_table (u8 *table)
             table[ i * 256 + j ] = gf_mul (i, j);
 }
 
-void gf_vect_dot_prod_ref (int len, int vlen, u8 *v, u8 **src, u8 *dest)
+void
+gf_vect_dot_prod_ref (int len, int vlen, u8 *v, u8 **src, u8 *dest)
 {
     int i, j;
     u8 s;
@@ -96,7 +99,8 @@ void gf_vect_dot_prod_ref (int len, int vlen, u8 *v, u8 **src, u8 *dest)
     }
 }
 
-void gf_vect_dot_prod_mult (int len, int vlen, u8 *v, u8 **src, u8 *dest)
+void
+gf_vect_dot_prod_mult (int len, int vlen, u8 *v, u8 **src, u8 *dest)
 {
     int i, j;
     u8 s;
@@ -111,7 +115,8 @@ void gf_vect_dot_prod_mult (int len, int vlen, u8 *v, u8 **src, u8 *dest)
     }
 }
 
-int main (void)
+int
+main (void)
 {
     int i, j;
     u8 vec[ TEST_SOURCES ], *dest1, *dest2;

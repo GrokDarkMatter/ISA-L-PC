@@ -1,7 +1,8 @@
 #include "ec_base_vsx.h"
 
-void gf_3vect_dot_prod_vsx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                            unsigned char **dest)
+void
+gf_3vect_dot_prod_vsx (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                       unsigned char **dest)
 {
     unsigned char *s, *t0, *t1, *t2;
     vector unsigned char vX1, vX2, vX3, vX4;

@@ -3,7 +3,8 @@
 /*
  * Same as gf_vect_mul_base in "ec_base.h" but without the size restriction.
  */
-static void _gf_vect_mul_base (int len, unsigned char *a, unsigned char *src, unsigned char *dest)
+static void
+_gf_vect_mul_base (int len, unsigned char *a, unsigned char *src, unsigned char *dest)
 {
     // 2nd element of table array is ref value used to fill it in
     unsigned char c = a[ 1 ];
@@ -13,7 +14,8 @@ static void _gf_vect_mul_base (int len, unsigned char *a, unsigned char *src, un
     return;
 }
 
-void gf_vect_mul_vsx (int len, unsigned char *gftbl, unsigned char *src, unsigned char *dest)
+void
+gf_vect_mul_vsx (int len, unsigned char *gftbl, unsigned char *src, unsigned char *dest)
 {
     unsigned char *s, *t0;
     vector unsigned char vX1, vY1;

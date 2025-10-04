@@ -42,7 +42,8 @@ uint32_t inflate_crc_table[ 256 ] = {
     0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94, 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
-uint32_t crc32_gzip_refl_ref (uint32_t crc, const unsigned char *buf, uint64_t len)
+uint32_t
+crc32_gzip_refl_ref (uint32_t crc, const unsigned char *buf, uint64_t len)
 {
     uint64_t i;
     crc = ~crc;
@@ -53,7 +54,8 @@ uint32_t crc32_gzip_refl_ref (uint32_t crc, const unsigned char *buf, uint64_t l
 
 #define ADLER_MOD 65521
 
-uint32_t adler_ref (uint32_t init, const unsigned char *buf, uint64_t len)
+uint32_t
+adler_ref (uint32_t init, const unsigned char *buf, uint64_t len)
 {
     uint64_t i;
     uint32_t a = init & 0xffff;

@@ -49,12 +49,14 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include "ec_base.h" /* for GF tables */
 #ifndef MAX_PC_RETRY
 #define MAX_PC_RETRY 1
-extern int pc_correct (int newPos, int k, int rows, unsigned char **data, int vLen);
+extern int
+pc_correct (int newPos, int k, int rows, unsigned char **data, int vLen);
 #endif
 #if __x86_64__ || __i386__ || _M_X64 || _M_IX86
 
-void ec_encode_data_sse (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
-                         unsigned char **coding)
+void
+ec_encode_data_sse (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
+                    unsigned char **coding)
 {
 
     if (len < 16)
@@ -92,8 +94,9 @@ void ec_encode_data_sse (int len, int k, int rows, unsigned char *g_tbls, unsign
     }
 }
 
-void ec_encode_data_avx (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
-                         unsigned char **coding)
+void
+ec_encode_data_avx (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
+                    unsigned char **coding)
 {
     if (len < 16)
     {
@@ -130,8 +133,9 @@ void ec_encode_data_avx (int len, int k, int rows, unsigned char *g_tbls, unsign
     }
 }
 
-void ec_encode_data_avx2 (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
-                          unsigned char **coding)
+void
+ec_encode_data_avx2 (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
+                     unsigned char **coding)
 {
 
     if (len < 32)
@@ -169,33 +173,46 @@ void ec_encode_data_avx2 (int len, int k, int rows, unsigned char *g_tbls, unsig
     }
 }
 
-extern int gf_vect_dot_prod_avx512 (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                                    unsigned char *dest);
-extern int gf_2vect_dot_prod_avx512 (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                                     unsigned char **coding);
-extern int gf_3vect_dot_prod_avx512 (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                                     unsigned char **coding);
-extern int gf_4vect_dot_prod_avx512 (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                                     unsigned char **coding);
-extern int gf_5vect_dot_prod_avx512 (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                                     unsigned char **coding);
-extern int gf_6vect_dot_prod_avx512 (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                                     unsigned char **coding);
-extern void gf_vect_mad_avx512 (int len, int vec, int vec_i, unsigned char *gftbls,
-                                unsigned char *src, unsigned char *dest);
-extern void gf_2vect_mad_avx512 (int len, int vec, int vec_i, unsigned char *gftbls,
-                                 unsigned char *src, unsigned char **dest);
-extern void gf_3vect_mad_avx512 (int len, int vec, int vec_i, unsigned char *gftbls,
-                                 unsigned char *src, unsigned char **dest);
-extern void gf_4vect_mad_avx512 (int len, int vec, int vec_i, unsigned char *gftbls,
-                                 unsigned char *src, unsigned char **dest);
-extern void gf_5vect_mad_avx512 (int len, int vec, int vec_i, unsigned char *gftbls,
-                                 unsigned char *src, unsigned char **dest);
-extern void gf_6vect_mad_avx512 (int len, int vec, int vec_i, unsigned char *gftbls,
-                                 unsigned char *src, unsigned char **dest);
+extern int
+gf_vect_dot_prod_avx512 (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                         unsigned char *dest);
+extern int
+gf_2vect_dot_prod_avx512 (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **coding);
+extern int
+gf_3vect_dot_prod_avx512 (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **coding);
+extern int
+gf_4vect_dot_prod_avx512 (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **coding);
+extern int
+gf_5vect_dot_prod_avx512 (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **coding);
+extern int
+gf_6vect_dot_prod_avx512 (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **coding);
+extern void
+gf_vect_mad_avx512 (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                    unsigned char *dest);
+extern void
+gf_2vect_mad_avx512 (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                     unsigned char **dest);
+extern void
+gf_3vect_mad_avx512 (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                     unsigned char **dest);
+extern void
+gf_4vect_mad_avx512 (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                     unsigned char **dest);
+extern void
+gf_5vect_mad_avx512 (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                     unsigned char **dest);
+extern void
+gf_6vect_mad_avx512 (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                     unsigned char **dest);
 
-void ec_encode_data_avx512 (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
-                            unsigned char **coding)
+void
+ec_encode_data_avx512 (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
+                       unsigned char **coding)
 {
 
     if (len < 64)
@@ -233,8 +250,9 @@ void ec_encode_data_avx512 (int len, int k, int rows, unsigned char *g_tbls, uns
     }
 }
 
-void ec_encode_data_update_avx512 (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
-                                   unsigned char *data, unsigned char **coding)
+void
+ec_encode_data_update_avx512 (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
+                              unsigned char *data, unsigned char **coding)
 {
     if (len < 64)
     {
@@ -271,65 +289,92 @@ void ec_encode_data_update_avx512 (int len, int k, int rows, int vec_i, unsigned
     }
 }
 
-extern void gf_vect_dot_prod_avx512_gfni (int len, int k, unsigned char *g_tbls,
-                                          unsigned char **data, unsigned char *dest);
-extern void gf_2vect_dot_prod_avx512_gfni (int len, int k, unsigned char *g_tbls,
-                                           unsigned char **data, unsigned char **coding);
-extern void gf_3vect_dot_prod_avx512_gfni (int len, int k, unsigned char *g_tbls,
-                                           unsigned char **data, unsigned char **coding);
-extern void gf_4vect_dot_prod_avx512_gfni (int len, int k, unsigned char *g_tbls,
-                                           unsigned char **data, unsigned char **coding);
-extern void gf_5vect_dot_prod_avx512_gfni (int len, int k, unsigned char *g_tbls,
-                                           unsigned char **data, unsigned char **coding);
-extern void gf_6vect_dot_prod_avx512_gfni (int len, int k, unsigned char *g_tbls,
-                                           unsigned char **data, unsigned char **coding);
-extern int gf_vect_syndrome_avx512_gfni (int len, int k, unsigned char *g_tbls,
-                                         unsigned char **data, unsigned char *dest, int offSet);
-extern int gf_2vect_syndrome_avx512_gfni (int len, int k, unsigned char *g_tbls,
-                                          unsigned char **data, unsigned char **dest, int offSet);
-extern int gf_3vect_syndrome_avx512_gfni (int len, int k, unsigned char *g_tbls,
-                                          unsigned char **data, unsigned char **dest, int offSet);
-extern int gf_4vect_syndrome_avx512_gfni (int len, int k, unsigned char *g_tbls,
-                                          unsigned char **data, unsigned char **dest, int offSet);
-extern int gf_5vect_syndrome_avx512_gfni (int len, int k, unsigned char *g_tbls,
-                                          unsigned char **data, unsigned char **dest, int offSet);
-extern int gf_6vect_syndrome_avx512_gfni (int len, int k, unsigned char *g_tbls,
-                                          unsigned char **data, unsigned char **dest, int offSet);
-extern int gf_nvect_syndrome_avx512_gfni (int len, int k, unsigned char *g_tbls,
-                                          unsigned char **data, unsigned char **dest, int offSet,
-                                          int syncount);
+extern void
+gf_vect_dot_prod_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                              unsigned char *dest);
+extern void
+gf_2vect_dot_prod_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                               unsigned char **coding);
+extern void
+gf_3vect_dot_prod_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                               unsigned char **coding);
+extern void
+gf_4vect_dot_prod_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                               unsigned char **coding);
+extern void
+gf_5vect_dot_prod_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                               unsigned char **coding);
+extern void
+gf_6vect_dot_prod_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                               unsigned char **coding);
+extern int
+gf_vect_syndrome_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                              unsigned char *dest, int offSet);
+extern int
+gf_2vect_syndrome_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                               unsigned char **dest, int offSet);
+extern int
+gf_3vect_syndrome_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                               unsigned char **dest, int offSet);
+extern int
+gf_4vect_syndrome_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                               unsigned char **dest, int offSet);
+extern int
+gf_5vect_syndrome_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                               unsigned char **dest, int offSet);
+extern int
+gf_6vect_syndrome_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                               unsigned char **dest, int offSet);
+extern int
+gf_nvect_syndrome_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                               unsigned char **dest, int offSet, int syncount);
 
-extern void gf_vect_mad_avx512_gfni (int len, int vec, int vec_i, unsigned char *gftbls,
-                                     unsigned char *src, unsigned char *dest);
-extern void gf_2vect_mad_avx512_gfni (int len, int vec, int vec_i, unsigned char *gftbls,
-                                      unsigned char *src, unsigned char **dest);
-extern void gf_3vect_mad_avx512_gfni (int len, int vec, int vec_i, unsigned char *gftbls,
-                                      unsigned char *src, unsigned char **dest);
-extern void gf_4vect_mad_avx512_gfni (int len, int vec, int vec_i, unsigned char *gftbls,
-                                      unsigned char *src, unsigned char **dest);
-extern void gf_5vect_mad_avx512_gfni (int len, int vec, int vec_i, unsigned char *gftbls,
-                                      unsigned char *src, unsigned char **dest);
-extern void gf_6vect_mad_avx512_gfni (int len, int vec, int vec_i, unsigned char *gftbls,
-                                      unsigned char *src, unsigned char **dest);
+extern void
+gf_vect_mad_avx512_gfni (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                         unsigned char *dest);
+extern void
+gf_2vect_mad_avx512_gfni (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                          unsigned char **dest);
+extern void
+gf_3vect_mad_avx512_gfni (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                          unsigned char **dest);
+extern void
+gf_4vect_mad_avx512_gfni (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                          unsigned char **dest);
+extern void
+gf_5vect_mad_avx512_gfni (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                          unsigned char **dest);
+extern void
+gf_6vect_mad_avx512_gfni (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                          unsigned char **dest);
 
-extern void gf_vect_dot_prod_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
-                                        unsigned char *dest);
-extern void gf_2vect_dot_prod_avx2_gfni (int len, int k, unsigned char *g_tbls,
-                                         unsigned char **data, unsigned char **coding);
-extern void gf_3vect_dot_prod_avx2_gfni (int len, int k, unsigned char *g_tbls,
-                                         unsigned char **data, unsigned char **coding);
-extern void gf_vect_mad_avx2_gfni (int len, int vec, int vec_i, unsigned char *gftbls,
-                                   unsigned char *src, unsigned char *dest);
-extern void gf_2vect_mad_avx2_gfni (int len, int vec, int vec_i, unsigned char *gftbls,
-                                    unsigned char *src, unsigned char **dest);
-extern void gf_3vect_mad_avx2_gfni (int len, int vec, int vec_i, unsigned char *gftbls,
-                                    unsigned char *src, unsigned char **dest);
-extern void gf_4vect_mad_avx2_gfni (int len, int vec, int vec_i, unsigned char *gftbls,
-                                    unsigned char *src, unsigned char **dest);
-extern void gf_5vect_mad_avx2_gfni (int len, int vec, int vec_i, unsigned char *gftbls,
-                                    unsigned char *src, unsigned char **dest);
+extern void
+gf_vect_dot_prod_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                            unsigned char *dest);
+extern void
+gf_2vect_dot_prod_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                             unsigned char **coding);
+extern void
+gf_3vect_dot_prod_avx2_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
+                             unsigned char **coding);
+extern void
+gf_vect_mad_avx2_gfni (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                       unsigned char *dest);
+extern void
+gf_2vect_mad_avx2_gfni (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                        unsigned char **dest);
+extern void
+gf_3vect_mad_avx2_gfni (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                        unsigned char **dest);
+extern void
+gf_4vect_mad_avx2_gfni (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                        unsigned char **dest);
+extern void
+gf_5vect_mad_avx2_gfni (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                        unsigned char **dest);
 
-void ec_init_tables_gfni (int k, int rows, unsigned char *a, unsigned char *g_tbls)
+void
+ec_init_tables_gfni (int k, int rows, unsigned char *a, unsigned char *g_tbls)
 {
     int i, j;
 
@@ -339,8 +384,9 @@ void ec_init_tables_gfni (int k, int rows, unsigned char *a, unsigned char *g_tb
         for (j = 0; j < k; j++)
             *(g64++) = gf_table_gfni[ *a++ ];
 }
-int ec_decode_data_avx512_gfni (int len, int k, int rows, unsigned char *g_tbls,
-                                unsigned char **data, unsigned char **coding)
+int
+ec_decode_data_avx512_gfni (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
+                            unsigned char **coding)
 {
     int newPos = 0, retry = 0, p = rows;
     unsigned char **dest = coding;
@@ -393,8 +439,9 @@ int ec_decode_data_avx512_gfni (int len, int k, int rows, unsigned char *g_tbls,
     return (newPos);
 }
 
-void ec_encode_data_avx512_gfni (int len, int k, int rows, unsigned char *g_tbls,
-                                 unsigned char **data, unsigned char **coding)
+void
+ec_encode_data_avx512_gfni (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
+                            unsigned char **coding)
 {
 
     while (rows >= 6)
@@ -427,8 +474,9 @@ void ec_encode_data_avx512_gfni (int len, int k, int rows, unsigned char *g_tbls
     }
 }
 
-void ec_encode_data_avx2_gfni (int len, int k, int rows, unsigned char *g_tbls,
-                               unsigned char **data, unsigned char **coding)
+void
+ec_encode_data_avx2_gfni (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
+                          unsigned char **coding)
 {
     while (rows >= 3)
     {
@@ -451,8 +499,9 @@ void ec_encode_data_avx2_gfni (int len, int k, int rows, unsigned char *g_tbls,
     }
 }
 
-void ec_encode_data_update_avx512_gfni (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
-                                        unsigned char *data, unsigned char **coding)
+void
+ec_encode_data_update_avx512_gfni (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
+                                   unsigned char *data, unsigned char **coding)
 {
     while (rows >= 6)
     {
@@ -484,8 +533,9 @@ void ec_encode_data_update_avx512_gfni (int len, int k, int rows, int vec_i, uns
     }
 }
 
-void ec_encode_data_update_avx2_gfni (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
-                                      unsigned char *data, unsigned char **coding)
+void
+ec_encode_data_update_avx2_gfni (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
+                                 unsigned char *data, unsigned char **coding)
 {
     while (rows >= 5)
     {
@@ -516,8 +566,9 @@ void ec_encode_data_update_avx2_gfni (int len, int k, int rows, int vec_i, unsig
 
 #if __WORDSIZE == 64 || _WIN64 || __x86_64__
 
-void ec_encode_data_update_sse (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
-                                unsigned char *data, unsigned char **coding)
+void
+ec_encode_data_update_sse (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
+                           unsigned char *data, unsigned char **coding)
 {
     if (len < 16)
     {
@@ -557,8 +608,9 @@ void ec_encode_data_update_sse (int len, int k, int rows, int vec_i, unsigned ch
     }
 }
 
-void ec_encode_data_update_avx (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
-                                unsigned char *data, unsigned char **coding)
+void
+ec_encode_data_update_avx (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
+                           unsigned char *data, unsigned char **coding)
 {
     if (len < 16)
     {
@@ -597,8 +649,9 @@ void ec_encode_data_update_avx (int len, int k, int rows, int vec_i, unsigned ch
     }
 }
 
-void ec_encode_data_update_avx2 (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
-                                 unsigned char *data, unsigned char **coding)
+void
+ec_encode_data_update_avx2 (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
+                            unsigned char *data, unsigned char **coding)
 {
     if (len < 32)
     {

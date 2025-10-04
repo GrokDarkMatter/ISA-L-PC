@@ -142,14 +142,16 @@ struct perf_info
     struct perf start;
 };
 
-void init_perf_info (struct perf_info *info)
+void
+init_perf_info (struct perf_info *info)
 {
     memset (info, 0, sizeof (*info));
     info->deflate_time = BENCHMARK_TIME;
     info->inflate_time = BENCHMARK_TIME;
 }
 
-int usage (void)
+int
+usage (void)
 {
     fprintf (
             stderr,
@@ -178,20 +180,23 @@ int usage (void)
     exit (0);
 }
 
-void print_perf_info_line (struct perf_info *info)
+void
+print_perf_info_line (struct perf_info *info)
 {
     printf ("igzip_perf-> compress level: %d flush_type: %d block_size: %d\n", info->strategy.level,
             info->flush_type, info->inblock_size);
 }
 
-void print_file_line (struct perf_info *info)
+void
+print_file_line (struct perf_info *info)
 {
     printf ("  file info-> name: %s file_size: %lu compress_size: %lu ratio: %2.02f%%\n",
             info->file_name, info->file_size, info->deflate_size,
             100.0 * info->deflate_size / info->file_size);
 }
 
-void print_deflate_perf_line (struct perf_info *info)
+void
+print_deflate_perf_line (struct perf_info *info)
 {
     if (info->strategy.mode == ISAL_STATELESS)
         printf ("    isal_stateless_deflate-> ");
@@ -205,7 +210,8 @@ void print_deflate_perf_line (struct perf_info *info)
     perf_print (info->start, info->file_size);
 }
 
-void print_inflate_perf_line (struct perf_info *info)
+void
+print_inflate_perf_line (struct perf_info *info)
 {
     if (info->inflate_mode == ISAL_STATELESS)
         printf ("    isal_stateless_inflate-> ");
@@ -219,9 +225,10 @@ void print_inflate_perf_line (struct perf_info *info)
     perf_print (info->start, info->file_size);
 }
 
-int isal_deflate_round (struct isal_zstream *stream, uint8_t *outbuf, uint32_t outbuf_size,
-                        uint8_t *inbuf, uint32_t inbuf_size, uint32_t level, uint8_t *level_buf,
-                        uint32_t level_buf_size, int flush_type, int hist_bits)
+int
+isal_deflate_round (struct isal_zstream *stream, uint8_t *outbuf, uint32_t outbuf_size,
+                    uint8_t *inbuf, uint32_t inbuf_size, uint32_t level, uint8_t *level_buf,
+                    uint32_t level_buf_size, int flush_type, int hist_bits)
 {
     int check;
 
@@ -248,10 +255,11 @@ int isal_deflate_round (struct isal_zstream *stream, uint8_t *outbuf, uint32_t o
     return 0;
 }
 
-int isal_deflate_dict_round (struct isal_zstream *stream, uint8_t *outbuf, uint32_t outbuf_size,
-                             uint8_t *inbuf, uint32_t inbuf_size, uint32_t level,
-                             uint8_t *level_buf, uint32_t level_buf_size, int flush_type,
-                             int hist_bits, struct isal_dict *dict_str)
+int
+isal_deflate_dict_round (struct isal_zstream *stream, uint8_t *outbuf, uint32_t outbuf_size,
+                         uint8_t *inbuf, uint32_t inbuf_size, uint32_t level, uint8_t *level_buf,
+                         uint32_t level_buf_size, int flush_type, int hist_bits,
+                         struct isal_dict *dict_str)
 {
     int check;
 
@@ -281,8 +289,9 @@ int isal_deflate_dict_round (struct isal_zstream *stream, uint8_t *outbuf, uint3
     return 0;
 }
 
-int isal_inflate_round (struct inflate_state *state, uint8_t *inbuf, uint32_t inbuf_size,
-                        uint8_t *outbuf, uint32_t outbuf_size, int hist_bits)
+int
+isal_inflate_round (struct inflate_state *state, uint8_t *inbuf, uint32_t inbuf_size,
+                    uint8_t *outbuf, uint32_t outbuf_size, int hist_bits)
 {
     int check = 0;
 
@@ -304,10 +313,11 @@ int isal_inflate_round (struct inflate_state *state, uint8_t *inbuf, uint32_t in
     return 0;
 }
 
-int isal_deflate_stateful_round (struct isal_zstream *stream, uint8_t *outbuf, uint32_t outbuf_size,
-                                 uint8_t *inbuf, uint32_t inbuf_size, uint32_t in_block_size,
-                                 uint32_t level, uint8_t *level_buf, uint32_t level_buf_size,
-                                 int flush_type, int hist_bits)
+int
+isal_deflate_stateful_round (struct isal_zstream *stream, uint8_t *outbuf, uint32_t outbuf_size,
+                             uint8_t *inbuf, uint32_t inbuf_size, uint32_t in_block_size,
+                             uint32_t level, uint8_t *level_buf, uint32_t level_buf_size,
+                             int flush_type, int hist_bits)
 {
     uint64_t inbuf_remaining;
     int check = COMP_OK;
@@ -352,9 +362,10 @@ int isal_deflate_stateful_round (struct isal_zstream *stream, uint8_t *outbuf, u
     return 0;
 }
 
-int isal_inflate_stateful_round (struct inflate_state *state, uint8_t *inbuf, uint32_t inbuf_size,
-                                 uint32_t in_block_size, uint8_t *outbuf, uint32_t outbuf_size,
-                                 int hist_bits, uint8_t *dict_buf, int dict_file_size)
+int
+isal_inflate_stateful_round (struct inflate_state *state, uint8_t *inbuf, uint32_t inbuf_size,
+                             uint32_t in_block_size, uint8_t *outbuf, uint32_t outbuf_size,
+                             int hist_bits, uint8_t *dict_buf, int dict_file_size)
 {
     int check = ISAL_DECOMP_OK;
     uint64_t inbuf_remaining;
@@ -387,8 +398,9 @@ int isal_inflate_stateful_round (struct inflate_state *state, uint8_t *inbuf, ui
     return 0;
 }
 
-int zlib_deflate_round (z_stream *gstream, uint8_t *outbuf, uInt outbuf_size, uint8_t *inbuf,
-                        uLong inbuf_size, uLong in_block_size, int level, int flush_type)
+int
+zlib_deflate_round (z_stream *gstream, uint8_t *outbuf, uInt outbuf_size, uint8_t *inbuf,
+                    uLong inbuf_size, uLong in_block_size, int level, int flush_type)
 {
     uLong inbuf_remaining;
     int check = Z_OK;
@@ -426,8 +438,9 @@ int zlib_deflate_round (z_stream *gstream, uint8_t *outbuf, uInt outbuf_size, ui
     return 0;
 }
 
-int zlib_inflate_round (z_stream *gstream, uint8_t *inbuf, uLong inbuf_size, uint8_t *outbuf,
-                        uInt outbuf_size)
+int
+zlib_inflate_round (z_stream *gstream, uint8_t *inbuf, uLong inbuf_size, uint8_t *outbuf,
+                    uInt outbuf_size)
 {
     int check = 0;
 
@@ -445,8 +458,9 @@ int zlib_inflate_round (z_stream *gstream, uint8_t *inbuf, uLong inbuf_size, uin
     return 0;
 }
 
-int isal_deflate_perf (uint8_t *outbuf, uint64_t *outbuf_size, uint8_t *inbuf, uint64_t inbuf_size,
-                       int level, int flush_type, int hist_bits, int time, struct perf *start)
+int
+isal_deflate_perf (uint8_t *outbuf, uint64_t *outbuf_size, uint8_t *inbuf, uint64_t inbuf_size,
+                   int level, int flush_type, int hist_bits, int time, struct perf *start)
 {
     struct isal_zstream stream;
     uint8_t *level_buf = NULL;
@@ -467,9 +481,10 @@ int isal_deflate_perf (uint8_t *outbuf, uint64_t *outbuf_size, uint8_t *inbuf, u
     return check;
 }
 
-int isal_deflate_dict_perf (uint8_t *outbuf, uint64_t *outbuf_size, uint8_t *inbuf,
-                            uint64_t inbuf_size, int level, int flush_type, int hist_bits, int time,
-                            struct perf *start, uint8_t *dict_buf, int dict_file_size)
+int
+isal_deflate_dict_perf (uint8_t *outbuf, uint64_t *outbuf_size, uint8_t *inbuf, uint64_t inbuf_size,
+                        int level, int flush_type, int hist_bits, int time, struct perf *start,
+                        uint8_t *dict_buf, int dict_file_size)
 {
     struct isal_zstream stream;
     struct isal_dict dict_str;
@@ -501,9 +516,10 @@ int isal_deflate_dict_perf (uint8_t *outbuf, uint64_t *outbuf_size, uint8_t *inb
     return check;
 }
 
-int isal_deflate_stateful_perf (uint8_t *outbuf, uint64_t *outbuf_size, uint8_t *inbuf,
-                                uint64_t inbuf_size, int level, int flush_type,
-                                uint64_t in_block_size, int hist_bits, int time, struct perf *start)
+int
+isal_deflate_stateful_perf (uint8_t *outbuf, uint64_t *outbuf_size, uint8_t *inbuf,
+                            uint64_t inbuf_size, int level, int flush_type, uint64_t in_block_size,
+                            int hist_bits, int time, struct perf *start)
 {
     struct isal_zstream stream;
     uint8_t *level_buf = NULL;
@@ -527,9 +543,10 @@ int isal_deflate_stateful_perf (uint8_t *outbuf, uint64_t *outbuf_size, uint8_t 
     return check;
 }
 
-int zlib_deflate_perf (uint8_t *outbuf, uint64_t *outbuf_size, uint8_t *inbuf, uint64_t inbuf_size,
-                       int level, int flush_type, uint64_t in_block_size, int hist_bits, int time,
-                       struct perf *start)
+int
+zlib_deflate_perf (uint8_t *outbuf, uint64_t *outbuf_size, uint8_t *inbuf, uint64_t inbuf_size,
+                   int level, int flush_type, uint64_t in_block_size, int hist_bits, int time,
+                   struct perf *start)
 {
     int check;
     z_stream gstream;
@@ -565,9 +582,10 @@ int zlib_deflate_perf (uint8_t *outbuf, uint64_t *outbuf_size, uint8_t *inbuf, u
     return check;
 }
 
-int isal_inflate_perf (uint8_t *inbuf, uint64_t inbuf_size, uint8_t *outbuf, uint64_t outbuf_size,
-                       uint8_t *filebuf, uint64_t file_size, int hist_bits, int time,
-                       struct perf *start)
+int
+isal_inflate_perf (uint8_t *inbuf, uint64_t inbuf_size, uint8_t *outbuf, uint64_t outbuf_size,
+                   uint8_t *filebuf, uint64_t file_size, int hist_bits, int time,
+                   struct perf *start)
 {
     struct inflate_state state;
     int check;
@@ -583,10 +601,11 @@ int isal_inflate_perf (uint8_t *inbuf, uint64_t inbuf_size, uint8_t *outbuf, uin
     return check;
 }
 
-int isal_inflate_stateful_perf (uint8_t *inbuf, uint64_t inbuf_size, uint8_t *outbuf,
-                                uint64_t outbuf_size, uint8_t *filebuf, uint64_t file_size,
-                                uint64_t in_block_size, int hist_bits, int time, struct perf *start,
-                                uint8_t *dict_buf, int dict_file_size)
+int
+isal_inflate_stateful_perf (uint8_t *inbuf, uint64_t inbuf_size, uint8_t *outbuf,
+                            uint64_t outbuf_size, uint8_t *filebuf, uint64_t file_size,
+                            uint64_t in_block_size, int hist_bits, int time, struct perf *start,
+                            uint8_t *dict_buf, int dict_file_size)
 {
     struct inflate_state state;
     int check;
@@ -606,9 +625,10 @@ int isal_inflate_stateful_perf (uint8_t *inbuf, uint64_t inbuf_size, uint8_t *ou
     return 0;
 }
 
-int zlib_inflate_perf (uint8_t *inbuf, uint64_t inbuf_size, uint8_t *outbuf, uint64_t outbuf_size,
-                       uint8_t *filebuf, uint64_t file_size, int hist_bits, int time,
-                       struct perf *start)
+int
+zlib_inflate_perf (uint8_t *inbuf, uint64_t inbuf_size, uint8_t *outbuf, uint64_t outbuf_size,
+                   uint8_t *filebuf, uint64_t file_size, int hist_bits, int time,
+                   struct perf *start)
 {
     int check;
     z_stream gstream;
@@ -637,7 +657,8 @@ int zlib_inflate_perf (uint8_t *inbuf, uint64_t inbuf_size, uint8_t *outbuf, uin
     return 0;
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     FILE *in = NULL;
     FILE *dict_fn = NULL;

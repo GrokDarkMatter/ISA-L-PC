@@ -3,7 +3,8 @@
 #include <stddef.h>
 #include "igzip_lib.h"
 
-int LLVMFuzzerTestOneInput (const uint8_t *data, size_t size)
+int
+LLVMFuzzerTestOneInput (const uint8_t *data, size_t size)
 {
     struct inflate_state state;
     uint8_t *isal_out_buf = (uint8_t *) (malloc (size * 2));

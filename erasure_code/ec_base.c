@@ -55,7 +55,8 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #ifdef NDEF
 // Utility print routine
 #include <stdio.h>
-void dump_u8xu8 (unsigned char *s, int k, int m)
+void
+dump_u8xu8 (unsigned char *s, int k, int m)
 {
     int i, j;
     for (i = 0; i < k; i++)
@@ -70,7 +71,8 @@ void dump_u8xu8 (unsigned char *s, int k, int m)
 }
 #endif
 
-void ec_init_tables_base (int k, int rows, unsigned char *a, unsigned char *g_tbls)
+void
+ec_init_tables_base (int k, int rows, unsigned char *a, unsigned char *g_tbls)
 {
     int i, j;
 
@@ -84,7 +86,8 @@ void ec_init_tables_base (int k, int rows, unsigned char *a, unsigned char *g_tb
     }
 }
 
-unsigned char gf_mul (unsigned char a, unsigned char b)
+unsigned char
+gf_mul (unsigned char a, unsigned char b)
 {
 #ifndef GF_LARGE_TABLES
     int i;
@@ -98,7 +101,8 @@ unsigned char gf_mul (unsigned char a, unsigned char b)
 #endif
 }
 
-unsigned char gf_inv (unsigned char a)
+unsigned char
+gf_inv (unsigned char a)
 {
 #ifndef GF_LARGE_TABLES
     if (a == 0)
@@ -110,7 +114,8 @@ unsigned char gf_inv (unsigned char a)
 #endif
 }
 
-void gf_gen_rs_matrix (unsigned char *a, int m, int k)
+void
+gf_gen_rs_matrix (unsigned char *a, int m, int k)
 {
     int i, j;
     unsigned char p, gen = 1;
@@ -131,7 +136,8 @@ void gf_gen_rs_matrix (unsigned char *a, int m, int k)
     }
 }
 
-void gf_gen_rsr_matrix (unsigned char *a, int m, int k)
+void
+gf_gen_rsr_matrix (unsigned char *a, int m, int k)
 {
     int i, j;
     unsigned char p, gen = 1;
@@ -156,7 +162,8 @@ void gf_gen_rsr_matrix (unsigned char *a, int m, int k)
     }
 }
 
-void gf_gen_cauchy1_matrix (unsigned char *a, int m, int k)
+void
+gf_gen_cauchy1_matrix (unsigned char *a, int m, int k)
 {
     int i, j;
     unsigned char *p;
@@ -173,7 +180,8 @@ void gf_gen_cauchy1_matrix (unsigned char *a, int m, int k)
             *p++ = gf_inv (i ^ j);
 }
 
-void gf_gen_poly (unsigned char *p, int rank)
+void
+gf_gen_poly (unsigned char *p, int rank)
 {
     int c, alpha, cr; // Loop variables
 
@@ -198,7 +206,8 @@ void gf_gen_poly (unsigned char *p, int rank)
     }
 }
 
-void gf_gen_poly_matrix (unsigned char *a, int m, int k)
+void
+gf_gen_poly_matrix (unsigned char *a, int m, int k)
 {
     int i, j, par, over, lpos;
     unsigned char *p, taps[ 254 ], lfsr[ 254 ];
@@ -238,7 +247,8 @@ void gf_gen_poly_matrix (unsigned char *a, int m, int k)
     }
 }
 
-int gf_invert_matrix (unsigned char *in_mat, unsigned char *out_mat, const int n)
+int
+gf_invert_matrix (unsigned char *in_mat, unsigned char *out_mat, const int n)
 {
     int i, j, k;
     unsigned char temp;
@@ -302,7 +312,8 @@ int gf_invert_matrix (unsigned char *in_mat, unsigned char *out_mat, const int n
 // Calculates const table gftbl in GF(2^8) from single input A
 // gftbl(A) = {A{00}, A{01}, A{02}, ... , A{0f} }, {A{00}, A{10}, A{20}, ... , A{f0} }
 
-void gf_vect_mul_init (unsigned char c, unsigned char *tbl)
+void
+gf_vect_mul_init (unsigned char c, unsigned char *tbl)
 {
     unsigned char c2 = (c << 1) ^ ((c & 0x80) ? 0x1d : 0);   // Mult by GF{2}
     unsigned char c4 = (c2 << 1) ^ ((c2 & 0x80) ? 0x1d : 0); // Mult by GF{2}
@@ -408,8 +419,9 @@ void gf_vect_mul_init (unsigned char c, unsigned char *tbl)
 #endif //__WORDSIZE == 64 || _WIN64 || __x86_64__
 }
 
-void gf_vect_dot_prod_base (int len, int vlen, unsigned char *v, unsigned char **src,
-                            unsigned char *dest)
+void
+gf_vect_dot_prod_base (int len, int vlen, unsigned char *v, unsigned char **src,
+                       unsigned char *dest)
 {
     int i, j;
     unsigned char s;
@@ -423,8 +435,9 @@ void gf_vect_dot_prod_base (int len, int vlen, unsigned char *v, unsigned char *
     }
 }
 
-void gf_vect_mad_base (int len, int vec, int vec_i, unsigned char *v, unsigned char *src,
-                       unsigned char *dest)
+void
+gf_vect_mad_base (int len, int vec, int vec_i, unsigned char *v, unsigned char *src,
+                  unsigned char *dest)
 {
     int i;
     unsigned char s;
@@ -436,8 +449,9 @@ void gf_vect_mad_base (int len, int vec, int vec_i, unsigned char *v, unsigned c
     }
 }
 
-void ec_encode_data_base (int len, int srcs, int dests, unsigned char *v, unsigned char **src,
-                          unsigned char **dest)
+void
+ec_encode_data_base (int len, int srcs, int dests, unsigned char *v, unsigned char **src,
+                     unsigned char **dest)
 {
     int i, j, l;
     unsigned char s;
@@ -455,8 +469,9 @@ void ec_encode_data_base (int len, int srcs, int dests, unsigned char *v, unsign
     }
 }
 
-void ec_encode_data_update_base (int len, int k, int rows, int vec_i, unsigned char *v,
-                                 unsigned char *data, unsigned char **dest)
+void
+ec_encode_data_update_base (int len, int k, int rows, int vec_i, unsigned char *v,
+                            unsigned char *data, unsigned char **dest)
 {
     int i, l;
     unsigned char s;
@@ -473,7 +488,8 @@ void ec_encode_data_update_base (int len, int k, int rows, int vec_i, unsigned c
     }
 }
 
-int gf_vect_mul_base (int len, unsigned char *a, unsigned char *src, unsigned char *dest)
+int
+gf_vect_mul_base (int len, unsigned char *a, unsigned char *src, unsigned char *dest)
 {
     // 2nd element of table array is ref value used to fill it in
     unsigned char c = a[ 1 ];
@@ -490,8 +506,9 @@ int gf_vect_mul_base (int len, unsigned char *a, unsigned char *src, unsigned ch
 }
 
 // Assume there is a single error and try to correct, see if syndromes match
-int pc_verify_single_error (unsigned char *S, unsigned char **data, int k, int p, int newPos,
-                            int offSet)
+int
+pc_verify_single_error (unsigned char *S, unsigned char **data, int k, int p, int newPos,
+                        int offSet)
 {
     // LSB has parity, for single error this equals error value
     unsigned char eVal = S[ 0 ];
@@ -527,7 +544,8 @@ int pc_verify_single_error (unsigned char *S, unsigned char **data, int k, int p
 #define PC_MAX_ERRS 32
 
 // Identify roots from key equation
-int find_roots (unsigned char *keyEq, unsigned char *roots, int mSize)
+int
+find_roots (unsigned char *keyEq, unsigned char *roots, int mSize)
 {
     int rootCount = 0;
     unsigned char baseVal = 1, eVal;
@@ -555,7 +573,8 @@ int find_roots (unsigned char *keyEq, unsigned char *roots, int mSize)
 }
 
 // Compute base ^ Power
-int pc_pow (unsigned char base, unsigned char Power)
+int
+pc_pow (unsigned char base, unsigned char Power)
 {
     // The first power is always 1
     if (Power == 0)
@@ -573,8 +592,8 @@ int pc_pow (unsigned char base, unsigned char Power)
 }
 
 // Compute error values using Vandermonde
-int pc_compute_error_values (int mSize, unsigned char *S, unsigned char *roots,
-                             unsigned char *errVal)
+int
+pc_compute_error_values (int mSize, unsigned char *S, unsigned char *roots, unsigned char *errVal)
 {
     int i, j;
     unsigned char Mat[ PC_MAX_ERRS * PC_MAX_ERRS ];
@@ -613,8 +632,9 @@ int pc_compute_error_values (int mSize, unsigned char *S, unsigned char *roots,
 }
 
 // Verify proposed data values and locations can generate syndromes
-int pc_verify_syndromes (unsigned char *S, int p, int mSize, unsigned char *roots,
-                         unsigned char *errVal)
+int
+pc_verify_syndromes (unsigned char *S, int p, int mSize, unsigned char *roots,
+                     unsigned char *errVal)
 {
     int i, j;
     unsigned char sum = 0;
@@ -642,13 +662,18 @@ int pc_verify_syndromes (unsigned char *S, int p, int mSize, unsigned char *root
     return 1;
 }
 
-unsigned char gf_div (unsigned char a, unsigned char b) { return gf_mul (a, gf_inv (b)); }
+unsigned char
+gf_div (unsigned char a, unsigned char b)
+{
+    return gf_mul (a, gf_inv (b));
+}
 
 // Assumes external gf_mul and gf_div functions for GF(256).
 // syndromes: array of length 'length' (typically 2t), syndromes[0] = S1, [1] = S2, etc.
 // lambda: caller-allocated array of size at least (length + 1), filled with locator poly coeffs.
 // Returns: degree L of the error locator polynomial.
-int berlekamp_massey (unsigned char *syndromes, int length, unsigned char *lambda)
+int
+berlekamp_massey (unsigned char *syndromes, int length, unsigned char *lambda)
 {
     unsigned char b[ PC_MAX_ERRS + 1 ];
     unsigned char temp[ PC_MAX_ERRS + 1 ];
@@ -708,8 +733,9 @@ int berlekamp_massey (unsigned char *syndromes, int length, unsigned char *lambd
 }
 
 // Attempt to detect multiple error locations and values
-int pc_verify_multiple_errors (unsigned char *S, unsigned char **data, int mSize, int k, int p,
-                               int newPos, int offSet, unsigned char *keyEq)
+int
+pc_verify_multiple_errors (unsigned char *S, unsigned char **data, int mSize, int k, int p,
+                           int newPos, int offSet, unsigned char *keyEq)
 {
     unsigned char roots[ PC_MAX_ERRS ] = { 0 };
     unsigned char errVal[ PC_MAX_ERRS ];
@@ -744,7 +770,8 @@ int pc_verify_multiple_errors (unsigned char *S, unsigned char **data, int mSize
 }
 
 // PGZ decoding step 1, see if we can invert the matrix, if so, compute key equation
-int PGZ (unsigned char *S, int p, unsigned char *keyEq)
+int
+PGZ (unsigned char *S, int p, unsigned char *keyEq)
 {
     unsigned char SMat[ PC_MAX_ERRS * PC_MAX_ERRS ], SMat_inv[ PC_MAX_ERRS * PC_MAX_ERRS ];
     int i, j;
@@ -778,7 +805,8 @@ int PGZ (unsigned char *S, int p, unsigned char *keyEq)
 }
 
 // Syndromes are non-zero, try to calculate error location and data values
-int pc_correct (int newPos, int k, int p, unsigned char **data, char **coding, int vLen)
+int
+pc_correct (int newPos, int k, int p, unsigned char **data, char **coding, int vLen)
 {
     int offSet = 0, i, mSize;
     unsigned char synZero = 0;

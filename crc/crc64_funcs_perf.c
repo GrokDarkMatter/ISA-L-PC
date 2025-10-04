@@ -76,7 +76,8 @@ func_case_t test_funcs[] = {
     { "crc64_rocksoft_refl", crc64_rocksoft_refl, crc64_rocksoft_refl_base }
 };
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     int j;
     void *buf;

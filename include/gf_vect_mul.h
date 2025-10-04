@@ -64,7 +64,8 @@ extern "C"
      * @returns 0 pass, other fail
      */
 
-    int gf_vect_mul_sse (int len, unsigned char *gftbl, void *src, void *dest);
+    int
+    gf_vect_mul_sse (int len, unsigned char *gftbl, void *src, void *dest);
 
     /**
      * @brief GF(2^8) vector multiply by constant.
@@ -84,7 +85,8 @@ extern "C"
      * @returns 0 pass, other fail
      */
 
-    int gf_vect_mul_avx (int len, unsigned char *gftbl, void *src, void *dest);
+    int
+    gf_vect_mul_avx (int len, unsigned char *gftbl, void *src, void *dest);
 
 #endif
 
@@ -108,7 +110,8 @@ extern "C"
      * @returns 0 pass, other fail
      */
 
-    int gf_vect_mul (int len, unsigned char *gftbl, void *src, void *dest);
+    int
+    gf_vect_mul (int len, unsigned char *gftbl, void *src, void *dest);
 
     /**
      * @brief Initialize 32-byte constant array for GF(2^8) vector multiply
@@ -120,7 +123,8 @@ extern "C"
      * @param gftbl Table output.
      */
 
-    void gf_vect_mul_init (unsigned char c, unsigned char *gftbl);
+    void
+    gf_vect_mul_init (unsigned char c, unsigned char *gftbl);
 
     /**
      * @brief GF(2^8) vector multiply by constant, runs baseline version.
@@ -140,7 +144,8 @@ extern "C"
      * @returns 0 pass, other fail
      */
 
-    int gf_vect_mul_base (int len, unsigned char *a, unsigned char *src, unsigned char *dest);
+    int
+    gf_vect_mul_base (int len, unsigned char *a, unsigned char *src, unsigned char *dest);
 
 #ifdef __cplusplus
 }

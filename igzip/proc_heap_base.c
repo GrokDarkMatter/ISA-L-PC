@@ -31,7 +31,8 @@
 #include "huff_codes.h"
 #include "unaligned.h"
 
-static inline void heapify (uint64_t *heap, uint64_t heap_size, uint64_t index)
+static inline void
+heapify (uint64_t *heap, uint64_t heap_size, uint64_t index)
 {
     uint64_t child = 2 * index, tmp;
     while (child <= heap_size)
@@ -51,7 +52,8 @@ static inline void heapify (uint64_t *heap, uint64_t heap_size, uint64_t index)
     }
 }
 
-void build_heap (uint64_t *heap, uint64_t heap_size)
+void
+build_heap (uint64_t *heap, uint64_t heap_size)
 {
     uint64_t i;
     heap[ heap_size + 1 ] = -1;
@@ -59,7 +61,8 @@ void build_heap (uint64_t *heap, uint64_t heap_size)
         heapify (heap, heap_size, i);
 }
 
-uint32_t build_huff_tree (struct heap_tree *heap_space, uint64_t heap_size, uint64_t node_ptr)
+uint32_t
+build_huff_tree (struct heap_tree *heap_space, uint64_t heap_size, uint64_t node_ptr)
 {
     uint64_t *heap = (uint64_t *) heap_space;
     uint64_t h1, h2;

@@ -6,8 +6,8 @@
 
 extern const struct isal_hufftables hufftables_default;
 
-static inline void update_state (struct isal_zstream *stream, uint8_t *start_in, uint8_t *next_in,
-                                 uint8_t *end_in)
+static inline void
+update_state (struct isal_zstream *stream, uint8_t *start_in, uint8_t *next_in, uint8_t *end_in)
 {
     struct isal_zstate *state = &stream->internal_state;
     uint32_t bytes_written;
@@ -25,7 +25,8 @@ static inline void update_state (struct isal_zstream *stream, uint8_t *start_in,
     stream->avail_out -= bytes_written;
 }
 
-void isal_deflate_body_base (struct isal_zstream *stream)
+void
+isal_deflate_body_base (struct isal_zstream *stream)
 {
     uint32_t literal, hash;
     uint8_t *start_in, *next_in, *end_in, *end, *next_hash;
@@ -117,7 +118,8 @@ void isal_deflate_body_base (struct isal_zstream *stream)
     return;
 }
 
-void isal_deflate_finish_base (struct isal_zstream *stream)
+void
+isal_deflate_finish_base (struct isal_zstream *stream)
 {
     uint32_t literal = 0, hash;
     uint8_t *start_in, *next_in, *end_in, *end, *next_hash;
@@ -223,8 +225,9 @@ void isal_deflate_finish_base (struct isal_zstream *stream)
     return;
 }
 
-void isal_deflate_hash_base (uint16_t *hash_table, uint32_t hash_mask, uint32_t current_index,
-                             uint8_t *dict, uint32_t dict_len)
+void
+isal_deflate_hash_base (uint16_t *hash_table, uint32_t hash_mask, uint32_t current_index,
+                        uint8_t *dict, uint32_t dict_len)
 {
     uint8_t *next_in = dict;
     uint8_t *end_in = dict + dict_len - SHORTEST_MATCH;

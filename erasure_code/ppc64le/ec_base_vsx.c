@@ -1,20 +1,21 @@
 #include "erasure_code.h"
 #include "ec_base_vsx.h"
 
-void gf_vect_dot_prod (int len, int vlen, unsigned char *v, unsigned char **src,
-                       unsigned char *dest)
+void
+gf_vect_dot_prod (int len, int vlen, unsigned char *v, unsigned char **src, unsigned char *dest)
 {
     gf_vect_dot_prod_vsx (len, vlen, v, src, dest);
 }
 
-void gf_vect_mad (int len, int vec, int vec_i, unsigned char *v, unsigned char *src,
-                  unsigned char *dest)
+void
+gf_vect_mad (int len, int vec, int vec_i, unsigned char *v, unsigned char *src, unsigned char *dest)
 {
     gf_vect_mad_vsx (len, vec, vec_i, v, src, dest);
 }
 
-void ec_encode_data (int len, int srcs, int dests, unsigned char *v, unsigned char **src,
-                     unsigned char **dest)
+void
+ec_encode_data (int len, int srcs, int dests, unsigned char *v, unsigned char **src,
+                unsigned char **dest)
 {
     if (len < 64)
     {
@@ -54,8 +55,9 @@ void ec_encode_data (int len, int srcs, int dests, unsigned char *v, unsigned ch
     }
 }
 
-void ec_encode_data_update (int len, int k, int rows, int vec_i, unsigned char *v,
-                            unsigned char *data, unsigned char **dest)
+void
+ec_encode_data_update (int len, int k, int rows, int vec_i, unsigned char *v, unsigned char *data,
+                       unsigned char **dest)
 {
     if (len < 64)
     {
@@ -95,7 +97,8 @@ void ec_encode_data_update (int len, int k, int rows, int vec_i, unsigned char *
     }
 }
 
-int gf_vect_mul (int len, unsigned char *a, void *src, void *dest)
+int
+gf_vect_mul (int len, unsigned char *a, void *src, void *dest)
 {
     /* Size must be aligned to 32 bytes */
     if ((len % 32) != 0)
@@ -105,7 +108,8 @@ int gf_vect_mul (int len, unsigned char *a, void *src, void *dest)
     return 0;
 }
 
-void ec_init_tables (int k, int rows, unsigned char *a, unsigned char *g_tbls)
+void
+ec_init_tables (int k, int rows, unsigned char *a, unsigned char *g_tbls)
 {
     return ec_init_tables_base (k, rows, a, g_tbls);
 }

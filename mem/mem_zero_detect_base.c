@@ -31,7 +31,8 @@
 #include <stddef.h>
 #include "unaligned.h"
 
-int mem_zero_detect_base (void *buf, size_t n)
+int
+mem_zero_detect_base (void *buf, size_t n)
 {
     uint8_t *c = buf;
     uintmax_t a = 0;

@@ -29,8 +29,10 @@
 #include <aarch64_multibinary.h>
 #include <stddef.h>
 
-extern int mem_zero_detect_neon (void *, size_t);
-extern int mem_zero_detect_base (void *, size_t);
+extern int
+mem_zero_detect_neon (void *, size_t);
+extern int
+mem_zero_detect_base (void *, size_t);
 
 DEFINE_INTERFACE_DISPATCHER (isal_zero_detect)
 {

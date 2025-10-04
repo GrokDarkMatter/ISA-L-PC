@@ -67,7 +67,8 @@ typedef enum
 typedef int (*raid_func_t) (int vects, int len, void **array);
 
 // Helper function to get buffer count for a specific RAID type
-static int get_buffer_count (const raid_type_t type, const int sources)
+static int
+get_buffer_count (const raid_type_t type, const int sources)
 {
     switch (type)
     {
@@ -79,33 +80,41 @@ static int get_buffer_count (const raid_type_t type, const int sources)
     }
 }
 
-void run_benchmark (void *buffs[], const size_t len, const int sources, const raid_type_t type,
-                    const int csv_output, const int use_cold_cache);
-void print_help (void);
-void print_raid_types (void);
-raid_type_t parse_raid_type (const char *type_str);
-size_t parse_size_value (const char *size_str);
+void
+run_benchmark (void *buffs[], const size_t len, const int sources, const raid_type_t type,
+               const int csv_output, const int use_cold_cache);
+void
+print_help (void);
+void
+print_raid_types (void);
+raid_type_t
+parse_raid_type (const char *type_str);
+size_t
+parse_size_value (const char *size_str);
 
-static void run_raid_type_range (const raid_type_t type, void *buffs[], const size_t min_len,
-                                 const size_t max_len, const int is_multiplicative,
-                                 const size_t abs_step, const int sources, const int csv_output,
-                                 const int use_cold_cache);
-static void run_raid_type_size_list (const raid_type_t type, void *buffs[], const size_t *size_list,
-                                     const int size_count, const int sources, const int csv_output,
-                                     const int use_cold_cache);
+static void
+run_raid_type_range (const raid_type_t type, void *buffs[], const size_t min_len,
+                     const size_t max_len, const int is_multiplicative, const size_t abs_step,
+                     const int sources, const int csv_output, const int use_cold_cache);
+static void
+run_raid_type_size_list (const raid_type_t type, void *buffs[], const size_t *size_list,
+                         const int size_count, const int sources, const int csv_output,
+                         const int use_cold_cache);
 
-void benchmark_raid_type_range (const raid_type_t raid_type, void *buffs[], const size_t min_len,
-                                const size_t max_len, const ssize_t step_len, const int sources,
-                                const int csv_output, const int use_cold_cache);
-void benchmark_raid_type_size_list (const raid_type_t raid_type, void *buffs[],
-                                    const size_t *size_list, const int size_count,
-                                    const int sources, const int csv_output,
-                                    const int use_cold_cache);
+void
+benchmark_raid_type_range (const raid_type_t raid_type, void *buffs[], const size_t min_len,
+                           const size_t max_len, const ssize_t step_len, const int sources,
+                           const int csv_output, const int use_cold_cache);
+void
+benchmark_raid_type_size_list (const raid_type_t raid_type, void *buffs[], const size_t *size_list,
+                               const int size_count, const int sources, const int csv_output,
+                               const int use_cold_cache);
 
 // Function to run a specific RAID benchmark
 // len is the block size for each source and destination buffer, in bytes
-void run_benchmark (void *buffs[], const size_t len, const int num_sources_dest,
-                    const raid_type_t type, const int csv_output, const int use_cold_cache)
+void
+run_benchmark (void *buffs[], const size_t len, const int num_sources_dest, const raid_type_t type,
+               const int csv_output, const int use_cold_cache)
 {
     struct perf start;
     const char *raid_type_str = "";
@@ -207,7 +216,8 @@ void run_benchmark (void *buffs[], const size_t len, const int num_sources_dest,
     }
 }
 
-void print_help (void)
+void
+print_help (void)
 {
     printf ("Usage: raid_funcs_perf [options]\n");
     printf ("  -h, --help          Show this help\n");
@@ -236,7 +246,8 @@ void print_help (void)
     printf ("      --cold          Use cold cache for benchmarks (buffer not in cache)\n");
 }
 
-void print_raid_types (void)
+void
+print_raid_types (void)
 {
     printf ("Available RAID function types:\n");
     printf ("  Function types:\n");
@@ -247,7 +258,8 @@ void print_raid_types (void)
 }
 
 // Helper function to parse string input for RAID type
-raid_type_t parse_raid_type (const char *type_str)
+raid_type_t
+parse_raid_type (const char *type_str)
 {
     if (!type_str)
         return RAID_ALL;
@@ -277,7 +289,8 @@ raid_type_t parse_raid_type (const char *type_str)
 }
 
 // Helper function to parse size values with optional K (KB) or M (MB) suffix
-size_t parse_size_value (const char *size_str)
+size_t
+parse_size_value (const char *size_str)
 {
     size_t size_val;
     char *endptr;
@@ -322,7 +335,8 @@ size_t parse_size_value (const char *size_str)
 #define MAX_SIZE_COUNT 32 // Maximum number of buffer sizes that can be specified
 #define MAX_SRC_BUFS   20 // Maximum number of source buffers
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     void **buffs;
     raid_type_t raid_type = RAID_ALL;
@@ -671,10 +685,10 @@ int main (int argc, char *argv[])
 }
 
 /* Helper function to process a specific RAID type for benchmark_raid_type_range */
-static void run_raid_type_range (const raid_type_t type, void *buffs[], const size_t min_len,
-                                 const size_t max_len, const int is_multiplicative,
-                                 const size_t abs_step, const int sources, const int csv_output,
-                                 const int use_cold_cache)
+static void
+run_raid_type_range (const raid_type_t type, void *buffs[], const size_t min_len,
+                     const size_t max_len, const int is_multiplicative, const size_t abs_step,
+                     const int sources, const int csv_output, const int use_cold_cache)
 {
     const char *type_names[] = { "XOR Generation", "P+Q Generation" };
     size_t len;
@@ -708,9 +722,10 @@ static void run_raid_type_range (const raid_type_t type, void *buffs[], const si
 }
 
 /* Helper function to run benchmarks for a specific RAID type with range of sizes */
-void benchmark_raid_type_range (const raid_type_t raid_type, void *buffs[], const size_t min_len,
-                                const size_t max_len, const ssize_t step_len, const int sources,
-                                const int csv_output, const int use_cold_cache)
+void
+benchmark_raid_type_range (const raid_type_t raid_type, void *buffs[], const size_t min_len,
+                           const size_t max_len, const ssize_t step_len, const int sources,
+                           const int csv_output, const int use_cold_cache)
 {
     const int is_multiplicative = (step_len < 0);
     const size_t abs_step = is_multiplicative ? -step_len : step_len;
@@ -738,9 +753,10 @@ void benchmark_raid_type_range (const raid_type_t raid_type, void *buffs[], cons
 }
 
 /* Helper function to process a specific RAID type for benchmark_raid_type_size_list */
-static void run_raid_type_size_list (const raid_type_t type, void *buffs[], const size_t *size_list,
-                                     const int size_count, const int sources, const int csv_output,
-                                     const int use_cold_cache)
+static void
+run_raid_type_size_list (const raid_type_t type, void *buffs[], const size_t *size_list,
+                         const int size_count, const int sources, const int csv_output,
+                         const int use_cold_cache)
 {
     const char *type_names[] = { "XOR Generation", "P+Q Generation" };
     const int buffer_count = get_buffer_count (type, sources);
@@ -765,10 +781,10 @@ static void run_raid_type_size_list (const raid_type_t type, void *buffs[], cons
 }
 
 /* Helper function to run benchmarks for a specific RAID type with list of sizes */
-void benchmark_raid_type_size_list (const raid_type_t raid_type, void *buffs[],
-                                    const size_t *size_list, const int size_count,
-                                    const int sources, const int csv_output,
-                                    const int use_cold_cache)
+void
+benchmark_raid_type_size_list (const raid_type_t raid_type, void *buffs[], const size_t *size_list,
+                               const int size_count, const int sources, const int csv_output,
+                               const int use_cold_cache)
 {
     /* Process according to the chosen RAID type */
     if (raid_type == RAID_ALL)

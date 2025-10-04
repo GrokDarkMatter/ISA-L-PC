@@ -58,25 +58,36 @@
 
 #include "riscv64_multibinary.h"
 
-extern void gf_vect_dot_prod_rvv (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                  unsigned char *dest);
-extern void gf_vect_dot_prod_base (int len, int vlen, unsigned char *v, unsigned char **src,
-                                   unsigned char *dest);
-extern void gf_vect_mad_rvv (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                             unsigned char *dest);
-extern void gf_vect_mad_base (int len, int vec, int vec_i, unsigned char *v, unsigned char *src,
-                              unsigned char *dest);
-extern void ec_encode_data_rvv (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
-                                unsigned char *data, unsigned char **coding);
-extern void ec_encode_data_base (int len, int srcs, int dests, unsigned char *v,
-                                 unsigned char **src, unsigned char **dest);
-extern int gf_vect_mul_rvv (int len, unsigned char *a, unsigned char *src, unsigned char *dest);
-extern int gf_vect_mul_base (int len, unsigned char *a, unsigned char *src, unsigned char *dest);
-extern void ec_encode_data_update_rvv (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
-                                       unsigned char *data, unsigned char **coding);
-extern void ec_encode_data_update_base (int len, int srcs, int dests, unsigned char *v,
-                                        unsigned char **src, unsigned char **dest);
-extern void ec_init_tables_base (int k, int rows, unsigned char *a, unsigned char *g_tbls);
+extern void
+gf_vect_dot_prod_rvv (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                      unsigned char *dest);
+extern void
+gf_vect_dot_prod_base (int len, int vlen, unsigned char *v, unsigned char **src,
+                       unsigned char *dest);
+extern void
+gf_vect_mad_rvv (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                 unsigned char *dest);
+extern void
+gf_vect_mad_base (int len, int vec, int vec_i, unsigned char *v, unsigned char *src,
+                  unsigned char *dest);
+extern void
+ec_encode_data_rvv (int len, int k, int rows, int vec_i, unsigned char *g_tbls, unsigned char *data,
+                    unsigned char **coding);
+extern void
+ec_encode_data_base (int len, int srcs, int dests, unsigned char *v, unsigned char **src,
+                     unsigned char **dest);
+extern int
+gf_vect_mul_rvv (int len, unsigned char *a, unsigned char *src, unsigned char *dest);
+extern int
+gf_vect_mul_base (int len, unsigned char *a, unsigned char *src, unsigned char *dest);
+extern void
+ec_encode_data_update_rvv (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
+                           unsigned char *data, unsigned char **coding);
+extern void
+ec_encode_data_update_base (int len, int srcs, int dests, unsigned char *v, unsigned char **src,
+                            unsigned char **dest);
+extern void
+ec_init_tables_base (int k, int rows, unsigned char *a, unsigned char *g_tbls);
 
 DEFINE_INTERFACE_DISPATCHER (gf_vect_dot_prod)
 {

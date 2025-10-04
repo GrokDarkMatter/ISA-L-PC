@@ -44,8 +44,9 @@
 #define MAX_INPUT_FILE_SIZE 512L * 1024L * 1024L
 #endif
 
-int inflate_multi_pass (uint8_t *compress_buf, uint64_t compress_len, uint8_t *uncompress_buf,
-                        uint32_t *uncompress_len)
+int
+inflate_multi_pass (uint8_t *compress_buf, uint64_t compress_len, uint8_t *uncompress_buf,
+                    uint32_t *uncompress_len)
 {
     struct inflate_state *state = NULL;
     int ret = 0;
@@ -158,9 +159,10 @@ int inflate_multi_pass (uint8_t *compress_buf, uint64_t compress_len, uint8_t *u
     return ret;
 }
 
-int test (uint8_t *compressed_stream, uint64_t *compressed_length, uint8_t *uncompressed_stream,
-          uint32_t uncompressed_length, uint8_t *uncompressed_test_stream,
-          uint32_t uncompressed_test_stream_length)
+int
+test (uint8_t *compressed_stream, uint64_t *compressed_length, uint8_t *uncompressed_stream,
+      uint32_t uncompressed_length, uint8_t *uncompressed_test_stream,
+      uint32_t uncompressed_test_stream_length)
 {
     int ret;
     ret = compress2 (compressed_stream, (uLongf *) compressed_length, uncompressed_stream,
@@ -228,7 +230,8 @@ int test (uint8_t *compressed_stream, uint64_t *compressed_length, uint8_t *unco
     return 0;
 }
 
-int main (int argc, char **argv)
+int
+main (int argc, char **argv)
 {
     int i, j, ret = 0, fin_ret = 0;
     FILE *file = NULL;

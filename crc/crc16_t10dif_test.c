@@ -46,16 +46,19 @@ typedef uint32_t u32;
 typedef uint16_t u16;
 typedef uint8_t u8;
 
-uint16_t crc16_t10dif_ref (uint16_t seed, uint8_t *buf, uint64_t len);
+uint16_t
+crc16_t10dif_ref (uint16_t seed, uint8_t *buf, uint64_t len);
 
-void rand_buffer (unsigned char *buf, long buffer_size)
+void
+rand_buffer (unsigned char *buf, long buffer_size)
 {
     long i;
     for (i = 0; i < buffer_size; i++)
         buf[ i ] = rand ();
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     int fail = 0;
     u32 r = 0;

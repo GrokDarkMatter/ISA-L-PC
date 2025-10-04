@@ -65,7 +65,8 @@
 
 typedef unsigned char u8;
 
-void dump (unsigned char *buf, int len)
+void
+dump (unsigned char *buf, int len)
 {
     int i;
     for (i = 0; i < len;)
@@ -77,7 +78,8 @@ void dump (unsigned char *buf, int len)
     printf ("\n");
 }
 
-void dump_matrix (unsigned char **s, int k, int m)
+void
+dump_matrix (unsigned char **s, int k, int m)
 {
     int i, j;
     for (i = 0; i < k; i++)
@@ -91,7 +93,8 @@ void dump_matrix (unsigned char **s, int k, int m)
     printf ("\n");
 }
 
-void dump_u8xu8 (unsigned char *s, int k, int m)
+void
+dump_u8xu8 (unsigned char *s, int k, int m)
 {
     int i, j;
     for (i = 0; i < k; i++)
@@ -106,8 +109,9 @@ void dump_u8xu8 (unsigned char *s, int k, int m)
 }
 
 // Generate Random errors
-static void gen_err_list (unsigned char *src_err_list, unsigned char *src_in_err, int *pnerrs,
-                          int *pnsrcerrs, int k, int m)
+static void
+gen_err_list (unsigned char *src_err_list, unsigned char *src_in_err, int *pnerrs, int *pnsrcerrs,
+              int k, int m)
 {
     int i, err;
     int nerrs = 0, nsrcerrs = 0;
@@ -141,10 +145,11 @@ static void gen_err_list (unsigned char *src_err_list, unsigned char *src_in_err
 
 #define NO_INVERT_MATRIX -2
 // Generate decode matrix from encode matrix
-static int gf_gen_decode_matrix (unsigned char *encode_matrix, unsigned char *decode_matrix,
-                                 unsigned char *invert_matrix, unsigned int *decode_index,
-                                 unsigned char *src_err_list, unsigned char *src_in_err, int nerrs,
-                                 int nsrcerrs, int k, int m)
+static int
+gf_gen_decode_matrix (unsigned char *encode_matrix, unsigned char *decode_matrix,
+                      unsigned char *invert_matrix, unsigned int *decode_index,
+                      unsigned char *src_err_list, unsigned char *src_in_err, int nerrs,
+                      int nsrcerrs, int k, int m)
 {
     int i, j, p;
     int r;
@@ -231,7 +236,8 @@ static int gf_gen_decode_matrix (unsigned char *encode_matrix, unsigned char *de
     return 0;
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     int re = 0;
     int i, j, p, rtest, m, k;

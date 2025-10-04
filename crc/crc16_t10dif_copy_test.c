@@ -51,16 +51,19 @@ typedef uint16_t u16;
 typedef uint8_t u8;
 
 // bitwise crc version
-uint16_t crc16_t10dif_copy_ref (uint16_t seed, uint8_t *dst, uint8_t *src, uint64_t len);
+uint16_t
+crc16_t10dif_copy_ref (uint16_t seed, uint8_t *dst, uint8_t *src, uint64_t len);
 
-void rand_buffer (unsigned char *buf, long buffer_size)
+void
+rand_buffer (unsigned char *buf, long buffer_size)
 {
     long i;
     for (i = 0; i < buffer_size; i++)
         buf[ i ] = rand ();
 }
 
-int memtst (unsigned char *buf, unsigned char c, int len)
+int
+memtst (unsigned char *buf, unsigned char c, int len)
 {
     int i;
     for (i = 0; i < len; i++)
@@ -70,7 +73,8 @@ int memtst (unsigned char *buf, unsigned char c, int len)
     return 0;
 }
 
-int crc_copy_check (const char *description, u8 *dst, u8 *src, u8 dst_fill_val, int len, int tot)
+int
+crc_copy_check (const char *description, u8 *dst, u8 *src, u8 dst_fill_val, int len, int tot)
 {
     u16 seed;
     int rem;
@@ -120,7 +124,8 @@ int crc_copy_check (const char *description, u8 *dst, u8 *src, u8 dst_fill_val, 
     return 0;
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     int r = 0;
     int i;

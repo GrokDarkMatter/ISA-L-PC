@@ -54,10 +54,14 @@
 #include "igzip_wrapper.h"
 #include "unaligned.h"
 
-extern void isal_deflate_hash_lvl0 (uint16_t *, uint32_t, uint32_t, uint8_t *, uint32_t);
-extern void isal_deflate_hash_lvl1 (uint16_t *, uint32_t, uint32_t, uint8_t *, uint32_t);
-extern void isal_deflate_hash_lvl2 (uint16_t *, uint32_t, uint32_t, uint8_t *, uint32_t);
-extern void isal_deflate_hash_lvl3 (uint16_t *, uint32_t, uint32_t, uint8_t *, uint32_t);
+extern void
+isal_deflate_hash_lvl0 (uint16_t *, uint32_t, uint32_t, uint8_t *, uint32_t);
+extern void
+isal_deflate_hash_lvl1 (uint16_t *, uint32_t, uint32_t, uint8_t *, uint32_t);
+extern void
+isal_deflate_hash_lvl2 (uint16_t *, uint32_t, uint32_t, uint8_t *, uint32_t);
+extern void
+isal_deflate_hash_lvl3 (uint16_t *, uint32_t, uint32_t, uint8_t *, uint32_t);
 extern const uint8_t gzip_hdr[];
 extern const uint32_t gzip_hdr_bytes;
 extern const uint32_t gzip_trl_bytes;
@@ -67,38 +71,52 @@ extern const uint32_t zlib_trl_bytes;
 extern const struct isal_hufftables hufftables_default;
 extern const struct isal_hufftables hufftables_static;
 
-static uint32_t write_stored_block (struct isal_zstream *stream);
+static uint32_t
+write_stored_block (struct isal_zstream *stream);
 
-static int write_stream_header_stateless (struct isal_zstream *stream);
-static void write_stream_header (struct isal_zstream *stream);
-static int write_deflate_header_stateless (struct isal_zstream *stream);
-static int write_deflate_header_unaligned_stateless (struct isal_zstream *stream);
+static int
+write_stream_header_stateless (struct isal_zstream *stream);
+static void
+write_stream_header (struct isal_zstream *stream);
+static int
+write_deflate_header_stateless (struct isal_zstream *stream);
+static int
+write_deflate_header_unaligned_stateless (struct isal_zstream *stream);
 
 #define TYPE0_HDR_LEN     4
 #define TYPE0_BLK_HDR_LEN 5
 #define TYPE0_MAX_BLK_LEN 65535
 
-void isal_deflate_body (struct isal_zstream *stream);
-void isal_deflate_finish (struct isal_zstream *stream);
+void
+isal_deflate_body (struct isal_zstream *stream);
+void
+isal_deflate_finish (struct isal_zstream *stream);
 
-void isal_deflate_icf_body (struct isal_zstream *stream);
-void isal_deflate_icf_finish_lvl1 (struct isal_zstream *stream);
-void isal_deflate_icf_finish_lvl2 (struct isal_zstream *stream);
-void isal_deflate_icf_finish_lvl3 (struct isal_zstream *stream);
+void
+isal_deflate_icf_body (struct isal_zstream *stream);
+void
+isal_deflate_icf_finish_lvl1 (struct isal_zstream *stream);
+void
+isal_deflate_icf_finish_lvl2 (struct isal_zstream *stream);
+void
+isal_deflate_icf_finish_lvl3 (struct isal_zstream *stream);
 /*****************************************************************/
 
 /* Forward declarations */
-static inline void reset_match_history (struct isal_zstream *stream);
-static void write_header (struct isal_zstream *stream, uint8_t *deflate_hdr,
-                          uint32_t deflate_hdr_count, uint32_t extra_bits_count,
-                          uint32_t next_state, uint32_t toggle_end_of_stream);
-static void write_trailer (struct isal_zstream *stream);
+static inline void
+reset_match_history (struct isal_zstream *stream);
+static void
+write_header (struct isal_zstream *stream, uint8_t *deflate_hdr, uint32_t deflate_hdr_count,
+              uint32_t extra_bits_count, uint32_t next_state, uint32_t toggle_end_of_stream);
+static void
+write_trailer (struct isal_zstream *stream);
 
 /*****************************************************************/
 
 // isal_adler32_bam1 - adler with (B | A minus 1) storage
 
-uint32_t isal_adler32_bam1 (uint32_t adler32, const unsigned char *start, uint64_t length)
+uint32_t
+isal_adler32_bam1 (uint32_t adler32, const unsigned char *start, uint64_t length)
 {
     uint64_t a;
 
@@ -113,7 +131,8 @@ uint32_t isal_adler32_bam1 (uint32_t adler32, const unsigned char *start, uint64
     return (adler32 & 0xffff0000) | a;
 }
 
-static void update_checksum (struct isal_zstream *stream, uint8_t *start_in, uint64_t length)
+static void
+update_checksum (struct isal_zstream *stream, uint8_t *start_in, uint64_t length)
 {
     struct isal_zstate *state = &stream->internal_state;
     switch (stream->gzip_flag)
@@ -129,7 +148,8 @@ static void update_checksum (struct isal_zstream *stream, uint8_t *start_in, uin
     }
 }
 
-static void sync_flush (struct isal_zstream *stream)
+static void
+sync_flush (struct isal_zstream *stream)
 {
     struct isal_zstate *state = &stream->internal_state;
     uint64_t bits_to_write = 0xFFFF0000, bits_len;
@@ -164,7 +184,8 @@ static void sync_flush (struct isal_zstream *stream)
     }
 }
 
-static void flush_write_buffer (struct isal_zstream *stream)
+static void
+flush_write_buffer (struct isal_zstream *stream)
 {
     struct isal_zstate *state = &stream->internal_state;
     int bytes = 0;
@@ -180,7 +201,8 @@ static void flush_write_buffer (struct isal_zstream *stream)
     }
 }
 
-static void flush_icf_block (struct isal_zstream *stream)
+static void
+flush_icf_block (struct isal_zstream *stream)
 {
     struct isal_zstate *state = &stream->internal_state;
     struct level_buf *level_buf = (struct level_buf *) stream->level_buf;
@@ -210,7 +232,8 @@ static void flush_icf_block (struct isal_zstream *stream)
     }
 }
 
-static int check_level_req (struct isal_zstream *stream)
+static int
+check_level_req (struct isal_zstream *stream)
 {
     if (stream->level == 0)
         return 0;
@@ -240,7 +263,8 @@ static int check_level_req (struct isal_zstream *stream)
     return 0;
 }
 
-static int init_hash8k_buf (struct isal_zstream *stream)
+static int
+init_hash8k_buf (struct isal_zstream *stream)
 {
     struct isal_zstate *state = &stream->internal_state;
     struct level_buf *level_buf = (struct level_buf *) stream->level_buf;
@@ -248,7 +272,8 @@ static int init_hash8k_buf (struct isal_zstream *stream)
     return sizeof (struct level_buf) - MAX_LVL_BUF_SIZE + sizeof (level_buf->hash8k);
 }
 
-static int init_hash_hist_buf (struct isal_zstream *stream)
+static int
+init_hash_hist_buf (struct isal_zstream *stream)
 {
     struct isal_zstate *state = &stream->internal_state;
     struct level_buf *level_buf = (struct level_buf *) stream->level_buf;
@@ -256,7 +281,8 @@ static int init_hash_hist_buf (struct isal_zstream *stream)
     return sizeof (struct level_buf) - MAX_LVL_BUF_SIZE + sizeof (level_buf->hash_hist);
 }
 
-static int init_hash_map_buf (struct isal_zstream *stream)
+static int
+init_hash_map_buf (struct isal_zstream *stream)
 {
     struct isal_zstate *state = &stream->internal_state;
     struct level_buf *level_buf = (struct level_buf *) stream->level_buf;
@@ -271,7 +297,8 @@ static int init_hash_map_buf (struct isal_zstream *stream)
 }
 
 /* returns the size of the level specific buffer */
-static int init_lvlX_buf (struct isal_zstream *stream)
+static int
+init_lvlX_buf (struct isal_zstream *stream)
 {
     switch (stream->level)
     {
@@ -284,7 +311,8 @@ static int init_lvlX_buf (struct isal_zstream *stream)
     }
 }
 
-static void init_new_icf_block (struct isal_zstream *stream)
+static void
+init_new_icf_block (struct isal_zstream *stream)
 {
     struct isal_zstate *state = &stream->internal_state;
     struct level_buf *level_buf = (struct level_buf *) stream->level_buf;
@@ -303,9 +331,14 @@ static void init_new_icf_block (struct isal_zstream *stream)
     state->state = ZSTATE_BODY;
 }
 
-static int are_buffers_empty_hashX (struct isal_zstream *stream) { return !stream->avail_in; }
+static int
+are_buffers_empty_hashX (struct isal_zstream *stream)
+{
+    return !stream->avail_in;
+}
 
-static int are_buffers_empty_hash_map (struct isal_zstream *stream)
+static int
+are_buffers_empty_hash_map (struct isal_zstream *stream)
 {
     struct level_buf *level_buf = (struct level_buf *) stream->level_buf;
 
@@ -313,7 +346,8 @@ static int are_buffers_empty_hash_map (struct isal_zstream *stream)
             level_buf->hash_map.matches_next >= level_buf->hash_map.matches_end);
 }
 
-static int are_buffers_empty (struct isal_zstream *stream)
+static int
+are_buffers_empty (struct isal_zstream *stream)
 {
 
     switch (stream->level)
@@ -327,7 +361,8 @@ static int are_buffers_empty (struct isal_zstream *stream)
     }
 }
 
-static void create_icf_block_hdr (struct isal_zstream *stream, uint8_t *start_in)
+static void
+create_icf_block_hdr (struct isal_zstream *stream, uint8_t *start_in)
 {
     struct isal_zstate *state = &stream->internal_state;
     struct level_buf *level_buf = (struct level_buf *) stream->level_buf;
@@ -416,7 +451,8 @@ static void create_icf_block_hdr (struct isal_zstream *stream, uint8_t *start_in
     }
 }
 
-static void isal_deflate_pass (struct isal_zstream *stream)
+static void
+isal_deflate_pass (struct isal_zstream *stream)
 {
     struct isal_zstate *state = &stream->internal_state;
     struct isal_hufftables *hufftables = stream->hufftables;
@@ -450,7 +486,8 @@ static void isal_deflate_pass (struct isal_zstream *stream)
         write_trailer (stream);
 }
 
-static void isal_deflate_icf_finish (struct isal_zstream *stream)
+static void
+isal_deflate_icf_finish (struct isal_zstream *stream)
 {
     switch (stream->level)
     {
@@ -465,7 +502,8 @@ static void isal_deflate_icf_finish (struct isal_zstream *stream)
     }
 }
 
-static void isal_deflate_icf_pass (struct isal_zstream *stream, uint8_t *inbuf_start)
+static void
+isal_deflate_icf_pass (struct isal_zstream *stream, uint8_t *inbuf_start)
 {
     uint8_t *start_in = stream->next_in;
     struct isal_zstate *state = &stream->internal_state;
@@ -517,7 +555,8 @@ static void isal_deflate_icf_pass (struct isal_zstream *stream, uint8_t *inbuf_s
         write_trailer (stream);
 }
 
-static void isal_deflate_int (struct isal_zstream *stream, uint8_t *start_in)
+static void
+isal_deflate_int (struct isal_zstream *stream, uint8_t *start_in)
 {
     struct isal_zstate *state = &stream->internal_state;
     uint32_t size;
@@ -592,8 +631,8 @@ static void isal_deflate_int (struct isal_zstream *stream, uint8_t *start_in)
     }
 }
 
-static void write_constant_compressed_stateless (struct isal_zstream *stream,
-                                                 uint32_t repeated_length)
+static void
+write_constant_compressed_stateless (struct isal_zstream *stream, uint32_t repeated_length)
 {
     /* Assumes repeated_length is at least 1.
      * Assumes the input end_of_stream is either 0 or 1. */
@@ -690,7 +729,8 @@ static void write_constant_compressed_stateless (struct isal_zstream *stream,
     return;
 }
 
-static int detect_repeated_char_length (uint8_t *in, uint32_t length)
+static int
+detect_repeated_char_length (uint8_t *in, uint32_t length)
 {
     /* This currently assumes the first 8 bytes are the same character.
      * This won't work effectively if the input stream isn't aligned well. */
@@ -710,7 +750,8 @@ static int detect_repeated_char_length (uint8_t *in, uint32_t length)
     return p_8 - in;
 }
 
-static int isal_deflate_int_stateless (struct isal_zstream *stream)
+static int
+isal_deflate_int_stateless (struct isal_zstream *stream)
 {
     uint32_t repeat_length;
     struct isal_zstate *state = &stream->internal_state;
@@ -757,7 +798,8 @@ static int isal_deflate_int_stateless (struct isal_zstream *stream)
         return STATELESS_OVERFLOW;
 }
 
-static void write_type0_header (struct isal_zstream *stream)
+static void
+write_type0_header (struct isal_zstream *stream)
 {
     struct isal_zstate *state = &stream->internal_state;
     uint64_t stored_blk_hdr;
@@ -819,7 +861,8 @@ static void write_type0_header (struct isal_zstream *stream)
     stream->internal_state.count = copy_size;
 }
 
-static uint32_t write_stored_block (struct isal_zstream *stream)
+static uint32_t
+write_stored_block (struct isal_zstream *stream)
 {
     uint32_t copy_size, avail_in, block_next_offset;
     uint8_t *next_in;
@@ -878,7 +921,8 @@ static uint32_t write_stored_block (struct isal_zstream *stream)
     return state->block_end - state->block_next;
 }
 
-static inline void reset_match_history (struct isal_zstream *stream)
+static inline void
+reset_match_history (struct isal_zstream *stream)
 {
     struct isal_zstate *state = &stream->internal_state;
     struct level_buf *level_buf = (struct level_buf *) stream->level_buf;
@@ -977,7 +1021,8 @@ static void inline set_hash_mask (struct isal_zstream *stream)
     }
 }
 
-void isal_deflate_init (struct isal_zstream *stream)
+void
+isal_deflate_init (struct isal_zstream *stream)
 {
     struct isal_zstate *state = &stream->internal_state;
 
@@ -1015,7 +1060,8 @@ void isal_deflate_init (struct isal_zstream *stream)
     return;
 }
 
-void isal_deflate_reset (struct isal_zstream *stream)
+void
+isal_deflate_reset (struct isal_zstream *stream)
 {
     struct isal_zstate *state = &stream->internal_state;
 
@@ -1043,7 +1089,8 @@ void isal_deflate_reset (struct isal_zstream *stream)
     state->crc = 0;
 }
 
-void isal_gzip_header_init (struct isal_gzip_header *gz_hdr)
+void
+isal_gzip_header_init (struct isal_gzip_header *gz_hdr)
 {
     gz_hdr->text = 0;
     gz_hdr->time = 0;
@@ -1060,7 +1107,8 @@ void isal_gzip_header_init (struct isal_gzip_header *gz_hdr)
     gz_hdr->flags = 0;
 }
 
-void isal_zlib_header_init (struct isal_zlib_header *z_hdr)
+void
+isal_zlib_header_init (struct isal_zlib_header *z_hdr)
 {
     z_hdr->info = 0;
     z_hdr->level = 0;
@@ -1068,7 +1116,8 @@ void isal_zlib_header_init (struct isal_zlib_header *z_hdr)
     z_hdr->dict_flag = 0;
 }
 
-uint32_t isal_write_gzip_header (struct isal_zstream *stream, struct isal_gzip_header *gz_hdr)
+uint32_t
+isal_write_gzip_header (struct isal_zstream *stream, struct isal_gzip_header *gz_hdr)
 {
     uint32_t flags = 0, hcrc, hdr_size = GZIP_HDR_BASE;
     uint8_t *out_buf = stream->next_out, *out_buf_start = stream->next_out;
@@ -1150,7 +1199,8 @@ uint32_t isal_write_gzip_header (struct isal_zstream *stream, struct isal_gzip_h
     return ISAL_DECOMP_OK;
 }
 
-uint32_t isal_write_zlib_header (struct isal_zstream *stream, struct isal_zlib_header *z_hdr)
+uint32_t
+isal_write_zlib_header (struct isal_zstream *stream, struct isal_zlib_header *z_hdr)
 {
     uint32_t cmf, flg, dict_flag = 0, hdr_size = ZLIB_HDR_BASE;
     uint8_t *out_buf = stream->next_out;
@@ -1182,8 +1232,9 @@ uint32_t isal_write_zlib_header (struct isal_zstream *stream, struct isal_zlib_h
     return ISAL_DECOMP_OK;
 }
 
-int isal_deflate_set_hufftables (struct isal_zstream *stream, struct isal_hufftables *hufftables,
-                                 int type)
+int
+isal_deflate_set_hufftables (struct isal_zstream *stream, struct isal_hufftables *hufftables,
+                             int type)
 {
     if (stream->internal_state.state != ZSTATE_NEW_HDR)
         return ISAL_INVALID_OPERATION;
@@ -1209,7 +1260,8 @@ int isal_deflate_set_hufftables (struct isal_zstream *stream, struct isal_huffta
     return COMP_OK;
 }
 
-void isal_deflate_stateless_init (struct isal_zstream *stream)
+void
+isal_deflate_stateless_init (struct isal_zstream *stream)
 {
     stream->total_in = 0;
     stream->total_out = 0;
@@ -1226,7 +1278,8 @@ void isal_deflate_stateless_init (struct isal_zstream *stream)
     return;
 }
 
-void isal_deflate_hash (struct isal_zstream *stream, uint8_t *dict, uint32_t dict_len)
+void
+isal_deflate_hash (struct isal_zstream *stream, uint8_t *dict, uint32_t dict_len)
 {
     /* Reset history to prevent out of bounds matches this works because
      * dictionary must set at least 1 element in the history */
@@ -1260,8 +1313,9 @@ void isal_deflate_hash (struct isal_zstream *stream, uint8_t *dict, uint32_t dic
     stream->internal_state.has_hist = IGZIP_HIST;
 }
 
-int isal_deflate_process_dict (struct isal_zstream *stream, struct isal_dict *dict,
-                               uint8_t *dict_data, uint32_t dict_len)
+int
+isal_deflate_process_dict (struct isal_zstream *stream, struct isal_dict *dict, uint8_t *dict_data,
+                           uint32_t dict_len)
 {
     if ((dict == NULL) || (dict_len == 0) || (dict->level > ISAL_DEF_MAX_LEVEL))
         return ISAL_INVALID_STATE;
@@ -1299,7 +1353,8 @@ int isal_deflate_process_dict (struct isal_zstream *stream, struct isal_dict *di
     return COMP_OK;
 }
 
-int isal_deflate_reset_dict (struct isal_zstream *stream, struct isal_dict *dict)
+int
+isal_deflate_reset_dict (struct isal_zstream *stream, struct isal_dict *dict)
 {
     struct isal_zstate *state = &stream->internal_state;
     struct level_buf *level_buf = (struct level_buf *) stream->level_buf;
@@ -1338,7 +1393,8 @@ int isal_deflate_reset_dict (struct isal_zstream *stream, struct isal_dict *dict
     return COMP_OK;
 }
 
-int isal_deflate_set_dict (struct isal_zstream *stream, uint8_t *dict, uint32_t dict_len)
+int
+isal_deflate_set_dict (struct isal_zstream *stream, uint8_t *dict, uint32_t dict_len)
 {
     struct isal_zstate *state = &stream->internal_state;
 
@@ -1363,7 +1419,8 @@ int isal_deflate_set_dict (struct isal_zstream *stream, uint8_t *dict, uint32_t 
     return COMP_OK;
 }
 
-int isal_deflate_stateless (struct isal_zstream *stream)
+int
+isal_deflate_stateless (struct isal_zstream *stream)
 {
     struct isal_zstate *state = &stream->internal_state;
     uint8_t *next_in = stream->next_in;
@@ -1496,8 +1553,8 @@ int isal_deflate_stateless (struct isal_zstream *stream)
     return COMP_OK;
 }
 
-static inline uint32_t get_hist_size (struct isal_zstream *stream, uint8_t *start_in,
-                                      int32_t buf_hist_start)
+static inline uint32_t
+get_hist_size (struct isal_zstream *stream, uint8_t *start_in, int32_t buf_hist_start)
 {
     struct isal_zstate *state = &stream->internal_state;
     uint32_t history_size;
@@ -1530,7 +1587,8 @@ static inline uint32_t get_hist_size (struct isal_zstream *stream, uint8_t *star
     return history_size;
 }
 
-int isal_deflate (struct isal_zstream *stream)
+int
+isal_deflate (struct isal_zstream *stream)
 {
     struct isal_zstate *state = &stream->internal_state;
     int ret = COMP_OK;
@@ -1737,7 +1795,8 @@ int isal_deflate (struct isal_zstream *stream)
 }
 
 // Helper function to avoid code duplication.
-static void _zlib_header_in_buffer (struct isal_zstream *stream, uint8_t *buffer)
+static void
+_zlib_header_in_buffer (struct isal_zstream *stream, uint8_t *buffer)
 {
     uint8_t hist_bits, info, level, cmf, flg;
     uint8_t dict_flag = 0;
@@ -1763,7 +1822,8 @@ static void _zlib_header_in_buffer (struct isal_zstream *stream, uint8_t *buffer
     return;
 }
 
-static int write_stream_header_stateless (struct isal_zstream *stream)
+static int
+write_stream_header_stateless (struct isal_zstream *stream)
 {
     uint32_t hdr_bytes;
     // Create a 10-byte buffer. Since the gzip header is almost fixed (9 of 10
@@ -1803,7 +1863,8 @@ static int write_stream_header_stateless (struct isal_zstream *stream)
     return COMP_OK;
 }
 
-static void write_stream_header (struct isal_zstream *stream)
+static void
+write_stream_header (struct isal_zstream *stream)
 {
     struct isal_zstate *state = &stream->internal_state;
     int bytes_to_write;
@@ -1847,7 +1908,8 @@ static void write_stream_header (struct isal_zstream *stream)
     stream->next_out += bytes_to_write;
 }
 
-static int write_deflate_header_stateless (struct isal_zstream *stream)
+static int
+write_deflate_header_stateless (struct isal_zstream *stream)
 {
     struct isal_zstate *state = &stream->internal_state;
     struct isal_hufftables *hufftables = stream->hufftables;
@@ -1887,7 +1949,8 @@ static int write_deflate_header_stateless (struct isal_zstream *stream)
     return COMP_OK;
 }
 
-static int write_deflate_header_unaligned_stateless (struct isal_zstream *stream)
+static int
+write_deflate_header_unaligned_stateless (struct isal_zstream *stream)
 {
     struct isal_zstate *state = &stream->internal_state;
     struct isal_hufftables *hufftables = stream->hufftables;
@@ -1953,9 +2016,9 @@ static int write_deflate_header_unaligned_stateless (struct isal_zstream *stream
 }
 
 /* Toggle end of stream only works when deflate header is aligned */
-static void write_header (struct isal_zstream *stream, uint8_t *deflate_hdr,
-                          uint32_t deflate_hdr_count, uint32_t extra_bits_count,
-                          uint32_t next_state, uint32_t toggle_end_of_stream)
+static void
+write_header (struct isal_zstream *stream, uint8_t *deflate_hdr, uint32_t deflate_hdr_count,
+              uint32_t extra_bits_count, uint32_t next_state, uint32_t toggle_end_of_stream)
 {
     struct isal_zstate *state = &stream->internal_state;
     uint32_t hdr_extra_bits = deflate_hdr[ deflate_hdr_count ];
@@ -2024,7 +2087,8 @@ static void write_header (struct isal_zstream *stream, uint8_t *deflate_hdr,
     }
 }
 
-static void write_trailer (struct isal_zstream *stream)
+static void
+write_trailer (struct isal_zstream *stream)
 {
     struct isal_zstate *state = &stream->internal_state;
     unsigned int bytes = 0;

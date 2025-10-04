@@ -32,6 +32,7 @@ struct deflate_icf
 #endif
 };
 
-struct deflate_icf *encode_deflate_icf (struct deflate_icf *next_in, struct deflate_icf *end_in,
-                                        struct BitBuf2 *bb, struct hufftables_icf *hufftables);
+struct deflate_icf *
+encode_deflate_icf (struct deflate_icf *next_in, struct deflate_icf *end_in, struct BitBuf2 *bb,
+                    struct hufftables_icf *hufftables);
 #endif

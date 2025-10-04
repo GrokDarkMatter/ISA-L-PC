@@ -28,10 +28,14 @@
 **********************************************************************/
 #include "riscv64_multibinary.h"
 
-extern int pq_gen_rvv (int vects, int len, void **array);
-extern int pq_gen_base (int vects, int len, void **array);
-extern int xor_gen_rvv (int vects, int len, void **array);
-extern int xor_gen_base (int vects, int len, void **array);
+extern int
+pq_gen_rvv (int vects, int len, void **array);
+extern int
+pq_gen_base (int vects, int len, void **array);
+extern int
+xor_gen_rvv (int vects, int len, void **array);
+extern int
+xor_gen_base (int vects, int len, void **array);
 
 DEFINE_INTERFACE_DISPATCHER (pq_gen)
 {

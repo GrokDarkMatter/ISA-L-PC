@@ -44,8 +44,8 @@ extern "C"
 #define MAX_ITER 8
 
     // iSCSI CRC reference function
-    static inline unsigned int crc32_iscsi_ref (unsigned char *buffer, int len,
-                                                unsigned int crc_init)
+    static inline unsigned int
+    crc32_iscsi_ref (unsigned char *buffer, int len, unsigned int crc_init)
     {
         uint64_t rem = crc_init;
         int i, j;
@@ -64,7 +64,8 @@ extern "C"
     }
 
     // crc16_t10dif reference function, slow crc16 from the definition.
-    static inline uint16_t crc16_t10dif_ref (uint16_t seed, uint8_t *buf, uint64_t len)
+    static inline uint16_t
+    crc16_t10dif_ref (uint16_t seed, uint8_t *buf, uint64_t len)
     {
         size_t rem = seed;
         unsigned int i, j;
@@ -84,8 +85,8 @@ extern "C"
     }
 
     // crc16_t10dif reference function, slow crc16 from the definition.
-    static inline uint16_t crc16_t10dif_copy_ref (uint16_t seed, uint8_t *dst, uint8_t *src,
-                                                  uint64_t len)
+    static inline uint16_t
+    crc16_t10dif_copy_ref (uint16_t seed, uint8_t *dst, uint8_t *src, uint64_t len)
     {
         size_t rem = seed;
         unsigned int i, j;
@@ -106,7 +107,8 @@ extern "C"
     }
 
     // crc32_ieee reference function, slow crc32 from the definition.
-    static inline uint32_t crc32_ieee_ref (uint32_t seed, uint8_t *buf, uint64_t len)
+    static inline uint32_t
+    crc32_ieee_ref (uint32_t seed, uint8_t *buf, uint64_t len)
     {
         uint64_t rem = ~seed;
         unsigned int i, j;
@@ -128,7 +130,8 @@ extern "C"
     // crc32_gzip_refl reference function, slow crc32 from the definition.
     // Please get difference details between crc32_gzip_ref and crc32_ieee
     // from crc.h.
-    static inline uint32_t crc32_gzip_refl_ref (uint32_t seed, uint8_t *buf, uint64_t len)
+    static inline uint32_t
+    crc32_gzip_refl_ref (uint32_t seed, uint8_t *buf, uint64_t len)
     {
         uint64_t rem = ~seed;
         int i, j;

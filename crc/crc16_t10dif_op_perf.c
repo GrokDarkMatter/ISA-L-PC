@@ -68,8 +68,9 @@ struct blk_ext
     uint16_t crc;
 };
 
-static void crc16_t10dif_copy_perf (struct blk *blks, struct blk *blkp, struct blk_ext *blks_ext,
-                                    struct blk_ext *blkp_ext, uint16_t *crc)
+static void
+crc16_t10dif_copy_perf (struct blk *blks, struct blk *blkp, struct blk_ext *blks_ext,
+                        struct blk_ext *blkp_ext, uint16_t *crc)
 {
     int i;
     for (i = 0, blkp = blks, blkp_ext = blks_ext; i < NBLOCKS; i++)
@@ -81,7 +82,8 @@ static void crc16_t10dif_copy_perf (struct blk *blks, struct blk *blkp, struct b
     }
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     uint16_t crc;
     struct blk *blks = NULL, *blkp = NULL;

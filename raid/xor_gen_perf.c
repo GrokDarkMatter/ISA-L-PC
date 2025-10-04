@@ -52,7 +52,8 @@
 
 #define TEST_MEM ((TEST_SOURCES + 1) * (TEST_LEN))
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     int i, ret, fail = 0;
     void **buffs;

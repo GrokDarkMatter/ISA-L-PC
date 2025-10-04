@@ -40,7 +40,8 @@
 #define gf8poly 0x1d1d1d1dUL
 #endif
 
-int pq_gen_base (int vects, int len, void **array)
+int
+pq_gen_base (int vects, int len, void **array)
 {
     int i, j;
     unsigned long p, q, s;
@@ -68,7 +69,8 @@ int pq_gen_base (int vects, int len, void **array)
     return 0;
 }
 
-int pq_check_base (int vects, int len, void **array)
+int
+pq_check_base (int vects, int len, void **array)
 {
     int i, j;
     unsigned char p, q, s;
@@ -98,7 +100,8 @@ int pq_check_base (int vects, int len, void **array)
     return 0;
 }
 
-int xor_gen_base (int vects, int len, void **array)
+int
+xor_gen_base (int vects, int len, void **array)
 {
     int i, j;
     unsigned char parity;
@@ -119,7 +122,8 @@ int xor_gen_base (int vects, int len, void **array)
     return 0;
 }
 
-int xor_check_base (int vects, int len, void **array)
+int
+xor_check_base (int vects, int len, void **array)
 {
     int i, j, fail = 0;
 

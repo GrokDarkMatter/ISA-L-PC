@@ -33,37 +33,52 @@
 /*external function*/
 
 /* RVV */
-extern void gf_vect_dot_prod_rvv (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                  unsigned char *dest);
-extern void gf_2vect_dot_prod_rvv (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                   unsigned char **dest);
-extern void gf_3vect_dot_prod_rvv (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                   unsigned char **dest);
-extern void gf_4vect_dot_prod_rvv (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                   unsigned char **dest);
-extern void gf_5vect_dot_prod_rvv (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                   unsigned char **dest);
-extern void gf_6vect_dot_prod_rvv (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                   unsigned char **dest);
-extern void gf_7vect_dot_prod_rvv (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                   unsigned char **dest);
-extern void gf_8vect_dot_prod_rvv (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                   unsigned char **dest);
-extern void gf_vect_mad_rvv (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                             unsigned char *dest);
-extern void gf_2vect_mad_rvv (int len, int vec, int vec_i, unsigned char *gftbls,
-                              unsigned char *src, unsigned char **dest);
-extern void gf_3vect_mad_rvv (int len, int vec, int vec_i, unsigned char *gftbls,
-                              unsigned char *src, unsigned char **dest);
-extern void gf_4vect_mad_rvv (int len, int vec, int vec_i, unsigned char *gftbls,
-                              unsigned char *src, unsigned char **dest);
-extern void gf_5vect_mad_rvv (int len, int vec, int vec_i, unsigned char *gftbls,
-                              unsigned char *src, unsigned char **dest);
-extern void gf_6vect_mad_rvv (int len, int vec, int vec_i, unsigned char *gftbls,
-                              unsigned char *src, unsigned char **dest);
+extern void
+gf_vect_dot_prod_rvv (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                      unsigned char *dest);
+extern void
+gf_2vect_dot_prod_rvv (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                       unsigned char **dest);
+extern void
+gf_3vect_dot_prod_rvv (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                       unsigned char **dest);
+extern void
+gf_4vect_dot_prod_rvv (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                       unsigned char **dest);
+extern void
+gf_5vect_dot_prod_rvv (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                       unsigned char **dest);
+extern void
+gf_6vect_dot_prod_rvv (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                       unsigned char **dest);
+extern void
+gf_7vect_dot_prod_rvv (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                       unsigned char **dest);
+extern void
+gf_8vect_dot_prod_rvv (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                       unsigned char **dest);
+extern void
+gf_vect_mad_rvv (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                 unsigned char *dest);
+extern void
+gf_2vect_mad_rvv (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                  unsigned char **dest);
+extern void
+gf_3vect_mad_rvv (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                  unsigned char **dest);
+extern void
+gf_4vect_mad_rvv (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                  unsigned char **dest);
+extern void
+gf_5vect_mad_rvv (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                  unsigned char **dest);
+extern void
+gf_6vect_mad_rvv (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                  unsigned char **dest);
 
-void ec_encode_data_rvv (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
-                         unsigned char **coding)
+void
+ec_encode_data_rvv (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
+                    unsigned char **coding)
 {
     if (len < 16)
     {
@@ -135,8 +150,9 @@ void ec_encode_data_rvv (int len, int k, int rows, unsigned char *g_tbls, unsign
     }
 }
 
-void ec_encode_data_update_rvv (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
-                                unsigned char *data, unsigned char **coding)
+void
+ec_encode_data_update_rvv (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
+                           unsigned char *data, unsigned char **coding)
 {
     if (len < 16)
     {

@@ -91,7 +91,8 @@ int level_size_buf[ 10 ] = {
 #endif
 };
 
-int usage (void)
+int
+usage (void)
 {
     fprintf (stderr, "Usage: igzip_file_perf [options] <infile>\n"
                      "  -h        help\n"
@@ -105,11 +106,11 @@ int usage (void)
     exit (0);
 }
 
-void deflate_perf (struct isal_zstream *stream, uint8_t *inbuf, size_t infile_size,
-                   size_t inbuf_size, uint8_t *outbuf, size_t outbuf_size, int level,
-                   uint8_t *level_buf, int level_size, uint32_t hist_bits, uint8_t *dictbuf,
-                   size_t dictfile_size, struct isal_dict *dict_str,
-                   struct isal_hufftables *hufftables_custom)
+void
+deflate_perf (struct isal_zstream *stream, uint8_t *inbuf, size_t infile_size, size_t inbuf_size,
+              uint8_t *outbuf, size_t outbuf_size, int level, uint8_t *level_buf, int level_size,
+              uint32_t hist_bits, uint8_t *dictbuf, size_t dictfile_size,
+              struct isal_dict *dict_str, struct isal_hufftables *hufftables_custom)
 {
     int avail_in;
     isal_deflate_init (stream);
@@ -146,7 +147,8 @@ void deflate_perf (struct isal_zstream *stream, uint8_t *inbuf, size_t infile_si
     }
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     FILE *in = NULL, *out = NULL, *dict = NULL;
     unsigned char *inbuf, *outbuf, *level_buf = NULL, *dictbuf = NULL;

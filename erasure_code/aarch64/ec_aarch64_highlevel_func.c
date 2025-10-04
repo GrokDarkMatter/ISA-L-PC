@@ -54,41 +54,58 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include <arm_neon.h>
 
 /*external function*/
-extern void gf_vect_dot_prod_neon (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                   unsigned char *dest);
-extern void gf_2vect_dot_prod_neon (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                    unsigned char **dest);
-extern void gf_3vect_dot_prod_neon (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                    unsigned char **dest);
-extern void gf_4vect_dot_prod_neon (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                    unsigned char **dest);
-extern void gf_5vect_dot_prod_neon (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                    unsigned char **dest);
-extern int gf_vect_syndrome_neon (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                  unsigned char *dest, int newPos);
-extern int gf_2vect_syndrome_neon (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                   unsigned char **dest, int newPos);
-extern int gf_3vect_syndrome_neon (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                   unsigned char **dest, int newPos);
-extern int gf_4vect_syndrome_neon (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                   unsigned char **dest, int newPos);
-extern int gf_5vect_syndrome_neon (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                   unsigned char **dest, int newPos);
-extern void gf_vect_mad_neon (int len, int vec, int vec_i, unsigned char *gftbls,
-                              unsigned char *src, unsigned char *dest);
-extern void gf_2vect_mad_neon (int len, int vec, int vec_i, unsigned char *gftbls,
-                               unsigned char *src, unsigned char **dest);
-extern void gf_3vect_mad_neon (int len, int vec, int vec_i, unsigned char *gftbls,
-                               unsigned char *src, unsigned char **dest);
-extern void gf_4vect_mad_neon (int len, int vec, int vec_i, unsigned char *gftbls,
-                               unsigned char *src, unsigned char **dest);
-extern void gf_5vect_mad_neon (int len, int vec, int vec_i, unsigned char *gftbls,
-                               unsigned char *src, unsigned char **dest);
-extern void gf_6vect_mad_neon (int len, int vec, int vec_i, unsigned char *gftbls,
-                               unsigned char *src, unsigned char **dest);
+extern void
+gf_vect_dot_prod_neon (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                       unsigned char *dest);
+extern void
+gf_2vect_dot_prod_neon (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                        unsigned char **dest);
+extern void
+gf_3vect_dot_prod_neon (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                        unsigned char **dest);
+extern void
+gf_4vect_dot_prod_neon (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                        unsigned char **dest);
+extern void
+gf_5vect_dot_prod_neon (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                        unsigned char **dest);
+extern int
+gf_vect_syndrome_neon (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                       unsigned char *dest, int newPos);
+extern int
+gf_2vect_syndrome_neon (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                        unsigned char **dest, int newPos);
+extern int
+gf_3vect_syndrome_neon (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                        unsigned char **dest, int newPos);
+extern int
+gf_4vect_syndrome_neon (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                        unsigned char **dest, int newPos);
+extern int
+gf_5vect_syndrome_neon (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                        unsigned char **dest, int newPos);
+extern void
+gf_vect_mad_neon (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                  unsigned char *dest);
+extern void
+gf_2vect_mad_neon (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                   unsigned char **dest);
+extern void
+gf_3vect_mad_neon (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                   unsigned char **dest);
+extern void
+gf_4vect_mad_neon (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                   unsigned char **dest);
+extern void
+gf_5vect_mad_neon (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                   unsigned char **dest);
+extern void
+gf_6vect_mad_neon (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                   unsigned char **dest);
 
-void ec_encode_data_neon (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
-                          unsigned char **coding)
+void
+ec_encode_data_neon (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
+                     unsigned char **coding)
 {
     if (len < 16)
     {
@@ -127,12 +144,14 @@ void ec_encode_data_neon (int len, int k, int rows, unsigned char *g_tbls, unsig
     }
 }
 
-extern int pc_correct (int newPos, int k, int p, unsigned char **data, int vLen);
+extern int
+pc_correct (int newPos, int k, int p, unsigned char **data, int vLen);
 
 #define MAX_PC_RETRY 1
 
-int ec_decode_data_neon (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
-                         unsigned char **coding)
+int
+ec_decode_data_neon (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
+                     unsigned char **coding)
 {
     int newPos = 0, retry = 0, p = rows, vSize;
     unsigned char **dest = coding, *g_orig = g_tbls;
@@ -195,8 +214,9 @@ int ec_decode_data_neon (int len, int k, int rows, unsigned char *g_tbls, unsign
     return (newPos);
 }
 
-void ec_encode_data_update_neon (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
-                                 unsigned char *data, unsigned char **coding)
+void
+ec_encode_data_update_neon (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
+                            unsigned char *data, unsigned char **coding)
 {
     if (len < 16)
     {
@@ -236,37 +256,52 @@ void ec_encode_data_update_neon (int len, int k, int rows, int vec_i, unsigned c
 }
 
 /* SVE */
-extern void gf_vect_dot_prod_sve (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                  unsigned char *dest);
-extern void gf_2vect_dot_prod_sve (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                   unsigned char **dest);
-extern void gf_3vect_dot_prod_sve (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                   unsigned char **dest);
-extern void gf_4vect_dot_prod_sve (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                   unsigned char **dest);
-extern void gf_5vect_dot_prod_sve (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                   unsigned char **dest);
-extern void gf_6vect_dot_prod_sve (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                   unsigned char **dest);
-extern void gf_7vect_dot_prod_sve (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                   unsigned char **dest);
-extern void gf_8vect_dot_prod_sve (int len, int vlen, unsigned char *gftbls, unsigned char **src,
-                                   unsigned char **dest);
-extern void gf_vect_mad_sve (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
-                             unsigned char *dest);
-extern void gf_2vect_mad_sve (int len, int vec, int vec_i, unsigned char *gftbls,
-                              unsigned char *src, unsigned char **dest);
-extern void gf_3vect_mad_sve (int len, int vec, int vec_i, unsigned char *gftbls,
-                              unsigned char *src, unsigned char **dest);
-extern void gf_4vect_mad_sve (int len, int vec, int vec_i, unsigned char *gftbls,
-                              unsigned char *src, unsigned char **dest);
-extern void gf_5vect_mad_sve (int len, int vec, int vec_i, unsigned char *gftbls,
-                              unsigned char *src, unsigned char **dest);
-extern void gf_6vect_mad_sve (int len, int vec, int vec_i, unsigned char *gftbls,
-                              unsigned char *src, unsigned char **dest);
+extern void
+gf_vect_dot_prod_sve (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                      unsigned char *dest);
+extern void
+gf_2vect_dot_prod_sve (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                       unsigned char **dest);
+extern void
+gf_3vect_dot_prod_sve (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                       unsigned char **dest);
+extern void
+gf_4vect_dot_prod_sve (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                       unsigned char **dest);
+extern void
+gf_5vect_dot_prod_sve (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                       unsigned char **dest);
+extern void
+gf_6vect_dot_prod_sve (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                       unsigned char **dest);
+extern void
+gf_7vect_dot_prod_sve (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                       unsigned char **dest);
+extern void
+gf_8vect_dot_prod_sve (int len, int vlen, unsigned char *gftbls, unsigned char **src,
+                       unsigned char **dest);
+extern void
+gf_vect_mad_sve (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                 unsigned char *dest);
+extern void
+gf_2vect_mad_sve (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                  unsigned char **dest);
+extern void
+gf_3vect_mad_sve (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                  unsigned char **dest);
+extern void
+gf_4vect_mad_sve (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                  unsigned char **dest);
+extern void
+gf_5vect_mad_sve (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                  unsigned char **dest);
+extern void
+gf_6vect_mad_sve (int len, int vec, int vec_i, unsigned char *gftbls, unsigned char *src,
+                  unsigned char **dest);
 
-void ec_encode_data_sve (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
-                         unsigned char **coding)
+void
+ec_encode_data_sve (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
+                    unsigned char **coding)
 {
     if (len < 16)
     {
@@ -338,8 +373,9 @@ void ec_encode_data_sve (int len, int k, int rows, unsigned char *g_tbls, unsign
     }
 }
 
-void ec_encode_data_update_sve (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
-                                unsigned char *data, unsigned char **coding)
+void
+ec_encode_data_update_sve (int len, int k, int rows, int vec_i, unsigned char *g_tbls,
+                           unsigned char *data, unsigned char **coding)
 {
     if (len < 16)
     {

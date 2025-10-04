@@ -107,13 +107,18 @@ extern "C"
 #define GHZ            1000000000
 #define UNIT_SCALE     (GHZ)
 #define CALIBRATE_TIME (UNIT_SCALE / 2)
-    static inline long long get_time (void)
+    static inline long long
+    get_time (void)
     {
         unsigned int dummy;
         return __rdtscp (&dummy);
     }
 
-    static inline long long get_res (void) { return 1; }
+    static inline long long
+    get_res (void)
+    {
+        return 1;
+    }
 #else
 #ifndef BENCHMARK_TIME
 #define BENCHMARK_TIME 3
@@ -122,14 +127,16 @@ extern "C"
 #include <windows.h>
 #define UNIT_SCALE     get_res ()
 #define CALIBRATE_TIME (UNIT_SCALE / 4)
-static inline long long get_time (void)
+static inline long long
+get_time (void)
 {
     LARGE_INTEGER ret;
     QueryPerformanceCounter (&ret);
     return ret.QuadPart;
 }
 
-static inline long long get_res (void)
+static inline long long
+get_res (void)
 {
     LARGE_INTEGER ret;
     QueryPerformanceFrequency (&ret);
@@ -145,7 +152,8 @@ static inline long long get_res (void)
 #define CLOCK_ID CLOCK_MONOTONIC
 #endif
 
-static inline long long get_time (void)
+static inline long long
+get_time (void)
 {
     struct timespec time;
     long long nano_total;
@@ -156,7 +164,8 @@ static inline long long get_time (void)
     return nano_total;
 }
 
-static inline long long get_res (void)
+static inline long long
+get_res (void)
 {
     struct timespec time;
     long long nano_total;
@@ -176,7 +185,8 @@ static inline long long get_res (void)
         long long iterations;
     };
 
-    static inline void perf_init (struct perf *p)
+    static inline void
+    perf_init (struct perf *p)
     {
         p->start = 0;
         p->stop = 0;
@@ -184,29 +194,44 @@ static inline long long get_res (void)
         p->iterations = 0;
     }
 
-    static inline void perf_continue (struct perf *p) { p->start = get_time (); }
+    static inline void
+    perf_continue (struct perf *p)
+    {
+        p->start = get_time ();
+    }
 
-    static inline void perf_pause (struct perf *p)
+    static inline void
+    perf_pause (struct perf *p)
     {
         p->stop = get_time ();
         p->run_total = p->run_total + p->stop - p->start;
         p->start = p->stop;
     }
 
-    static inline void perf_start (struct perf *p)
+    static inline void
+    perf_start (struct perf *p)
     {
         perf_init (p);
         perf_continue (p);
     }
 
-    static inline void perf_stop (struct perf *p) { perf_pause (p); }
+    static inline void
+    perf_stop (struct perf *p)
+    {
+        perf_pause (p);
+    }
 
-    static inline double get_time_elapsed (struct perf *p)
+    static inline double
+    get_time_elapsed (struct perf *p)
     {
         return 1.0 * p->run_total / UNIT_SCALE;
     }
 
-    static inline long long get_base_elapsed (struct perf *p) { return p->run_total; }
+    static inline long long
+    get_base_elapsed (struct perf *p)
+    {
+        return p->run_total;
+    }
 
     static inline unsigned long long
     estimate_perf_iterations (struct perf *p, unsigned long long runs, unsigned long long total)
@@ -360,7 +385,8 @@ static inline long long get_res (void)
     } while (0)
 
 #ifdef USE_CYCLES
-    static inline void perf_print (struct perf p, long long unit_count)
+    static inline void
+    perf_print (struct perf p, long long unit_count)
     {
         long long total_units = p.iterations * unit_count;
 
@@ -373,7 +399,8 @@ static inline long long get_res (void)
         printf ("\n");
     }
 #else
-static inline void perf_print (struct perf p, double unit_count)
+static inline void
+perf_print (struct perf p, double unit_count)
 {
     long long total_units = p.iterations * unit_count;
     long long usecs = (long long) (get_time_elapsed (&p) * 1000000);
@@ -388,7 +415,8 @@ static inline void perf_print (struct perf p, double unit_count)
 }
 #endif
 
-    static inline uint64_t get_filesize (FILE *fp)
+    static inline uint64_t
+    get_filesize (FILE *fp)
     {
         uint64_t file_size;
         fpos_t pos, pos_curr;

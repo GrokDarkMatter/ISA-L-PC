@@ -61,7 +61,8 @@ extern "C"
      * @returns 0 pass, other fail
      */
 
-    int xor_gen (int vects, int len, void **array);
+    int
+    xor_gen (int vects, int len, void **array);
 
     /**
      * @brief Checks that array has XOR parity sum of 0 across all vectors, runs appropriate
@@ -78,7 +79,8 @@ extern "C"
      * @returns 0 pass, other fail
      */
 
-    int xor_check (int vects, int len, void **array);
+    int
+    xor_check (int vects, int len, void **array);
 
     /**
      * @brief Generate P+Q parity vectors from N sources, runs appropriate version.
@@ -97,7 +99,8 @@ extern "C"
      * @returns 0 pass, other fail
      */
 
-    int pq_gen (int vects, int len, void **array);
+    int
+    pq_gen (int vects, int len, void **array);
 
     /**
      * @brief Checks that array of N sources, P and Q are consistent across all vectors, runs
@@ -115,7 +118,8 @@ extern "C"
      * @returns 0 pass, other fail
      */
 
-    int pq_check (int vects, int len, void **array);
+    int
+    pq_check (int vects, int len, void **array);
 
 /* Arch specific versions */
 // x86 only
@@ -134,7 +138,8 @@ extern "C"
      * @returns 0 pass, other fail
      */
 
-    int xor_gen_sse (int vects, int len, void **array);
+    int
+    xor_gen_sse (int vects, int len, void **array);
 
     /**
      * @brief Generate XOR parity vector from N sources.
@@ -149,7 +154,8 @@ extern "C"
      * @returns 0 pass, other fail
      */
 
-    int xor_gen_avx (int vects, int len, void **array);
+    int
+    xor_gen_avx (int vects, int len, void **array);
 
     /**
      * @brief Checks that array has XOR parity sum of 0 across all vectors.
@@ -163,7 +169,8 @@ extern "C"
      * @returns 0 pass, other fail
      */
 
-    int xor_check_sse (int vects, int len, void **array);
+    int
+    xor_check_sse (int vects, int len, void **array);
 
     /**
      * @brief Generate P+Q parity vectors from N sources.
@@ -180,7 +187,8 @@ extern "C"
      * @returns 0 pass, other fail
      */
 
-    int pq_gen_sse (int vects, int len, void **array);
+    int
+    pq_gen_sse (int vects, int len, void **array);
 
     /**
      * @brief Generate P+Q parity vectors from N sources.
@@ -197,7 +205,8 @@ extern "C"
      * @returns 0 pass, other fail
      */
 
-    int pq_gen_avx (int vects, int len, void **array);
+    int
+    pq_gen_avx (int vects, int len, void **array);
 
     /**
      * @brief Generate P+Q parity vectors from N sources.
@@ -214,7 +223,8 @@ extern "C"
      * @returns 0 pass, other fail
      */
 
-    int pq_gen_avx2 (int vects, int len, void **array);
+    int
+    pq_gen_avx2 (int vects, int len, void **array);
 
     /**
      * @brief Checks that array of N sources, P and Q are consistent across all vectors.
@@ -228,7 +238,8 @@ extern "C"
      * @returns 0 pass, other fail
      */
 
-    int pq_check_sse (int vects, int len, void **array);
+    int
+    pq_check_sse (int vects, int len, void **array);
 
 #endif
 
@@ -245,7 +256,8 @@ extern "C"
      * @returns 0 pass, other fail
      */
 
-    int pq_gen_base (int vects, int len, void **array);
+    int
+    pq_gen_base (int vects, int len, void **array);
 
     /**
      * @brief Generate XOR parity vector from N sources, runs baseline version.
@@ -258,7 +270,8 @@ extern "C"
      * @returns 0 pass, other fail
      */
 
-    int xor_gen_base (int vects, int len, void **array);
+    int
+    xor_gen_base (int vects, int len, void **array);
 
     /**
      * @brief Checks that array has XOR parity sum of 0 across all vectors, runs baseline version.
@@ -271,7 +284,8 @@ extern "C"
      * @returns 0 pass, other fail
      */
 
-    int xor_check_base (int vects, int len, void **array);
+    int
+    xor_check_base (int vects, int len, void **array);
 
     /**
      * @brief Checks that array of N sources, P and Q are consistent across all vectors, runs
@@ -286,7 +300,8 @@ extern "C"
      * @returns 0 pass, other fail
      */
 
-    int pq_check_base (int vects, int len, void **array);
+    int
+    pq_check_base (int vects, int len, void **array);
 
 #ifdef __cplusplus
 }

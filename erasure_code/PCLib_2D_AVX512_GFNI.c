@@ -131,7 +131,8 @@ static unsigned char NumErrs, ErrLoc[ 32 ];
     }
 
 // Single level encoding
-int PC_SingleEncoding (unsigned char **data, int len, int symbols)
+int
+PC_SingleEncoding (unsigned char **data, int len, int symbols)
 {
     __m512i matVec, vreg, CodeWord, par_Vec;
     __m128i maskP = _mm_set_epi64x (0ULL, 0x0101010101010101ULL);
@@ -152,7 +153,8 @@ int PC_SingleEncoding (unsigned char **data, int len, int symbols)
 }
 
 // Single level decoding
-int PC_SingleDecoding (unsigned char **data, int len, int symbols, unsigned char *syn)
+int
+PC_SingleDecoding (unsigned char **data, int len, int symbols, unsigned char *syn)
 {
     __m512i matVec, vreg, CodeWord;
     __m128i maskP = _mm_set_epi64x (0ULL, 0x0101010101010101ULL);
@@ -174,7 +176,8 @@ int PC_SingleDecoding (unsigned char **data, int len, int symbols, unsigned char
     return 0;
 }
 // Single level encoding
-int PC_SingleEncoding_u (unsigned char **data, int len, int symbols)
+int
+PC_SingleEncoding_u (unsigned char **data, int len, int symbols)
 {
     __m512i matVec1, matVec2, matVec3, matVec4, CodeWord, par_Vec1, par_Vec2, par_Vec3, par_Vec4,
             pVec;
@@ -246,7 +249,8 @@ int PC_SingleEncoding_u (unsigned char **data, int len, int symbols)
 }
 
 // Single level decoding
-int PC_SingleDecoding_u (unsigned char **data, int len, int symbols, unsigned char *syn)
+int
+PC_SingleDecoding_u (unsigned char **data, int len, int symbols, unsigned char *syn)
 {
     __m512i matVec1, matVec2, matVec3, matVec4, CodeWord, vreg1, vreg2, vreg3, vreg4;
     __m128i maskP = _mm_set_epi64x (0ULL, 0x0101010101010101ULL);
@@ -319,7 +323,8 @@ int PC_SingleDecoding_u (unsigned char **data, int len, int symbols, unsigned ch
     return 0;
 }
 // Multiply two bytes using the hardware GF multiply
-unsigned char pc_mul_2d (unsigned char a, unsigned char b)
+unsigned char
+pc_mul_2d (unsigned char a, unsigned char b)
 {
     __m128i va, vb;
 
@@ -333,7 +338,8 @@ unsigned char pc_mul_2d (unsigned char a, unsigned char b)
 }
 
 // pc_bpow - Build a table of power values
-void pc_bpow_2d (unsigned char Gen)
+void
+pc_bpow_2d (unsigned char Gen)
 {
     int i;
 
@@ -348,7 +354,8 @@ void pc_bpow_2d (unsigned char Gen)
 }
 
 // pc_blog - Use the power table to build the log table
-void pc_blog_2d (void)
+void
+pc_blog_2d (void)
 {
     int i;
 
@@ -360,7 +367,8 @@ void pc_blog_2d (void)
 }
 
 // pc_linv - Calculate the inverse of a number, that is, 1/Number
-void pc_binv_2d (void)
+void
+pc_binv_2d (void)
 {
     int i;
     for (i = 0; i < 256; i++)
@@ -370,7 +378,8 @@ void pc_binv_2d (void)
 }
 
 // Generate Reed Solomon matrix in reverse (LSB terms to the right)
-void pc_gen_rsr_matrix_2d (unsigned char *a, int k)
+void
+pc_gen_rsr_matrix_2d (unsigned char *a, int k)
 {
     int i, j;
     unsigned char p, gen = 1;
@@ -392,7 +401,8 @@ void pc_gen_rsr_matrix_2d (unsigned char *a, int k)
 }
 
 // Initialize encoding matrix for encoding
-void pc_bmat_2d (unsigned char *vals, int p)
+void
+pc_bmat_2d (unsigned char *vals, int p)
 {
     for (int curP = 0; curP < p; curP++)
     {
@@ -407,7 +417,8 @@ void pc_bmat_2d (unsigned char *vals, int p)
 }
 
 // Initialize vandermonde matrix for decoding
-void pc_bvan_2d (unsigned char *vals, int p)
+void
+pc_bvan_2d (unsigned char *vals, int p)
 {
     for (int curP = 0; curP < p; curP++)
     {
@@ -422,7 +433,8 @@ void pc_bvan_2d (unsigned char *vals, int p)
 
 #ifdef NDEF
 // Produce syndromes for a codeword the old fashioned way
-void test_rs_64_60 (__m512i *vec)
+void
+test_rs_64_60 (__m512i *vec)
 {
     unsigned char sum[ 4 ] = { 0 };
     for (int i = 0; i < 4; i++) // Examine 4 levels
@@ -441,7 +453,8 @@ void test_rs_64_60 (__m512i *vec)
 #endif
 
 // Encode using the Vandermonde matrix, do the whole 255 byte codeword
-void pc_encoder1b (unsigned char *codeWord, unsigned char *par, int p)
+void
+pc_encoder1b (unsigned char *codeWord, unsigned char *par, int p)
 {
     __m512i codeWordvec[ 4 ], encMatvec[ 4 ], vreg[ 4 ];
     __m128i maskP = _mm_set_epi64x (0ULL, 0x0101010101010101ULL);
@@ -497,7 +510,8 @@ void pc_encoder1b (unsigned char *codeWord, unsigned char *par, int p)
 }
 
 // Decode using the Vandermonde matrix, do a whole 255 element row at once
-void pc_decoder1b (unsigned char *codeWord, unsigned char *syn, int p)
+void
+pc_decoder1b (unsigned char *codeWord, unsigned char *syn, int p)
 {
     __m512i codeWordvec[ 4 ], vanMatvec[ 4 ], vreg[ 4 ];
     __m128i maskP = _mm_set_epi64x (0ULL, 0x0101010101010101ULL);
@@ -556,7 +570,8 @@ void pc_decoder1b (unsigned char *codeWord, unsigned char *syn, int p)
 }
 
 // Identify roots from key equation
-int find_roots_2d (unsigned char *keyEq, unsigned char *roots, int mSize)
+int
+find_roots_2d (unsigned char *keyEq, unsigned char *roots, int mSize)
 {
     int rootCount = 0;
     unsigned char baseVal = 1, eVal;
@@ -584,7 +599,8 @@ int find_roots_2d (unsigned char *keyEq, unsigned char *roots, int mSize)
 }
 
 // Produce the Generator Polynomial
-void pc_gen_poly_2d (unsigned char *p, int rank)
+void
+pc_gen_poly_2d (unsigned char *p, int rank)
 {
     int c, alpha, cr; // Loop variables
 
@@ -610,7 +626,8 @@ void pc_gen_poly_2d (unsigned char *p, int rank)
 }
 
 // Produce the matrix that corresponds to LFSR
-void pc_gen_poly_matrix_2d (unsigned char *a, int m, int k)
+void
+pc_gen_poly_matrix_2d (unsigned char *a, int m, int k)
 {
     int i, j, par, over, lpos;
     unsigned char *p, taps[ 254 ], lfsr[ 254 ];
@@ -645,13 +662,15 @@ void pc_gen_poly_matrix_2d (unsigned char *a, int m, int k)
 }
 
 // Simlate division with multiplication by inverse
-unsigned char gf_div_2d_AVX512_GFNI (unsigned char a, unsigned char b)
+unsigned char
+gf_div_2d_AVX512_GFNI (unsigned char a, unsigned char b)
 {
     return pc_mul_2d (a, pc_itab_2d[ b ]);
 }
 
 // Compute base ^ Power
-int pc_pow_2d_AVX512_GFNI (unsigned char base, unsigned char Power)
+int
+pc_pow_2d_AVX512_GFNI (unsigned char base, unsigned char Power)
 {
     // The first power is always 1
     if (Power == 0)
@@ -669,8 +688,9 @@ int pc_pow_2d_AVX512_GFNI (unsigned char base, unsigned char Power)
 }
 
 // Assume there is a single error and try to correct, verify syndromes match
-int pc_verify_single_error_2d_AVX512_GFNI (unsigned char *S, unsigned char **data, int k, int p,
-                                           int newPos, int offSet)
+int
+pc_verify_single_error_2d_AVX512_GFNI (unsigned char *S, unsigned char **data, int k, int p,
+                                       int newPos, int offSet)
 {
     // LSB has parity, for single error this equals error value
     unsigned char eVal = S[ 0 ];
@@ -708,7 +728,8 @@ int pc_verify_single_error_2d_AVX512_GFNI (unsigned char *S, unsigned char **dat
 }
 
 // Invert matrix with vector assist
-int gf_invert_matrix_2d_AVX512_GFNI (unsigned char *in_mat, unsigned char *out_mat, const int n)
+int
+gf_invert_matrix_2d_AVX512_GFNI (unsigned char *in_mat, unsigned char *out_mat, const int n)
 {
     __m512i multVal512;
 
@@ -789,7 +810,8 @@ int gf_invert_matrix_2d_AVX512_GFNI (unsigned char *in_mat, unsigned char *out_m
 }
 
 // Find roots with vector assist
-int find_roots_2d_AVX512_GFNI (unsigned char *keyEq, unsigned char *roots, int mSize)
+int
+find_roots_2d_AVX512_GFNI (unsigned char *keyEq, unsigned char *roots, int mSize)
 {
     static __m512i Vandermonde[ 16 ][ 4 ];
     __m512i sum[ 4 ], temp, multVal512;
@@ -861,8 +883,9 @@ int find_roots_2d_AVX512_GFNI (unsigned char *keyEq, unsigned char *roots, int m
 }
 
 // Compute error values using Vandermonde
-int pc_compute_error_values_2d_AVX512_GFNI (int mSize, unsigned char *S, unsigned char *roots,
-                                            unsigned char *errVal)
+int
+pc_compute_error_values_2d_AVX512_GFNI (int mSize, unsigned char *S, unsigned char *roots,
+                                        unsigned char *errVal)
 {
     int i, j;
     unsigned char Mat[ PC_MAX_ERRS * PC_MAX_ERRS ];
@@ -910,8 +933,9 @@ int pc_compute_error_values_2d_AVX512_GFNI (int mSize, unsigned char *S, unsigne
 }
 
 // Verify proposed data values and locations can generate syndromes
-int pc_verify_syndromes_2d_AVX512_GFNI (unsigned char *S, int p, int mSize, unsigned char *roots,
-                                        unsigned char *errVal)
+int
+pc_verify_syndromes_2d_AVX512_GFNI (unsigned char *S, int p, int mSize, unsigned char *roots,
+                                    unsigned char *errVal)
 {
     int i, j;
     unsigned char sum = 0;
@@ -969,7 +993,8 @@ int pc_verify_syndromes_2d_AVX512_GFNI (unsigned char *S, int p, int mSize, unsi
 // lambda: caller-allocated array of size at least (length + 1 + 31), filled with locator poly
 // coeffs. Returns: degree L of the error locator polynomial. Note: Assumes length <= 32 for AVX-512
 // (32-byte vectors); extend loops for larger lengths.
-int berlekamp_massey_2d_AVX512_GFNI (unsigned char *syndromes, int length, unsigned char *lambda)
+int
+berlekamp_massey_2d_AVX512_GFNI (unsigned char *syndromes, int length, unsigned char *lambda)
 {
     unsigned char b[ PC_MAX_ERRS * 2 + 1 ]; // Padded for AVX-512 (32-byte alignment)
     unsigned char temp[ PC_MAX_ERRS * 2 + 1 ];
@@ -1030,8 +1055,9 @@ int berlekamp_massey_2d_AVX512_GFNI (unsigned char *syndromes, int length, unsig
 }
 
 // Find roots and error values, verify with syndromes, level 1
-int pc_verify_multiple_errors_l1 (unsigned char *S, int mSize, unsigned char *keyEq, __m512i *vec,
-                                  unsigned char *vecAdr)
+int
+pc_verify_multiple_errors_l1 (unsigned char *S, int mSize, unsigned char *keyEq, __m512i *vec,
+                              unsigned char *vecAdr)
 {
     unsigned char roots[ PC_MAX_ERRS ] = { 0 };
     unsigned char errVal[ PC_MAX_ERRS ];
@@ -1098,9 +1124,9 @@ int pc_verify_multiple_errors_l1 (unsigned char *S, int mSize, unsigned char *ke
 }
 
 // Attempt to detect multiple error locations and values, level 2
-int pc_verify_multiple_errors_2d_AVX512_GFNI (unsigned char *S, unsigned char **data, int mSize,
-                                              int k, int p, int newPos, int offSet,
-                                              unsigned char *keyEq)
+int
+pc_verify_multiple_errors_2d_AVX512_GFNI (unsigned char *S, unsigned char **data, int mSize, int k,
+                                          int p, int newPos, int offSet, unsigned char *keyEq)
 {
     unsigned char roots[ PC_MAX_ERRS ] = { 0 };
     unsigned char errVal[ PC_MAX_ERRS ];
@@ -1152,7 +1178,8 @@ int pc_verify_multiple_errors_2d_AVX512_GFNI (unsigned char *S, unsigned char **
 }
 
 // PGZ decoding step 1, see if we can invert the matrix, if so, compute key equation
-int PGZ_2d_AVX512_GFNI (unsigned char *S, int p, unsigned char *keyEq)
+int
+PGZ_2d_AVX512_GFNI (unsigned char *S, int p, unsigned char *keyEq)
 {
     unsigned char SMat[ PC_MAX_ERRS * PC_MAX_ERRS ], SMat_inv[ PC_MAX_ERRS * PC_MAX_ERRS ];
     int i, j;
@@ -1192,8 +1219,9 @@ int PGZ_2d_AVX512_GFNI (unsigned char *S, int p, unsigned char *keyEq)
 }
 
 // Syndromes are non-zero, try to calculate error location and data values
-int pc_correct_AVX512_GFNI_2d_old (int newPos, int k, int p, unsigned char **data,
-                                   unsigned char **coding, int vLen)
+int
+pc_correct_AVX512_GFNI_2d_old (int newPos, int k, int p, unsigned char **data,
+                               unsigned char **coding, int vLen)
 {
     int i, mSize;
     unsigned char S[ PC_MAX_ERRS ], keyEq[ PC_MAX_ERRS + 1 ] = { 0 };
@@ -1246,8 +1274,9 @@ int pc_correct_AVX512_GFNI_2d_old (int newPos, int k, int p, unsigned char **dat
     return 0;
 }
 
-int pc_correct_AVX512_GFNI_2d (int newPos, int k, int p, unsigned char **data,
-                               unsigned char **coding, int vLen)
+int
+pc_correct_AVX512_GFNI_2d (int newPos, int k, int p, unsigned char **data, unsigned char **coding,
+                           int vLen)
 {
     // printf ( "L2E Number of errors = %d p = %d\n", NumErrs, p ) ;
     // dump_u8xu8 ( ErrLoc, 1, NumErrs ) ;
@@ -1325,7 +1354,8 @@ int pc_correct_AVX512_GFNI_2d (int newPos, int k, int p, unsigned char **data,
 }
 
 // Assume there is a single error and try to correct, see if syndromes match
-int pc_verify_single_error_2d_1L (__m512i *vec, unsigned char *memVec, unsigned char *S, int k)
+int
+pc_verify_single_error_2d_1L (__m512i *vec, unsigned char *memVec, unsigned char *S, int k)
 {
     // LSB has parity, for single error this equals error value
     unsigned char eVal = S[ 0 ];
@@ -1359,7 +1389,8 @@ int pc_verify_single_error_2d_1L (__m512i *vec, unsigned char *memVec, unsigned 
 }
 
 // Correct error detected on Level 1
-void L1Correct (__m512i *vec, int CurSym, int k, unsigned char *S_in, unsigned char *memVec)
+void
+L1Correct (__m512i *vec, int CurSym, int k, unsigned char *S_in, unsigned char *memVec)
 {
     unsigned char S[ 4 ];
 
@@ -1447,8 +1478,9 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 **********************************************************************/
 
 // 2D Parallel Syndrome Sequencer for P1 = 2 and P2 = 4 Codewords
-int gf_2vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                 unsigned char **dest, int offSet)
+int
+gf_2vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                             unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -1513,8 +1545,9 @@ int gf_2vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 3 and P2 = 4 Codewords
-int gf_3vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                 unsigned char **dest, int offSet)
+int
+gf_3vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                             unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -1585,8 +1618,9 @@ int gf_3vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 4 and P2 = 4 Codewords
-int gf_4vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                 unsigned char **dest, int offSet)
+int
+gf_4vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                             unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -1663,8 +1697,9 @@ int gf_4vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 5 and P2 = 4 Codewords
-int gf_5vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                 unsigned char **dest, int offSet)
+int
+gf_5vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                             unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -1747,8 +1782,9 @@ int gf_5vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 6 and P2 = 4 Codewords
-int gf_6vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                 unsigned char **dest, int offSet)
+int
+gf_6vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                             unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -1837,8 +1873,9 @@ int gf_6vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 7 and P2 = 4 Codewords
-int gf_7vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                 unsigned char **dest, int offSet)
+int
+gf_7vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                             unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -1933,8 +1970,9 @@ int gf_7vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 8 and P2 = 4 Codewords
-int gf_8vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                 unsigned char **dest, int offSet)
+int
+gf_8vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                             unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -2035,8 +2073,9 @@ int gf_8vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 9 and P2 = 4 Codewords
-int gf_9vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                 unsigned char **dest, int offSet)
+int
+gf_9vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                             unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -2143,8 +2182,9 @@ int gf_9vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 10 and P2 = 4 Codewords
-int gf_10vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_10vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -2257,8 +2297,9 @@ int gf_10vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 11 and P2 = 4 Codewords
-int gf_11vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_11vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -2377,8 +2418,9 @@ int gf_11vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 12 and P2 = 4 Codewords
-int gf_12vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_12vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -2503,8 +2545,9 @@ int gf_12vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 13 and P2 = 4 Codewords
-int gf_13vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_13vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -2635,8 +2678,9 @@ int gf_13vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 14 and P2 = 4 Codewords
-int gf_14vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_14vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -2773,8 +2817,9 @@ int gf_14vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 15 and P2 = 4 Codewords
-int gf_15vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_15vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -2917,8 +2962,9 @@ int gf_15vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 16 and P2 = 4 Codewords
-int gf_16vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_16vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -3067,8 +3113,9 @@ int gf_16vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 17 and P2 = 4 Codewords
-int gf_17vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_17vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -3223,8 +3270,9 @@ int gf_17vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 18 and P2 = 4 Codewords
-int gf_18vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_18vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -3385,8 +3433,9 @@ int gf_18vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 19 and P2 = 4 Codewords
-int gf_19vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_19vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -3553,8 +3602,9 @@ int gf_19vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 20 and P2 = 4 Codewords
-int gf_20vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_20vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -3727,8 +3777,9 @@ int gf_20vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 21 and P2 = 4 Codewords
-int gf_21vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_21vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -3907,8 +3958,9 @@ int gf_21vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 22 and P2 = 4 Codewords
-int gf_22vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_22vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -4093,8 +4145,9 @@ int gf_22vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 23 and P2 = 4 Codewords
-int gf_23vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_23vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -4285,8 +4338,9 @@ int gf_23vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 24 and P2 = 4 Codewords
-int gf_24vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_24vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -4483,8 +4537,9 @@ int gf_24vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 25 and P2 = 4 Codewords
-int gf_25vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_25vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -4687,8 +4742,9 @@ int gf_25vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 26 and P2 = 4 Codewords
-int gf_26vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_26vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -4897,8 +4953,9 @@ int gf_26vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 27 and P2 = 4 Codewords
-int gf_27vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_27vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -5113,8 +5170,9 @@ int gf_27vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 28 and P2 = 4 Codewords
-int gf_28vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_28vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -5335,8 +5393,9 @@ int gf_28vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 29 and P2 = 4 Codewords
-int gf_29vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_29vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -5563,8 +5622,9 @@ int gf_29vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 30 and P2 = 4 Codewords
-int gf_30vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_30vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -5797,8 +5857,9 @@ int gf_30vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 31 and P2 = 4 Codewords
-int gf_31vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_31vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -6037,8 +6098,9 @@ int gf_31vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel Syndrome Sequencer for P1 = 32 and P2 = 4 Codewords
-int gf_32vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest, int offSet)
+int
+gf_32vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest, int offSet)
 {
     int curSym, curPos; // Loop counters
     unsigned char syn[ 4 ];
@@ -6283,8 +6345,9 @@ int gf_32vect_pss_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 2 and P2 = 4 Codewords
-int gf_2vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                 unsigned char **dest)
+int
+gf_2vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                             unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 2 ], taps[ 2 ], par_vec;
@@ -6343,8 +6406,9 @@ int gf_2vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 3 and P2 = 4 Codewords
-int gf_3vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                 unsigned char **dest)
+int
+gf_3vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                             unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 3 ], taps[ 3 ], par_vec;
@@ -6408,8 +6472,9 @@ int gf_3vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 4 and P2 = 4 Codewords
-int gf_4vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                 unsigned char **dest)
+int
+gf_4vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                             unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 4 ], taps[ 4 ], par_vec;
@@ -6478,8 +6543,9 @@ int gf_4vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 5 and P2 = 4 Codewords
-int gf_5vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                 unsigned char **dest)
+int
+gf_5vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                             unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 5 ], taps[ 5 ], par_vec;
@@ -6553,8 +6619,9 @@ int gf_5vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 6 and P2 = 4 Codewords
-int gf_6vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                 unsigned char **dest)
+int
+gf_6vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                             unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 6 ], taps[ 6 ], par_vec;
@@ -6633,8 +6700,9 @@ int gf_6vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 7 and P2 = 4 Codewords
-int gf_7vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                 unsigned char **dest)
+int
+gf_7vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                             unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 7 ], taps[ 7 ], par_vec;
@@ -6718,8 +6786,9 @@ int gf_7vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 8 and P2 = 4 Codewords
-int gf_8vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                 unsigned char **dest)
+int
+gf_8vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                             unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 8 ], taps[ 8 ], par_vec;
@@ -6808,8 +6877,9 @@ int gf_8vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 9 and P2 = 4 Codewords
-int gf_9vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                 unsigned char **dest)
+int
+gf_9vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                             unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 9 ], taps[ 9 ], par_vec;
@@ -6903,8 +6973,9 @@ int gf_9vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 10 and P2 = 4 Codewords
-int gf_10vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_10vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 10 ], taps[ 10 ], par_vec;
@@ -7003,8 +7074,9 @@ int gf_10vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 11 and P2 = 4 Codewords
-int gf_11vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_11vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 11 ], taps[ 11 ], par_vec;
@@ -7108,8 +7180,9 @@ int gf_11vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 12 and P2 = 4 Codewords
-int gf_12vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_12vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 12 ], taps[ 12 ], par_vec;
@@ -7218,8 +7291,9 @@ int gf_12vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 13 and P2 = 4 Codewords
-int gf_13vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_13vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 13 ], taps[ 13 ], par_vec;
@@ -7333,8 +7407,9 @@ int gf_13vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 14 and P2 = 4 Codewords
-int gf_14vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_14vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 14 ], taps[ 14 ], par_vec;
@@ -7453,8 +7528,9 @@ int gf_14vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 15 and P2 = 4 Codewords
-int gf_15vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_15vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 15 ], taps[ 15 ], par_vec;
@@ -7578,8 +7654,9 @@ int gf_15vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 16 and P2 = 4 Codewords
-int gf_16vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_16vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 16 ], taps[ 16 ], par_vec;
@@ -7708,8 +7785,9 @@ int gf_16vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 17 and P2 = 4 Codewords
-int gf_17vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_17vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 17 ], taps[ 17 ], par_vec;
@@ -7843,8 +7921,9 @@ int gf_17vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 18 and P2 = 4 Codewords
-int gf_18vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_18vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 18 ], taps[ 18 ], par_vec;
@@ -7983,8 +8062,9 @@ int gf_18vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 19 and P2 = 4 Codewords
-int gf_19vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_19vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 19 ], taps[ 19 ], par_vec;
@@ -8128,8 +8208,9 @@ int gf_19vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 20 and P2 = 4 Codewords
-int gf_20vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_20vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 20 ], taps[ 20 ], par_vec;
@@ -8278,8 +8359,9 @@ int gf_20vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 21 and P2 = 4 Codewords
-int gf_21vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_21vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 21 ], taps[ 21 ], par_vec;
@@ -8433,8 +8515,9 @@ int gf_21vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 22 and P2 = 4 Codewords
-int gf_22vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_22vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 22 ], taps[ 22 ], par_vec;
@@ -8593,8 +8676,9 @@ int gf_22vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 23 and P2 = 4 Codewords
-int gf_23vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_23vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 23 ], taps[ 23 ], par_vec;
@@ -8758,8 +8842,9 @@ int gf_23vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 24 and P2 = 4 Codewords
-int gf_24vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_24vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 24 ], taps[ 24 ], par_vec;
@@ -8928,8 +9013,9 @@ int gf_24vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 25 and P2 = 4 Codewords
-int gf_25vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_25vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 25 ], taps[ 25 ], par_vec;
@@ -9103,8 +9189,9 @@ int gf_25vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 26 and P2 = 4 Codewords
-int gf_26vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_26vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 26 ], taps[ 26 ], par_vec;
@@ -9283,8 +9370,9 @@ int gf_26vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 27 and P2 = 4 Codewords
-int gf_27vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_27vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 27 ], taps[ 27 ], par_vec;
@@ -9468,8 +9556,9 @@ int gf_27vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 28 and P2 = 4 Codewords
-int gf_28vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_28vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 28 ], taps[ 28 ], par_vec;
@@ -9658,8 +9747,9 @@ int gf_28vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 29 and P2 = 4 Codewords
-int gf_29vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_29vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 29 ], taps[ 29 ], par_vec;
@@ -9853,8 +9943,9 @@ int gf_29vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 30 and P2 = 4 Codewords
-int gf_30vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_30vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 30 ], taps[ 30 ], par_vec;
@@ -10053,8 +10144,9 @@ int gf_30vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 31 and P2 = 4 Codewords
-int gf_31vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_31vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 31 ], taps[ 31 ], par_vec;
@@ -10258,8 +10350,9 @@ int gf_31vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // 2D Parallel LFSR Sequencer for P1 = 32 and P2 = 4 Codewords
-int gf_32vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
-                                  unsigned char **dest)
+int
+gf_32vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigned char **data,
+                              unsigned char **dest)
 {
     int curSym, curPos; // Loop counters
     __m512i parity[ 32 ], taps[ 32 ], par_vec;
@@ -10468,8 +10561,9 @@ int gf_32vect_pls_avx512_gfni_2d (int len, int k, unsigned char *tapVal, unsigne
 }
 
 // Single function to access each unrolled Encode for Level 2
-void pc_encode_data_avx512_gfni_2d (int len, int k, int parities, unsigned char *tapVal,
-                                    unsigned char **data, unsigned char **coding)
+void
+pc_encode_data_avx512_gfni_2d (int len, int k, int parities, unsigned char *tapVal,
+                               unsigned char **data, unsigned char **coding)
 {
     switch (parities)
     {
@@ -10569,8 +10663,9 @@ void pc_encode_data_avx512_gfni_2d (int len, int k, int parities, unsigned char 
     }
 }
 // Single function to access each unrolled Decode for Level 2
-int pc_decode_data_avx512_gfni_2d (int len, int k, int parities, unsigned char *tapVal,
-                                   unsigned char **data, unsigned char **coding, int retries)
+int
+pc_decode_data_avx512_gfni_2d (int len, int k, int parities, unsigned char *tapVal,
+                               unsigned char **data, unsigned char **coding, int retries)
 {
     int newPos = 0, retry = 0;
     while ((newPos < len) && (retry++ < retries))

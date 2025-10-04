@@ -6,7 +6,8 @@
 #define DNAME_MAX 256
 #define FNAME_MAX (DNAME_MAX + 81)
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     uint8_t *buf;
     int i, len, err;

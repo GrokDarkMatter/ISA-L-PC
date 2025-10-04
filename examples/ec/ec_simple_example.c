@@ -38,7 +38,8 @@
 
 typedef unsigned char u8;
 
-int usage (void)
+int
+usage (void)
 {
     fprintf (stderr,
              "Usage: ec_simple_example [options]\n"
@@ -51,11 +52,13 @@ int usage (void)
     exit (0);
 }
 
-static int gf_gen_decode_matrix_simple (u8 *encode_matrix, u8 *decode_matrix, u8 *invert_matrix,
-                                        u8 *temp_matrix, u8 *decode_index, u8 *frag_err_list,
-                                        int nerrs, int k, int m);
+static int
+gf_gen_decode_matrix_simple (u8 *encode_matrix, u8 *decode_matrix, u8 *invert_matrix,
+                             u8 *temp_matrix, u8 *decode_index, u8 *frag_err_list, int nerrs, int k,
+                             int m);
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     int i, j, m, c, e, ret;
     int k = 10, p = 4, len = 8 * 1024; // Default params
@@ -245,9 +248,10 @@ int main (int argc, char *argv[])
  *
  */
 
-static int gf_gen_decode_matrix_simple (u8 *encode_matrix, u8 *decode_matrix, u8 *invert_matrix,
-                                        u8 *temp_matrix, u8 *decode_index, u8 *frag_err_list,
-                                        int nerrs, int k, int m)
+static int
+gf_gen_decode_matrix_simple (u8 *encode_matrix, u8 *decode_matrix, u8 *invert_matrix,
+                             u8 *temp_matrix, u8 *decode_index, u8 *frag_err_list, int nerrs, int k,
+                             int m)
 {
     int i, j, p, r;
     int nsrcerrs = 0;

@@ -6,17 +6,19 @@
 #include "igzip_level_buf_structs.h"
 #include "unaligned.h"
 
-static inline void write_deflate_icf (struct deflate_icf *icf, uint32_t lit_len, uint32_t lit_dist,
-                                      uint32_t extra_bits)
+static inline void
+write_deflate_icf (struct deflate_icf *icf, uint32_t lit_len, uint32_t lit_dist,
+                   uint32_t extra_bits)
 {
     icf->lit_len = lit_len;
     icf->lit_dist = lit_dist;
     icf->dist_extra = extra_bits;
 }
 
-static inline void update_state (struct isal_zstream *stream, uint8_t *start_in, uint8_t *next_in,
-                                 uint8_t *end_in, struct deflate_icf *start_out,
-                                 struct deflate_icf *next_out, struct deflate_icf *end_out)
+static inline void
+update_state (struct isal_zstream *stream, uint8_t *start_in, uint8_t *next_in, uint8_t *end_in,
+              struct deflate_icf *start_out, struct deflate_icf *next_out,
+              struct deflate_icf *end_out)
 {
     struct level_buf *level_buf = (struct level_buf *) stream->level_buf;
 
@@ -32,7 +34,8 @@ static inline void update_state (struct isal_zstream *stream, uint8_t *start_in,
     level_buf->icf_buf_avail_out = end_out - next_out;
 }
 
-void isal_deflate_icf_body_hash_hist_base (struct isal_zstream *stream)
+void
+isal_deflate_icf_body_hash_hist_base (struct isal_zstream *stream)
 {
     uint32_t literal, hash;
     uint8_t *start_in, *next_in, *end_in, *end, *next_hash;
@@ -132,7 +135,8 @@ void isal_deflate_icf_body_hash_hist_base (struct isal_zstream *stream)
     return;
 }
 
-void isal_deflate_icf_finish_hash_hist_base (struct isal_zstream *stream)
+void
+isal_deflate_icf_finish_hash_hist_base (struct isal_zstream *stream)
 {
     uint32_t literal = 0, hash;
     uint8_t *start_in, *next_in, *end_in, *end, *next_hash;
@@ -248,7 +252,8 @@ void isal_deflate_icf_finish_hash_hist_base (struct isal_zstream *stream)
     return;
 }
 
-void isal_deflate_icf_finish_hash_map_base (struct isal_zstream *stream)
+void
+isal_deflate_icf_finish_hash_map_base (struct isal_zstream *stream)
 {
     uint32_t literal = 0, hash;
     uint8_t *start_in, *next_in, *end_in, *end, *next_hash;
@@ -363,8 +368,9 @@ void isal_deflate_icf_finish_hash_map_base (struct isal_zstream *stream)
     return;
 }
 
-void isal_deflate_hash_mad_base (uint16_t *hash_table, uint32_t hash_mask, uint32_t current_index,
-                                 uint8_t *dict, uint32_t dict_len)
+void
+isal_deflate_hash_mad_base (uint16_t *hash_table, uint32_t hash_mask, uint32_t current_index,
+                            uint8_t *dict, uint32_t dict_len)
 {
     uint8_t *next_in = dict;
     uint8_t *end_in = dict + dict_len - SHORTEST_MATCH;

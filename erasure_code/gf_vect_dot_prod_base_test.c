@@ -49,7 +49,8 @@
 
 typedef unsigned char u8;
 
-void dump (unsigned char *buf, int len)
+void
+dump (unsigned char *buf, int len)
 {
     int i;
     for (i = 0; i < len;)
@@ -61,7 +62,8 @@ void dump (unsigned char *buf, int len)
     printf ("\n");
 }
 
-void dump_matrix (unsigned char **s, int k, int m)
+void
+dump_matrix (unsigned char **s, int k, int m)
 {
     int i, j;
     for (i = 0; i < k; i++)
@@ -75,7 +77,8 @@ void dump_matrix (unsigned char **s, int k, int m)
     printf ("\n");
 }
 
-void dump_u8xu8 (unsigned char *s, int k, int m)
+void
+dump_u8xu8 (unsigned char *s, int k, int m)
 {
     int i, j;
     for (i = 0; i < k; i++)
@@ -89,7 +92,8 @@ void dump_u8xu8 (unsigned char *s, int k, int m)
     printf ("\n");
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     int i, j, rtest, m, k, nerrs, r, err;
     void *buf;

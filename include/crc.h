@@ -52,9 +52,10 @@ extern "C"
      *
      * @returns 16 bit CRC
      */
-    uint16_t crc16_t10dif (uint16_t init_crc,        //!< initial CRC value, 16 bits
-                           const unsigned char *buf, //!< buffer to calculate CRC on
-                           uint64_t len              //!< buffer length in bytes (64-bit data)
+    uint16_t
+    crc16_t10dif (uint16_t init_crc,        //!< initial CRC value, 16 bits
+                  const unsigned char *buf, //!< buffer to calculate CRC on
+                  uint64_t len              //!< buffer length in bytes (64-bit data)
     );
 
     /**
@@ -64,10 +65,11 @@ extern "C"
      *
      * @returns 16 bit CRC
      */
-    uint16_t crc16_t10dif_copy (uint16_t init_crc, //!< initial CRC value, 16 bits
-                                uint8_t *dst,      //!< buffer destination for copy
-                                uint8_t *src,      //!< buffer source to crc + copy
-                                uint64_t len       //!< buffer length in bytes (64-bit data)
+    uint16_t
+    crc16_t10dif_copy (uint16_t init_crc, //!< initial CRC value, 16 bits
+                       uint8_t *dst,      //!< buffer destination for copy
+                       uint8_t *src,      //!< buffer source to crc + copy
+                       uint64_t len       //!< buffer length in bytes (64-bit data)
     );
 
     /**
@@ -90,9 +92,10 @@ extern "C"
      * @returns 32 bit CRC
      */
 
-    uint32_t crc32_ieee (uint32_t init_crc,        //!< initial CRC value, 32 bits
-                         const unsigned char *buf, //!< buffer to calculate CRC on
-                         uint64_t len              //!< buffer length in bytes (64-bit data)
+    uint32_t
+    crc32_ieee (uint32_t init_crc,        //!< initial CRC value, 32 bits
+                const unsigned char *buf, //!< buffer to calculate CRC on
+                uint64_t len              //!< buffer length in bytes (64-bit data)
     );
 
     /**
@@ -117,9 +120,10 @@ extern "C"
      *
      * @returns 32 bit CRC
      */
-    uint32_t crc32_gzip_refl (uint32_t init_crc,        //!< initial CRC value, 32 bits
-                              const unsigned char *buf, //!< buffer to calculate CRC on
-                              uint64_t len              //!< buffer length in bytes (64-bit data)
+    uint32_t
+    crc32_gzip_refl (uint32_t init_crc,        //!< initial CRC value, 32 bits
+                     const unsigned char *buf, //!< buffer to calculate CRC on
+                     uint64_t len              //!< buffer length in bytes (64-bit data)
     );
 
     /**
@@ -130,9 +134,10 @@ extern "C"
      *
      * @returns 32 bit CRC
      */
-    unsigned int crc32_iscsi (unsigned char *buffer, //!< buffer to calculate CRC on
-                              int len,               //!< buffer length in bytes
-                              unsigned int init_crc  //!< initial CRC value
+    unsigned int
+    crc32_iscsi (unsigned char *buffer, //!< buffer to calculate CRC on
+                 int len,               //!< buffer length in bytes
+                 unsigned int init_crc  //!< initial CRC value
     );
 
     /* Base functions */
@@ -141,37 +146,41 @@ extern "C"
      * @brief ISCSI CRC function, baseline version
      * @returns 32 bit CRC
      */
-    unsigned int crc32_iscsi_base (unsigned char *buffer, //!< buffer to calculate CRC on
-                                   int len,               //!< buffer length in bytes
-                                   unsigned int crc_init  //!< initial CRC value
+    unsigned int
+    crc32_iscsi_base (unsigned char *buffer, //!< buffer to calculate CRC on
+                      int len,               //!< buffer length in bytes
+                      unsigned int crc_init  //!< initial CRC value
     );
 
     /**
      * @brief Generate CRC from the T10 standard, runs baseline version
      * @returns 16 bit CRC
      */
-    uint16_t crc16_t10dif_base (uint16_t seed, //!< initial CRC value, 16 bits
-                                uint8_t *buf,  //!< buffer to calculate CRC on
-                                uint64_t len   //!< buffer length in bytes (64-bit data)
+    uint16_t
+    crc16_t10dif_base (uint16_t seed, //!< initial CRC value, 16 bits
+                       uint8_t *buf,  //!< buffer to calculate CRC on
+                       uint64_t len   //!< buffer length in bytes (64-bit data)
     );
 
     /**
      * @brief Generate CRC and copy T10 standard, runs baseline version.
      * @returns 16 bit CRC
      */
-    uint16_t crc16_t10dif_copy_base (uint16_t init_crc, //!< initial CRC value, 16 bits
-                                     uint8_t *dst,      //!< buffer destination for copy
-                                     uint8_t *src,      //!< buffer source to crc + copy
-                                     uint64_t len       //!< buffer length in bytes (64-bit data)
+    uint16_t
+    crc16_t10dif_copy_base (uint16_t init_crc, //!< initial CRC value, 16 bits
+                            uint8_t *dst,      //!< buffer destination for copy
+                            uint8_t *src,      //!< buffer source to crc + copy
+                            uint64_t len       //!< buffer length in bytes (64-bit data)
     );
 
     /**
      * @brief Generate CRC from the IEEE standard, runs baseline version
      * @returns 32 bit CRC
      */
-    uint32_t crc32_ieee_base (uint32_t seed, //!< initial CRC value, 32 bits
-                              uint8_t *buf,  //!< buffer to calculate CRC on
-                              uint64_t len   //!< buffer length in bytes (64-bit data)
+    uint32_t
+    crc32_ieee_base (uint32_t seed, //!< initial CRC value, 32 bits
+                     uint8_t *buf,  //!< buffer to calculate CRC on
+                     uint64_t len   //!< buffer length in bytes (64-bit data)
     );
 
     /**
@@ -180,9 +189,10 @@ extern "C"
      * runs baseline version
      * @returns 32 bit CRC
      */
-    uint32_t crc32_gzip_refl_base (uint32_t seed, //!< initial CRC value, 32 bits
-                                   uint8_t *buf,  //!< buffer to calculate CRC on
-                                   uint64_t len   //!< buffer length in bytes (64-bit data)
+    uint32_t
+    crc32_gzip_refl_base (uint32_t seed, //!< initial CRC value, 32 bits
+                          uint8_t *buf,  //!< buffer to calculate CRC on
+                          uint64_t len   //!< buffer length in bytes (64-bit data)
     );
 
 #ifdef __cplusplus

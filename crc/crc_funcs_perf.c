@@ -120,14 +120,15 @@ typedef struct
 
 // Wrapper functions for CRC functions with non-standard parameter order
 // ISCSI CRC wrapper that adapts (buffer, len, seed) to standard (seed, buffer, len) format
-static uint32_t crc32_iscsi_wrapped (const uint32_t seed, const uint8_t *buf, const uint64_t len)
+static uint32_t
+crc32_iscsi_wrapped (const uint32_t seed, const uint8_t *buf, const uint64_t len)
 {
     // Cast to match the expected function signature
     return crc32_iscsi ((unsigned char *) buf, (int) len, seed);
 }
 
-static uint32_t crc32_iscsi_base_wrapped (const uint32_t seed, const uint8_t *buf,
-                                          const uint64_t len)
+static uint32_t
+crc32_iscsi_base_wrapped (const uint32_t seed, const uint8_t *buf, const uint64_t len)
 {
     // Cast to match the expected function signature
     return crc32_iscsi_base ((unsigned char *) buf, (int) len, seed);
@@ -167,11 +168,11 @@ static const crc_func_info_t CRC_FUNCS_TABLE[] = {
 static const size_t CRC_FUNCS_TABLE_SIZE = sizeof (CRC_FUNCS_TABLE) / sizeof (CRC_FUNCS_TABLE[ 0 ]);
 
 // Helper function to run benchmark for standard CRC function
-static void run_standard_crc_benchmark (struct perf *start, const crc_func_info_t *func_info,
-                                        const int run_base_version, const uint8_t *buffer,
-                                        const size_t len, const int csv_output,
-                                        const int use_cold_cache, uint8_t **buffer_list,
-                                        const size_t num_buffers)
+static void
+run_standard_crc_benchmark (struct perf *start, const crc_func_info_t *func_info,
+                            const int run_base_version, const uint8_t *buffer, const size_t len,
+                            const int csv_output, const int use_cold_cache, uint8_t **buffer_list,
+                            const size_t num_buffers)
 {
     const char *function_suffix = run_base_version ? "_base" : "";
     const char *crc_type_str = func_info->name;
@@ -252,9 +253,9 @@ static void run_standard_crc_benchmark (struct perf *start, const crc_func_info_
 }
 
 // Function to run a specific CRC benchmark
-static void run_benchmark (const void *buf, const size_t len, const crc_type_t type,
-                           const int run_base_version, const int csv_output,
-                           const int use_cold_cache)
+static void
+run_benchmark (const void *buf, const size_t len, const crc_type_t type, const int run_base_version,
+               const int csv_output, const int use_cold_cache)
 {
     struct perf start;
     perf_init (&start);
@@ -351,7 +352,8 @@ static void run_benchmark (const void *buf, const size_t len, const crc_type_t t
     }
 }
 
-static void print_crc_types (void)
+static void
+print_crc_types (void)
 {
     printf ("Available CRC types:\n");
     printf ("  CRC32 types:\n");
@@ -377,7 +379,8 @@ static void print_crc_types (void)
     printf ("    103 or 'crc64_all'    - All CRC64 types\n");
 }
 
-static void print_help (void)
+static void
+print_help (void)
 {
     printf ("Usage: crc_funcs_perf [options]\n");
     printf ("  -h, --help          Show this help message\n");
@@ -443,7 +446,8 @@ static const crc_name_map_t CRC_NAME_MAP[] = {
 
 static const size_t CRC_NAME_MAP_LEN = sizeof (CRC_NAME_MAP) / sizeof (CRC_NAME_MAP[ 0 ]);
 
-static crc_type_t parse_crc_type (const char *type_str)
+static crc_type_t
+parse_crc_type (const char *type_str)
 {
     // Default to CRC_ALL if no type provided
     if (!type_str)
@@ -464,7 +468,8 @@ static crc_type_t parse_crc_type (const char *type_str)
 }
 
 // Helper function to parse size values with optional K (KB) or M (MB) suffix
-static size_t parse_size_value (const char *const size_str)
+static size_t
+parse_size_value (const char *const size_str)
 {
     size_t size_val;
     char *endptr;
@@ -508,10 +513,10 @@ static size_t parse_size_value (const char *const size_str)
 #define MAX_SIZE_COUNT 32 // Maximum number of buffer sizes that can be specified
 
 // Helper function to run benchmarks for a specific CRC type (range version)
-static void run_crc_type_range (const crc_type_t type, const void *buf, const size_t min_len,
-                                const size_t max_len, const int is_multiplicative,
-                                const size_t abs_step, const int csv_output, const int include_base,
-                                const int use_cold_cache)
+static void
+run_crc_type_range (const crc_type_t type, const void *buf, const size_t min_len,
+                    const size_t max_len, const int is_multiplicative, const size_t abs_step,
+                    const int csv_output, const int include_base, const int use_cold_cache)
 {
     static const char *const type_names[] = { "GZIP Reflected CRC32", "IEEE CRC32",
                                               "iSCSI CRC32",          "T10DIF CRC16",
@@ -550,10 +555,10 @@ static void run_crc_type_range (const crc_type_t type, const void *buf, const si
 }
 
 // Helper function to run benchmarks for a specific CRC type with range of sizes
-static void benchmark_crc_type_range (const crc_type_t crc_type, const void *buf,
-                                      const size_t min_len, const size_t max_len,
-                                      const ssize_t step_len, const int csv_output,
-                                      const int include_base, const int use_cold_cache)
+static void
+benchmark_crc_type_range (const crc_type_t crc_type, const void *buf, const size_t min_len,
+                          const size_t max_len, const ssize_t step_len, const int csv_output,
+                          const int include_base, const int use_cold_cache)
 {
     const int is_multiplicative = (step_len < 0);
     const size_t abs_step = is_multiplicative ? -step_len : step_len;
@@ -605,9 +610,10 @@ static void benchmark_crc_type_range (const crc_type_t crc_type, const void *buf
 }
 
 // Helper function to run benchmarks for a specific CRC type with list of sizes
-static void run_crc_type_size_list (const crc_type_t type, const void *buf, const size_t *size_list,
-                                    const int size_count, const int csv_output,
-                                    const int include_base, const int use_cold_cache)
+static void
+run_crc_type_size_list (const crc_type_t type, const void *buf, const size_t *size_list,
+                        const int size_count, const int csv_output, const int include_base,
+                        const int use_cold_cache)
 {
     static const char *const type_names[] = { "GZIP Reflected CRC32", "IEEE CRC32",
                                               "iSCSI CRC32",          "T10DIF CRC16",
@@ -636,9 +642,9 @@ static void run_crc_type_size_list (const crc_type_t type, const void *buf, cons
 }
 
 // Helper function to run benchmarks for a specific CRC type with default size
-static void run_crc_type_default (const crc_type_t type, const void *buf, const size_t test_len,
-                                  const int csv_output, const int include_base,
-                                  const int use_cold_cache)
+static void
+run_crc_type_default (const crc_type_t type, const void *buf, const size_t test_len,
+                      const int csv_output, const int include_base, const int use_cold_cache)
 {
     static const char *const type_names[] = { "GZIP Reflected CRC32", "IEEE CRC32",
                                               "iSCSI CRC32",          "T10DIF CRC16",
@@ -664,9 +670,9 @@ static void run_crc_type_default (const crc_type_t type, const void *buf, const 
 }
 
 // Helper function to run benchmarks for a specific CRC type with default size
-static void benchmark_crc_type_default (const crc_type_t crc_type, const void *buf,
-                                        const size_t test_len, const int csv_output,
-                                        const int include_base, const int use_cold_cache)
+static void
+benchmark_crc_type_default (const crc_type_t crc_type, const void *buf, const size_t test_len,
+                            const int csv_output, const int include_base, const int use_cold_cache)
 {
     // Run selected benchmarks based on crc_type
     if (crc_type == CRC_ALL || crc_type == CRC32_ALL)
@@ -714,10 +720,10 @@ static void benchmark_crc_type_default (const crc_type_t crc_type, const void *b
 }
 
 // Helper function to run benchmarks for a specific CRC type with list of sizes
-static void benchmark_crc_type_size_list (const crc_type_t crc_type, const void *buf,
-                                          const size_t *size_list, const int size_count,
-                                          const int csv_output, const int include_base,
-                                          const int use_cold_cache)
+static void
+benchmark_crc_type_size_list (const crc_type_t crc_type, const void *buf, const size_t *size_list,
+                              const int size_count, const int csv_output, const int include_base,
+                              const int use_cold_cache)
 {
     // Run selected benchmarks based on crc_type
     if (crc_type == CRC_ALL || crc_type == CRC32_ALL)
@@ -765,7 +771,8 @@ static void benchmark_crc_type_size_list (const crc_type_t crc_type, const void 
     }
 }
 
-int main (const int argc, char *const argv[])
+int
+main (const int argc, char *const argv[])
 {
     size_t test_len = DEFAULT_TEST_LEN;
     int csv_output = 0;            // Default to human-readable output

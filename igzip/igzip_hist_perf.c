@@ -41,7 +41,8 @@
 #define RUN_MEM_SIZE 2000000000
 #endif
 
-void print_histogram (struct isal_huff_histogram *histogram)
+void
+print_histogram (struct isal_huff_histogram *histogram)
 {
     int i;
     printf ("Lit Len histogram");
@@ -67,7 +68,8 @@ void print_histogram (struct isal_huff_histogram *histogram)
     printf ("\n");
 }
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     FILE *in;
     unsigned char *inbuf;

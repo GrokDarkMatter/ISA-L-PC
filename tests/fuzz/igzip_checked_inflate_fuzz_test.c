@@ -6,7 +6,8 @@
 #include <assert.h>
 #include "igzip_lib.h"
 
-int LLVMFuzzerTestOneInput (const uint8_t *data, size_t size)
+int
+LLVMFuzzerTestOneInput (const uint8_t *data, size_t size)
 {
     struct inflate_state state;
     z_stream zstate;

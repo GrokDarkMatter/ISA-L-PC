@@ -35,7 +35,8 @@
 #define BUF_SIZE  8192
 #define INIT_SEED 0x12345678
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     uint8_t inbuf[ BUF_SIZE ];
     uint64_t avail_in, total_in = 0;

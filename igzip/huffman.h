@@ -50,7 +50,8 @@
  *
  * @returns bit offset of msb starting at 1 for first bit
  */
-static inline uint32_t bsr (uint32_t val)
+static inline uint32_t
+bsr (uint32_t val)
 {
     uint32_t msb;
 #if defined(_MSC_VER)
@@ -73,7 +74,8 @@ static inline uint32_t bsr (uint32_t val)
     return msb;
 }
 
-static inline uint32_t tzbytecnt (uint64_t val)
+static inline uint32_t
+tzbytecnt (uint64_t val)
 {
     uint32_t cnt;
 
@@ -92,8 +94,9 @@ static inline uint32_t tzbytecnt (uint64_t val)
     return cnt;
 }
 
-static void compute_dist_code (struct isal_hufftables *hufftables, uint16_t dist, uint64_t *p_code,
-                               uint64_t *p_len)
+static void
+compute_dist_code (struct isal_hufftables *hufftables, uint16_t dist, uint64_t *p_code,
+                   uint64_t *p_len)
 {
     assert (dist > IGZIP_DIST_TABLE_SIZE);
 
@@ -118,8 +121,8 @@ static void compute_dist_code (struct isal_hufftables *hufftables, uint16_t dist
     *p_len = len + num_extra_bits;
 }
 
-static inline void get_dist_code (struct isal_hufftables *hufftables, uint32_t dist, uint64_t *code,
-                                  uint64_t *len)
+static inline void
+get_dist_code (struct isal_hufftables *hufftables, uint32_t dist, uint64_t *code, uint64_t *len)
 {
     assert (dist >= 1);
     assert (dist <= 32768);
@@ -136,8 +139,8 @@ static inline void get_dist_code (struct isal_hufftables *hufftables, uint32_t d
     }
 }
 
-static inline void get_len_code (struct isal_hufftables *hufftables, uint32_t length,
-                                 uint64_t *code, uint64_t *len)
+static inline void
+get_len_code (struct isal_hufftables *hufftables, uint32_t length, uint64_t *code, uint64_t *len)
 {
     assert (length >= 3);
     assert (length <= 258);
@@ -148,8 +151,8 @@ static inline void get_len_code (struct isal_hufftables *hufftables, uint32_t le
     *len = code_len & 0x1F;
 }
 
-static inline void get_lit_code (struct isal_hufftables *hufftables, uint32_t lit, uint64_t *code,
-                                 uint64_t *len)
+static inline void
+get_lit_code (struct isal_hufftables *hufftables, uint32_t lit, uint64_t *code, uint64_t *len)
 {
     assert (lit <= 256);
 
@@ -157,7 +160,8 @@ static inline void get_lit_code (struct isal_hufftables *hufftables, uint32_t li
     *len = hufftables->lit_table_sizes[ lit ];
 }
 
-static void compute_dist_icf_code (uint32_t dist, uint32_t *code, uint32_t *extra_bits)
+static void
+compute_dist_icf_code (uint32_t dist, uint32_t *code, uint32_t *extra_bits)
 {
     uint32_t msb;
     uint32_t num_extra_bits;
@@ -172,7 +176,8 @@ static void compute_dist_icf_code (uint32_t dist, uint32_t *code, uint32_t *extr
     assert (*code < 30);
 }
 
-static inline void get_dist_icf_code (uint32_t dist, uint32_t *code, uint32_t *extra_bits)
+static inline void
+get_dist_icf_code (uint32_t dist, uint32_t *code, uint32_t *extra_bits)
 {
     assert (dist >= 1);
     assert (dist <= 32768);
@@ -187,7 +192,8 @@ static inline void get_dist_icf_code (uint32_t dist, uint32_t *code, uint32_t *e
     }
 }
 
-static inline void get_len_icf_code (uint32_t length, uint32_t *code)
+static inline void
+get_len_icf_code (uint32_t length, uint32_t *code)
 {
     assert (length >= 3);
     assert (length <= 258);
@@ -195,7 +201,8 @@ static inline void get_len_icf_code (uint32_t length, uint32_t *code)
     *code = length + 254;
 }
 
-static inline void get_lit_icf_code (uint32_t lit, uint32_t *code)
+static inline void
+get_lit_icf_code (uint32_t lit, uint32_t *code)
 {
     assert (lit <= 256);
 
@@ -205,7 +212,8 @@ static inline void get_lit_icf_code (uint32_t lit, uint32_t *code)
 /**
  * @brief Returns a hash of the first 3 bytes of input data.
  */
-static inline uint32_t compute_hash (uint32_t data)
+static inline uint32_t
+compute_hash (uint32_t data)
 {
 #ifdef __SSE4_2__
 
@@ -227,7 +235,8 @@ static inline uint32_t compute_hash (uint32_t data)
 
 #define PROD1 0xFFFFE84B
 #define PROD2 0xFFFF97B1
-static inline uint32_t compute_hash_mad (uint32_t data)
+static inline uint32_t
+compute_hash_mad (uint32_t data)
 {
     int16_t data_low;
     int16_t data_high;
@@ -243,7 +252,8 @@ static inline uint32_t compute_hash_mad (uint32_t data)
     return data;
 }
 
-static inline uint32_t compute_long_hash (uint64_t data)
+static inline uint32_t
+compute_long_hash (uint64_t data)
 {
 
     return compute_hash (data >> 32) ^ compute_hash (data);
@@ -255,7 +265,8 @@ static inline uint32_t compute_long_hash (uint64_t data)
  * @param str2: Second input string.
  * @param max_length: length of the smaller string.
  */
-static inline int compare258 (uint8_t *str1, uint8_t *str2, uint32_t max_length)
+static inline int
+compare258 (uint8_t *str1, uint8_t *str2, uint32_t max_length)
 {
     uint32_t count;
     uint64_t test;
@@ -318,7 +329,8 @@ static inline int compare258 (uint8_t *str1, uint8_t *str2, uint32_t max_length)
  * @param str2: Second input string.
  * @param max_length: length of the smaller string.
  */
-static inline int compare (uint8_t *str1, uint8_t *str2, uint32_t max_length)
+static inline int
+compare (uint8_t *str1, uint8_t *str2, uint32_t max_length)
 {
     uint32_t count;
     uint64_t test;

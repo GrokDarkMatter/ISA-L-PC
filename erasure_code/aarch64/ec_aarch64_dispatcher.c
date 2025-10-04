@@ -30,26 +30,32 @@
 #include "erasure_code.h"
 #include "gf_vect_mul.h"
 
-extern void gf_vect_dot_prod_sve (int, int, unsigned char *, unsigned char **, unsigned char *);
-extern void gf_vect_dot_prod_neon (int, int, unsigned char *, unsigned char **, unsigned char *);
+extern void
+gf_vect_dot_prod_sve (int, int, unsigned char *, unsigned char **, unsigned char *);
+extern void
+gf_vect_dot_prod_neon (int, int, unsigned char *, unsigned char **, unsigned char *);
 
-extern void gf_vect_mad_sve (int, int, int, unsigned char *, unsigned char *, unsigned char *);
-extern void gf_vect_mad_neon (int, int, int, unsigned char *, unsigned char *, unsigned char *);
+extern void
+gf_vect_mad_sve (int, int, int, unsigned char *, unsigned char *, unsigned char *);
+extern void
+gf_vect_mad_neon (int, int, int, unsigned char *, unsigned char *, unsigned char *);
 
-extern void ec_encode_data_sve (int, int, int, unsigned char *, unsigned char **,
-                                unsigned char **coding);
-extern void ec_encode_data_neon (int, int, int, unsigned char *, unsigned char **,
-                                 unsigned char **);
-extern void ec_decode_data_neon (int, int, int, unsigned char *, unsigned char **,
-                                 unsigned char **);
+extern void
+ec_encode_data_sve (int, int, int, unsigned char *, unsigned char **, unsigned char **coding);
+extern void
+ec_encode_data_neon (int, int, int, unsigned char *, unsigned char **, unsigned char **);
+extern void
+ec_decode_data_neon (int, int, int, unsigned char *, unsigned char **, unsigned char **);
 
-extern void ec_encode_data_update_sve (int, int, int, int, unsigned char *, unsigned char *,
-                                       unsigned char **);
-extern void ec_encode_data_update_neon (int, int, int, int, unsigned char *, unsigned char *,
-                                        unsigned char **);
+extern void
+ec_encode_data_update_sve (int, int, int, int, unsigned char *, unsigned char *, unsigned char **);
+extern void
+ec_encode_data_update_neon (int, int, int, int, unsigned char *, unsigned char *, unsigned char **);
 
-extern int gf_vect_mul_sve (int, unsigned char *, unsigned char *, unsigned char *);
-extern int gf_vect_mul_neon (int, unsigned char *, unsigned char *, unsigned char *);
+extern int
+gf_vect_mul_sve (int, unsigned char *, unsigned char *, unsigned char *);
+extern int
+gf_vect_mul_neon (int, unsigned char *, unsigned char *, unsigned char *);
 
 DEFINE_INTERFACE_DISPATCHER (gf_vect_dot_prod)
 {

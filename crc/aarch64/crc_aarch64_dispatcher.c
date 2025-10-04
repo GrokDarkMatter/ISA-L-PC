@@ -30,35 +30,52 @@
 #include "crc.h"
 #include "crc64.h"
 
-extern uint16_t crc16_t10dif_pmull (uint16_t, uint8_t *, uint64_t);
+extern uint16_t
+crc16_t10dif_pmull (uint16_t, uint8_t *, uint64_t);
 
-extern uint16_t crc16_t10dif_copy_pmull (uint16_t, uint8_t *, uint8_t *, uint64_t);
+extern uint16_t
+crc16_t10dif_copy_pmull (uint16_t, uint8_t *, uint8_t *, uint64_t);
 
-extern uint32_t crc32_ieee_norm_pmull (uint32_t, uint8_t *, uint64_t);
+extern uint32_t
+crc32_ieee_norm_pmull (uint32_t, uint8_t *, uint64_t);
 
-extern unsigned int crc32_iscsi_crc_ext (unsigned char *, int, unsigned int);
-extern unsigned int crc32_iscsi_3crc_fold (unsigned char *, int, unsigned int);
-extern unsigned int crc32_iscsi_refl_pmull (unsigned char *, int, unsigned int);
+extern unsigned int
+crc32_iscsi_crc_ext (unsigned char *, int, unsigned int);
+extern unsigned int
+crc32_iscsi_3crc_fold (unsigned char *, int, unsigned int);
+extern unsigned int
+crc32_iscsi_refl_pmull (unsigned char *, int, unsigned int);
 
-extern uint32_t crc32_gzip_refl_crc_ext (uint32_t, uint8_t *, uint64_t);
-extern uint32_t crc32_gzip_refl_3crc_fold (uint32_t, uint8_t *, uint64_t);
-extern uint32_t crc32_gzip_refl_pmull (uint32_t, uint8_t *, uint64_t);
+extern uint32_t
+crc32_gzip_refl_crc_ext (uint32_t, uint8_t *, uint64_t);
+extern uint32_t
+crc32_gzip_refl_3crc_fold (uint32_t, uint8_t *, uint64_t);
+extern uint32_t
+crc32_gzip_refl_pmull (uint32_t, uint8_t *, uint64_t);
 
-extern uint64_t crc64_ecma_refl_pmull (uint64_t, const unsigned char *, uint64_t);
+extern uint64_t
+crc64_ecma_refl_pmull (uint64_t, const unsigned char *, uint64_t);
 
-extern uint64_t crc64_ecma_norm_pmull (uint64_t, const unsigned char *, uint64_t);
+extern uint64_t
+crc64_ecma_norm_pmull (uint64_t, const unsigned char *, uint64_t);
 
-extern uint64_t crc64_iso_refl_pmull (uint64_t, const unsigned char *, uint64_t);
+extern uint64_t
+crc64_iso_refl_pmull (uint64_t, const unsigned char *, uint64_t);
 
-extern uint64_t crc64_iso_norm_pmull (uint64_t, const unsigned char *, uint64_t);
+extern uint64_t
+crc64_iso_norm_pmull (uint64_t, const unsigned char *, uint64_t);
 
-extern uint64_t crc64_jones_refl_pmull (uint64_t, const unsigned char *, uint64_t);
+extern uint64_t
+crc64_jones_refl_pmull (uint64_t, const unsigned char *, uint64_t);
 
-extern uint64_t crc64_jones_norm_pmull (uint64_t, const unsigned char *, uint64_t);
+extern uint64_t
+crc64_jones_norm_pmull (uint64_t, const unsigned char *, uint64_t);
 
-extern uint64_t crc64_rocksoft_refl_pmull (uint64_t, const unsigned char *, uint64_t);
+extern uint64_t
+crc64_rocksoft_refl_pmull (uint64_t, const unsigned char *, uint64_t);
 
-extern uint64_t crc64_rocksoft_norm_pmull (uint64_t, const unsigned char *, uint64_t);
+extern uint64_t
+crc64_rocksoft_norm_pmull (uint64_t, const unsigned char *, uint64_t);
 
 DEFINE_INTERFACE_DISPATCHER (crc16_t10dif)
 {

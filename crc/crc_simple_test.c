@@ -36,7 +36,8 @@ const uint16_t t10_dif_expected = 0x60b3;
 const uint32_t init_crc_32 = 0x12345678;
 const uint32_t ieee_expected = 0x2ceadbe3;
 
-int main (void)
+int
+main (void)
 {
     unsigned char p_buf[ 48 ];
     uint16_t t10_dif_computed;

@@ -74,7 +74,8 @@ func_case_t test_funcs[] = {
 
 // Generates pseudo-random data
 
-void rand_buffer (unsigned char *buf, long buffer_size)
+void
+rand_buffer (unsigned char *buf, long buffer_size)
 {
     long i;
     for (i = 0; i < buffer_size; i++)
@@ -82,19 +83,25 @@ void rand_buffer (unsigned char *buf, long buffer_size)
 }
 
 // Test cases
-int zeros_test (func_case_t *test_func);
+int
+zeros_test (func_case_t *test_func);
 
-int simple_pattern_test (func_case_t *test_func);
+int
+simple_pattern_test (func_case_t *test_func);
 
-int seeds_sizes_test (func_case_t *test_func);
+int
+seeds_sizes_test (func_case_t *test_func);
 
-int eob_test (func_case_t *test_func);
+int
+eob_test (func_case_t *test_func);
 
-int update_test (func_case_t *test_func);
+int
+update_test (func_case_t *test_func);
 
 void *buf_alloc = NULL;
 
-int main (int argc, char *argv[])
+int
+main (int argc, char *argv[])
 {
     int fail = 0, fail_case;
     int i, ret;
@@ -138,7 +145,8 @@ int main (int argc, char *argv[])
 }
 
 // Test of all zeros
-int zeros_test (func_case_t *test_func)
+int
+zeros_test (func_case_t *test_func)
 {
     uint64_t crc_ref, crc_base, crc;
     int fail = 0;
@@ -167,7 +175,8 @@ int zeros_test (func_case_t *test_func)
 }
 
 // Another simple test pattern
-int simple_pattern_test (func_case_t *test_func)
+int
+simple_pattern_test (func_case_t *test_func)
 {
     uint64_t crc_ref, crc_base, crc;
     int fail = 0;
@@ -192,7 +201,8 @@ int simple_pattern_test (func_case_t *test_func)
     return fail;
 }
 
-int seeds_sizes_test (func_case_t *test_func)
+int
+seeds_sizes_test (func_case_t *test_func)
 {
     uint64_t crc_ref, crc_base, crc;
     int fail = 0;
@@ -282,7 +292,8 @@ int seeds_sizes_test (func_case_t *test_func)
 }
 
 // Run tests at end of buffer
-int eob_test (func_case_t *test_func)
+int
+eob_test (func_case_t *test_func)
 {
     uint64_t crc_ref, crc_base, crc;
     int fail = 0;
@@ -319,7 +330,8 @@ int eob_test (func_case_t *test_func)
     return fail;
 }
 
-int update_test (func_case_t *test_func)
+int
+update_test (func_case_t *test_func)
 {
     uint64_t crc_ref, crc_base, crc;
     int fail = 0;
