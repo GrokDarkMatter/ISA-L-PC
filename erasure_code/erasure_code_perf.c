@@ -1030,7 +1030,7 @@ int main (int argc, char *argv[])
     PAPI_destroy_eventset (&event_set);
     PAPI_shutdown ();
 #endif
-    printf (" done all: Pass\n");
+    printf ("done all: Pass\n");
     fflush (stdout);
 
     ret = 0;
