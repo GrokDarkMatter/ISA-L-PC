@@ -30,133 +30,127 @@
 #include "erasure_code.h"
 #include "gf_vect_mul.h"
 
-extern void
-gf_vect_dot_prod_sve(int, int, unsigned char *, unsigned char **, unsigned char *);
-extern void
-gf_vect_dot_prod_neon(int, int, unsigned char *, unsigned char **, unsigned char *);
+extern void gf_vect_dot_prod_sve (int, int, unsigned char *, unsigned char **, unsigned char *);
+extern void gf_vect_dot_prod_neon (int, int, unsigned char *, unsigned char **, unsigned char *);
 
-extern void
-gf_vect_mad_sve(int, int, int, unsigned char *, unsigned char *, unsigned char *);
-extern void
-gf_vect_mad_neon(int, int, int, unsigned char *, unsigned char *, unsigned char *);
+extern void gf_vect_mad_sve (int, int, int, unsigned char *, unsigned char *, unsigned char *);
+extern void gf_vect_mad_neon (int, int, int, unsigned char *, unsigned char *, unsigned char *);
 
-extern void
-ec_encode_data_sve(int, int, int, unsigned char *, unsigned char **, unsigned char **coding);
-extern void
-ec_encode_data_neon(int, int, int, unsigned char *, unsigned char **, unsigned char **);
-extern void
-ec_decode_data_neon(int, int, int, unsigned char *, unsigned char **, unsigned char **);
+extern void ec_encode_data_sve (int, int, int, unsigned char *, unsigned char **,
+                                unsigned char **coding);
+extern void ec_encode_data_neon (int, int, int, unsigned char *, unsigned char **,
+                                 unsigned char **);
+extern void ec_decode_data_neon (int, int, int, unsigned char *, unsigned char **,
+                                 unsigned char **);
 
-extern void
-ec_encode_data_update_sve(int, int, int, int, unsigned char *, unsigned char *, unsigned char **);
-extern void
-ec_encode_data_update_neon(int, int, int, int, unsigned char *, unsigned char *, unsigned char **);
+extern void ec_encode_data_update_sve (int, int, int, int, unsigned char *, unsigned char *,
+                                       unsigned char **);
+extern void ec_encode_data_update_neon (int, int, int, int, unsigned char *, unsigned char *,
+                                        unsigned char **);
 
-extern int
-gf_vect_mul_sve(int, unsigned char *, unsigned char *, unsigned char *);
-extern int
-gf_vect_mul_neon(int, unsigned char *, unsigned char *, unsigned char *);
+extern int gf_vect_mul_sve (int, unsigned char *, unsigned char *, unsigned char *);
+extern int gf_vect_mul_neon (int, unsigned char *, unsigned char *, unsigned char *);
 
-DEFINE_INTERFACE_DISPATCHER(gf_vect_dot_prod)
+DEFINE_INTERFACE_DISPATCHER (gf_vect_dot_prod)
 {
 #if defined(__linux__)
-        unsigned long auxval = getauxval(AT_HWCAP);
+    unsigned long auxval = getauxval (AT_HWCAP);
 
-        if (auxval & HWCAP_SVE)
-                return gf_vect_dot_prod_sve;
-        if (auxval & HWCAP_ASIMD)
-                return gf_vect_dot_prod_neon;
-#elif defined(__APPLE__)
-        if (sysctlEnabled(SYSCTL_SVE_KEY))
-                return gf_vect_dot_prod_sve;
+    if (auxval & HWCAP_SVE)
+        return gf_vect_dot_prod_sve;
+    if (auxval & HWCAP_ASIMD)
         return gf_vect_dot_prod_neon;
+#elif defined(__APPLE__)
+    if (sysctlEnabled (SYSCTL_SVE_KEY))
+        return gf_vect_dot_prod_sve;
+    return gf_vect_dot_prod_neon;
 #endif
-        return gf_vect_dot_prod_base;
+    return gf_vect_dot_prod_base;
 }
 
-DEFINE_INTERFACE_DISPATCHER(gf_vect_mad)
+DEFINE_INTERFACE_DISPATCHER (gf_vect_mad)
 {
 #if defined(__linux__)
-        unsigned long auxval = getauxval(AT_HWCAP);
+    unsigned long auxval = getauxval (AT_HWCAP);
 
-        if (auxval & HWCAP_SVE)
-                return gf_vect_mad_sve;
-        if (auxval & HWCAP_ASIMD)
-                return gf_vect_mad_neon;
-#elif defined(__APPLE__)
-        if (sysctlEnabled(SYSCTL_SVE_KEY))
-                return gf_vect_mad_sve;
+    if (auxval & HWCAP_SVE)
+        return gf_vect_mad_sve;
+    if (auxval & HWCAP_ASIMD)
         return gf_vect_mad_neon;
+#elif defined(__APPLE__)
+    if (sysctlEnabled (SYSCTL_SVE_KEY))
+        return gf_vect_mad_sve;
+    return gf_vect_mad_neon;
 #endif
-        return gf_vect_mad_base;
+    return gf_vect_mad_base;
 }
 
-DEFINE_INTERFACE_DISPATCHER(ec_encode_data)
+DEFINE_INTERFACE_DISPATCHER (ec_encode_data)
 {
 #if defined(__linux__)
-        unsigned long auxval = getauxval(AT_HWCAP);
+    unsigned long auxval = getauxval (AT_HWCAP);
 
-        if (auxval & HWCAP_SVE)
-                return ec_encode_data_sve;
-        if (auxval & HWCAP_ASIMD)
-                return ec_encode_data_neon;
-#elif defined(__APPLE__)
-        if (sysctlEnabled(SYSCTL_SVE_KEY))
-                return ec_encode_data_sve;
+    if (auxval & HWCAP_SVE)
+        return ec_encode_data_sve;
+    if (auxval & HWCAP_ASIMD)
         return ec_encode_data_neon;
+#elif defined(__APPLE__)
+    if (sysctlEnabled (SYSCTL_SVE_KEY))
+        return ec_encode_data_sve;
+    return ec_encode_data_neon;
 #endif
-        return ec_encode_data_base;
+    return ec_encode_data_base;
 }
 
-DEFINE_INTERFACE_DISPATCHER(ec_decode_data)
+DEFINE_INTERFACE_DISPATCHER (ec_decode_data)
 {
 #if defined(__linux__)
-        unsigned long auxval = getauxval(AT_HWCAP);
+    unsigned long auxval = getauxval (AT_HWCAP);
 
-        if (auxval & HWCAP_SVE)
-                return ec_encode_data_sve;
-        if (auxval & HWCAP_ASIMD)
-                return ec_decode_data_neon;
-#elif defined(__APPLE__)
-        if (sysctlEnabled(SYSCTL_SVE_KEY))
-                return ec_encode_data_sve;
+    if (auxval & HWCAP_SVE)
+        return ec_encode_data_sve;
+    if (auxval & HWCAP_ASIMD)
         return ec_decode_data_neon;
+#elif defined(__APPLE__)
+    if (sysctlEnabled (SYSCTL_SVE_KEY))
+        return ec_encode_data_sve;
+    return ec_decode_data_neon;
 #endif
-        return ec_encode_data_base;
+    return ec_encode_data_base;
 }
 
-DEFINE_INTERFACE_DISPATCHER(ec_encode_data_update)
+DEFINE_INTERFACE_DISPATCHER (ec_encode_data_update)
 {
 #if defined(__linux__)
-        unsigned long auxval = getauxval(AT_HWCAP);
+    unsigned long auxval = getauxval (AT_HWCAP);
 
-        if (auxval & HWCAP_SVE)
-                return ec_encode_data_update_sve;
-        if (auxval & HWCAP_ASIMD)
-                return ec_encode_data_update_neon;
-#elif defined(__APPLE__)
-        if (sysctlEnabled(SYSCTL_SVE_KEY))
-                return ec_encode_data_update_sve;
+    if (auxval & HWCAP_SVE)
+        return ec_encode_data_update_sve;
+    if (auxval & HWCAP_ASIMD)
         return ec_encode_data_update_neon;
+#elif defined(__APPLE__)
+    if (sysctlEnabled (SYSCTL_SVE_KEY))
+        return ec_encode_data_update_sve;
+    return ec_encode_data_update_neon;
 #endif
-        return ec_encode_data_update_base;
+    return ec_encode_data_update_base;
 }
 
-DEFINE_INTERFACE_DISPATCHER(gf_vect_mul)
+DEFINE_INTERFACE_DISPATCHER (gf_vect_mul)
 {
 #if defined(__linux__)
-        unsigned long auxval = getauxval(AT_HWCAP);
+    unsigned long auxval = getauxval (AT_HWCAP);
 
-        if (auxval & HWCAP_SVE)
-                return gf_vect_mul_sve;
-        if (auxval & HWCAP_ASIMD)
-                return gf_vect_mul_neon;
-#elif defined(__APPLE__)
-        if (sysctlEnabled(SYSCTL_SVE_KEY))
-                return gf_vect_mul_sve;
+    if (auxval & HWCAP_SVE)
+        return gf_vect_mul_sve;
+    if (auxval & HWCAP_ASIMD)
         return gf_vect_mul_neon;
+#elif defined(__APPLE__)
+    if (sysctlEnabled (SYSCTL_SVE_KEY))
+        return gf_vect_mul_sve;
+    return gf_vect_mul_neon;
 #endif
-        return gf_vect_mul_base;
+    return gf_vect_mul_base;
 }
 
-DEFINE_INTERFACE_DISPATCHER(ec_init_tables) { return ec_init_tables_base; }
+DEFINE_INTERFACE_DISPATCHER (ec_init_tables) { return ec_init_tables_base; }

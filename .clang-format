@@ -24,7 +24,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 BasedOnStyle: LLVM
-IndentWidth: 8
+IndentWidth: 4
 Language: Cpp
 BreakBeforeBraces: Allman
 AllowShortIfStatementsOnASingleLine: false
@@ -32,7 +32,7 @@ IndentCaseLabels: false
 UseTab: Never
 AlignConsecutiveMacros: true
 AlignTrailingComments: true
-AlwaysBreakAfterReturnType: All
+AlwaysBreakAfterReturnType: None
 SortIncludes: false
 BreakBeforeInheritanceComma: true
 AllowAllParametersOfDeclarationOnNextLine: false
@@ -44,3 +44,5 @@ Cpp11BracedListStyle: false
 MaxEmptyLinesToKeep: 1
 ContinuationIndentWidth: 8
 SpaceAfterCStyleCast: true
+SpaceBeforeParens: Always
+SpacesInSquareBrackets: true

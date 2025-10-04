@@ -55,43 +55,42 @@
 
 typedef unsigned char u8;
 
-void
-gf_vect_mul_perf(u8 a, u8 *gf_const_tbl, u8 *buff1, u8 *buff2)
+void gf_vect_mul_perf (u8 a, u8 *gf_const_tbl, u8 *buff1, u8 *buff2)
 {
-        gf_vect_mul_init(a, gf_const_tbl);
-        gf_vect_mul(TEST_LEN, gf_const_tbl, buff1, buff2);
+    gf_vect_mul_init (a, gf_const_tbl);
+    gf_vect_mul (TEST_LEN, gf_const_tbl, buff1, buff2);
 }
 
-int
-main(int argc, char *argv[])
+int main (int argc, char *argv[])
 {
-        u8 *buff1, *buff2, gf_const_tbl[64], a = 2;
-        struct perf start;
+    u8 *buff1, *buff2, gf_const_tbl[ 64 ], a = 2;
+    struct perf start;
 
-        printf("gf_vect_mul_perf:\n");
+    printf ("gf_vect_mul_perf:\n");
 
-        // Allocate large mem region
-        buff1 = (u8 *) malloc(TEST_LEN);
-        buff2 = (u8 *) malloc(TEST_LEN);
-        if (NULL == buff1 || NULL == buff2) {
-                printf("Failed to allocate %dB\n", TEST_LEN);
-                return 1;
-        }
+    // Allocate large mem region
+    buff1 = (u8 *) malloc (TEST_LEN);
+    buff2 = (u8 *) malloc (TEST_LEN);
+    if (NULL == buff1 || NULL == buff2)
+    {
+        printf ("Failed to allocate %dB\n", TEST_LEN);
+        return 1;
+    }
 
-        memset(buff1, 0, TEST_LEN);
-        memset(buff2, 0, TEST_LEN);
+    memset (buff1, 0, TEST_LEN);
+    memset (buff2, 0, TEST_LEN);
 
-        printf("Start timed tests\n");
-        fflush(0);
+    printf ("Start timed tests\n");
+    fflush (0);
 
-        BENCHMARK(&start, BENCHMARK_TIME, gf_vect_mul_perf(a, gf_const_tbl, buff1, buff2));
+    BENCHMARK (&start, BENCHMARK_TIME, gf_vect_mul_perf (a, gf_const_tbl, buff1, buff2));
 
-        printf("gf_vect_mul" TEST_TYPE_STR ": ");
-        perf_print(start, (long long) TEST_LEN);
+    printf ("gf_vect_mul" TEST_TYPE_STR ": ");
+    perf_print (start, (long long) TEST_LEN);
 
-        // Free allocated memory
-        free(buff1);
-        free(buff2);
+    // Free allocated memory
+    free (buff1);
+    free (buff2);
 
-        return 0;
+    return 0;
 }
