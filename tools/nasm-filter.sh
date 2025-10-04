@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Filter out unnecessary options added by automake
+# Filter out unnecessary option added by automake
 
 while [ -n "$*" ]; do
     case "$1" in
