@@ -6,6 +6,7 @@
 *.dll
 *.exp
 *.lib
+*.pdf
 bin
 
 # Autobuild
