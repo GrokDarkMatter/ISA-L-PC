@@ -32,7 +32,7 @@ IndentCaseLabels: false
 UseTab: Never
 AlignConsecutiveMacros: true
 AlignTrailingComments: true
-AlwaysBreakAfterReturnType: None
+AlwaysBreakAfterReturnType: All
 SortIncludes: false
 BreakBeforeInheritanceComma: true
 AllowAllParametersOfDeclarationOnNextLine: false
