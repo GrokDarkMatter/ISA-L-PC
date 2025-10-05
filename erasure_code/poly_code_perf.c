@@ -53,6 +53,7 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include <stdlib.h>
 #include <string.h> // for memset, memcmp
 typedef unsigned char u8;
+#include "PC_CPU_ID.c"
 
 #define PC_MAX_ERRS 32
 
@@ -92,7 +93,6 @@ extern void
 ec_encode_data_neon (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
 #else
 #include <immintrin.h>
-#include "PC_CPU_ID.c"
 #include "PCLib_2D_AVX512_GFNI.c"
 #endif
 
