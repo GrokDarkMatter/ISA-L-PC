@@ -78,6 +78,14 @@ int PC_CPU_ID( void ) {
     while (fgets(line, sizeof(line), fp)) {
         // Print specific fields for name and details
         if (strncmp(line, "vendor_id", 9) == 0 ||
+            strncmp(line, "processor", 9) == 0 ||
+            strncmp(line, "CPU architecture", 16) == 0 ||
+            strncmp(line, "cpu family", 10) == 0 ||
+            strncmp(line, "CPU implementer", 15) == 0 ||
+            strncmp(line, "CPU variant", 11) == 0 ||
+            strncmp(line, "CPU part", 8) == 0 ||
+            strncmp(line, "CPU revision", 12) == 0 ||
+            strncmp(line, "BogoMIPS", 8) == 0 ||
             strncmp(line, "cpu family", 10) == 0 ||
             strncmp(line, "model\t", 6) == 0 ||
             strncmp(line, "model name", 10) == 0 ||
@@ -87,7 +95,9 @@ int PC_CPU_ID( void ) {
  //           strncmp(line, "flags", 5) == 0) {
             if ( s == 0 ) printf("%s", line);
             if ( strncmp(line, "cpu family", 10) == 0 ) Cores ++ ;
+            if ( strncmp(line, "processor", 9) == 0 ) Cores ++ ;
             if ( strncmp(line, "cpu MHz", 7 ) == 0 ) s=1 ;
+            if ( strncmp(line, "CPU revision", 12 ) == 0 ) s=1 ;
         }
     }
     printf ( "cpu cores	: %d\n", Cores ) ;

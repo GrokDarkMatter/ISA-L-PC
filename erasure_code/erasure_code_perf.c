@@ -50,6 +50,7 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> // for memset, memcmp
+#include "PC_CPU_ID.c"
 typedef unsigned char u8;
 // Utility print routine
 void
@@ -84,7 +85,6 @@ extern void
 ec_encode_data_neon (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
 #else
 #include <immintrin.h>
-#include "PC_CPU_ID.c"
 extern void
 ec_encode_data_avx2_gfni (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
 #include "PCLib_AVX2_GFNI.c"
