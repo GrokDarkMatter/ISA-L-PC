@@ -92,6 +92,7 @@ extern void
 ec_encode_data_neon (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
 #else
 #include <immintrin.h>
+#include "PC_CPU_ID.c"
 #include "PCLib_2D_AVX512_GFNI.c"
 #endif
 
@@ -953,6 +954,7 @@ main (int argc, char *argv[])
     pc_bmat_2d (a, 4);
 
     // Print output header
+    PC_CPU_ID() ;
     printf ("Testing with %u data buffers and %u parity buffers\n", k, p);
     printf ("erasure_code_perf: %dx%d %d\n", m, TEST_LEN (m), nerrs);
 

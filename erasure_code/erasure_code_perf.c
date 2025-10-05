@@ -51,7 +51,6 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include <stdlib.h>
 #include <string.h> // for memset, memcmp
 typedef unsigned char u8;
-#define _WIN64
 // Utility print routine
 void
 dump_u8xu8 (unsigned char *s, int k, int m)

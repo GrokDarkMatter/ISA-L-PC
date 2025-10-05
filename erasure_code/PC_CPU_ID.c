@@ -62,4 +62,37 @@ int PC_CPU_ID() {
     return 0;
 }
 #else
+#include <stdio.h>
+#include <string.h>
+
+int PC_CPU_ID( void ) {
+    FILE* fp = fopen("/proc/cpuinfo", "r");
+    if (fp == NULL) {
+        printf("Failed to open /proc/cpuinfo\n");
+        return 1;
+    }
+
+    int s=0, Cores = 0;
+    char line[1024];
+    printf("Processor Details:\n");
+    while (fgets(line, sizeof(line), fp)) {
+        // Print specific fields for name and details
+        if (strncmp(line, "vendor_id", 9) == 0 ||
+            strncmp(line, "cpu family", 10) == 0 ||
+            strncmp(line, "model\t", 6) == 0 ||
+            strncmp(line, "model name", 10) == 0 ||
+            strncmp(line, "stepping", 8) == 0 ||
+            strncmp(line, "microcode", 9) == 0 ||
+            strncmp(line, "cpu MHz", 7) == 0) {
+ //           strncmp(line, "flags", 5) == 0) {
+            if ( s == 0 ) printf("%s", line);
+            if ( strncmp(line, "cpu family", 10) == 0 ) Cores ++ ;
+            if ( strncmp(line, "cpu MHz", 7 ) == 0 ) s=1 ;
+        }
+    }
+    printf ( "cpu cores	: %d\n", Cores ) ;
+
+    fclose(fp);
+    return 0;
+}
 #endif
