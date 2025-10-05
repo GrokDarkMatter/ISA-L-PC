@@ -51,7 +51,7 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include <stdlib.h>
 #include <string.h> // for memset, memcmp
 typedef unsigned char u8;
-
+#define _WIN64
 // Utility print routine
 void
 dump_u8xu8 (unsigned char *s, int k, int m)
@@ -85,6 +85,7 @@ extern void
 ec_encode_data_neon (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
 #else
 #include <immintrin.h>
+#include "PC_CPU_ID.c"
 extern void
 ec_encode_data_avx2_gfni (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
 #include "PCLib_AVX2_GFNI.c"
@@ -763,6 +764,7 @@ main (int argc, char *argv[])
         goto exit;
     }
     // Print output header
+    PC_CPU_ID ();
     printf ("Testing with %u data buffers and %u parity buffers\n", k, p);
     printf ("erasure_code_perf: %dx%d %d\n", m, TEST_LEN (m), nerrs);
 
