@@ -44,8 +44,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restrictions
 **********************************************************************/
 
-#ifndef __aarch64__
-
 #include "ec_base.h"
 #include "erasure_code.h"
 #include "test.h"
@@ -585,11 +583,3 @@ exit:
     aligned_free (g_tbls);
     return ret;
 }
-#else
-#include <stdio.h>
-int
-main (void)
-{
-    printf ("No support for multi-level encoding on ARM64/NEON\n");
-}
-#endif
