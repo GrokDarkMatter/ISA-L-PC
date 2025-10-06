@@ -237,6 +237,7 @@ InitClone (struct PCBenchStruct * ps, unsigned char k, unsigned char p, int test
             printf ("Error allocating buffers\n");
             return 0;
         }
+        memset ( buf, i, TEST_LEN(m) ) ;
         buffs[ i ] = buf;
     }
     ps->Data = buffs;
@@ -255,6 +256,7 @@ InitClone (struct PCBenchStruct * ps, unsigned char k, unsigned char p, int test
             printf ("Error allocating buffers\n");
             return 0;
         }
+        memset ( buf, i, TEST_LEN(m) ) ;
         buffs[ i ] = buf;
     }
     ps->Syn = buffs;
@@ -264,7 +266,7 @@ InitClone (struct PCBenchStruct * ps, unsigned char k, unsigned char p, int test
         printf ("Error allocating g_tbls\n");
         return 0;
     }
- 
+    memset ( ps->g_tbls, 255, 255*32*8) ;
     return 1;
 }
 
