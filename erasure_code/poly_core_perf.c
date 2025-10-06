@@ -296,7 +296,9 @@ main (int argc, char *argv[])
     u8 *a, *g_tbls = 0, *z0 = 0;
     u8 *temp_buffs[ TEST_SOURCES ] = { NULL };
     u8 *buffs[ TEST_SOURCES ] = { NULL };
-
+#ifndef __aarm64__
+    struct perf start;
+#endif
     /* Set default parameters */
     k = 223;
     p = 32;
