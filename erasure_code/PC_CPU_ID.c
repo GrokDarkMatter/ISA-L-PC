@@ -50,8 +50,8 @@ int PC_CPU_ID() {
     HKEY hKey;
     DWORD mhz = 0;
     DWORD size = sizeof(DWORD);
-    if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0", 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
-        RegQueryValueEx(hKey, L"~MHz", NULL, NULL, (LPBYTE)&mhz, &size); // Use LPBYTE
+    if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0", 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+        RegQueryValueEx(hKey, "~MHz", NULL, NULL, (LPBYTE)&mhz, &size); // Use LPBYTE
         RegCloseKey(hKey);
         printf("Approximate Clock Speed: %u MHz\n", mhz);
     }

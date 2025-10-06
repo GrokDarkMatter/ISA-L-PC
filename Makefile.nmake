@@ -195,7 +195,7 @@ objs = \
 INCLUDES   = -I./ -Ierasure_code/ -Iraid/ -Icrc/ -Iigzip/ -Iprograms/ -Imem/ -Iinclude/ -Itests/fuzz/ -Iexamples/ec/
 CFLAGS_REL = -O2 -DNDEBUG /Z7 /Gy
 CFLAGS_DBG = -Od -DDEBUG /Z7
-LINKFLAGS  = -nologo -incremental:no -debug Advapi32.lib
+LINKFLAGS  = -nologo -incremental:no -debug Advapi32.lib Winmm.lib
 CFLAGS     = $(CFLAGS_REL) -nologo -D_USE_MATH_DEFINES $(INCLUDES) $(D)
 AFLAGS     = -f win64 $(INCLUDES) $(D)
 CC         = cl
@@ -321,6 +321,7 @@ perfs = \
 	gf_vect_dot_prod_1tbl.exe \
 	erasure_code_perf.exe \
     poly_code_perf.exe \
+    poly_core_perf.exe \
 	erasure_code_base_perf.exe \
 	erasure_code_update_perf.exe \
 	xor_gen_perf.exe \
