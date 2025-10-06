@@ -54,10 +54,10 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include <string.h> // for memset, memcmp
 typedef unsigned char u8;
 #include "PC_CPU_ID.c"
+#include <process.h>
 
 #ifdef __GNUC__
-#include <sys/time.h>
-#include <pthread.h>
+
 /// Macro to define a time value
 #define ECCTIME struct timeval
 /// Macro to get current time
@@ -74,7 +74,7 @@ typedef unsigned char u8;
 #define ECCTHREADWAIT(T) pthread_join (T, NULL)
 
 #else
-#include <process.h>
+
 // Same as above
 #define ECCTIME                 DWORD
 #define ECCGETTIME(X)           X = timeGetTime ()
@@ -127,6 +127,8 @@ ec_encode_data_neon (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
 #include "PCLib_2D_AVX512_GFNI.c"
 #endif
 
+#define PC_MAX_CORES 32
+
 #ifndef GT_L3_CACHE
 #define GT_L3_CACHE 32 * 1024 * 1024 /* some number > last level cache */
 #endif
@@ -171,7 +173,7 @@ BenchWorker (void *t)
 {
     struct PCBenchStruct *pcBench = (struct PCBenchStruct *) t;
    
-    int m = pcBench->k + pcBench->p;
+    int res = 0, m = pcBench->k + pcBench->p;
 
     for (int i = 0; i < pcBench->testReps; i++)
     {
@@ -197,24 +199,88 @@ usage (const char *app_name)
              "Usage: %s [options]\n"
              "  -h        Help\n"
              "  -k <val>  Number of source buffers\n"
-             "  -p <val>  Number of parity buffers\n"
+             "  -p <val>  Number of parity buffers\n",
              "  -c <val>  Number of cores\n",
              app_name);
 }
 
-long long
-ComputeRate (long long elapsedTime, long long ops)
+// Create buffers and data structures for benchmark to run in another thread
+int
+InitClone (struct PCBenchStruct * ps, unsigned char k, unsigned char p, int testNum, int testReps)
 {
-    if (elapsedTime == 0)
+    // Save parms for test in structure
+    ps->k = k;
+    ps->p = p;
+    int m = k + p;
+    ps->testNum = testNum;
+    ps->testReps = testReps;
+
+    // Now allocate data buffers (k+p)
+    unsigned char **buffs, *buf;
+    if (posix_memalign (&buffs, 64, sizeof ( unsigned char * ) * m ) )
     {
+        printf ("Error allocating buffs\n");
         return 0;
     }
-    printf ("Elapsed Time = %lld ops = %lld ComputeRate = %lld\n", elapsedTime, ops,
-            ops / elapsedTime);
-    return (ops / elapsedTime);
+    memset (buffs, 0, sizeof (unsigned char *) * m);
+    for (int i = 0; i < m; i++)
+    {
+        if (posix_memalign (&buf, 64, TEST_LEN (m)))
+        {
+            printf ("Error allocating buffers\n");
+            return 0;
+        }
+        buffs[ i ] = buf;
+    }
+    ps->Data = buffs;
+
+    if (posix_memalign (&buffs, 64, sizeof (unsigned char *) * p))
+    {
+        printf ("Error allocating Syns\n");
+        return 0;
+    }
+    memset (buffs, 0, sizeof (unsigned char *) * p);
+
+    for (int i = 0; i < p; i++)
+    {
+        if (posix_memalign (&buf, 64, TEST_LEN (m)))
+        {
+            printf ("Error allocating buffers\n");
+            return 0;
+        }
+        buffs[ i ] = buf;
+    }
+    ps->Syn = buffs;
+    
+    if (posix_memalign (&ps->g_tbls, 64, 255*32*8))
+    {
+        printf ("Error allocating g_tbls\n");
+        return 0;
+    }
+ 
+    return 1;
 }
 
-int
+// Free data buffers for other thread benchmarks
+void 
+FreeClone (struct PCBenchStruct *ps, unsigned char k, unsigned char p) 
+{
+    int m = k + p;
+    for (int i = 0; i < m; i++)
+    {
+        aligned_free (ps->Data[ i ]);
+    }
+
+    for (int i = 0; i < p; i++)
+    {
+        aligned_free (ps->Syn[ i ]);
+    }
+    aligned_free (ps->g_tbls);
+    aligned_free (ps->Data);
+    aligned_free (ps->Syn);
+}
+
+int 
 main (int argc, char *argv[])
 {
     // Work variables
@@ -360,46 +426,49 @@ main (int argc, char *argv[])
     for (i = 0; i < k; i++)
         for (j = 0; j < TEST_LEN (m); j++)
             buffs[ i ][ j ] = rand ();
-    // buffs [ k - 1 ] [ 59 ] = 1 ;
-    // memset ( buffs [ k - 1 ], 1, 64 ) ;
-    // memset ( buffs [ k - 3 ], 2, TEST_LEN(m) ) ;
-    // printf ( "memset [ k-1 ]\n" ) ;
-    // dump_u8xu8 ( ( unsigned char * ) buffs [ k - 1 ], 1,16 ) ;
+    // buffs [ k - 1 ] [ 59 ] = 1 ;;
 
     // Print test type
     printf ("Testing AVX512-GFNI\n");
 
-    struct PCBenchStruct myBench;
+    struct PCBenchStruct Bench[ PC_MAX_CORES ] = { 0 };
 
-    myBench.p = p;
-    myBench.k = k;
-    myBench.testNum = 1;
-    myBench.Data = buffs;
-    myBench.g_tbls = g_tbls;
-    myBench.Syn = temp_buffs;
-    myBench.testReps = 200;
+    // Initialize the clones
+    for (i = 0; i < cores; i++)
+    {
+        if (InitClone(&Bench[i], k, p, 1, 200) == 0)
+        {
+            printf ("Initclone %d failed\n", i);
+        }
+    }
 
     ECCTIME startTime, endTime;
     double elapsedTime, mbPerSecond, totBytes;
-    ECCTHREAD clone [ 2 ];
+    ECCTHREAD clone [ PC_MAX_CORES ];
 
     ECCGETTIME (startTime);
  
-    printf ("Starting Benchworker\n");
+    // Start each benchmark thread
+    for (i = 0; i < cores; i++)
+    {
+        ECCTHREADSTART (clone[ i ], BenchWorker, Bench[i]);
+    }
 
-    ECCTHREADSTART (clone[ 0 ], BenchWorker, myBench);
-    ECCTHREADSTART (clone[ 1 ], BenchWorker, myBench);
-    ECCTHREADWAIT (clone[ 0 ]);
-    ECCTHREADWAIT (clone[ 1 ]);
+    // Wait for each benchmark thread to complete
+    for (i = 0; i < cores; i++)
+    {
+        ECCTHREADWAIT (clone[ i ]);
+    }
  
-    printf ("Benchworker done\n");
-
     ECCGETTIME (endTime);
 
     ECCELAPSED (elapsedTime, startTime, endTime);
 
+    //printf ("StartTime = %d Endtime = %d ElapsedTime = %.0f\n", startTime, endTime,
+    //        elapsedTime);
+
     totBytes = TEST_LEN (m);
-    totBytes = totBytes * 200 * m * 2;
+    totBytes = totBytes * 200 * m * cores;
     totBytes /= 1000000;
 
     if (elapsedTime > 0)
@@ -410,6 +479,10 @@ main (int argc, char *argv[])
     printf ("erasure_code_encode_cold: k=%d p=%d bandwidth %.0f MB in %.3f sec = %.2f MB/s\n", 
         k, p, totBytes, elapsedTime/1000, mbPerSecond ) ;
 
+    for (i = 0; i < cores; i++)
+    {
+        FreeClone (&Bench[ i ], k,p);
+    }
     // Perform the baseline benchmark
 
     BENCHMARK (&start, BENCHMARK_TIME,
