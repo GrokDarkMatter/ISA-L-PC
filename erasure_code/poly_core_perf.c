@@ -54,10 +54,10 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include <string.h> // for memset, memcmp
 typedef unsigned char u8;
 #include "PC_CPU_ID.c"
-#include <process.h>
 
 #ifdef __GNUC__
-
+#include <sys/time.h>
+#include <pthread.h>
 /// Macro to define a time value
 #define ECCTIME struct timeval
 /// Macro to get current time
@@ -74,7 +74,7 @@ typedef unsigned char u8;
 #define ECCTHREADWAIT(T) pthread_join (T, NULL)
 
 #else
-
+#include <process.h>
 // Same as above
 #define ECCTIME                 DWORD
 #define ECCGETTIME(X)           X = timeGetTime ()
@@ -171,7 +171,7 @@ BenchWorker (void *t)
 {
     struct PCBenchStruct *pcBench = (struct PCBenchStruct *) t;
    
-    int res = 0, m = pcBench->k + pcBench->p;
+    int m = pcBench->k + pcBench->p;
 
     for (int i = 0; i < pcBench->testReps; i++)
     {
@@ -197,7 +197,7 @@ usage (const char *app_name)
              "Usage: %s [options]\n"
              "  -h        Help\n"
              "  -k <val>  Number of source buffers\n"
-             "  -p <val>  Number of parity buffers\n",
+             "  -p <val>  Number of parity buffers\n"
              "  -c <val>  Number of cores\n",
              app_name);
 }
