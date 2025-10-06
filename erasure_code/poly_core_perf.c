@@ -113,7 +113,11 @@ ec_encode_data_avx512_gfni (int len, int m, int p, unsigned char *g_tbls, unsign
 #define __builtin_prefetch(a, b, c) _mm_prefetch ((const char *) (a), _MM_HINT_T0)
 #define _popcnt64                   __popcnt64
 #define NOPAPI                      1
+#else
+#include <sys/time.h>
+#include <pthread.h>
 #endif
+
 #ifdef __aarch64__
 #define NOPAPI 1
 #include "aarch64/PCLib_AARCH64_NEON.c"
@@ -124,8 +128,6 @@ extern void
 ec_encode_data_neon (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
 #else
 #include <immintrin.h>
-#include <sys/time.h>
-#include <pthread.h>
 #include "PCLib_2D_AVX512_GFNI.c"
 #endif
 
