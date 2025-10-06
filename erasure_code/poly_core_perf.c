@@ -54,7 +54,6 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include <string.h> // for memset, memcmp
 typedef unsigned char u8;
 #include "PC_CPU_ID.c"
-#include <process.h>
 
 #ifdef __GNUC__
 
@@ -110,6 +109,7 @@ ec_encode_data_avx512_gfni (int len, int m, int p, unsigned char *g_tbls, unsign
 #define NOPAPI 1
 
 #ifdef _WIN64
+#include <process.h>
 #define __builtin_prefetch(a, b, c) _mm_prefetch ((const char *) (a), _MM_HINT_T0)
 #define _popcnt64                   __popcnt64
 #define NOPAPI                      1
@@ -124,6 +124,8 @@ extern void
 ec_encode_data_neon (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
 #else
 #include <immintrin.h>
+#include <sys/time.h>
+#include <pthread.h>
 #include "PCLib_2D_AVX512_GFNI.c"
 #endif
 
@@ -173,7 +175,7 @@ BenchWorker (void *t)
 {
     struct PCBenchStruct *pcBench = (struct PCBenchStruct *) t;
    
-    int res = 0, m = pcBench->k + pcBench->p;
+    int m = pcBench->k + pcBench->p;
 
     for (int i = 0; i < pcBench->testReps; i++)
     {
@@ -199,7 +201,7 @@ usage (const char *app_name)
              "Usage: %s [options]\n"
              "  -h        Help\n"
              "  -k <val>  Number of source buffers\n"
-             "  -p <val>  Number of parity buffers\n",
+             "  -p <val>  Number of parity buffers\n"
              "  -c <val>  Number of cores\n",
              app_name);
 }
@@ -217,7 +219,7 @@ InitClone (struct PCBenchStruct * ps, unsigned char k, unsigned char p, int test
 
     // Now allocate data buffers (k+p)
     unsigned char **buffs, *buf;
-    if (posix_memalign (&buffs, 64, sizeof ( unsigned char * ) * m ) )
+    if (posix_memalign ((void *)&buffs, 64, sizeof ( unsigned char * ) * m ) )
     {
         printf ("Error allocating buffs\n");
         return 0;
@@ -225,7 +227,7 @@ InitClone (struct PCBenchStruct * ps, unsigned char k, unsigned char p, int test
     memset (buffs, 0, sizeof (unsigned char *) * m);
     for (int i = 0; i < m; i++)
     {
-        if (posix_memalign (&buf, 64, TEST_LEN (m)))
+        if (posix_memalign ((void *)&buf, 64, TEST_LEN (m)))
         {
             printf ("Error allocating buffers\n");
             return 0;
@@ -234,7 +236,7 @@ InitClone (struct PCBenchStruct * ps, unsigned char k, unsigned char p, int test
     }
     ps->Data = buffs;
 
-    if (posix_memalign (&buffs, 64, sizeof (unsigned char *) * p))
+    if (posix_memalign ((void *)&buffs, 64, sizeof (unsigned char *) * p))
     {
         printf ("Error allocating Syns\n");
         return 0;
@@ -243,7 +245,7 @@ InitClone (struct PCBenchStruct * ps, unsigned char k, unsigned char p, int test
 
     for (int i = 0; i < p; i++)
     {
-        if (posix_memalign (&buf, 64, TEST_LEN (m)))
+        if (posix_memalign ((void *)&buf, 64, TEST_LEN (m)))
         {
             printf ("Error allocating buffers\n");
             return 0;
@@ -252,7 +254,7 @@ InitClone (struct PCBenchStruct * ps, unsigned char k, unsigned char p, int test
     }
     ps->Syn = buffs;
     
-    if (posix_memalign (&ps->g_tbls, 64, 255*32*8))
+    if (posix_memalign ((void *)&ps->g_tbls, 64, 255*32*8))
     {
         printf ("Error allocating g_tbls\n");
         return 0;
