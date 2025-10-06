@@ -100,9 +100,6 @@ dump_u8xu8 (unsigned char *s, int k, int m)
     }
     printf ("\n");
 }
-extern int
-ec_encode_data_avx512_gfni (int len, int m, int p, unsigned char *g_tbls, unsigned char **data,
-                            unsigned char **coding);
 
 #define NOPAPI 1
 
@@ -118,13 +115,16 @@ ec_encode_data_avx512_gfni (int len, int m, int p, unsigned char *g_tbls, unsign
 
 #ifdef __aarch64__
 #define NOPAPI 1
-#include "aarch64/PCLib_AARCH64_NEON.c"
 #include <arm_neon.h>
+#include "aarch64/PCLib_AARCH64_NEON.c"
 extern void
 ec_encode_data_neon (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
 extern void
 ec_encode_data_neon (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
 #else
+extern int
+ec_encode_data_avx512_gfni (int len, int m, int p, unsigned char *g_tbls, unsigned char **data,
+                            unsigned char **coding);
 #include <immintrin.h>
 #include "PCLib_2D_AVX512_GFNI.c"
 #endif
@@ -183,8 +183,13 @@ BenchWorker (void *t)
         switch (pcBench->testNum)
         {
         case 1:
+#ifndef __aarch64__
             ec_encode_data_avx512_gfni (TEST_LEN (m), pcBench->k, pcBench->p, pcBench->g_tbls,
                                         pcBench->Data, pcBench->Syn);
+#else
+            ec_encode_data_neon (TEST_LEN (m), pcBench->k, pcBench->p, pcBench->g_tbls,
+                                        pcBench->Data, pcBench->Syn);
+#endif
             break;
         default:
             printf ("Error Test '%d' not valid\n", pcBench->testNum);
@@ -292,8 +297,6 @@ main (int argc, char *argv[])
     u8 *temp_buffs[ TEST_SOURCES ] = { NULL };
     u8 *buffs[ TEST_SOURCES ] = { NULL };
 
-    struct perf start;
-
     /* Set default parameters */
     k = 223;
     p = 32;
@@ -363,21 +366,23 @@ main (int argc, char *argv[])
     PC_CPU_ID ();
     printf ("Testing with %u data buffers and %u parity buffers\n", k, p);
     printf ("erasure_code_perf: %dx%d %d\n", m, TEST_LEN (m), nerrs);
-
+#ifndef __aarch64__
     // Build the power, log and inverse tables
     pc_bpow_2d (3);
     pc_blog_2d ();
     pc_binv_2d ();
-
-    // Create memory for encoding matrices
-    // a = malloc ( MMAX * ( KMAX*2 ) ) ;
     a = malloc (sizeof (Vand1b));
+#else
+    // Create memory for encoding matrices
+
+    a = malloc ( MMAX * ( KMAX*2 ) ) ;
+#endif
     if (a == NULL)
     {
         printf ("Error allocating a\n");
         goto exit;
     }
-
+#ifndef __aarch64__
     // Initialize the Vandermonde matrix
     pc_gen_rsr_matrix_2d (a, 4);
 
@@ -386,7 +391,7 @@ main (int argc, char *argv[])
     // Initialize the encoding matrix
     pc_gen_poly_matrix_2d (a, 255, 255 - 4);
     pc_bmat_2d (a, 4);
-
+#endif
     // Allocate the arrays
     if (posix_memalign (&buf, 64, TEST_LEN (m)))
     {
@@ -429,10 +434,12 @@ main (int argc, char *argv[])
         for (j = 0; j < TEST_LEN (m); j++)
             buffs[ i ][ j ] = rand ();
     // buffs [ k - 1 ] [ 59 ] = 1 ;;
-
+#ifndef __aarch64__
     // Print test type
     printf ("Testing AVX512-GFNI\n");
-
+#else
+    printf ("Testing ARM64 NEON\n" ) ;
+#endif
     struct PCBenchStruct Bench[ PC_MAX_CORES ] = { 0 };
 
     // Initialize the clones
@@ -485,6 +492,7 @@ main (int argc, char *argv[])
     {
         FreeClone (&Bench[ i ], k,p);
     }
+#ifndef __aarch64__
     // Perform the baseline benchmark
 
     BENCHMARK (&start, BENCHMARK_TIME,
@@ -567,7 +575,7 @@ main (int argc, char *argv[])
 
     printf ("polynomial_code_sdeu" TEST_TYPE_STR ": k=%d p=%d ", m, p);
     perf_print (start, (long long) (TEST_LEN (m)) * (m));
-
+#endif
     printf (" done all: Pass\n");
     fflush (stdout);
 
