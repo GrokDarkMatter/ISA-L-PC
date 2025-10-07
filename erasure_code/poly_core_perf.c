@@ -127,6 +127,7 @@ ec_encode_data_avx512_gfni (int len, int m, int p, unsigned char *g_tbls, unsign
                             unsigned char **coding);
 #include <immintrin.h>
 #include "PCLib_2D_AVX512_GFNI.c"
+#include "PCLib_AVX512_GFNI.c"
 #endif
 
 #define PC_MAX_CORES 32
@@ -166,6 +167,8 @@ struct PCBenchStruct
     unsigned char k;
     unsigned char p;
     unsigned char *g_tbls;
+    unsigned char * plyTab;
+    unsigned char * pwrTab;
     int testNum;
     int testReps;
 };
@@ -185,12 +188,25 @@ BenchWorker (void *t)
         case 1:
 #ifndef __aarch64__
             ec_encode_data_avx512_gfni (TEST_LEN (m), pcBench->k, pcBench->p, pcBench->g_tbls,
-                                        pcBench->Data, pcBench->Syn);
+                                        pcBench->Data, &pcBench->Data[ pcBench->k ]);
 #else
             ec_encode_data_neon (TEST_LEN (m), pcBench->k, pcBench->p, pcBench->g_tbls,
-                                        pcBench->Data, pcBench->Syn);
+                                 pcBench->Data, &pcBench->data[ pcBench -> k ]);
 #endif
             break;
+        case 2:
+            ec_encode_data_avx512_gfni (TEST_LEN (m), m, pcBench->p, pcBench->g_tbls, pcBench->Data,
+                                        pcBench->Syn);
+            break;
+        case 3:
+            pc_encode_data_avx512_gfni (TEST_LEN (m), pcBench->k, pcBench->p, pcBench->plyTab,
+                                        pcBench->Data, &pcBench->Data[ pcBench->k ]);
+            break;
+        case 4:
+            pc_decode_data_avx512_gfni (TEST_LEN (m), m, pcBench->p, pcBench->pwrTab,
+                                        pcBench->Data, pcBench->Syn, 1);
+            break;
+
         default:
             printf ("Error Test '%d' not valid\n", pcBench->testNum);
         }
@@ -266,7 +282,35 @@ InitClone (struct PCBenchStruct * ps, unsigned char k, unsigned char p, int test
         printf ("Error allocating g_tbls\n");
         return 0;
     }
-    memset ( ps->g_tbls, 255, 255*32*8) ;
+    memset (ps->g_tbls, 1, 255 * 32 * 8);
+
+    ps->plyTab = malloc (255*8);
+    if (ps->plyTab == 0)
+        return 0;
+
+    ps->pwrTab = malloc (255*8);
+    if (ps->pwrTab == 0)
+        return 0;
+
+    // Initialize tables for encoding
+    unsigned char a[ 255 ];
+    gf_gen_poly (a, p);
+
+    // Initialize decoding table
+    unsigned char b[ 255 ];
+    int i = 2;
+    for (int j = p - 2; j >= 0; j--)
+    {
+        b[ j ] = i;
+        i = gf_mul (i, 2);
+    }
+
+    //printf ("poly and pwr tables p=%d\n", p);
+    //dump_u8xu8 (a, 1, p);
+    //dump_u8xu8 (b, 1, p-1);
+    ec_init_tables (p, 1, a, ps->plyTab);
+    ec_init_tables (p - 1, 1, b, ps->pwrTab);
+
     return 1;
 }
 
@@ -287,6 +331,8 @@ FreeClone (struct PCBenchStruct *ps, unsigned char k, unsigned char p)
     aligned_free (ps->g_tbls);
     aligned_free (ps->Data);
     aligned_free (ps->Syn);
+    free (ps->plyTab);
+    free (ps->pwrTab);
 }
 
 int 
@@ -459,38 +505,73 @@ main (int argc, char *argv[])
     double elapsedTime, mbPerSecond, totBytes;
     ECCTHREAD clone [ PC_MAX_CORES ];
 
-    ECCGETTIME (startTime);
- 
-    // Start each benchmark thread
-    for (i = 0; i < cores; i++)
+    for (int curCore = 1; curCore <= cores; curCore++)
     {
-        ECCTHREADSTART (clone[ i ], BenchWorker, Bench[i]);
+        printf ("Testing with %d cores\n", curCore);
+        for (int curTest = 1; curTest <= 4; curTest++)
+        {
+            for (int curBench = 0; curBench < cores; curBench++)
+            {
+                Bench[ curBench ].testNum = curTest;
+            }
+            ECCGETTIME (startTime);
+
+            // Start each benchmark thread
+            for (i = 0; i < curCore; i++)
+            {
+                ECCTHREADSTART (clone[ i ], BenchWorker, Bench[ i ]);
+            }
+
+            // Wait for each benchmark thread to complete
+            for (i = 0; i < curCore; i++)
+            {
+                ECCTHREADWAIT (clone[ i ]);
+            }
+
+            ECCGETTIME (endTime);
+
+            ECCELAPSED (elapsedTime, startTime, endTime);
+
+            // printf ("StartTime = %d Endtime = %d ElapsedTime = %.0f\n", startTime, endTime,
+            //         elapsedTime);
+
+            totBytes = TEST_LEN (m);
+            totBytes = totBytes * 200 * m * curCore;
+            totBytes /= 1000000;
+
+            if (elapsedTime > 0)
+                mbPerSecond = (totBytes / elapsedTime) * 1000;
+            else
+                mbPerSecond = 0;
+
+            switch (curTest)
+            {
+            case 1:
+                printf ("erasure_code_encode_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
+                       "sec = %.2f MB/s\n",
+                       curCore, k, p, totBytes, elapsedTime / 1000, mbPerSecond);
+                break;
+            case 2:
+                printf ("erasure_code_decode_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
+                        "sec = %.2f MB/s\n",
+                        curCore, k+p, p, totBytes, elapsedTime / 1000, mbPerSecond);
+                break;
+            case 3:
+                printf ("polynomial_code_pls_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
+                        "sec = %.2f MB/s\n",
+                        curCore, k, p, totBytes, elapsedTime / 1000, mbPerSecond);
+                break;
+            case 4:
+                printf ("polynomial_code_pss_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
+                        "sec = %.2f MB/s\n",
+                        curCore, k+p, p, totBytes, elapsedTime / 1000, mbPerSecond);
+                break;
+            }
+            //printf ("erasure_code_encode_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f sec "
+            //        "= %.2f MB/s\n",
+            //        curCore, k, p, totBytes, elapsedTime / 1000, mbPerSecond);
+        }
     }
-
-    // Wait for each benchmark thread to complete
-    for (i = 0; i < cores; i++)
-    {
-        ECCTHREADWAIT (clone[ i ]);
-    }
- 
-    ECCGETTIME (endTime);
-
-    ECCELAPSED (elapsedTime, startTime, endTime);
-
-    //printf ("StartTime = %d Endtime = %d ElapsedTime = %.0f\n", startTime, endTime,
-    //        elapsedTime);
-
-    totBytes = TEST_LEN (m);
-    totBytes = totBytes * 200 * m * cores;
-    totBytes /= 1000000;
-
-    if (elapsedTime > 0)
-        mbPerSecond = ( totBytes / elapsedTime ) * 1000 ;
-    else
-        mbPerSecond = 0;
-
-    printf ("erasure_code_encode_cold: k=%d p=%d bandwidth %.0f MB in %.3f sec = %.2f MB/s\n", 
-        k, p, totBytes, elapsedTime/1000, mbPerSecond ) ;
 
     for (i = 0; i < cores; i++)
     {
