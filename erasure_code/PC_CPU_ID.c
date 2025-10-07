@@ -94,82 +94,101 @@ PC_CPU_ID ()
 #else
 #include <stdio.h>
 #include <string.h>
+#include <cpuid.h>
 
 int
-check_gfni_support ()
+check_gfni_support (void)
 {
     unsigned int eax, ebx, ecx, edx;
     __cpuid (0x7, eax, ebx, ecx, edx); // Leaf 0x7, subleaf 0
     return (ecx & (1 << 8)) != 0;      // Check ECX bit 8 for GFNI
 }
 
-int PC_CPU_ID( void ) {
-    FILE* fp = fopen("/proc/cpuinfo", "r");
-    if (fp == NULL) {
-        printf("Failed to open /proc/cpuinfo\n");
+int
+PC_CPU_ID (void)
+{
+    FILE *fp = fopen ("/proc/cpuinfo", "r");
+    if (fp == NULL)
+    {
+        printf ("Failed to open /proc/cpuinfo\n");
         return 1;
     }
 
-int check_gfni_support() {
-    unsigned int eax, ebx, ecx, edx;
-    __cpuid(0x7, eax, ebx, ecx, edx); // Leaf 0x7, subleaf 0
-    return (ecx & (1 << 8)) != 0; // Check ECX bit 8 for GFNI
-}
-    int s=0, Cores = 0, m ;
-    char line[1024];
-    printf("Processor Details:\n");
-    while (fgets(line, sizeof(line), fp)) {
+    int s = 0, Cores = 0, m;
+    char line[ 1024 ];
+    printf ("Processor Details:\n");
+    while (fgets (line, sizeof (line), fp))
+    {
         // Print specific fields for name and details
-        m = 0 ;
-        if (strncmp(line, "vendor_id", 9) == 0) m = 1 ;
-        if (strncmp(line, "processor", 9) == 0) m = 1 ;
-        if (strncmp(line, "CPU architecture", 16) == 0)
+        m = 0;
+        if (strncmp (line, "vendor_id", 9) == 0)
+            m = 1;
+        if (strncmp (line, "processor", 9) == 0)
+            m = 1;
+        if (strncmp (line, "CPU architecture", 16) == 0)
         {
-            if ( strncmp ( line, "CPU architecture: 8", 19 ) == 0 )
+            if (strncmp (line, "CPU architecture: 8", 19) == 0)
             {
-                strncpy ( line, "CPU architecture: ARMv8\n", 25 ) ;
+                strncpy (line, "CPU architecture: ARMv8\n", 25);
             }
-            m = 1 ;
-        }
-        if (strncmp(line, "cpu family", 10) == 0) m = 1 ;
-        if (strncmp(line, "CPU implementer", 15) == 0)
-        {
-            if (strncmp(line, "CPU implementer	: 0x41", 22 ) == 0)
-            {
-                strncpy ( line, "CPU Implementer : ARM Holdings\n", 32 ) ; ;
-            }
-            m = 1 ;
-         }
-        if (strncmp(line, "CPU variant", 11) == 0) m = 1 ;
-        if (strncmp(line, "CPU part", 8) == 0)
-        {
-            if ( strncmp ( line, "CPU part	: 0xd0b", 16 ) == 0 )
-            {
-                strncpy ( line, "CPU part	: Cortex-A76 core\n", 28 ) ; ;
-            } 
             m = 1;
         }
-        if (strncmp(line, "CPU revision", 12) == 0) m = 1 ;
-        if (strncmp(line, "BogoMIPS", 8) == 0) m = 1 ;
-        if (strncmp(line, "cpu family", 10) == 0) m = 1 ;
-        if (strncmp(line, "model\t", 6) == 0) m = 1 ;
-        if (strncmp(line, "model name", 10) == 0) m = 1 ;
-        if (strncmp(line, "stepping", 8) == 0) m = 1 ;
-        if (strncmp(line, "microcode", 9) == 0) m = 1 ;
-        if (strncmp(line, "cpu MHz", 7) == 0) m = 1 ;
-        if ( m )
+        if (strncmp (line, "cpu family", 10) == 0)
+            m = 1;
+        if (strncmp (line, "CPU implementer", 15) == 0)
         {
-            if ( s == 0 ) printf("%s", line);
-            if ( strncmp(line, "cpu family", 10) == 0 ) Cores ++ ;
-            if ( strncmp(line, "processor", 9) == 0 ) Cores ++ ;
-            if ( strncmp(line, "cpu MHz", 7 ) == 0 ) s=1 ;
-            if ( strncmp(line, "CPU revision", 12 ) == 0 ) s=1 ;
+            if (strncmp (line, "CPU implementer	: 0x41", 22) == 0)
+            {
+                strncpy (line, "CPU Implementer : ARM Holdings\n", 32);
+                ;
+            }
+            m = 1;
+        }
+        if (strncmp (line, "CPU variant", 11) == 0)
+            m = 1;
+        if (strncmp (line, "CPU part", 8) == 0)
+        {
+            if (strncmp (line, "CPU part	: 0xd0b", 16) == 0)
+            {
+                strncpy (line, "CPU part	: Cortex-A76 core\n", 28);
+                ;
+            }
+            m = 1;
+        }
+        if (strncmp (line, "CPU revision", 12) == 0)
+            m = 1;
+        if (strncmp (line, "BogoMIPS", 8) == 0)
+            m = 1;
+        if (strncmp (line, "cpu family", 10) == 0)
+            m = 1;
+        if (strncmp (line, "model\t", 6) == 0)
+            m = 1;
+        if (strncmp (line, "model name", 10) == 0)
+            m = 1;
+        if (strncmp (line, "stepping", 8) == 0)
+            m = 1;
+        if (strncmp (line, "microcode", 9) == 0)
+            m = 1;
+        if (strncmp (line, "cpu MHz", 7) == 0)
+            m = 1;
+        if (m)
+        {
+            if (s == 0)
+                printf ("%s", line);
+            if (strncmp (line, "cpu family", 10) == 0)
+                Cores++;
+            if (strncmp (line, "processor", 9) == 0)
+                Cores++;
+            if (strncmp (line, "cpu MHz", 7) == 0)
+                s = 1;
+            if (strncmp (line, "CPU revision", 12) == 0)
+                s = 1;
         }
     }
-    printf ( "cpu cores	: %d\n", Cores ) ;
-    printf ("GFNI Support: %s\n", check_gfni_support () ? "Yes" : "No");
+    printf ("cpu cores       : %d\n", Cores);
+    printf ("GFNI Support    : %s\n", check_gfni_support () ? "Yes" : "No");
 
-    fclose(fp);
+    fclose (fp);
     return Cores;
 }
 #endif
