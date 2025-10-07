@@ -89,7 +89,7 @@ PC_CPU_ID ()
         printf ("Failed to retrieve clock speed from registry\n");
     }
 
-    return 0;
+    return si.dwNumberOfProcessors;
 }
 #else
 #include <stdio.h>
