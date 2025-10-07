@@ -583,6 +583,14 @@ main (int argc, char *argv[])
                 break;
             }
         }
+        if (elapsedTime > 2000) // If greater than 2 seconds
+        {
+            //printf ("Elapsed Time = %lf\n", elapsedTime);
+            for (int curP = 0; curP < cores; curP++)
+            {
+                Bench[ curP ].testReps /= 2;
+            }
+        }
     }
 
     for (i = 0; i < cores; i++)
