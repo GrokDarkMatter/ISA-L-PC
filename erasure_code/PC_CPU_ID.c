@@ -102,6 +102,13 @@ check_gfni_support (void)
 {
     unsigned int eax, ebx, ecx, edx;
     __cpuid (0x7, eax, ebx, ecx, edx); // Leaf 0x7, subleaf 0
+    unsigned int GFNI = (ecx & (1 << 8)) != 0;
+    unsigned int AVX512 = (ebx & (1 << 16)) != 0;
+    if ((GFNI == 0) || (AVX512 == 0))
+    {
+        printf ("Error this processor does not support AVX512 and GFNI\n");
+        exit 0
+    }
     return (ecx & (1 << 8)) != 0;      // Check ECX bit 8 for GFNI
 }
 #endif
