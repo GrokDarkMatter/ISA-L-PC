@@ -59,7 +59,7 @@ int PC_CPU_ID() {
         //printf("Failed to retrieve clock speed from registry\n");
     }
 
-    return 0;
+    return si.dwNumberOfProcessors;
 }
 #else
 #include <stdio.h>
@@ -126,6 +126,6 @@ int PC_CPU_ID( void ) {
     printf ( "cpu cores	: %d\n", Cores ) ;
 
     fclose(fp);
-    return 0;
+    return Cores;
 }
 #endif

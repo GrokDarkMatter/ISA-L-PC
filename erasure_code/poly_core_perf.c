@@ -339,18 +339,17 @@ int
 main (int argc, char *argv[])
 {
     // Work variables
-    int i, j, m, k, p, nerrs, ret = -1, cores = 1;
+    int i, j, m, k, p, nerrs, ret = -1, cores;
     void *buf;
     u8 *a, *g_tbls = 0, *z0 = 0;
     u8 *temp_buffs[ TEST_SOURCES ] = { NULL };
     u8 *buffs[ TEST_SOURCES ] = { NULL };
-#ifndef __aarch64__
-    struct perf start;
-#endif
+
     /* Set default parameters */
     k = 223;
     p = 32;
-    nerrs = 32;
+
+    cores = PC_CPU_ID ();
 
     /* Parse arguments */
     for (i = 1; i < argc; i++)
@@ -377,12 +376,6 @@ main (int argc, char *argv[])
             usage (argv[ 0 ]);
             return -1;
         }
-    }
-
-    // Do a little paramater validation
-    if (nerrs > k)
-    {
-        nerrs = k;
     }
 
     if (k <= 0)
@@ -413,7 +406,6 @@ main (int argc, char *argv[])
     }
 
     // Print output header
-    PC_CPU_ID ();
     printf ("Testing with %u data buffers and %u parity buffers\n", k, p);
     printf ("erasure_code_perf: %dx%d %d\n", m, TEST_LEN (m), nerrs);
 #ifndef __aarch64__
@@ -507,7 +499,7 @@ main (int argc, char *argv[])
 
     for (int curCore = 1; curCore <= cores; curCore++)
     {
-        printf ("Testing with %d cores\n", curCore);
+        printf ("Testing with %d of %d cores\n", curCore, cores);
         for (int curTest = 1; curTest <= 4; curTest++)
         {
             for (int curBench = 0; curBench < cores; curBench++)
@@ -567,9 +559,6 @@ main (int argc, char *argv[])
                         curCore, k+p, p, totBytes, elapsedTime / 1000, mbPerSecond);
                 break;
             }
-            //printf ("erasure_code_encode_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f sec "
-            //        "= %.2f MB/s\n",
-            //        curCore, k, p, totBytes, elapsedTime / 1000, mbPerSecond);
         }
     }
 
@@ -577,94 +566,11 @@ main (int argc, char *argv[])
     {
         FreeClone (&Bench[ i ], k,p);
     }
-#ifndef __aarch64__
-    // Perform the baseline benchmark
-
-    BENCHMARK (&start, BENCHMARK_TIME,
-               ec_encode_data_avx512_gfni (TEST_LEN (m), k, p, g_tbls, buffs, &buffs[ k ]));
-
-    printf ("erasure_code_encode" TEST_TYPE_STR ": k=%d p=%d ", k, p);
-    perf_print (start, (long long) (TEST_LEN (m)) * (m));
-
-    unsigned char LFSRTab[ 32 ];
-    // Test intrinsics lfsr
-    pc_gen_poly_2d (LFSRTab, p);
-    // dump_u8xu8 ( LFSRTab, 1, 4 ) ;
-    BENCHMARK (&start, BENCHMARK_TIME,
-               pc_encode_data_avx512_gfni_2d (TEST_LEN (m), k, p, LFSRTab, buffs, &buffs[ k ]));
-    // pc_encode_data_avx512_gfni_2d(64, k, p, LFSRTab, buffs, &buffs [ k ]);
-
-    printf ("polynomial_code_pls" TEST_TYPE_STR ": k=%d p=%d ", k, p);
-    perf_print (start, (long long) (TEST_LEN (m)) * (m));
-
-    // for ( i = 0 ; i < m ; i ++ )
-    //{
-    //     dump_u8xu8 ( ( unsigned char * ) buffs [ i ], 1, 64 ) ;
-    // }
-
-    BENCHMARK (&start, BENCHMARK_TIME,
-               ec_encode_data_avx512_gfni (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs));
-
-    printf ("dot_prod_decode" TEST_TYPE_STR ":     k=%d p=%d ", m, p);
-    perf_print (start, (long long) (TEST_LEN (m)) * (m));
-
-    // Now benchmark parallel syndrome sequencer - First create power vector
-    unsigned char pwrTab[ 32 ];
-    i = 3;
-    for (j = p - 2; j >= 0; j--)
-    {
-        pwrTab[ j ] = i;
-        i = pc_mul_2d (i, 3);
-    }
-
-    int done;
-    // printf ( "Before Benchmark\n" ) ;
-    BENCHMARK (&start, BENCHMARK_TIME,
-               done = pc_decode_data_avx512_gfni_2d (TEST_LEN (m), m, p, pwrTab, buffs, temp_buffs,
-                                                     1));
-    //        done=pc_decode_data_avx512_gfni_2d(64, m, p, pwrTab, buffs, temp_buffs, 1);
-    // printf ( "After benchmark\n" ) ;
-
-    printf ("polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p);
-    perf_print (start, (long long) (TEST_LEN (m)) * (m));
-
-    printf ("Length decoded = %x TEST_LEN(m) = %x\n", done, TEST_LEN (m));
-    for (i = 0; i < p; i++)
-    {
-        if (0 != memcmp (z0, temp_buffs[ i ], TEST_LEN (m)))
-        {
-            printf ("Fail zero compare (%d, %d, %d, %d) - ", m, k, p, i);
-            dump_u8xu8 (z0, 1, 16);
-            dump_u8xu8 (temp_buffs[ i ], 1, 256);
-            // goto exit;
-        }
-    }
-
-    BENCHMARK (&start, BENCHMARK_TIME, PC_SingleEncoding (buffs, TEST_LEN (m), m));
-
-    printf ("polynomial_code_sen" TEST_TYPE_STR ": k=%d p=%d ", m, p);
-    perf_print (start, (long long) (TEST_LEN (m)) * (m));
-
-    unsigned char syn[ 4 ];
-    BENCHMARK (&start, BENCHMARK_TIME, done = PC_SingleDecoding (buffs, TEST_LEN (m), m, syn));
-
-    printf ("polynomial_code_sde" TEST_TYPE_STR ": k=%d p=%d ", m, p);
-    perf_print (start, (long long) (TEST_LEN (m)) * (m));
-
-    BENCHMARK (&start, BENCHMARK_TIME, PC_SingleEncoding_u (buffs, TEST_LEN (m), m));
-
-    printf ("polynomial_code_senu" TEST_TYPE_STR ": k=%d p=%d ", m, p);
-    perf_print (start, (long long) (TEST_LEN (m)) * (m));
-
-    BENCHMARK (&start, BENCHMARK_TIME, done = PC_SingleDecoding_u (buffs, TEST_LEN (m), m, syn));
-
-    printf ("polynomial_code_sdeu" TEST_TYPE_STR ": k=%d p=%d ", m, p);
-    perf_print (start, (long long) (TEST_LEN (m)) * (m));
-#endif
     printf (" done all: Pass\n");
     fflush (stdout);
 
     ret = 0;
+
 exit:
     aligned_free (z0);
     free (a);
