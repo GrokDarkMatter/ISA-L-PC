@@ -182,17 +182,13 @@ BenchWorker (void *t)
 
     for (int i = 0; i < pcBench->testReps; i++)
     {
+#ifndef __aarch64__
         // Select the appropriate test
         switch (pcBench->testNum)
         {
         case 1:
-#ifndef __aarch64__
             ec_encode_data_avx512_gfni (TEST_LEN (m), pcBench->k, pcBench->p, pcBench->g_tbls,
                                         pcBench->Data, &pcBench->Data[ pcBench->k ]);
-#else
-            ec_encode_data_neon (TEST_LEN (m), pcBench->k, pcBench->p, pcBench->g_tbls,
-                                 pcBench->Data, &pcBench->data[ pcBench -> k ]);
-#endif
             break;
         case 2:
             ec_encode_data_avx512_gfni (TEST_LEN (m), m, pcBench->p, pcBench->g_tbls, pcBench->Data,
@@ -210,6 +206,29 @@ BenchWorker (void *t)
         default:
             printf ("Error Test '%d' not valid\n", pcBench->testNum);
         }
+#else
+        switch (pcBench->testNum)
+        {
+        case 1:
+            ec_encode_data_neon (TEST_LEN (m), pcBench->k, pcBench->p, pcBench->g_tbls,
+                                 pcBench->Data, &pcBench->Data[ pcBench -> k ]);
+            break ;
+        case 2:
+            ec_encode_data_neon (TEST_LEN (m), m, pcBench->p, pcBench->g_tbls,
+                                 pcBench->Data, &pcBench->Data[ pcBench -> k ]);
+            break ;
+        case 3:
+            pc_encode_data_neon (TEST_LEN (m), pcBench->k, pcBench->p, pcBench->plyTab,
+                                 pcBench->Data, &pcBench->Data[ pcBench -> k ]);
+            break ;
+        case 4:
+            pc_decode_data_neon (TEST_LEN (m), m, pcBench->p, pcBench->pwrTab,
+                                 pcBench->Data, pcBench->Syn, 1) ;
+            break ;
+        default:
+            printf ("Error Test '%d' not valid\n", pcBench->testNum);
+        }
+#endif
     }
 
     ECCENDTHREAD;
@@ -277,18 +296,18 @@ InitClone (struct PCBenchStruct * ps, unsigned char k, unsigned char p, int test
     }
     ps->Syn = buffs;
     
-    if (posix_memalign ((void *)&ps->g_tbls, 64, 255*32*8))
+    if (posix_memalign ((void *)&ps->g_tbls, 64, 255*32*32))
     {
         printf ("Error allocating g_tbls\n");
         return 0;
     }
-    memset (ps->g_tbls, 1, 255 * 32 * 8);
+    memset (ps->g_tbls, 1, 255 * 32 * 32);
 
-    ps->plyTab = malloc (255*8);
+    ps->plyTab = malloc (255*32);
     if (ps->plyTab == 0)
         return 0;
 
-    ps->pwrTab = malloc (255*8);
+    ps->pwrTab = malloc (255*32);
     if (ps->pwrTab == 0)
         return 0;
 
@@ -487,7 +506,11 @@ main (int argc, char *argv[])
     // Initialize the clones
     for (i = 0; i < cores; i++)
     {
+#ifndef __aarch64__
         if (InitClone(&Bench[i], k, p, 1, 200) == 0)
+#else
+        if (InitClone(&Bench[i], k, p, 1, 20) == 0)
+#endif
         {
             printf ("Initclone %d failed\n", i);
         }
@@ -528,7 +551,7 @@ main (int argc, char *argv[])
             //         elapsedTime);
 
             totBytes = TEST_LEN (m);
-            totBytes = totBytes * 200 * m * curCore;
+            totBytes = totBytes * Bench [ 0 ].testReps * m * curCore;
             totBytes /= 1000000;
 
             if (elapsedTime > 0)
