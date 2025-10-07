@@ -94,6 +94,7 @@ PC_CPU_ID ()
 #else
 #include <stdio.h>
 #include <string.h>
+#ifndef __aarch64__
 #include <cpuid.h>
 
 int
@@ -103,7 +104,7 @@ check_gfni_support (void)
     __cpuid (0x7, eax, ebx, ecx, edx); // Leaf 0x7, subleaf 0
     return (ecx & (1 << 8)) != 0;      // Check ECX bit 8 for GFNI
 }
-
+#endif
 int
 PC_CPU_ID (void)
 {
@@ -186,8 +187,9 @@ PC_CPU_ID (void)
         }
     }
     printf ("cpu cores       : %d\n", Cores);
+#ifndef __aarch64__
     printf ("GFNI Support    : %s\n", check_gfni_support () ? "Yes" : "No");
-
+#endif
     fclose (fp);
     return Cores;
 }
