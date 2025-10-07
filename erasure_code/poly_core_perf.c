@@ -167,8 +167,8 @@ struct PCBenchStruct
     unsigned char k;
     unsigned char p;
     unsigned char *g_tbls;
-    unsigned char * plyTab;
-    unsigned char * pwrTab;
+    unsigned char *plyTab;
+    unsigned char *pwrTab;
     int testNum;
     int testReps;
 };
@@ -177,7 +177,7 @@ void
 BenchWorker (void *t)
 {
     struct PCBenchStruct *pcBench = (struct PCBenchStruct *) t;
-   
+
     int m = pcBench->k + pcBench->p;
 
     for (int i = 0; i < pcBench->testReps; i++)
@@ -199,8 +199,8 @@ BenchWorker (void *t)
                                         pcBench->Data, &pcBench->Data[ pcBench->k ]);
             break;
         case 4:
-            pc_decode_data_avx512_gfni (TEST_LEN (m), m, pcBench->p, pcBench->pwrTab,
-                                        pcBench->Data, pcBench->Syn, 1);
+            pc_decode_data_avx512_gfni (TEST_LEN (m), m, pcBench->p, pcBench->pwrTab, pcBench->Data,
+                                        pcBench->Syn, 1);
             break;
 
         default:
@@ -211,20 +211,20 @@ BenchWorker (void *t)
         {
         case 1:
             ec_encode_data_neon (TEST_LEN (m), pcBench->k, pcBench->p, pcBench->g_tbls,
-                                 pcBench->Data, &pcBench->Data[ pcBench -> k ]);
-            break ;
+                                 pcBench->Data, &pcBench->Data[ pcBench->k ]);
+            break;
         case 2:
-            ec_encode_data_neon (TEST_LEN (m), m, pcBench->p, pcBench->g_tbls,
-                                 pcBench->Data, &pcBench->Data[ pcBench -> k ]);
-            break ;
+            ec_encode_data_neon (TEST_LEN (m), m, pcBench->p, pcBench->g_tbls, pcBench->Data,
+                                 &pcBench->Data[ pcBench->k ]);
+            break;
         case 3:
             pc_encode_data_neon (TEST_LEN (m), pcBench->k, pcBench->p, pcBench->plyTab,
-                                 pcBench->Data, &pcBench->Data[ pcBench -> k ]);
-            break ;
+                                 pcBench->Data, &pcBench->Data[ pcBench->k ]);
+            break;
         case 4:
-            pc_decode_data_neon (TEST_LEN (m), m, pcBench->p, pcBench->pwrTab,
-                                 pcBench->Data, pcBench->Syn, 1) ;
-            break ;
+            pc_decode_data_neon (TEST_LEN (m), m, pcBench->p, pcBench->pwrTab, pcBench->Data,
+                                 pcBench->Syn, 1);
+            break;
         default:
             printf ("Error Test '%d' not valid\n", pcBench->testNum);
         }
@@ -248,7 +248,7 @@ usage (const char *app_name)
 
 // Create buffers and data structures for benchmark to run in another thread
 int
-InitClone (struct PCBenchStruct * ps, unsigned char k, unsigned char p, int testNum, int testReps)
+InitClone (struct PCBenchStruct *ps, unsigned char k, unsigned char p, int testNum, int testReps)
 {
     // Save parms for test in structure
     ps->k = k;
@@ -259,7 +259,7 @@ InitClone (struct PCBenchStruct * ps, unsigned char k, unsigned char p, int test
 
     // Now allocate data buffers (k+p)
     unsigned char **buffs, *buf;
-    if (posix_memalign ((void *)&buffs, 64, sizeof ( unsigned char * ) * m ) )
+    if (posix_memalign ((void *) &buffs, 64, sizeof (unsigned char *) * m))
     {
         printf ("Error allocating buffs\n");
         return 0;
@@ -267,17 +267,17 @@ InitClone (struct PCBenchStruct * ps, unsigned char k, unsigned char p, int test
     memset (buffs, 0, sizeof (unsigned char *) * m);
     for (int i = 0; i < m; i++)
     {
-        if (posix_memalign ((void *)&buf, 64, TEST_LEN (m)))
+        if (posix_memalign ((void *) &buf, 64, TEST_LEN (m)))
         {
             printf ("Error allocating buffers\n");
             return 0;
         }
-        memset ( buf, i, TEST_LEN(m) ) ;
+        memset (buf, i, TEST_LEN (m));
         buffs[ i ] = buf;
     }
     ps->Data = buffs;
 
-    if (posix_memalign ((void *)&buffs, 64, sizeof (unsigned char *) * p))
+    if (posix_memalign ((void *) &buffs, 64, sizeof (unsigned char *) * p))
     {
         printf ("Error allocating Syns\n");
         return 0;
@@ -286,28 +286,28 @@ InitClone (struct PCBenchStruct * ps, unsigned char k, unsigned char p, int test
 
     for (int i = 0; i < p; i++)
     {
-        if (posix_memalign ((void *)&buf, 64, TEST_LEN (m)))
+        if (posix_memalign ((void *) &buf, 64, TEST_LEN (m)))
         {
             printf ("Error allocating buffers\n");
             return 0;
         }
-        memset ( buf, i, TEST_LEN(m) ) ;
+        memset (buf, i, TEST_LEN (m));
         buffs[ i ] = buf;
     }
     ps->Syn = buffs;
-    
-    if (posix_memalign ((void *)&ps->g_tbls, 64, 255*32*32))
+
+    if (posix_memalign ((void *) &ps->g_tbls, 64, 255 * 32 * 32))
     {
         printf ("Error allocating g_tbls\n");
         return 0;
     }
     memset (ps->g_tbls, 1, 255 * 32 * 32);
 
-    ps->plyTab = malloc (255*32);
+    ps->plyTab = malloc (255 * 32);
     if (ps->plyTab == 0)
         return 0;
 
-    ps->pwrTab = malloc (255*32);
+    ps->pwrTab = malloc (255 * 32);
     if (ps->pwrTab == 0)
         return 0;
 
@@ -324,9 +324,9 @@ InitClone (struct PCBenchStruct * ps, unsigned char k, unsigned char p, int test
         i = gf_mul (i, 2);
     }
 
-    //printf ("poly and pwr tables p=%d\n", p);
-    //dump_u8xu8 (a, 1, p);
-    //dump_u8xu8 (b, 1, p-1);
+    // printf ("poly and pwr tables p=%d\n", p);
+    // dump_u8xu8 (a, 1, p);
+    // dump_u8xu8 (b, 1, p-1);
     ec_init_tables (p, 1, a, ps->plyTab);
     ec_init_tables (p - 1, 1, b, ps->pwrTab);
 
@@ -334,8 +334,8 @@ InitClone (struct PCBenchStruct * ps, unsigned char k, unsigned char p, int test
 }
 
 // Free data buffers for other thread benchmarks
-void 
-FreeClone (struct PCBenchStruct *ps, unsigned char k, unsigned char p) 
+void
+FreeClone (struct PCBenchStruct *ps, unsigned char k, unsigned char p)
 {
     int m = k + p;
     for (int i = 0; i < m; i++)
@@ -354,7 +354,7 @@ FreeClone (struct PCBenchStruct *ps, unsigned char k, unsigned char p)
     free (ps->pwrTab);
 }
 
-int 
+int
 main (int argc, char *argv[])
 {
     // Work variables
@@ -436,7 +436,7 @@ main (int argc, char *argv[])
 #else
     // Create memory for encoding matrices
 
-    a = malloc ( MMAX * ( KMAX*2 ) ) ;
+    a = malloc (MMAX * (KMAX * 2));
 #endif
     if (a == NULL)
     {
@@ -494,12 +494,12 @@ main (int argc, char *argv[])
     for (i = 0; i < k; i++)
         for (j = 0; j < TEST_LEN (m); j++)
             buffs[ i ][ j ] = rand ();
-    // buffs [ k - 1 ] [ 59 ] = 1 ;;
+            // buffs [ k - 1 ] [ 59 ] = 1 ;;
 #ifndef __aarch64__
     // Print test type
     printf ("Testing AVX512-GFNI\n");
 #else
-    printf ("Testing ARM64 NEON\n" ) ;
+    printf ("Testing ARM64 NEON\n");
 #endif
     struct PCBenchStruct Bench[ PC_MAX_CORES ] = { 0 };
 
@@ -507,9 +507,9 @@ main (int argc, char *argv[])
     for (i = 0; i < cores; i++)
     {
 #ifndef __aarch64__
-        if (InitClone(&Bench[i], k, p, 1, 200) == 0)
+        if (InitClone (&Bench[ i ], k, p, 1, 200) == 0)
 #else
-        if (InitClone(&Bench[i], k, p, 1, 20) == 0)
+        if (InitClone (&Bench[ i ], k, p, 1, 20) == 0)
 #endif
         {
             printf ("Initclone %d failed\n", i);
@@ -518,7 +518,7 @@ main (int argc, char *argv[])
 
     ECCTIME startTime, endTime;
     double elapsedTime, mbPerSecond, totBytes;
-    ECCTHREAD clone [ PC_MAX_CORES ];
+    ECCTHREAD clone[ PC_MAX_CORES ];
 
     for (int curCore = 1; curCore <= cores; curCore++)
     {
@@ -551,7 +551,7 @@ main (int argc, char *argv[])
             //         elapsedTime);
 
             totBytes = TEST_LEN (m);
-            totBytes = totBytes * Bench [ 0 ].testReps * m * curCore;
+            totBytes = totBytes * Bench[ 0 ].testReps * m * curCore;
             totBytes /= 1000000;
 
             if (elapsedTime > 0)
@@ -563,13 +563,13 @@ main (int argc, char *argv[])
             {
             case 1:
                 printf ("erasure_code_encode_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
-                       "sec = %.2f MB/s\n",
-                       curCore, k, p, totBytes, elapsedTime / 1000, mbPerSecond);
+                        "sec = %.2f MB/s\n",
+                        curCore, k, p, totBytes, elapsedTime / 1000, mbPerSecond);
                 break;
             case 2:
                 printf ("erasure_code_decode_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
                         "sec = %.2f MB/s\n",
-                        curCore, k+p, p, totBytes, elapsedTime / 1000, mbPerSecond);
+                        curCore, k + p, p, totBytes, elapsedTime / 1000, mbPerSecond);
                 break;
             case 3:
                 printf ("polynomial_code_pls_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
@@ -579,13 +579,13 @@ main (int argc, char *argv[])
             case 4:
                 printf ("polynomial_code_pss_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
                         "sec = %.2f MB/s\n",
-                        curCore, k+p, p, totBytes, elapsedTime / 1000, mbPerSecond);
+                        curCore, k + p, p, totBytes, elapsedTime / 1000, mbPerSecond);
                 break;
             }
         }
         if (elapsedTime > 2000) // If greater than 2 seconds
         {
-            //printf ("Elapsed Time = %lf\n", elapsedTime);
+            // printf ("Elapsed Time = %lf\n", elapsedTime);
             for (int curP = 0; curP < cores; curP++)
             {
                 Bench[ curP ].testReps /= 2;
@@ -595,7 +595,7 @@ main (int argc, char *argv[])
 
     for (i = 0; i < cores; i++)
     {
-        FreeClone (&Bench[ i ], k,p);
+        FreeClone (&Bench[ i ], k, p);
     }
     printf (" done all: Pass\n");
     fflush (stdout);
