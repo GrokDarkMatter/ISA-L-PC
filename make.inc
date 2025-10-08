@@ -386,3 +386,13 @@ spellcheck:
 	./erasure_code ./examples ./igzip ./include ./mem ./programs ./raid ./tests README.md SECURITY.md CONTRIBUTING.md \
 	Makefile.unx Makefile.nmake Release_notes.txt LICENSE $(CS_EXTRA_OPTS)
 
+
+# Architecture-specific flags for intrinsics
+ifeq ($(host_cpu),x86_64)
+  CFLAGS += -mavx -mavx2 -mavx512f -mavx512dq -mavx512bw -mavx512vl -mgfni -mbmi -mbmi2 -mpclmul
+#else ifeq ($(host_cpu),aarch64)
+#  CFLAGS += -O2
+#else
+#  CFLAGS += -O2
+endif
+

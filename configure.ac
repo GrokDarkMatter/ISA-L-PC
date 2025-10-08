@@ -99,8 +99,8 @@ AM_CONDITIONAL([ENABLE_INTRINSICS], [test "x$enable_intrinsics" = "xyes"])
 #if test "x$enable_intrinsics" = "xyes"; then
     if test "x$CPU" = "xx86_64"; then
         CFLAGS="$CFLAGS -mavx2 -mavx512dq -mavx512bw -mavx512vl -mgfni -mbmi -mbmi2 -mpclmul"
-#   fi
-fi
+    fi
+#fi
 # If this build is for x86, look for nasm
 if test x"$is_x86" = x"yes"; then
   AC_MSG_CHECKING([whether Intel CET is enabled])
