@@ -344,11 +344,11 @@ perf: $(perfs)
 	!$?
 
 # Standalone rule for poly_core_perf.exe only (links directly with objs, no library dependency)
-poly_core_perf.obj: tests/perf/poly_core_perf.c
+poly_core_perf.obj: erasure_code\poly_core_perf.c
 	$(CC) $(CFLAGS) /c -Fo$@ $?
 
-poly_core_perf.exe: poly_core_perf.obj $(objs)
-	link /out:$@ $(LINKFLAGS) $(objs) poly_core_perf.obj
+poly_core_perf.exe: poly_core_perf.obj $(objs) lib
+    link /out:$@ $(LINKFLAGS) poly_core_perf.obj $(objs) isa-l.lib
 
 progs = \
 	igzip.exe
