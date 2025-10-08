@@ -867,6 +867,8 @@ main (int argc, char *argv[])
 
     struct perf start;
 
+    // Print CPU info and check CPU flags
+    PC_CPU_ID ();
     /* Set default parameters */
     k = 223;
     p = 32;
@@ -954,7 +956,6 @@ main (int argc, char *argv[])
     pc_bmat_2d (a, 4);
 
     // Print output header
-    PC_CPU_ID ();
     printf ("Testing with %u data buffers and %u parity buffers\n", k, p);
     printf ("erasure_code_perf: %dx%d %d\n", m, TEST_LEN (m), nerrs);
 
