@@ -1,6 +1,6 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
-
+#
 AC_PREREQ(2.69)
 AC_INIT([libisal],
         [2.31.1],
@@ -89,7 +89,20 @@ AC_ARG_ENABLE([debug],
 AS_IF([test "x$enable_debug" = "xyes"], [
         AC_DEFINE(ENABLE_DEBUG, [1], [Debug messages.])
 ])
+# Add --enable-intrinsics option
+AC_ARG_ENABLE([intrinsics],
+    [AS_HELP_STRING([--enable-intrinsics], [Enable intrinsics in C code (x86_64 only)])],
+    [enable_intrinsics=$enableval], [enable_intrinsics=no])
+AM_CONDITIONAL([ENABLE_INTRINSICS], [test "x$enable_intrinsics" = "xyes"])
 
+# Apply architecture-specific flags for intrinsics
+#if test "x$enable_intrinsics" = "xyes"; then
+    if test "x$CPU" = "xx86_64"; then
+        CFLAGS="$CFLAGS -mavx2 -mavx512dq -mavx512bw -mavx512vl -mgfni -mbmi -mbmi2 -mpclmul"
+    else
+        CFLAGS="$CFLAGS -O2"
+#   fi
+fi
 # If this build is for x86, look for nasm
 if test x"$is_x86" = x"yes"; then
   AC_MSG_CHECKING([whether Intel CET is enabled])
