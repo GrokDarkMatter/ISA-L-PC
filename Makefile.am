@@ -93,6 +93,8 @@ EXTRA_DIST += Release_notes.txt
 
 # For tests
 LDADD += libisal.la
+# Override LDADD for poly_core_perf to make it standalone
+poly_core_perf_LDADD = $(libisal_la_OBJECTS)
 check_PROGRAMS = ${check_tests}
 TESTS = ${check_tests}
 
