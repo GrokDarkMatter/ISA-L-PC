@@ -17,12 +17,12 @@ In addition to performance, ISA-L offers both 1D and 2D Reed Solomon error encod
 
 ### Background papers
 
-[An Erasure coding Performance Metric for Windows 8](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/ECPWin8g.pdf)
+[An Erasure coding Performance Metric for Windows 8](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/MathPapers/ECPWin8g.pdf)
 
-[On the reliability of RAID systems: An Argument for More Check Drives](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/ECRAIDReliability.pdf)
+[On the reliability of RAID systems: An Argument for More Check Drives](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/MathPapers/ECRAIDReliability.pdf)
 
 
-[Our work with Baylor University - Guide to Reed Solomon Codes](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/BaylorWork-b188a16.pdf)
+[Our work with Baylor University - Guide to Reed Solomon Codes](hhttps://github.com/GrokDarkMatter/ISA-L-PC/blob/master/MathPapers/BaylorWork-b188a16.pdf)
 ### Battling Silent Data Corruption: Empowering Reliability with Modern Vector Processors
 
 In today's data-intensive landscape, silent data corruption (SDC) poses a stealthy risk to computational integrity, where errors creep into systems undetected, potentially skewing AI models, financial calculations, or scientific simulations. CERN's groundbreaking 2007 study exposed SDC's reach, analyzing over 3,000 machines and 1.46 million device hours to uncover corruption in 1.8% of devices, stemming from hardware flaws, firmware glitches, and memory failures—resulting in 22 corrupted files across 8.7 TB of data. Hyperscalers like Meta, Google, and Microsoft now report SDC impacting one in a thousand machines in their vast fleets, fueling urgent calls for resilient solutions in cloud and AI environments.
@@ -37,7 +37,7 @@ In the era of exabyte-scale data centers, silent data corruption (SDC) lurks as 
 
 Enter a potent weapon: two-dimensional Reed-Solomon (2D-RS) encoding, an ECC powerhouse that improves upon legacy tape technologies for disk and cloud resilience. My new open-source library, ISA-L-PC, delivers exactly this—leveraging Intel's GFNI instructions for blazing-fast SIMD acceleration. It applies RS(64,60) encoding within blocks for intra-level correction, then layers a flexible RS code (up to 255 symbols) across blocks for inter-level fortification. With full source code, you can tweak both levels to any valid 8-bit configuration, tailoring protection to your workload.
 
-[LTO-9 Technical Paper](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/LTO-UBER-Technical-Paper-August-2022.pdf)
+[LTO-9 Technical Paper](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/MathPapers/LTO-UBER-Technical-Paper-August-2022.pdf)
 
 Drawing from the LTO-9 technical paper's rigorous analysis, this 2D-RS approach yields 10X UBER improvements over single-level codes—pushing uncorrectable bit error rates to 10^-20, or 12+ NINES of durability. Even with degraded channels (think debris-clogged reads or flaky disks), it sustains 10^-19 UBER at input rates 99X higher than legacy systems, outshining HDDs by two orders of magnitude in cold data scenarios. No more latent sector panics; this blankets end-to-end protection against write errors, media defects, and aging.
 
