@@ -60,7 +60,7 @@ fi
 
 if hash grep; then
     echo "Checking for dos and whitespace violations..."
-    for f in $(git ls-files -- ':(exclude)*.pdf'); do
+    for f in $(git ls-files -- ':(exclude)*.pdf' ':(exclude)*.exe'); do
 	[ "$verbose" -gt 0 ] && echo "checking whitespace on $f"
 	if grep -q '[[:space:]]$' $f ; then
 	    echo "  File found with trailing whitespace: $f"
