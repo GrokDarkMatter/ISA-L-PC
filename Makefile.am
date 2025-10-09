@@ -93,8 +93,10 @@ EXTRA_DIST += Release_notes.txt
 
 # For tests
 LDADD += libisal.la
-# Override LDADD for poly_core_perf to make it standalone
+# Override LDADD for poly_core_perf to link object files statically
 poly_core_perf_LDADD = $(libisal_la_OBJECTS)
+# Force static linking to avoid libisal.so dependency
+poly_core_perf_LDFLAGS = $(AM_LDFLAGS) -static
 check_PROGRAMS = ${check_tests}
 TESTS = ${check_tests}
 
