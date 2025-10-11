@@ -115,7 +115,7 @@ dump_u8xu8 (unsigned char *s, int k, int m)
 
 #ifdef __aarch64__
 #define PC_MAXTEST 4
-#define NOPAPI 1
+#define NOPAPI     1
 #include <arm_neon.h>
 #include "aarch64/PCLib_AARCH64_NEON.c"
 extern void
@@ -208,11 +208,11 @@ BenchWorker (void *t)
             break;
         case 5:
             pc_encode_data_avx512_gfni_2d (TEST_LEN (m), pcBench->k, pcBench->p, pcBench->plyTab2d,
-                                        pcBench->Data, &pcBench->Data[ pcBench->k ]);
+                                           pcBench->Data, &pcBench->Data[ pcBench->k ]);
             break;
         case 6:
-            pc_decode_data_avx512_gfni_2d (TEST_LEN (m), m, pcBench->p, pcBench->pwrTab2d, pcBench->Data,
-                                        pcBench->Syn, 1);
+            pc_decode_data_avx512_gfni_2d (TEST_LEN (m), m, pcBench->p, pcBench->pwrTab2d,
+                                           pcBench->Data, pcBench->Syn, 1);
             break;
 
         default:
@@ -386,8 +386,8 @@ FreeClone (struct PCBenchStruct *ps, unsigned char k, unsigned char p)
     free (ps->plyTab);
     free (ps->pwrTab);
 #ifndef __aarch64__
-    free (ps->plyTab2d) ;
-    free (ps->pwrTab2d) ;
+    free (ps->plyTab2d);
+    free (ps->pwrTab2d);
 #endif
 }
 
@@ -469,7 +469,7 @@ main (int argc, char *argv[])
 #else
     // Create memory for encoding matrices
 
-    unsigned char * a = malloc (MMAX * (KMAX * 2));
+    unsigned char *a = malloc (MMAX * (KMAX * 2));
 #endif
     if (a == NULL)
     {
