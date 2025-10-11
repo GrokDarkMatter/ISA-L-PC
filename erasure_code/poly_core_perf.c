@@ -339,6 +339,8 @@ InitClone (struct PCBenchStruct *ps, unsigned char k, unsigned char p, int testN
     // printf ("poly and pwr tables p=%d\n", p);
     // dump_u8xu8 (a, 1, p);
     // dump_u8xu8 (b, 1, p-1);
+
+    // Initialize the constants for either affine or ARM64 multiply
     ec_init_tables (p, 1, a, ps->plyTab);
     ec_init_tables (p - 1, 1, b, ps->pwrTab);
 
@@ -348,13 +350,14 @@ InitClone (struct PCBenchStruct *ps, unsigned char k, unsigned char p, int testN
     if (ps->plyTab2d == 0)
         return 0;
 
-    pc_gen_poly_2d (ps->plyTab2d, p);
-
-    // Now create power vector for 0x11b
     ps->pwrTab2d = malloc (254);
     if (ps->pwrTab2d == 0)
         return 0;
 
+    // Create generator polynomial for LFSR encoder
+    pc_gen_poly_2d (ps->plyTab2d, p);
+
+    // Create decreasing power values for Syndrome deocder
     i = 3;
     for (int j = p - 2; j >= 0; j--)
     {
@@ -395,7 +398,7 @@ int
 main (int argc, char *argv[])
 {
     // Work variables
-    int i, m, k, p, nerrs, ret = -1, cores;
+    int i, m, k, p, ret = -1, cores;
 
     /* Set default parameters */
     k = 223;
@@ -447,8 +450,7 @@ main (int argc, char *argv[])
         cores = 1;
     }
 
-    // Match errors to parity count and compute codeword size
-    nerrs = p;
+    // m is total size of codeword
     m = k + p;
 
     if (m > MMAX)
@@ -459,7 +461,7 @@ main (int argc, char *argv[])
 
     // Print output header
     printf ("Testing with %u data buffers and %u parity buffers\n", k, p);
-    printf ("erasure_code_perf: %dx%d %d\n", m, TEST_LEN (m), nerrs);
+    printf ("erasure_code_perf: %dx%d %d\n", m, TEST_LEN (m), p);
 #ifndef __aarch64__
     // Build the power, log and inverse tables
     pc_bpow_2d (3);
