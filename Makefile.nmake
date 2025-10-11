@@ -362,7 +362,7 @@ erasure_code_perf.obj: erasure_code\erasure_code_perf.c
 	$(CC) $(CFLAGS) /c -Fo$@ $?
 
 erasure_code_perf.exe: erasure_code_perf.obj $(objs) lib
-    link /out:$@ $(LINKFLAGS) perasure_code_perf.obj $(objs) isa-l.lib
+    link /out:$@ $(LINKFLAGS) erasure_code_perf.obj $(objs) isa-l.lib
 
 progs = \
 	igzip.exe
