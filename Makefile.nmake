@@ -350,6 +350,20 @@ poly_core_perf.obj: erasure_code\poly_core_perf.c
 poly_core_perf.exe: poly_core_perf.obj $(objs) lib
     link /out:$@ $(LINKFLAGS) poly_core_perf.obj $(objs) isa-l.lib
 
+# Standalone rule for poly_core_perf.exe only (links directly with objs, no library dependency)
+poly_code_perf.obj: erasure_code\poly_code_perf.c
+	$(CC) $(CFLAGS) /c -Fo$@ $?
+
+poly_code_perf.exe: poly_code_perf.obj $(objs) lib
+    link /out:$@ $(LINKFLAGS) poly_code_perf.obj $(objs) isa-l.lib
+
+# Standalone rule for poly_core_perf.exe only (links directly with objs, no library dependency)
+erasure_code_perf.obj: erasure_code\erasure_code_perf.c
+	$(CC) $(CFLAGS) /c -Fo$@ $?
+
+erasure_code_perf.exe: erasure_code_perf.obj $(objs) lib
+    link /out:$@ $(LINKFLAGS) perasure_code_perf.obj $(objs) isa-l.lib
+
 progs = \
 	igzip.exe
 
