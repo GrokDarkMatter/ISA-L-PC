@@ -46,6 +46,7 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 
 #include "ec_base.h"
 #include "erasure_code.h"
+#include "poly_code.h"
 #include "test.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -298,7 +299,7 @@ InitClone (struct PCBenchStruct *ps, unsigned char k, unsigned char p, int testN
 
     for (int i = 0; i < p; i++)
     {
-        if (posix_memalign ((void *) &buf, 64, TEST_LEN (m)))
+        if (posix_memalign ((void *) &buf, PC_STRIDE, TEST_LEN (m)))
         {
             printf ("Error allocating buffers\n");
             return 0;
@@ -308,32 +309,32 @@ InitClone (struct PCBenchStruct *ps, unsigned char k, unsigned char p, int testN
     }
     ps->Syn = buffs;
 
-    if (posix_memalign ((void *) &ps->g_tbls, 64, 255 * 32 * 32))
+    if (posix_memalign ((void *) &ps->g_tbls, 64, PC_FIELD_SIZE * PC_MAX_PAR * PC_MAX_TAB))
     {
         printf ("Error allocating g_tbls\n");
         return 0;
     }
-    memset (ps->g_tbls, 1, 255 * 32 * 32);
+    memset (ps->g_tbls, 1, PC_FIELD_SIZE * PC_MAX_PAR * PC_MAX_TAB);
 
-    ps->plyTab = malloc (255 * 32);
+    ps->plyTab = malloc (PC_FIELD_SIZE * PC_MAX_PAR);
     if (ps->plyTab == 0)
         return 0;
 
-    ps->pwrTab = malloc (255 * 32);
+    ps->pwrTab = malloc (PC_FIELD_SIZE * PC_MAX_PAR);
     if (ps->pwrTab == 0)
         return 0;
 
     // Initialize tables for encoding
-    unsigned char a[ 255 ];
+    unsigned char a[ PC_FIELD_SIZE ];
     gf_gen_poly (a, p);
 
     // Initialize decoding table
-    unsigned char b[ 255 ];
-    int i = 2;
+    unsigned char b[ PC_FIELD_SIZE ];
+    int i = PC_GEN_x11d;
     for (int j = p - 2; j >= 0; j--)
     {
         b[ j ] = i;
-        i = gf_mul (i, 2);
+        i = gf_mul (i, PC_GEN_x11d);
     }
 
     // printf ("poly and pwr tables p=%d\n", p);
@@ -346,11 +347,11 @@ InitClone (struct PCBenchStruct *ps, unsigned char k, unsigned char p, int testN
 
 #ifndef __aarch64__
     // Create generator polynomial for LFSR
-    ps->plyTab2d = malloc (254);
+    ps->plyTab2d = malloc (PC_FIELD_SIZE);
     if (ps->plyTab2d == 0)
         return 0;
 
-    ps->pwrTab2d = malloc (254);
+    ps->pwrTab2d = malloc (PC_FIELD_SIZE);
     if (ps->pwrTab2d == 0)
         return 0;
 
@@ -358,11 +359,11 @@ InitClone (struct PCBenchStruct *ps, unsigned char k, unsigned char p, int testN
     pc_gen_poly_2d (ps->plyTab2d, p);
 
     // Create decreasing power values for Syndrome deocder
-    i = 3;
+    i = PC_GEN_x11b;
     for (int j = p - 2; j >= 0; j--)
     {
         ps->pwrTab2d[ j ] = i;
-        i = pc_mul_2d (i, 3);
+        i = pc_mul_2d (i, PC_GEN_x11b);
     }
 #endif
 
@@ -501,9 +502,9 @@ main (int argc, char *argv[])
     for (i = 0; i < cores; i++)
     {
 #ifndef __aarch64__
-        if (InitClone (&Bench[ i ], k, p, 1, 200) == 0)
+        if (InitClone (&Bench[ i ], k, p, 1, PC_TEST_LOOPS) == 0)
 #else
-        if (InitClone (&Bench[ i ], k, p, 1, 20) == 0)
+        if (InitClone (&Bench[ i ], k, p, 1, (PC_TEST_LOOPS/10)) == 0)
 #endif
         {
             printf ("Initclone %d failed\n", i);
