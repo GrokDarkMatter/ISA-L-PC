@@ -342,6 +342,7 @@ InitClone (struct PCBenchStruct *ps, unsigned char k, unsigned char p, int testN
     ec_init_tables (p, 1, a, ps->plyTab);
     ec_init_tables (p - 1, 1, b, ps->pwrTab);
 
+#ifndef __aarch64__
     // Create generator polynomial for LFSR
     ps->plyTab2d = malloc (254);
     if (ps->plyTab2d == 0)
@@ -360,6 +361,7 @@ InitClone (struct PCBenchStruct *ps, unsigned char k, unsigned char p, int testN
         ps->pwrTab2d[ j ] = i;
         i = pc_mul_2d (i, 3);
     }
+#endif
 
     return 1;
 }
@@ -383,17 +385,17 @@ FreeClone (struct PCBenchStruct *ps, unsigned char k, unsigned char p)
     aligned_free (ps->Syn);
     free (ps->plyTab);
     free (ps->pwrTab);
+#ifndef __aarch64__
+    free (ps->plyTab2d) ;
+    free (ps->pwrTab2d) ;
+#endif
 }
 
 int
 main (int argc, char *argv[])
 {
     // Work variables
-    int i, j, m, k, p, nerrs, ret = -1, cores;
-    void *buf;
-    u8 *a, *g_tbls = 0, *z0 = 0;
-    u8 *temp_buffs[ TEST_SOURCES ] = { NULL };
-    u8 *buffs[ TEST_SOURCES ] = { NULL };
+    int i, m, k, p, nerrs, ret = -1, cores;
 
     /* Set default parameters */
     k = 223;
@@ -463,11 +465,11 @@ main (int argc, char *argv[])
     pc_bpow_2d (3);
     pc_blog_2d ();
     pc_binv_2d ();
-    a = malloc (sizeof (Vand1b));
+    unsigned char *a = malloc (sizeof (Vand1b));
 #else
     // Create memory for encoding matrices
 
-    a = malloc (MMAX * (KMAX * 2));
+    unsigned char * a = malloc (MMAX * (KMAX * 2));
 #endif
     if (a == NULL)
     {
@@ -603,13 +605,7 @@ main (int argc, char *argv[])
     ret = 0;
 
 exit:
-    aligned_free (z0);
     free (a);
-    for (i = 0; i < TEST_SOURCES; i++)
-    {
-        aligned_free (buffs[ i ]);
-        aligned_free (temp_buffs[ i ]);
-    }
-    aligned_free (g_tbls);
+
     return ret;
 }
