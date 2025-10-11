@@ -114,6 +114,7 @@ dump_u8xu8 (unsigned char *s, int k, int m)
 #endif
 
 #ifdef __aarch64__
+#define PC_MAXTEST 4
 #define NOPAPI 1
 #include <arm_neon.h>
 #include "aarch64/PCLib_AARCH64_NEON.c"
@@ -122,6 +123,7 @@ ec_encode_data_neon (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
 extern void
 ec_encode_data_neon (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
 #else
+#define PC_MAXTEST 6
 extern int
 ec_encode_data_avx512_gfni (int len, int m, int p, unsigned char *g_tbls, unsigned char **data,
                             unsigned char **coding);
@@ -169,6 +171,8 @@ struct PCBenchStruct
     unsigned char *g_tbls;
     unsigned char *plyTab;
     unsigned char *pwrTab;
+    unsigned char *plyTab2d;
+    unsigned char *pwrTab2d;
     int testNum;
     int testReps;
 };
@@ -200,6 +204,14 @@ BenchWorker (void *t)
             break;
         case 4:
             pc_decode_data_avx512_gfni (TEST_LEN (m), m, pcBench->p, pcBench->pwrTab, pcBench->Data,
+                                        pcBench->Syn, 1);
+            break;
+        case 5:
+            pc_encode_data_avx512_gfni_2d (TEST_LEN (m), pcBench->k, pcBench->p, pcBench->plyTab2d,
+                                        pcBench->Data, &pcBench->Data[ pcBench->k ]);
+            break;
+        case 6:
+            pc_decode_data_avx512_gfni_2d (TEST_LEN (m), m, pcBench->p, pcBench->pwrTab2d, pcBench->Data,
                                         pcBench->Syn, 1);
             break;
 
@@ -330,6 +342,25 @@ InitClone (struct PCBenchStruct *ps, unsigned char k, unsigned char p, int testN
     ec_init_tables (p, 1, a, ps->plyTab);
     ec_init_tables (p - 1, 1, b, ps->pwrTab);
 
+    // Create generator polynomial for LFSR
+    ps->plyTab2d = malloc (254);
+    if (ps->plyTab2d == 0)
+        return 0;
+
+    pc_gen_poly_2d (ps->plyTab2d, p);
+
+    // Now create power vector for 0x11b
+    ps->pwrTab2d = malloc (254);
+    if (ps->pwrTab2d == 0)
+        return 0;
+
+    i = 3;
+    for (int j = p - 2; j >= 0; j--)
+    {
+        ps->pwrTab2d[ j ] = i;
+        i = pc_mul_2d (i, 3);
+    }
+
     return 1;
 }
 
@@ -453,48 +484,7 @@ main (int argc, char *argv[])
     pc_gen_poly_matrix_2d (a, 255, 255 - 4);
     pc_bmat_2d (a, 4);
 #endif
-    // Allocate the arrays
-    if (posix_memalign (&buf, 64, TEST_LEN (m)))
-    {
-        printf ("Error allocating buffers\n");
-        goto exit;
-    }
-    z0 = buf;
-    memset (z0, 0, TEST_LEN (m));
 
-    for (i = 0; i < m; i++)
-    {
-        if (posix_memalign (&buf, 64, TEST_LEN (m)))
-        {
-            printf ("Error allocating buffers\n");
-            goto exit;
-        }
-        buffs[ i ] = buf;
-    }
-
-    for (i = 0; i < p; i++)
-    {
-        if (posix_memalign (&buf, 64, TEST_LEN (m)))
-        {
-            printf ("Error allocating buffers\n");
-            goto exit;
-        }
-        temp_buffs[ i ] = buf;
-    }
-
-    // Allocate gtbls
-    if (posix_memalign (&buf, 64, KMAX * TEST_SOURCES * 32))
-    {
-        printf ("Error allocating g_tbls\n");
-        goto exit;
-    }
-    g_tbls = buf;
-
-    // Make random data
-    for (i = 0; i < k; i++)
-        for (j = 0; j < TEST_LEN (m); j++)
-            buffs[ i ][ j ] = rand ();
-            // buffs [ k - 1 ] [ 59 ] = 1 ;;
 #ifndef __aarch64__
     // Print test type
     printf ("Testing AVX512-GFNI\n");
@@ -523,7 +513,7 @@ main (int argc, char *argv[])
     for (int curCore = 1; curCore <= cores; curCore++)
     {
         printf ("Testing with %d of %d cores\n", curCore, cores);
-        for (int curTest = 1; curTest <= 4; curTest++)
+        for (int curTest = 1; curTest <= PC_MAXTEST; curTest++)
         {
             for (int curBench = 0; curBench < cores; curBench++)
             {
@@ -578,6 +568,16 @@ main (int argc, char *argv[])
                 break;
             case 4:
                 printf ("polynomial_code_pss_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
+                        "sec = %.2f MB/s\n",
+                        curCore, k + p, p, totBytes, elapsedTime / 1000, mbPerSecond);
+                break;
+            case 5:
+                printf ("polynomial_code_pls_2d  : cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
+                        "sec = %.2f MB/s\n",
+                        curCore, k, p, totBytes, elapsedTime / 1000, mbPerSecond);
+                break;
+            case 6:
+                printf ("polynomial_code_pss_2d  : cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
                         "sec = %.2f MB/s\n",
                         curCore, k + p, p, totBytes, elapsedTime / 1000, mbPerSecond);
                 break;
