@@ -502,7 +502,7 @@ TestPAPIbm (void)
                 values[ 0 ] / 1000, values[ 1 ] / 1000, CPI);
 
         // Now test Berlekamp
-        unsigned char bmKeyEq[ PC_MAX_ERRS+1 ];
+        unsigned char bmKeyEq[ PC_MAX_ERRS + 1 ];
         int bmLen;
         if ((ret = PAPI_start (event_set)) != PAPI_OK)
         {

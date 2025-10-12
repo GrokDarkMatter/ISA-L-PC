@@ -280,7 +280,7 @@ TestPAPIInv (void)
     for (int lenPoly = 4; lenPoly <= PC_MAX_PAR; lenPoly++)
     {
         unsigned char in_mat[ PC_MAX_PAR * PC_MAX_PAR ], out_mat[ PC_MAX_PAR * PC_MAX_PAR ],
-                base = 1,val = 1;
+                base = 1, val = 1;
 
         for (int i = 0; i < lenPoly; i++)
         {

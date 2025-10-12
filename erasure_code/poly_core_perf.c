@@ -502,7 +502,7 @@ main (int argc, char *argv[])
 #ifndef __aarch64__
         if (InitClone (&Bench[ i ], k, p, 1, PC_TEST_LOOPS) == 0)
 #else
-        if (InitClone (&Bench[ i ], k, p, 1, (PC_TEST_LOOPS/10)) == 0)
+        if (InitClone (&Bench[ i ], k, p, 1, (PC_TEST_LOOPS / 10)) == 0)
 #endif
         {
             printf ("Initclone %d failed\n", i);
