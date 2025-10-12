@@ -43,9 +43,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restrictions
 **********************************************************************/
 
-static unsigned char pc_ptab_2d[ 256 ], pc_ltab_2d[ 256 ], pc_itab_2d[ 256 ];
-static __m512i EncMat[ 255 ][ 4 ], Vand1b[ 255 ][ 4 ];
-static unsigned char NumErrs, ErrLoc[ 32 ];
+static unsigned char pc_ptab_2d[ PC_TABLE_SIZE ], pc_ltab_2d[ PC_TABLE_SIZE ],
+        pc_itab_2d[ PC_TABLE_SIZE ];
+static __m512i EncMat[ PC_FIELD_SIZE ][ PC_L1PAR ], Vand1b[ PC_FIELD_SIZE ][ PC_L1PAR ];
+static unsigned char NumErrs, ErrLoc[ PC_MAX_PAR ];
 
 // Level 1 encoder for bytes that are sequential in memory
 #define L1Enc(vec, p, pvec)                                                                        \
@@ -347,7 +348,7 @@ pc_bpow_2d (unsigned char Gen)
     pc_ptab_2d[ 0 ] = 1;
 
     // Two is a good generator for 0x1d, three is a good generator for 0x1b
-    for (i = 1; i < 256; i++)
+    for (i = 1; i <= PC_FIELD_SIZE; i++)
     {
         pc_ptab_2d[ i ] = pc_mul_2d (pc_ptab_2d[ i - 1 ], Gen);
     }
@@ -360,7 +361,7 @@ pc_blog_2d (void)
     int i;
 
     // Use the power table to index into the log table and store log value
-    for (i = 0; i < 256; i++)
+    for (i = 0; i <= PC_FIELD_SIZE; i++)
     {
         pc_ltab_2d[ pc_ptab_2d[ i ] ] = i;
     }
@@ -371,7 +372,7 @@ void
 pc_binv_2d (void)
 {
     int i;
-    for (i = 0; i < 256; i++)
+    for (i = 0; i <= PC_FIELD_SIZE; i++)
     {
         pc_itab_2d[ i ] = pc_ptab_2d[ 255 - pc_ltab_2d[ i ] ];
     }
@@ -388,13 +389,13 @@ pc_gen_rsr_matrix_2d (unsigned char *a, int k)
     for (i = k - 1; i >= 0; i--)
     {
         p = 1;
-        for (j = 0; j < 255; j++)
+        for (j = 0; j < PC_FIELD_SIZE; j++)
         {
-            int idx = (255 * i) + (255 - j - 1);
+            int idx = (PC_FIELD_SIZE * i) + (PC_FIELD_SIZE - j - 1);
             a[ idx ] = p;
             p = pc_mul_2d (p, gen);
         }
-        gen = pc_mul_2d (gen, 3);
+        gen = pc_mul_2d (gen, PC_GEN_x11b);
         // printf ( "Vand row %d\n", i ) ;
         // dump_u8xu8 ( &a[ 255*i ], 16, 16 ) ;
     }
@@ -408,9 +409,9 @@ pc_bmat_2d (unsigned char *vals, int p)
     {
         unsigned char *eDest = (unsigned char *) &EncMat[ curP ];
         eDest++;
-        memcpy ((unsigned char *) eDest, &vals[ curP * (255 - p) ], 255 - p);
+        memcpy ((unsigned char *) eDest, &vals[ curP * (PC_FIELD_SIZE - p) ], PC_FIELD_SIZE - p);
         unsigned char *extra = (unsigned char *) &EncMat[ curP ];
-        memset (extra + 256 - p, 0, p);
+        memset (extra + PC_TABLE_SIZE - p, 0, p);
         // printf ( "Encmat %d\n", curP ) ;
         // dump_u8xu8 ( ( unsigned char * ) &EncMat [ curP ] [ 3 ], 4, 16 ) ;
     }
@@ -425,7 +426,7 @@ pc_bvan_2d (unsigned char *vals, int p)
         unsigned char *eDest = (unsigned char *) &Vand1b[ curP ];
         *eDest = 0;
         eDest++;
-        memcpy ((unsigned char *) eDest, &vals[ curP * (255) ], 255);
+        memcpy ((unsigned char *) eDest, &vals[ curP * (PC_FIELD_SIZE) ], PC_FIELD_SIZE);
         // printf ( "Vand1b %d\n", curP ) ;
         // dump_u8xu8 ( ( unsigned char * ) &Vand1b [ curP ] [ 3 ], 4, 16 ) ;
     }
@@ -460,10 +461,10 @@ pc_encoder1b (unsigned char *codeWord, unsigned char *par, int p)
     __m128i maskP = _mm_set_epi64x (0ULL, 0x0101010101010101ULL);
 
     // Load the entire codeword into 4 vector registers
-    codeWordvec[ 0 ] = _mm512_loadu_si512 (codeWord + 0 * 64);
-    codeWordvec[ 1 ] = _mm512_loadu_si512 (codeWord + 1 * 64);
-    codeWordvec[ 2 ] = _mm512_loadu_si512 (codeWord + 2 * 64);
-    codeWordvec[ 3 ] = _mm512_loadu_si512 (codeWord + 3 * 64);
+    codeWordvec[ 0 ] = _mm512_loadu_si512 (codeWord + 0 * PC_STRIDE);
+    codeWordvec[ 1 ] = _mm512_loadu_si512 (codeWord + 1 * PC_STRIDE);
+    codeWordvec[ 2 ] = _mm512_loadu_si512 (codeWord + 2 * PC_STRIDE);
+    codeWordvec[ 3 ] = _mm512_loadu_si512 (codeWord + 3 * PC_STRIDE);
     // printf ( "Codeword\n" ) ;
     // dump_u8xu8 ( ( unsigned char * ) &codeWordvec [ 0 ], 1, 255 ) ;
 
@@ -517,10 +518,10 @@ pc_decoder1b (unsigned char *codeWord, unsigned char *syn, int p)
     __m128i maskP = _mm_set_epi64x (0ULL, 0x0101010101010101ULL);
 
     // Load the whole codeword into vector registers
-    codeWordvec[ 0 ] = _mm512_loadu_si512 (codeWord + 0 * 64);
-    codeWordvec[ 1 ] = _mm512_loadu_si512 (codeWord + 1 * 64);
-    codeWordvec[ 2 ] = _mm512_loadu_si512 (codeWord + 2 * 64);
-    codeWordvec[ 3 ] = _mm512_loadu_si512 (codeWord + 3 * 64);
+    codeWordvec[ 0 ] = _mm512_loadu_si512 (codeWord + 0 * PC_STRIDE);
+    codeWordvec[ 1 ] = _mm512_loadu_si512 (codeWord + 1 * PC_STRIDE);
+    codeWordvec[ 2 ] = _mm512_loadu_si512 (codeWord + 2 * PC_STRIDE);
+    codeWordvec[ 3 ] = _mm512_loadu_si512 (codeWord + 3 * PC_STRIDE);
     // printf ( "Codeword LSB\n" ) ;
     // dump_u8xu8 ( ( unsigned char * ) &codeWordvec [ 0 ], 1, 255 ) ;
 
@@ -577,7 +578,7 @@ find_roots_2d (unsigned char *keyEq, unsigned char *roots, int mSize)
     unsigned char baseVal = 1, eVal;
 
     // Check each possible root
-    for (int i = 0; i < 255; i++)
+    for (int i = 0; i < PC_FIELD_SIZE; i++)
     {
         // Loop over the Key Equation terms and sum
         eVal = 1;
@@ -593,7 +594,7 @@ find_roots_2d (unsigned char *keyEq, unsigned char *roots, int mSize)
             rootCount++;
         }
         // Next evaluation is at the next power of 3
-        baseVal = gf_mul (baseVal, 3);
+        baseVal = gf_mul (baseVal, PC_GEN_x11b);
     }
     return rootCount;
 }
@@ -605,7 +606,7 @@ pc_gen_poly_2d (unsigned char *p, int rank)
     int c, alpha, cr; // Loop variables
 
     p[ 0 ] = 1; // Start with (x+1)
-    alpha = 3;
+    alpha = PC_GEN_x11b;
     for (cr = 1; cr < rank; cr++) // Loop rank-1 times
     {
         // Compute the last term of the polynomial by multiplying
@@ -621,7 +622,7 @@ pc_gen_poly_2d (unsigned char *p, int rank)
         p[ 0 ] ^= alpha;
 
         // Compute next alpha (power of 2)
-        alpha = pc_mul_2d (alpha, 3);
+        alpha = pc_mul_2d (alpha, PC_GEN_x11b);
     }
 }
 
@@ -630,7 +631,7 @@ void
 pc_gen_poly_matrix_2d (unsigned char *a, int m, int k)
 {
     int i, j, par, over, lpos;
-    unsigned char *p, taps[ 254 ], lfsr[ 254 ];
+    unsigned char *p, taps[ PC_FIELD_SIZE ], lfsr[ PC_FIELD_SIZE ];
 
     // First compute the generator polynomial and initialize the taps
     par = m - k;
@@ -733,11 +734,11 @@ gf_invert_matrix_2d_AVX512_GFNI (unsigned char *in_mat, unsigned char *out_mat, 
 {
     __m512i multVal512;
 
-    if (n > 32)
+    if (n > PC_MAX_PAR)
         return -1; // Assumption: n <= 32
 
     int i, j;
-    __m512i aug_rows[ 32 ];                                 // Ensure 64-byte alignment
+    __m512i aug_rows[ PC_MAX_PAR ];                         // Ensure 64-byte alignment
     unsigned char *matrix_mem = (unsigned char *) aug_rows; // Point to aug_rows memory
 
     // Initialize augmented matrix: [in_mat row | out_mat row | padding zeros]
@@ -745,7 +746,7 @@ gf_invert_matrix_2d_AVX512_GFNI (unsigned char *in_mat, unsigned char *out_mat, 
     {
         memcpy (&matrix_mem[ i * 64 ], &in_mat[ i * n ], n);
         memset (&matrix_mem[ i * 64 + n ], 0, n);
-        matrix_mem[ i * 64 + n + i ] = 1;
+        matrix_mem[ i * PC_STRIDE + n + i ] = 1;
         // dump_u8xu8 ( &matrix_mem [ i * 64 + n ], 1, n ) ;
     }
 
@@ -792,7 +793,7 @@ gf_invert_matrix_2d_AVX512_GFNI (unsigned char *in_mat, unsigned char *out_mat, 
         {
             if (j == i)
                 continue;
-            unsigned char factor = matrix_mem[ j * 64 + i ];
+            unsigned char factor = matrix_mem[ j * PC_STRIDE + i ];
             // Compute scaled pivot row: pivot_row * factor
             multVal512 = _mm512_set1_epi8 (factor);
             __m512i scaled = _mm512_gf2p8mul_epi8 (aug_rows[ i ], multVal512);
@@ -804,7 +805,7 @@ gf_invert_matrix_2d_AVX512_GFNI (unsigned char *in_mat, unsigned char *out_mat, 
     for (i = 0; i < n; i++)
     {
         // dump_u8xu8 ( &matrix_mem [ i * 64 + n ], 1, n ) ;
-        memcpy (&out_mat[ i * n ], &matrix_mem[ i * 64 + n ], n);
+        memcpy (&out_mat[ i * n ], &matrix_mem[ i * PC_STRIDE + n ], n);
     }
     return 0;
 }
@@ -813,24 +814,24 @@ gf_invert_matrix_2d_AVX512_GFNI (unsigned char *in_mat, unsigned char *out_mat, 
 int
 find_roots_2d_AVX512_GFNI (unsigned char *keyEq, unsigned char *roots, int mSize)
 {
-    static __m512i Vandermonde[ 16 ][ 4 ];
-    __m512i sum[ 4 ], temp, multVal512;
+    static __m512i Vandermonde[ PC_MAX_PAR ][ PC_L1PAR ];
+    __m512i sum[ PC_L1PAR ], temp, multVal512;
     int i, j;
 
     unsigned char *vVal = (unsigned char *) Vandermonde;
     // Check to see if Vandermonde has been initialized yet
     if (vVal[ 0 ] == 0)
     {
-        unsigned char base = 3, cVal = 1;
+        unsigned char base = PC_GEN_x11b, cVal = 1;
         for (i = 0; i < 16; i++)
         {
             vVal = (unsigned char *) &Vandermonde[ i ];
-            for (j = 0; j < 255; j++)
+            for (j = 0; j < PC_FIELD_SIZE; j++)
             {
                 vVal[ j ] = cVal;
                 cVal = pc_mul_2d (cVal, base);
             }
-            base = pc_mul_2d (base, 3);
+            base = pc_mul_2d (base, PC_GEN_x11b);
         }
     }
     // Initialize our sum to the constant term, no need for multiply
@@ -861,7 +862,7 @@ find_roots_2d_AVX512_GFNI (unsigned char *keyEq, unsigned char *roots, int mSize
 
     int rootCount = 0, idx = 0;
     // Create the list of roots
-    for (i = 0; i < 4; i++)
+    for (i = 0; i < PC_L1PAR; i++)
     {
         // Compare each byte to zero, generating a 64-bit mask
         __mmask64 mask = _mm512_cmpeq_epi8_mask (sum[ i ], _mm512_setzero_si512 ());
@@ -874,7 +875,7 @@ find_roots_2d_AVX512_GFNI (unsigned char *keyEq, unsigned char *roots, int mSize
         {
             // Find the next set bit (index of zero byte)
             uint64_t pos = _tzcnt_u64 (mask);
-            roots[ idx++ ] = (uint8_t) pos + (i * 64);
+            roots[ idx++ ] = (uint8_t) pos + (i * PC_STRIDE);
             // Clear the lowest set bit
             mask = _blsr_u64 (mask); // mask &= (mask - 1)
         }
@@ -888,13 +889,13 @@ pc_compute_error_values_2d_AVX512_GFNI (int mSize, unsigned char *S, unsigned ch
                                         unsigned char *errVal)
 {
     int i, j;
-    unsigned char Mat[ PC_MAX_ERRS * PC_MAX_ERRS ];
-    unsigned char Mat_inv[ PC_MAX_ERRS * PC_MAX_ERRS ];
+    unsigned char Mat[ PC_MAX_PAR * PC_MAX_PAR ];
+    unsigned char Mat_inv[ PC_MAX_PAR * PC_MAX_PAR ];
 
     // Find error values by building and inverting Vandemonde
     memset (Mat, 1, mSize);
 
-    unsigned char baseVec[ PC_MAX_ERRS ], matVal[ PC_MAX_ERRS ];
+    unsigned char baseVec[ PC_MAX_PAR ], matVal[ PC_MAX_PAR ];
     for (i = 1; i < mSize; i++)
     {
         for (j = 0; j < mSize; j++)
@@ -942,7 +943,7 @@ pc_verify_syndromes_2d_AVX512_GFNI (unsigned char *S, int p, int mSize, unsigned
 
     // Verify syndromes across each power row
     unsigned char base = 1;
-    unsigned char baseVec[ PC_MAX_ERRS ], matVal[ PC_MAX_ERRS ];
+    unsigned char baseVec[ PC_MAX_PAR ], matVal[ PC_MAX_PAR ];
     for (i = 0; i < p; i++)
     {
         sum = 0;
@@ -996,8 +997,8 @@ pc_verify_syndromes_2d_AVX512_GFNI (unsigned char *S, int p, int mSize, unsigned
 int
 berlekamp_massey_2d_AVX512_GFNI (unsigned char *syndromes, int length, unsigned char *lambda)
 {
-    unsigned char b[ PC_MAX_ERRS * 2 + 1 ]; // Padded for AVX-512 (32-byte alignment)
-    unsigned char temp[ PC_MAX_ERRS * 2 + 1 ];
+    unsigned char b[ PC_MAX_PAR * 2 + 1 ]; // Padded for AVX-512 (32-byte alignment)
+    unsigned char temp[ PC_MAX_PAR * 2 + 1 ];
     int L = 0;
     int m = 1;
     unsigned char old_d = 1; // Initial previous discrepancy
@@ -1059,8 +1060,8 @@ int
 pc_verify_multiple_errors_l1 (unsigned char *S, int mSize, unsigned char *keyEq, __m512i *vec,
                               unsigned char *vecAdr)
 {
-    unsigned char roots[ PC_MAX_ERRS ] = { 0 };
-    unsigned char errVal[ PC_MAX_ERRS ];
+    unsigned char roots[ PC_MAX_PAR ] = { 0 };
+    unsigned char errVal[ PC_MAX_PAR ];
 
     // Find roots, exit if mismatch with expected roots
     int nroots = find_roots_2d_AVX512_GFNI (keyEq, roots, mSize);
@@ -1092,8 +1093,8 @@ pc_verify_multiple_errors_l1 (unsigned char *S, int mSize, unsigned char *keyEq,
 
     __m128i maskP = _mm_set_epi64x (0ULL, 0x0101010101010101ULL);
     __m512i matVec, vreg;
-    unsigned char syn[ 4 ];
-    L1Dec (trialVec, 4, syn);
+    unsigned char syn[ PC_L1PAR ];
+    L1Dec (trialVec, PC_L1PAR, syn);
 
     // printf ( "TrialVec\n" ) ;
     // dump_u8xu8 ( ( unsigned char * ) &trialVec, 4, 16 ) ;
@@ -1128,8 +1129,8 @@ int
 pc_verify_multiple_errors_2d_AVX512_GFNI (unsigned char *S, unsigned char **data, int mSize, int k,
                                           int p, int newPos, int offSet, unsigned char *keyEq)
 {
-    unsigned char roots[ PC_MAX_ERRS ] = { 0 };
-    unsigned char errVal[ PC_MAX_ERRS ];
+    unsigned char roots[ PC_MAX_PAR ] = { 0 };
+    unsigned char errVal[ PC_MAX_PAR ];
 
     // Find roots, exit if mismatch with expected roots
     int nroots = find_roots_2d_AVX512_GFNI (keyEq, roots, mSize);
@@ -1181,7 +1182,7 @@ pc_verify_multiple_errors_2d_AVX512_GFNI (unsigned char *S, unsigned char **data
 int
 PGZ_2d_AVX512_GFNI (unsigned char *S, int p, unsigned char *keyEq)
 {
-    unsigned char SMat[ PC_MAX_ERRS * PC_MAX_ERRS ], SMat_inv[ PC_MAX_ERRS * PC_MAX_ERRS ];
+    unsigned char SMat[ PC_MAX_PAR * PC_MAX_PAR ], SMat_inv[ PC_MAX_PAR * PC_MAX_PAR ];
     int i, j;
 
     memset (keyEq, 0, p / 2);
@@ -1224,7 +1225,7 @@ pc_correct_AVX512_GFNI_2d_old (int newPos, int k, int p, unsigned char **data,
                                unsigned char **coding, int vLen)
 {
     int i, mSize;
-    unsigned char S[ PC_MAX_ERRS ], keyEq[ PC_MAX_ERRS + 1 ] = { 0 };
+    unsigned char S[ PC_MAX_PAR ], keyEq[ PC_MAX_PAR + 1 ] = { 0 };
 
     __m512i vec, vec2;
 
@@ -1293,13 +1294,13 @@ pc_correct_AVX512_GFNI_2d (int newPos, int k, int p, unsigned char **data, unsig
     }
     // Otherwise build and invert a Vandermonde matrix using ErrLoc information
     int i, j;
-    unsigned char Mat[ PC_MAX_ERRS * PC_MAX_ERRS ];
-    unsigned char Mat_inv[ PC_MAX_ERRS * PC_MAX_ERRS ];
+    unsigned char Mat[ PC_MAX_PAR * PC_MAX_PAR ];
+    unsigned char Mat_inv[ PC_MAX_PAR * PC_MAX_PAR ];
 
     // First of Vandermonde is 1's
     memset (Mat, 1, NumErrs);
 
-    unsigned char baseVec[ PC_MAX_ERRS ], matVal[ PC_MAX_ERRS ];
+    unsigned char baseVec[ PC_MAX_PAR ], matVal[ PC_MAX_PAR ];
     for (i = 1; i < NumErrs; i++)
     {
         for (j = 0; j < NumErrs; j++)
@@ -1325,7 +1326,7 @@ pc_correct_AVX512_GFNI_2d (int newPos, int k, int p, unsigned char **data, unsig
     // dump_u8xu8 ( Mat, NumErrs, NumErrs ) ;
     // dump_u8xu8 ( Mat_inv, NumErrs, NumErrs ) ;
 
-    __m512i errVec[ PC_MAX_ERRS ], factor1, factor2;
+    __m512i errVec[ PC_MAX_PAR ], factor1, factor2;
 
     // Compute error values by summing Syndrome terms across inverted Vandermonde
     for (i = 0; i < NumErrs; i++)
@@ -1363,7 +1364,7 @@ pc_verify_single_error_2d_1L (__m512i *vec, unsigned char *memVec, unsigned char
     // Compute error location is log2(syndrome[1]/syndrome[0])
     unsigned char eLoc = S[ 1 ];
     unsigned char pVal = pc_mul_2d (eLoc, pc_itab_2d[ eVal ]);
-    eLoc = pc_ltab_2d[ pVal ] % 255;
+    eLoc = pc_ltab_2d[ pVal ] % PC_FIELD_SIZE;
 
     // Verify error location is reasonable
     if (eLoc > 63)
@@ -1373,7 +1374,7 @@ pc_verify_single_error_2d_1L (__m512i *vec, unsigned char *memVec, unsigned char
     }
 
     // Now verify that the error can be used to produce the remaining syndromes
-    for (int i = 2; i < 4; i++)
+    for (int i = 2; i < PC_L1PAR; i++)
     {
         if (pc_mul_2d (S[ i - 1 ], pVal) != S[ i ])
         {
@@ -1392,10 +1393,10 @@ pc_verify_single_error_2d_1L (__m512i *vec, unsigned char *memVec, unsigned char
 void
 L1Correct (__m512i *vec, int CurSym, int k, unsigned char *S_in, unsigned char *memVec)
 {
-    unsigned char S[ 4 ];
+    unsigned char S[ PC_L1PAR ];
 
     // int mSize  ;
-    // unsigned char keyEq [ PC_MAX_ERRS + 1 ] = { 0 } ;
+    // unsigned char keyEq [ PC_MAX_PAR + 1 ] = { 0 } ;
 
     // Reverse terms to match PC_Correct
     S[ 0 ] = S_in[ 3 ];

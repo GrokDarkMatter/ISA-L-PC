@@ -46,6 +46,7 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 
 #include "ec_base.h"
 #include "erasure_code.h"
+#include "poly_code.h"
 #include "test.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -276,9 +277,10 @@ TestPAPIInv (void)
         exit (1);
     }
 
-    for (int lenPoly = 4; lenPoly <= 32; lenPoly++)
+    for (int lenPoly = 4; lenPoly <= PC_MAX_PAR; lenPoly++)
     {
-        unsigned char in_mat[ 32 * 32 ], out_mat[ 32 * 32 ], base = 1, val = 1;
+        unsigned char in_mat[ PC_MAX_PAR * PC_MAX_PAR ], out_mat[ PC_MAX_PAR * PC_MAX_PAR ],
+                base = 1,val = 1;
 
         for (int i = 0; i < lenPoly; i++)
         {
@@ -287,7 +289,7 @@ TestPAPIInv (void)
                 in_mat[ i * lenPoly + j ] = val;
                 val = gf_mul (val, base);
             }
-            base = gf_mul (base, 2);
+            base = gf_mul (base, PC_GEN_x11d);
         }
 
         // printf ( "Vandermonde\n" ) ;
@@ -352,9 +354,9 @@ TestPAPIbm (void)
         exit (1);
     }
 
-    for (int lenPoly = 4; lenPoly <= 32; lenPoly += 2)
+    for (int lenPoly = 4; lenPoly <= PC_MAX_PAR; lenPoly += 2)
     {
-        unsigned char S[ 32 ], keyEq[ 16 ];
+        unsigned char S[ PC_MAX_PAR ], keyEq[ PC_MAX_PAR ];
 
         unsigned char base = 1;
         for (int i = 0; i < lenPoly; i++)
@@ -368,7 +370,7 @@ TestPAPIbm (void)
                 S[ rvs ] ^= val;
                 val = gf_mul (val, base);
             }
-            base = gf_mul (base, 2);
+            base = gf_mul (base, PC_GEN_x11d);
         }
 
         if ((ret = PAPI_start (event_set)) != PAPI_OK)
@@ -586,8 +588,8 @@ test_pgz_decoder (int index, int m, int p, unsigned char *g_tbls, unsigned char 
     {
         for (int start = 0; start < m - (p / 2); start++)
         {
-            unsigned char error_positions[ 16 ];
-            uint8_t original_values[ 16 ];
+            unsigned char error_positions[ PC_MAX_ERRS ];
+            uint8_t original_values[ PC_MAX_ERRS ];
             for (int i = 0; i < (p / 2); i++)
             {
                 error_positions[ i ] = start + i;
@@ -624,8 +626,8 @@ test_pgz_decoder (int index, int m, int p, unsigned char *g_tbls, unsigned char 
     {
         for (int trial = 0; trial < 1000; trial++)
         {
-            uint8_t error_positions[ 16 ];
-            uint8_t original_values[ 16 ];
+            uint8_t error_positions[ PC_MAX_ERRS ];
+            uint8_t original_values[ PC_MAX_ERRS ];
             int available[ FIELD_SIZE ];
             for (int i = 0; i < m; i++)
             {

@@ -42,7 +42,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restrictions
 **********************************************************************/
-#define PC_MAX_ERRS 32
 
 unsigned char
 gf_div_AVX512_GFNI (unsigned char a, unsigned char b)
@@ -270,8 +269,8 @@ pc_compute_error_values_AVX512_GFNI (int mSize, unsigned char *S, unsigned char 
                                      unsigned char *errVal)
 {
     int i, j;
-    unsigned char Mat[ PC_MAX_ERRS * PC_MAX_ERRS ];
-    unsigned char Mat_inv[ PC_MAX_ERRS * PC_MAX_ERRS ];
+    unsigned char Mat[ PC_MAX_PAR * PC_MAX_PAR ];
+    unsigned char Mat_inv[ PC_MAX_PAR * PC_MAX_PAR ];
 
     // Find error values by building and inverting Vandemonde
     for (i = 0; i < mSize; i++)
@@ -346,8 +345,8 @@ static const uint64_t gf_table_gfni[ 256 ]; // Assume defined in ec_base.h
 int
 berlekamp_massey_AVX512_GFNI (unsigned char *syndromes, int length, unsigned char *lambda)
 {
-    unsigned char b[ PC_MAX_ERRS * 2 + 1 ]; // Padded for AVX-512 (32-byte alignment)
-    unsigned char temp[ PC_MAX_ERRS * 2 + 1 ];
+    unsigned char b[ PC_MAX_PAR * 2 + 1 ]; // Padded for AVX-512 (32-byte alignment)
+    unsigned char temp[ PC_MAX_PAR * 2 + 1 ];
     int L = 0;
     int m = 1;
     unsigned char old_d = 1; // Initial previous discrepancy
@@ -420,8 +419,8 @@ int
 pc_verify_multiple_errors_AVX512_GFNI (unsigned char *S, unsigned char **data, int mSize, int k,
                                        int p, int newPos, int offSet, unsigned char *keyEq)
 {
-    unsigned char roots[ PC_MAX_ERRS ] = { 0 };
-    unsigned char errVal[ PC_MAX_ERRS ];
+    unsigned char roots[ PC_MAX_PAR ] = { 0 };
+    unsigned char errVal[ PC_MAX_PAR ];
 
     // Find roots, exit if mismatch with expected roots
     int nroots = find_roots_AVX512_GFNI (keyEq, roots, mSize);
@@ -457,7 +456,7 @@ pc_verify_multiple_errors_AVX512_GFNI (unsigned char *S, unsigned char **data, i
 int
 PGZ_AVX512_GFNI (unsigned char *S, int p, unsigned char *keyEq)
 {
-    unsigned char SMat[ PC_MAX_ERRS * PC_MAX_ERRS ], SMat_inv[ PC_MAX_ERRS * PC_MAX_ERRS ];
+    unsigned char SMat[ PC_MAX_PAR * PC_MAX_PAR ], SMat_inv[ PC_MAX_PAR * PC_MAX_PAR ];
     int i, j;
 
     // For each potential size, create and find Hankel matrix that will invert
@@ -493,7 +492,7 @@ pc_correct_AVX512_GFNI (int newPos, int k, int p, unsigned char **data, unsigned
                         int vLen)
 {
     int i, mSize;
-    unsigned char S[ PC_MAX_ERRS ], keyEq[ PC_MAX_ERRS + 1 ] = { 0 };
+    unsigned char S[ PC_MAX_PAR ], keyEq[ PC_MAX_PAR + 1 ] = { 0 };
 
     __m512i vec, vec2;
 

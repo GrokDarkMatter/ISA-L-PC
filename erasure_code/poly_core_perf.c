@@ -84,8 +84,6 @@ typedef unsigned char u8;
 
 #endif
 
-#define PC_MAX_ERRS 32
-
 // Utility print routine
 void
 dump_u8xu8 (unsigned char *s, int k, int m)

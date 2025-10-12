@@ -48,14 +48,13 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 
 #include "ec_base.h"
 #include "erasure_code.h"
+#include "poly_code.h"
 #include "test.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> // for memset, memcmp
 typedef unsigned char u8;
 #include "PC_CPU_ID.c"
-
-#define PC_MAX_ERRS 32
 
 // Utility print routine
 void
@@ -191,12 +190,12 @@ TestPAPIRoots (void)
         printf ("PAPI failed to initialize\n");
         exit (1);
     }
-    unsigned char roots[ 16 ];
+    unsigned char roots[ PC_MAX_ERRS ];
 
     for (int lenPoly = 2; lenPoly <= 16; lenPoly++)
     {
         int rootCount = 0;
-        unsigned char S[ 16 ], keyEq[ 16 ];
+        unsigned char S[ PC_MAX_ERRS ], keyEq[ PC_MAX_ERRS ];
         pc_gen_poly_2d (S, lenPoly);
         // printf ( "Generator poly\n" ) ;
         // dump_u8xu8 ( S, 1, lenPoly ) ;
@@ -273,7 +272,8 @@ TestPAPIInv (void)
 
     for (int lenPoly = 4; lenPoly <= 32; lenPoly++)
     {
-        unsigned char in_mat[ 32 * 32 ], out_mat[ 32 * 32 ], base = 1, val = 1;
+        unsigned char in_mat[ PC_MAX_PAR * PC_MAX_PAR ], out_mat[ PC_MAX_PAR * PC_MAX_PAR ],
+                base = 1, val = 1;
 
         for (int i = 0; i < lenPoly; i++)
         {
@@ -372,7 +372,7 @@ TestPAPI1b (void)
         // pc_bvan2 () ;
         pc_bvan_2d (a, lenPoly);
 
-        pc_gen_poly_matrix_2d (a, 255, 255 - lenPoly);
+        pc_gen_poly_matrix_2d (a, PC_FIELD_SIZE, PC_FIELD_SIZE - lenPoly);
         pc_bmat_2d (a, lenPoly);
 
         // Initialize with a single bit for testing
@@ -462,9 +462,9 @@ TestPAPIbm (void)
         exit (1);
     }
 
-    for (int lenPoly = 4; lenPoly <= 32; lenPoly += 2)
+    for (int lenPoly = 4; lenPoly <= PC_MAX_PAR; lenPoly += 2)
     {
-        unsigned char S[ 32 ], keyEq[ 16 ] = { 0 };
+        unsigned char S[ PC_MAX_PAR ], keyEq[ PC_MAX_ERRS ] = { 0 };
 
         unsigned char base = 1;
         for (int i = 0; i < lenPoly; i++)
@@ -502,7 +502,7 @@ TestPAPIbm (void)
                 values[ 0 ] / 1000, values[ 1 ] / 1000, CPI);
 
         // Now test Berlekamp
-        unsigned char bmKeyEq[ 17 ];
+        unsigned char bmKeyEq[ PC_MAX_ERRS+1 ];
         int bmLen;
         if ((ret = PAPI_start (event_set)) != PAPI_OK)
         {
@@ -870,8 +870,8 @@ main (int argc, char *argv[])
     // Print CPU info and check CPU flags
     PC_CPU_ID ();
     /* Set default parameters */
-    k = 223;
-    p = 32;
+    k = PC_FIELD_SIZE - PC_MAX_PAR;
+    p = PC_MAX_PAR;
     nerrs = 32;
 
     /* Parse arguments */
@@ -947,12 +947,12 @@ main (int argc, char *argv[])
     }
 
     // Initialize the Vandermonde matrix
-    pc_gen_rsr_matrix_2d (a, 4);
+    pc_gen_rsr_matrix_2d (a, PC_L1PAR);
 
-    pc_bvan_2d (a, 4);
+    pc_bvan_2d (a, PC_L1PAR);
 
     // Initialize the encoding matrix
-    pc_gen_poly_matrix_2d (a, 255, 255 - 4);
+    pc_gen_poly_matrix_2d (a, PC_FIELD_SIZE, PC_FIELD_SIZE - PC_L1PAR);
     pc_bmat_2d (a, 4);
 
     // Print output header
@@ -960,7 +960,7 @@ main (int argc, char *argv[])
     printf ("erasure_code_perf: %dx%d %d\n", m, TEST_LEN (m), nerrs);
 
     // Allocate the arrays
-    if (posix_memalign (&buf, 64, TEST_LEN (m)))
+    if (posix_memalign (&buf, PC_STRIDE, TEST_LEN (m)))
     {
         printf ("Error allocating buffers\n");
         goto exit;
@@ -970,7 +970,7 @@ main (int argc, char *argv[])
 
     for (i = 0; i < m; i++)
     {
-        if (posix_memalign (&buf, 64, TEST_LEN (m)))
+        if (posix_memalign (&buf, PC_STRIDE, TEST_LEN (m)))
         {
             printf ("Error allocating buffers\n");
             goto exit;
@@ -980,7 +980,7 @@ main (int argc, char *argv[])
 
     for (i = 0; i < p; i++)
     {
-        if (posix_memalign (&buf, 64, TEST_LEN (m)))
+        if (posix_memalign (&buf, PC_STRIDE, TEST_LEN (m)))
         {
             printf ("Error allocating buffers\n");
             goto exit;
@@ -989,7 +989,7 @@ main (int argc, char *argv[])
     }
 
     // Allocate gtbls
-    if (posix_memalign (&buf, 64, KMAX * TEST_SOURCES * 32))
+    if (posix_memalign (&buf, PC_STRIDE, KMAX * TEST_SOURCES * PC_MAX_PAR))
     {
         printf ("Error allocating g_tbls\n");
         goto exit;
