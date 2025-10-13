@@ -192,8 +192,8 @@ gf_invert_matrix_AVX512_GFNI (unsigned char *in_mat, unsigned char *out_mat, con
 int
 find_roots_AVX512_GFNI (unsigned char *keyEq, unsigned char *roots, int mSize)
 {
-    static __m512i Vandermonde[ PC_MAX_PAR ][ PC_L1PAR ];
-    __m512i sum[ 4 ], temp, affineVal512;
+    static __m512i Vandermonde[ PC_MAX_PAR ][ 4 ]; // 4 64 byte registers cover the
+    __m512i sum[ 4 ], temp, affineVal512;          // whole field to search
     __m128i affineVal128;
     int i, j;
 
