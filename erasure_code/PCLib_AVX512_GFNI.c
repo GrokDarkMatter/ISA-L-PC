@@ -535,6 +535,7 @@ pc_correct_AVX512_GFNI (int newPos, int k, int p, unsigned char **data, unsigned
     return 0;
 }
 
+// Parallel Syndrome Sequencer for P = 2 Codewords
 int
 gf_2vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                           unsigned char **dest, int offSet)
@@ -544,27 +545,36 @@ gf_2vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     __m512i parity[ 2 ], taps[ 1 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 0 ], data_vec);
             parity[ 1 ] = _mm512_xor_si512 (parity[ 1 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -575,6 +585,7 @@ gf_2vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 3 Codewords
 int
 gf_3vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                           unsigned char **dest, int offSet)
@@ -584,22 +595,29 @@ gf_3vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     __m512i parity[ 3 ], taps[ 2 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 0 ], data_vec);
@@ -607,9 +625,11 @@ gf_3vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
             parity[ 2 ] = _mm512_xor_si512 (parity[ 2 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -621,6 +641,7 @@ gf_3vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 4 Codewords
 int
 gf_4vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                           unsigned char **dest, int offSet)
@@ -630,24 +651,31 @@ gf_4vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     __m512i parity[ 4 ], taps[ 3 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
         parity[ 3 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -657,10 +685,12 @@ gf_4vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
             parity[ 3 ] = _mm512_xor_si512 (parity[ 3 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -673,6 +703,7 @@ gf_4vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 5 Codewords
 int
 gf_5vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                           unsigned char **dest, int offSet)
@@ -682,26 +713,33 @@ gf_5vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     __m512i parity[ 5 ], taps[ 4 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
     taps[ 3 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (3 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
         parity[ 3 ] = data_vec;
         parity[ 4 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -713,11 +751,13 @@ gf_5vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
             parity[ 4 ] = _mm512_xor_si512 (parity[ 4 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 4 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -731,6 +771,7 @@ gf_5vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 6 Codewords
 int
 gf_6vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                           unsigned char **dest, int offSet)
@@ -740,16 +781,20 @@ gf_6vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     __m512i parity[ 6 ], taps[ 5 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
     taps[ 3 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (3 * 8)));
     taps[ 4 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (4 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -757,11 +802,14 @@ gf_6vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
         parity[ 4 ] = data_vec;
         parity[ 5 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -775,12 +823,14 @@ gf_6vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
             parity[ 5 ] = _mm512_xor_si512 (parity[ 5 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 4 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 5 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -795,6 +845,7 @@ gf_6vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 7 Codewords
 int
 gf_7vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                           unsigned char **dest, int offSet)
@@ -804,6 +855,7 @@ gf_7vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     __m512i parity[ 7 ], taps[ 6 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -811,10 +863,13 @@ gf_7vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     taps[ 4 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (4 * 8)));
     taps[ 5 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (5 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -823,11 +878,14 @@ gf_7vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
         parity[ 5 ] = data_vec;
         parity[ 6 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -843,6 +901,7 @@ gf_7vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
             parity[ 6 ] = _mm512_xor_si512 (parity[ 6 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -850,6 +909,7 @@ gf_7vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
         data_vec = _mm512_or_si512 (data_vec, parity[ 5 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 6 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -865,6 +925,7 @@ gf_7vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 8 Codewords
 int
 gf_8vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                           unsigned char **dest, int offSet)
@@ -874,6 +935,7 @@ gf_8vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     __m512i parity[ 8 ], taps[ 7 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -882,10 +944,13 @@ gf_8vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     taps[ 5 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (5 * 8)));
     taps[ 6 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (6 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -895,11 +960,14 @@ gf_8vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
         parity[ 6 ] = data_vec;
         parity[ 7 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -917,6 +985,7 @@ gf_8vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
             parity[ 7 ] = _mm512_xor_si512 (parity[ 7 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -925,6 +994,7 @@ gf_8vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
         data_vec = _mm512_or_si512 (data_vec, parity[ 6 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 7 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -941,6 +1011,7 @@ gf_8vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 9 Codewords
 int
 gf_9vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                           unsigned char **dest, int offSet)
@@ -950,6 +1021,7 @@ gf_9vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     __m512i parity[ 9 ], taps[ 8 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -959,10 +1031,13 @@ gf_9vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     taps[ 6 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (6 * 8)));
     taps[ 7 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (7 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -973,11 +1048,14 @@ gf_9vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
         parity[ 7 ] = data_vec;
         parity[ 8 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -997,6 +1075,7 @@ gf_9vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
             parity[ 8 ] = _mm512_xor_si512 (parity[ 8 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -1006,6 +1085,7 @@ gf_9vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
         data_vec = _mm512_or_si512 (data_vec, parity[ 7 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 8 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -1023,6 +1103,7 @@ gf_9vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 10 Codewords
 int
 gf_10vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -1032,6 +1113,7 @@ gf_10vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 10 ], taps[ 9 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -1042,10 +1124,13 @@ gf_10vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 7 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (7 * 8)));
     taps[ 8 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (8 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -1057,11 +1142,14 @@ gf_10vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 8 ] = data_vec;
         parity[ 9 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -1083,6 +1171,7 @@ gf_10vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 9 ] = _mm512_xor_si512 (parity[ 9 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -1093,6 +1182,7 @@ gf_10vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 8 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 9 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -1111,6 +1201,7 @@ gf_10vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 11 Codewords
 int
 gf_11vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -1120,6 +1211,7 @@ gf_11vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 11 ], taps[ 10 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -1131,10 +1223,13 @@ gf_11vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 8 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (8 * 8)));
     taps[ 9 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (9 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -1147,11 +1242,14 @@ gf_11vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 9 ] = data_vec;
         parity[ 10 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -1175,6 +1273,7 @@ gf_11vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 10 ] = _mm512_xor_si512 (parity[ 10 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -1186,6 +1285,7 @@ gf_11vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 9 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 10 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -1205,6 +1305,7 @@ gf_11vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 12 Codewords
 int
 gf_12vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -1214,6 +1315,7 @@ gf_12vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 12 ], taps[ 11 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -1226,10 +1328,13 @@ gf_12vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 9 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (9 * 8)));
     taps[ 10 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (10 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -1243,11 +1348,14 @@ gf_12vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 10 ] = data_vec;
         parity[ 11 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -1273,6 +1381,7 @@ gf_12vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 11 ] = _mm512_xor_si512 (parity[ 11 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -1285,6 +1394,7 @@ gf_12vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 10 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 11 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -1305,6 +1415,7 @@ gf_12vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 13 Codewords
 int
 gf_13vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -1314,6 +1425,7 @@ gf_13vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 13 ], taps[ 12 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -1327,10 +1439,13 @@ gf_13vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 10 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (10 * 8)));
     taps[ 11 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (11 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -1345,11 +1460,14 @@ gf_13vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 11 ] = data_vec;
         parity[ 12 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -1377,6 +1495,7 @@ gf_13vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 12 ] = _mm512_xor_si512 (parity[ 12 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -1390,6 +1509,7 @@ gf_13vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 11 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 12 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -1411,6 +1531,7 @@ gf_13vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 14 Codewords
 int
 gf_14vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -1420,6 +1541,7 @@ gf_14vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 14 ], taps[ 13 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -1434,10 +1556,13 @@ gf_14vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 11 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (11 * 8)));
     taps[ 12 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (12 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -1453,11 +1578,14 @@ gf_14vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 12 ] = data_vec;
         parity[ 13 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -1487,6 +1615,7 @@ gf_14vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 13 ] = _mm512_xor_si512 (parity[ 13 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -1501,6 +1630,7 @@ gf_14vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 12 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 13 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -1523,6 +1653,7 @@ gf_14vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 15 Codewords
 int
 gf_15vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -1532,6 +1663,7 @@ gf_15vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 15 ], taps[ 14 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -1547,10 +1679,13 @@ gf_15vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 12 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (12 * 8)));
     taps[ 13 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (13 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -1567,11 +1702,14 @@ gf_15vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 13 ] = data_vec;
         parity[ 14 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -1603,6 +1741,7 @@ gf_15vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 14 ] = _mm512_xor_si512 (parity[ 14 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -1618,6 +1757,7 @@ gf_15vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 13 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 14 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -1641,6 +1781,7 @@ gf_15vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 16 Codewords
 int
 gf_16vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -1650,6 +1791,7 @@ gf_16vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 16 ], taps[ 15 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -1666,10 +1808,13 @@ gf_16vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 13 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (13 * 8)));
     taps[ 14 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (14 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -1687,11 +1832,14 @@ gf_16vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 14 ] = data_vec;
         parity[ 15 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -1725,6 +1873,7 @@ gf_16vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 15 ] = _mm512_xor_si512 (parity[ 15 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -1741,6 +1890,7 @@ gf_16vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 14 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 15 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -1765,6 +1915,7 @@ gf_16vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 17 Codewords
 int
 gf_17vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -1774,6 +1925,7 @@ gf_17vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 17 ], taps[ 16 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -1791,10 +1943,13 @@ gf_17vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 14 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (14 * 8)));
     taps[ 15 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (15 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -1813,11 +1968,14 @@ gf_17vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 15 ] = data_vec;
         parity[ 16 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -1853,6 +2011,7 @@ gf_17vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 16 ] = _mm512_xor_si512 (parity[ 16 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -1870,6 +2029,7 @@ gf_17vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 15 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 16 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -1895,6 +2055,7 @@ gf_17vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 18 Codewords
 int
 gf_18vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -1904,6 +2065,7 @@ gf_18vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 18 ], taps[ 17 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -1922,10 +2084,13 @@ gf_18vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 15 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (15 * 8)));
     taps[ 16 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (16 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -1945,11 +2110,14 @@ gf_18vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 16 ] = data_vec;
         parity[ 17 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -1987,6 +2155,7 @@ gf_18vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 17 ] = _mm512_xor_si512 (parity[ 17 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -2005,6 +2174,7 @@ gf_18vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 16 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 17 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -2031,6 +2201,7 @@ gf_18vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 19 Codewords
 int
 gf_19vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -2040,6 +2211,7 @@ gf_19vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 19 ], taps[ 18 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -2059,10 +2231,13 @@ gf_19vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 16 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (16 * 8)));
     taps[ 17 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (17 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -2083,11 +2258,14 @@ gf_19vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 17 ] = data_vec;
         parity[ 18 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -2127,6 +2305,7 @@ gf_19vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 18 ] = _mm512_xor_si512 (parity[ 18 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -2146,6 +2325,7 @@ gf_19vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 17 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 18 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -2173,6 +2353,7 @@ gf_19vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 20 Codewords
 int
 gf_20vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -2182,6 +2363,7 @@ gf_20vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 20 ], taps[ 19 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -2202,10 +2384,13 @@ gf_20vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 17 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (17 * 8)));
     taps[ 18 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (18 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -2227,11 +2412,14 @@ gf_20vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 18 ] = data_vec;
         parity[ 19 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -2273,6 +2461,7 @@ gf_20vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 19 ] = _mm512_xor_si512 (parity[ 19 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -2293,6 +2482,7 @@ gf_20vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 18 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 19 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -2321,6 +2511,7 @@ gf_20vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 21 Codewords
 int
 gf_21vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -2330,6 +2521,7 @@ gf_21vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 21 ], taps[ 20 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -2351,10 +2543,13 @@ gf_21vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 18 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (18 * 8)));
     taps[ 19 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (19 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -2377,11 +2572,14 @@ gf_21vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 19 ] = data_vec;
         parity[ 20 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -2425,6 +2623,7 @@ gf_21vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 20 ] = _mm512_xor_si512 (parity[ 20 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -2446,6 +2645,7 @@ gf_21vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 19 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 20 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -2475,6 +2675,7 @@ gf_21vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 22 Codewords
 int
 gf_22vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -2484,6 +2685,7 @@ gf_22vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 22 ], taps[ 21 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -2506,10 +2708,13 @@ gf_22vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 19 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (19 * 8)));
     taps[ 20 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (20 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -2533,11 +2738,14 @@ gf_22vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 20 ] = data_vec;
         parity[ 21 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -2583,6 +2791,7 @@ gf_22vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 21 ] = _mm512_xor_si512 (parity[ 21 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -2605,6 +2814,7 @@ gf_22vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 20 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 21 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -2635,6 +2845,7 @@ gf_22vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 23 Codewords
 int
 gf_23vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -2644,6 +2855,7 @@ gf_23vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 23 ], taps[ 22 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -2667,10 +2879,13 @@ gf_23vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 20 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (20 * 8)));
     taps[ 21 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (21 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -2695,11 +2910,14 @@ gf_23vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 21 ] = data_vec;
         parity[ 22 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -2747,6 +2965,7 @@ gf_23vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 22 ] = _mm512_xor_si512 (parity[ 22 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -2770,6 +2989,7 @@ gf_23vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 21 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 22 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -2801,6 +3021,7 @@ gf_23vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 24 Codewords
 int
 gf_24vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -2810,6 +3031,7 @@ gf_24vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 24 ], taps[ 23 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -2834,10 +3056,13 @@ gf_24vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 21 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (21 * 8)));
     taps[ 22 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (22 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -2863,11 +3088,14 @@ gf_24vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 22 ] = data_vec;
         parity[ 23 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -2917,6 +3145,7 @@ gf_24vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 23 ] = _mm512_xor_si512 (parity[ 23 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -2941,6 +3170,7 @@ gf_24vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 22 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 23 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -2973,6 +3203,7 @@ gf_24vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 25 Codewords
 int
 gf_25vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -2982,6 +3213,7 @@ gf_25vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 25 ], taps[ 24 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -3007,10 +3239,13 @@ gf_25vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 22 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (22 * 8)));
     taps[ 23 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (23 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -3037,11 +3272,14 @@ gf_25vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 23 ] = data_vec;
         parity[ 24 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -3093,6 +3331,7 @@ gf_25vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 24 ] = _mm512_xor_si512 (parity[ 24 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -3118,6 +3357,7 @@ gf_25vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 23 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 24 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -3151,6 +3391,7 @@ gf_25vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 26 Codewords
 int
 gf_26vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -3160,6 +3401,7 @@ gf_26vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 26 ], taps[ 25 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -3186,10 +3428,13 @@ gf_26vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 23 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (23 * 8)));
     taps[ 24 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (24 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -3217,11 +3462,14 @@ gf_26vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 24 ] = data_vec;
         parity[ 25 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -3275,6 +3523,7 @@ gf_26vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 25 ] = _mm512_xor_si512 (parity[ 25 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -3301,6 +3550,7 @@ gf_26vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 24 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 25 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -3335,6 +3585,7 @@ gf_26vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 27 Codewords
 int
 gf_27vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -3344,6 +3595,7 @@ gf_27vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 27 ], taps[ 26 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -3371,10 +3623,13 @@ gf_27vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 24 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (24 * 8)));
     taps[ 25 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (25 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -3403,11 +3658,14 @@ gf_27vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 25 ] = data_vec;
         parity[ 26 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -3463,6 +3721,7 @@ gf_27vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 26 ] = _mm512_xor_si512 (parity[ 26 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -3490,6 +3749,7 @@ gf_27vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 25 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 26 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -3525,6 +3785,7 @@ gf_27vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 28 Codewords
 int
 gf_28vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -3534,6 +3795,7 @@ gf_28vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 28 ], taps[ 27 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -3562,10 +3824,13 @@ gf_28vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 25 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (25 * 8)));
     taps[ 26 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (26 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -3595,11 +3860,14 @@ gf_28vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 26 ] = data_vec;
         parity[ 27 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -3657,6 +3925,7 @@ gf_28vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 27 ] = _mm512_xor_si512 (parity[ 27 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -3685,6 +3954,7 @@ gf_28vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 26 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 27 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -3721,6 +3991,7 @@ gf_28vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 29 Codewords
 int
 gf_29vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -3730,6 +4001,7 @@ gf_29vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 29 ], taps[ 28 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -3759,10 +4031,13 @@ gf_29vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 26 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (26 * 8)));
     taps[ 27 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (27 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -3793,11 +4068,14 @@ gf_29vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 27 ] = data_vec;
         parity[ 28 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -3857,6 +4135,7 @@ gf_29vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 28 ] = _mm512_xor_si512 (parity[ 28 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -3886,6 +4165,7 @@ gf_29vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 27 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 28 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -3923,6 +4203,7 @@ gf_29vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 30 Codewords
 int
 gf_30vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -3932,6 +4213,7 @@ gf_30vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 30 ], taps[ 29 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -3962,10 +4244,13 @@ gf_30vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 27 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (27 * 8)));
     taps[ 28 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (28 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -3997,11 +4282,14 @@ gf_30vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 28 ] = data_vec;
         parity[ 29 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -4063,6 +4351,7 @@ gf_30vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 29 ] = _mm512_xor_si512 (parity[ 29 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -4093,6 +4382,7 @@ gf_30vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 28 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 29 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -4131,6 +4421,7 @@ gf_30vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 31 Codewords
 int
 gf_31vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -4140,6 +4431,7 @@ gf_31vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 31 ], taps[ 30 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -4171,10 +4463,13 @@ gf_31vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 28 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (28 * 8)));
     taps[ 29 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (29 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -4207,11 +4502,14 @@ gf_31vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 29 ] = data_vec;
         parity[ 30 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -4275,6 +4573,7 @@ gf_31vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 30 ] = _mm512_xor_si512 (parity[ 30 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -4306,6 +4605,7 @@ gf_31vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 29 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 30 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -4345,6 +4645,7 @@ gf_31vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel Syndrome Sequencer for P = 32 Codewords
 int
 gf_32vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest, int offSet)
@@ -4354,6 +4655,7 @@ gf_32vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 32 ], taps[ 31 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in power values to create parallel multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -4386,10 +4688,13 @@ gf_32vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 29 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (29 * 8)));
     taps[ 30 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (30 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = offSet; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initialize parity values to Symbol 0
         parity[ 0 ] = data_vec;
         parity[ 1 ] = data_vec;
         parity[ 2 ] = data_vec;
@@ -4423,11 +4728,14 @@ gf_32vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 30 ] = data_vec;
         parity[ 31 ] = data_vec;
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
 
+            // Update parity values using power values and Parallel Multiplier
             parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 0 ], taps[ 0 ], 0);
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 1 ], taps[ 1 ], 0);
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (parity[ 2 ], taps[ 2 ], 0);
@@ -4493,6 +4801,7 @@ gf_32vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 31 ] = _mm512_xor_si512 (parity[ 31 ], data_vec);
         }
 
+        // Verify Syndromes are zero
         data_vec = _mm512_or_si512 (parity[ 0 ], parity[ 1 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 2 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 3 ]);
@@ -4525,6 +4834,7 @@ gf_32vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         data_vec = _mm512_or_si512 (data_vec, parity[ 30 ]);
         data_vec = _mm512_or_si512 (data_vec, parity[ 31 ]);
         mask = _mm512_test_epi64_mask (data_vec, data_vec);
+        // Store syndromes and exit function on non-zero syndromes
         if (!_ktestz_mask8_u8 (mask, mask))
         {
             _mm512_store_si512 ((__m512i *) &dest[ 0 ][ 0 ], parity[ 0 ]);
@@ -4565,6 +4875,7 @@ gf_32vect_pss_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 2 Codewords
 int
 gf_2vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                           unsigned char **dest)
@@ -4573,32 +4884,42 @@ gf_2vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     __m512i parity[ 2 ], taps[ 2 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
             parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
     }
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 3 Codewords
 int
 gf_3vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                           unsigned char **dest)
@@ -4607,22 +4928,30 @@ gf_3vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     __m512i parity[ 3 ], taps[ 3 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -4631,6 +4960,7 @@ gf_3vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
             parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -4638,6 +4968,7 @@ gf_3vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 4 Codewords
 int
 gf_4vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                           unsigned char **dest)
@@ -4646,24 +4977,32 @@ gf_4vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     __m512i parity[ 4 ], taps[ 4 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
     taps[ 3 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (3 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
         parity[ 3 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 3 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -4674,6 +5013,7 @@ gf_4vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
             parity[ 3 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 3 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -4682,6 +5022,7 @@ gf_4vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 5 Codewords
 int
 gf_5vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                           unsigned char **dest)
@@ -4690,26 +5031,34 @@ gf_5vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     __m512i parity[ 5 ], taps[ 5 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
     taps[ 3 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (3 * 8)));
     taps[ 4 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (4 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
         parity[ 3 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 3 ], 0);
         parity[ 4 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 4 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -4722,6 +5071,7 @@ gf_5vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
             parity[ 4 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 4 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -4731,6 +5081,7 @@ gf_5vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 6 Codewords
 int
 gf_6vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                           unsigned char **dest)
@@ -4739,6 +5090,8 @@ gf_6vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     __m512i parity[ 6 ], taps[ 6 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -4746,10 +5099,13 @@ gf_6vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     taps[ 4 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (4 * 8)));
     taps[ 5 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (5 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -4757,10 +5113,13 @@ gf_6vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
         parity[ 4 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 4 ], 0);
         parity[ 5 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 5 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -4775,6 +5134,7 @@ gf_6vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
             parity[ 5 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 5 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -4785,6 +5145,7 @@ gf_6vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 7 Codewords
 int
 gf_7vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                           unsigned char **dest)
@@ -4793,6 +5154,8 @@ gf_7vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     __m512i parity[ 7 ], taps[ 7 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -4801,10 +5164,13 @@ gf_7vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     taps[ 5 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (5 * 8)));
     taps[ 6 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (6 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -4813,10 +5179,13 @@ gf_7vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
         parity[ 5 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 5 ], 0);
         parity[ 6 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 6 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -4833,6 +5202,7 @@ gf_7vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
             parity[ 6 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 6 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -4844,6 +5214,7 @@ gf_7vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 8 Codewords
 int
 gf_8vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                           unsigned char **dest)
@@ -4852,6 +5223,8 @@ gf_8vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     __m512i parity[ 8 ], taps[ 8 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -4861,10 +5234,13 @@ gf_8vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     taps[ 6 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (6 * 8)));
     taps[ 7 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (7 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -4874,10 +5250,13 @@ gf_8vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
         parity[ 6 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 6 ], 0);
         parity[ 7 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 7 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -4896,6 +5275,7 @@ gf_8vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
             parity[ 7 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 7 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -4908,6 +5288,7 @@ gf_8vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 9 Codewords
 int
 gf_9vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                           unsigned char **dest)
@@ -4916,6 +5297,8 @@ gf_9vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     __m512i parity[ 9 ], taps[ 9 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -4926,10 +5309,13 @@ gf_9vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     taps[ 7 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (7 * 8)));
     taps[ 8 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (8 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -4940,10 +5326,13 @@ gf_9vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
         parity[ 7 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 7 ], 0);
         parity[ 8 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 8 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -4964,6 +5353,7 @@ gf_9vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
             parity[ 8 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 8 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -4977,6 +5367,7 @@ gf_9vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char *
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 10 Codewords
 int
 gf_10vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -4985,6 +5376,8 @@ gf_10vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 10 ], taps[ 10 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -4996,10 +5389,13 @@ gf_10vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 8 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (8 * 8)));
     taps[ 9 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (9 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -5011,10 +5407,13 @@ gf_10vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 8 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 8 ], 0);
         parity[ 9 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 9 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -5037,6 +5436,7 @@ gf_10vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 9 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 9 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -5051,6 +5451,7 @@ gf_10vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 11 Codewords
 int
 gf_11vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -5059,6 +5460,8 @@ gf_11vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 11 ], taps[ 11 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -5071,10 +5474,13 @@ gf_11vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 9 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (9 * 8)));
     taps[ 10 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (10 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -5087,10 +5493,13 @@ gf_11vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 9 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 9 ], 0);
         parity[ 10 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 10 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -5115,6 +5524,7 @@ gf_11vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 10 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 10 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -5130,6 +5540,7 @@ gf_11vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 12 Codewords
 int
 gf_12vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -5138,6 +5549,8 @@ gf_12vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 12 ], taps[ 12 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -5151,10 +5564,13 @@ gf_12vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 10 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (10 * 8)));
     taps[ 11 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (11 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -5168,10 +5584,13 @@ gf_12vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 10 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 10 ], 0);
         parity[ 11 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 11 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -5198,6 +5617,7 @@ gf_12vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 11 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 11 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -5214,6 +5634,7 @@ gf_12vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 13 Codewords
 int
 gf_13vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -5222,6 +5643,8 @@ gf_13vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 13 ], taps[ 13 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -5236,10 +5659,13 @@ gf_13vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 11 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (11 * 8)));
     taps[ 12 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (12 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -5254,10 +5680,13 @@ gf_13vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 11 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 11 ], 0);
         parity[ 12 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 12 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -5286,6 +5715,7 @@ gf_13vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 12 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 12 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -5303,6 +5733,7 @@ gf_13vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 14 Codewords
 int
 gf_14vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -5311,6 +5742,8 @@ gf_14vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 14 ], taps[ 14 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -5326,10 +5759,13 @@ gf_14vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 12 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (12 * 8)));
     taps[ 13 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (13 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -5345,10 +5781,13 @@ gf_14vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 12 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 12 ], 0);
         parity[ 13 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 13 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -5379,6 +5818,7 @@ gf_14vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 13 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 13 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -5397,6 +5837,7 @@ gf_14vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 15 Codewords
 int
 gf_15vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -5405,6 +5846,8 @@ gf_15vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 15 ], taps[ 15 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -5421,10 +5864,13 @@ gf_15vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 13 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (13 * 8)));
     taps[ 14 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (14 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -5441,10 +5887,13 @@ gf_15vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 13 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 13 ], 0);
         parity[ 14 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 14 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -5477,6 +5926,7 @@ gf_15vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 14 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 14 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -5496,6 +5946,7 @@ gf_15vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 16 Codewords
 int
 gf_16vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -5504,6 +5955,8 @@ gf_16vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 16 ], taps[ 16 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -5521,10 +5974,13 @@ gf_16vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 14 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (14 * 8)));
     taps[ 15 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (15 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -5542,10 +5998,13 @@ gf_16vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 14 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 14 ], 0);
         parity[ 15 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 15 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -5580,6 +6039,7 @@ gf_16vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 15 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 15 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -5600,6 +6060,7 @@ gf_16vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 17 Codewords
 int
 gf_17vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -5608,6 +6069,8 @@ gf_17vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 17 ], taps[ 17 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -5626,10 +6089,13 @@ gf_17vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 15 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (15 * 8)));
     taps[ 16 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (16 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -5648,10 +6114,13 @@ gf_17vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 15 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 15 ], 0);
         parity[ 16 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 16 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -5688,6 +6157,7 @@ gf_17vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 16 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 16 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -5709,6 +6179,7 @@ gf_17vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 18 Codewords
 int
 gf_18vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -5717,6 +6188,8 @@ gf_18vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 18 ], taps[ 18 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -5736,10 +6209,13 @@ gf_18vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 16 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (16 * 8)));
     taps[ 17 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (17 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -5759,10 +6235,13 @@ gf_18vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 16 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 16 ], 0);
         parity[ 17 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 17 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -5801,6 +6280,7 @@ gf_18vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 17 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 17 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -5823,6 +6303,7 @@ gf_18vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 19 Codewords
 int
 gf_19vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -5831,6 +6312,8 @@ gf_19vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 19 ], taps[ 19 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -5851,10 +6334,13 @@ gf_19vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 17 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (17 * 8)));
     taps[ 18 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (18 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -5875,10 +6361,13 @@ gf_19vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 17 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 17 ], 0);
         parity[ 18 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 18 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -5919,6 +6408,7 @@ gf_19vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 18 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 18 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -5942,6 +6432,7 @@ gf_19vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 20 Codewords
 int
 gf_20vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -5950,6 +6441,8 @@ gf_20vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 20 ], taps[ 20 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -5971,10 +6464,13 @@ gf_20vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 18 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (18 * 8)));
     taps[ 19 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (19 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -5996,10 +6492,13 @@ gf_20vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 18 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 18 ], 0);
         parity[ 19 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 19 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -6042,6 +6541,7 @@ gf_20vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 19 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 19 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -6066,6 +6566,7 @@ gf_20vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 21 Codewords
 int
 gf_21vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -6074,6 +6575,8 @@ gf_21vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 21 ], taps[ 21 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -6096,10 +6599,13 @@ gf_21vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 19 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (19 * 8)));
     taps[ 20 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (20 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -6122,10 +6628,13 @@ gf_21vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 19 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 19 ], 0);
         parity[ 20 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 20 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -6170,6 +6679,7 @@ gf_21vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 20 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 20 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -6195,6 +6705,7 @@ gf_21vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 22 Codewords
 int
 gf_22vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -6203,6 +6714,8 @@ gf_22vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 22 ], taps[ 22 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -6226,10 +6739,13 @@ gf_22vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 20 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (20 * 8)));
     taps[ 21 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (21 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -6253,10 +6769,13 @@ gf_22vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 20 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 20 ], 0);
         parity[ 21 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 21 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -6303,6 +6822,7 @@ gf_22vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 21 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 21 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -6329,6 +6849,7 @@ gf_22vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 23 Codewords
 int
 gf_23vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -6337,6 +6858,8 @@ gf_23vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 23 ], taps[ 23 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -6361,10 +6884,13 @@ gf_23vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 21 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (21 * 8)));
     taps[ 22 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (22 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -6389,10 +6915,13 @@ gf_23vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 21 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 21 ], 0);
         parity[ 22 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 22 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -6441,6 +6970,7 @@ gf_23vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 22 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 22 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -6468,6 +6998,7 @@ gf_23vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 24 Codewords
 int
 gf_24vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -6476,6 +7007,8 @@ gf_24vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 24 ], taps[ 24 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -6501,10 +7034,13 @@ gf_24vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 22 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (22 * 8)));
     taps[ 23 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (23 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -6530,10 +7066,13 @@ gf_24vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 22 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 22 ], 0);
         parity[ 23 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 23 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -6584,6 +7123,7 @@ gf_24vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 23 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 23 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -6612,6 +7152,7 @@ gf_24vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 25 Codewords
 int
 gf_25vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -6620,6 +7161,8 @@ gf_25vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 25 ], taps[ 25 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -6646,10 +7189,13 @@ gf_25vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 23 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (23 * 8)));
     taps[ 24 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (24 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -6676,10 +7222,13 @@ gf_25vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 23 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 23 ], 0);
         parity[ 24 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 24 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -6732,6 +7281,7 @@ gf_25vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 24 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 24 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -6761,6 +7311,7 @@ gf_25vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 26 Codewords
 int
 gf_26vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -6769,6 +7320,8 @@ gf_26vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 26 ], taps[ 26 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -6796,10 +7349,13 @@ gf_26vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 24 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (24 * 8)));
     taps[ 25 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (25 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -6827,10 +7383,13 @@ gf_26vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 24 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 24 ], 0);
         parity[ 25 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 25 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -6885,6 +7444,7 @@ gf_26vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 25 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 25 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -6915,6 +7475,7 @@ gf_26vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 27 Codewords
 int
 gf_27vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -6923,6 +7484,8 @@ gf_27vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 27 ], taps[ 27 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -6951,10 +7514,13 @@ gf_27vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 25 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (25 * 8)));
     taps[ 26 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (26 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -6983,10 +7549,13 @@ gf_27vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 25 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 25 ], 0);
         parity[ 26 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 26 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -7043,6 +7612,7 @@ gf_27vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 26 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 26 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -7074,6 +7644,7 @@ gf_27vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 28 Codewords
 int
 gf_28vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -7082,6 +7653,8 @@ gf_28vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 28 ], taps[ 28 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -7111,10 +7684,13 @@ gf_28vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 26 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (26 * 8)));
     taps[ 27 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (27 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -7144,10 +7720,13 @@ gf_28vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 26 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 26 ], 0);
         parity[ 27 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 27 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -7206,6 +7785,7 @@ gf_28vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 27 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 27 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -7238,6 +7818,7 @@ gf_28vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 29 Codewords
 int
 gf_29vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -7246,6 +7827,8 @@ gf_29vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 29 ], taps[ 29 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -7276,10 +7859,13 @@ gf_29vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 27 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (27 * 8)));
     taps[ 28 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (28 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -7310,10 +7896,13 @@ gf_29vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 27 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 27 ], 0);
         parity[ 28 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 28 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -7374,6 +7963,7 @@ gf_29vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 28 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 28 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -7407,6 +7997,7 @@ gf_29vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 30 Codewords
 int
 gf_30vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -7415,6 +8006,8 @@ gf_30vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 30 ], taps[ 30 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -7446,10 +8039,13 @@ gf_30vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 28 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (28 * 8)));
     taps[ 29 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (29 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -7481,10 +8077,13 @@ gf_30vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 28 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 28 ], 0);
         parity[ 29 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 29 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -7547,6 +8146,7 @@ gf_30vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 29 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 29 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -7581,6 +8181,7 @@ gf_30vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 31 Codewords
 int
 gf_31vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -7589,6 +8190,8 @@ gf_31vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 31 ], taps[ 31 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -7621,10 +8224,13 @@ gf_31vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 29 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (29 * 8)));
     taps[ 30 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (30 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -7657,10 +8263,13 @@ gf_31vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 29 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 29 ], 0);
         parity[ 30 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 30 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -7725,6 +8334,7 @@ gf_31vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 30 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 30 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -7760,6 +8370,7 @@ gf_31vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Parallel LFSR Sequencer for P = 32 Codewords
 int
 gf_32vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char **data,
                            unsigned char **dest)
@@ -7768,6 +8379,8 @@ gf_32vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     __m512i parity[ 32 ], taps[ 32 ]; // Parity registers
     __m512i data_vec;
 
+    // Initialize the taps to the passed in Generator Polynomial values to create Parallel
+    // Multiplier
     taps[ 0 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (0 * 8)));
     taps[ 1 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (1 * 8)));
     taps[ 2 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (2 * 8)));
@@ -7801,10 +8414,13 @@ gf_32vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     taps[ 30 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (30 * 8)));
     taps[ 31 ] = _mm512_broadcast_i32x2 (*(__m128i *) (g_tbls + (31 * 8)));
 
+    // Loop through each 64 byte codeword
     for (curPos = 0; curPos < len; curPos += 64)
     {
+        // Load 64 bytes of Original Data
         data_vec = _mm512_load_si512 ((__m512i *) &data[ 0 ][ curPos ]);
         __builtin_prefetch (&data[ 0 ][ curPos + 64 ], 0, 3);
+        // Initalize Parallel Multipliers with Generator Polynomial values
         parity[ 0 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0);
         parity[ 1 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 1 ], 0);
         parity[ 2 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 2 ], 0);
@@ -7838,10 +8454,13 @@ gf_32vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
         parity[ 30 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 30 ], 0);
         parity[ 31 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 31 ], 0);
 
+        // Loop through all the 1..k symbols
         for (curSym = 1; curSym < k; curSym++)
         {
+            // Load next 64 bytes of Original Data
             data_vec = _mm512_load_si512 ((__m512i *) &data[ curSym ][ curPos ]);
             __builtin_prefetch (&data[ curSym ][ curPos + 64 ], 0, 3);
+            // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
             data_vec = _mm512_xor_si512 (data_vec, parity[ 0 ]);
             parity[ 0 ] = _mm512_xor_si512 (parity[ 1 ],
                                             _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 0 ], 0));
@@ -7908,6 +8527,7 @@ gf_32vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
             parity[ 31 ] = _mm512_gf2p8affine_epi64_epi8 (data_vec, taps[ 31 ], 0);
         }
 
+        // Store Level 2 parity back to memory
         _mm512_store_si512 ((__m512i *) &dest[ 0 ][ curPos ], parity[ 0 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 1 ][ curPos ], parity[ 1 ]);
         _mm512_store_si512 ((__m512i *) &dest[ 2 ][ curPos ], parity[ 2 ]);
@@ -7944,6 +8564,7 @@ gf_32vect_pls_avx512_gfni (int len, int k, unsigned char *g_tbls, unsigned char 
     return (curPos);
 }
 
+// Single function to access each unrolled Encode
 void
 pc_encode_data_avx512_gfni (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
                             unsigned char **coding)
@@ -8045,6 +8666,7 @@ pc_encode_data_avx512_gfni (int len, int k, int rows, unsigned char *g_tbls, uns
         break;
     }
 }
+// Single function to access each unrolled Decode
 int
 pc_decode_data_avx512_gfni (int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
                             unsigned char **coding, int retries)
