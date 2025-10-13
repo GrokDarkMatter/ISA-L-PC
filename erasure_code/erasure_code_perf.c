@@ -588,8 +588,8 @@ test_pgz_decoder (int index, int m, int p, unsigned char *g_tbls, unsigned char 
     {
         for (int start = 0; start < m - (p / 2); start++)
         {
-            unsigned char error_positions[ PC_MAX_ERRS ];
-            uint8_t original_values[ PC_MAX_ERRS ];
+            unsigned char error_positions[ PC_MAX_PAR ];
+            uint8_t original_values[ PC_MAX_PAR ];
             for (int i = 0; i < (p / 2); i++)
             {
                 error_positions[ i ] = start + i;
@@ -626,8 +626,8 @@ test_pgz_decoder (int index, int m, int p, unsigned char *g_tbls, unsigned char 
     {
         for (int trial = 0; trial < 1000; trial++)
         {
-            uint8_t error_positions[ PC_MAX_ERRS ];
-            uint8_t original_values[ PC_MAX_ERRS ];
+            uint8_t error_positions[ PC_MAX_PAR ];
+            uint8_t original_values[ PC_MAX_PAR ];
             int available[ FIELD_SIZE ];
             for (int i = 0; i < m; i++)
             {
@@ -676,7 +676,7 @@ int
 main (int argc, char *argv[])
 {
     // Work variables
-    int i, j, m, k, p, nerrs, ret = -1;
+    int i, j, m, k, p, ret = -1;
     void *buf;
     u8 *a, *g_tbls = 0, *z0 = 0;
     u8 *temp_buffs[ TEST_SOURCES ] = { NULL };
@@ -689,7 +689,6 @@ main (int argc, char *argv[])
     /* Set default parameters */
     k = 12;
     p = 8;
-    nerrs = 4;
 
     /* Parse arguments */
     for (i = 1; i < argc; i++)
@@ -720,12 +719,6 @@ main (int argc, char *argv[])
         }
     }
 
-    // Do a little paramater validation
-    if (nerrs > k)
-    {
-        nerrs = k;
-    }
-
     if (k <= 0)
     {
         printf ("Number of source buffers (%d) must be > 0\n", k);
@@ -739,7 +732,6 @@ main (int argc, char *argv[])
     }
 
     // Match errors to parity count and compute codeword size
-    nerrs = p;
     m = k + p;
 
 #ifndef NOPAPI
@@ -767,7 +759,7 @@ main (int argc, char *argv[])
     // Print output header
     PC_CPU_ID ();
     printf ("Testing with %u data buffers and %u parity buffers\n", k, p);
-    printf ("erasure_code_perf: %dx%d %d\n", m, TEST_LEN (m), nerrs);
+    printf ("erasure_code_perf: %dx%d %d\n", m, TEST_LEN (m), p);
 
     // Allocate the arrays
     if (posix_memalign (&buf, 64, TEST_LEN (m)))
@@ -780,7 +772,7 @@ main (int argc, char *argv[])
 
     for (i = 0; i < m; i++)
     {
-        if (posix_memalign (&buf, 64, TEST_LEN (m)))
+        if (posix_memalign (&buf, PC_STRIDE, TEST_LEN (m)))
         {
             printf ("Error allocating buffers\n");
             goto exit;
@@ -790,7 +782,7 @@ main (int argc, char *argv[])
 
     for (i = 0; i < p; i++)
     {
-        if (posix_memalign (&buf, 64, TEST_LEN (m)))
+        if (posix_memalign (&buf, PC_STRIDE, TEST_LEN (m)))
         {
             printf ("Error allocating buffers\n");
             goto exit;
@@ -799,7 +791,7 @@ main (int argc, char *argv[])
     }
 
     // Allocate gtbls
-    if (posix_memalign (&buf, 64, KMAX * TEST_SOURCES * 32))
+    if (posix_memalign (&buf, PC_STRIDE, KMAX * TEST_SOURCES * PC_MAX_TAB))
     {
         printf ("Error allocating g_tbls\n");
         goto exit;

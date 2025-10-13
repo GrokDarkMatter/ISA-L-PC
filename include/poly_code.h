@@ -23,9 +23,6 @@
 // Base value for number of test loops
 #define PC_TEST_LOOPS 200
 
-// Maximum unknown errors
-#define PC_MAX_ERRS PC_MAX_PAR
-
 // Number of L1 parity symbols
 #define PC_L1PAR 4
 

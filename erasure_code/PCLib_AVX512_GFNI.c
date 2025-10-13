@@ -79,7 +79,7 @@ pc_verify_single_error_AVX512_GFNI (unsigned char *S, unsigned char **data, int 
     // Compute error location is log2(syndrome[1]/syndrome[0])
     unsigned char eLoc = S[ 1 ];
     unsigned char pVal = gf_mul (eLoc, gf_inv (eVal));
-    eLoc = (gflog_base[ pVal ]) % 255;
+    eLoc = (gflog_base[ pVal ]) % PC_FIELD_SIZE;
 
     // Verify error location is reasonable
     if (eLoc >= k)
@@ -111,11 +111,11 @@ gf_invert_matrix_AVX512_GFNI (unsigned char *in_mat, unsigned char *out_mat, con
     __m512i affineVal512;
     __m128i affineVal128;
 
-    if (n > 32)
+    if (n > PC_MAX_PAR)
         return -1; // Assumption: n <= 32
 
     int i, j;
-    __m512i aug_rows[ 32 ];                                 // Ensure 64-byte alignment
+    __m512i aug_rows[ PC_MAX_PAR ];                         // Ensure 64-byte alignment
     unsigned char *matrix_mem = (unsigned char *) aug_rows; // Point to aug_rows memory
 
     // Initialize augmented matrix: [in_mat row | out_mat row | padding zeros]
@@ -131,14 +131,14 @@ gf_invert_matrix_AVX512_GFNI (unsigned char *in_mat, unsigned char *out_mat, con
     for (i = 0; i < n; i++)
     {
         // Check for 0 in pivot element using matrix_mem
-        unsigned char pivot = matrix_mem[ i * 64 + i ];
+        unsigned char pivot = matrix_mem[ i * PC_STRIDE + i ];
         // printf ( "Pivot = %d\n", pivot ) ;
         if (pivot == 0)
         {
             // Find a row with non-zero in current column and swap
             for (j = i + 1; j < n; j++)
             {
-                if (matrix_mem[ j * 64 + i ] != 0)
+                if (matrix_mem[ j * PC_STRIDE + i ] != 0)
                 {
                     break;
                 }
@@ -192,7 +192,7 @@ gf_invert_matrix_AVX512_GFNI (unsigned char *in_mat, unsigned char *out_mat, con
 int
 find_roots_AVX512_GFNI (unsigned char *keyEq, unsigned char *roots, int mSize)
 {
-    static __m512i Vandermonde[ 16 ][ 4 ];
+    static __m512i Vandermonde[ PC_MAX_PAR ][ PC_L1PAR ];
     __m512i sum[ 4 ], temp, affineVal512;
     __m128i affineVal128;
     int i, j;
@@ -201,16 +201,16 @@ find_roots_AVX512_GFNI (unsigned char *keyEq, unsigned char *roots, int mSize)
     // Check to see if Vandermonde has been initialized yet
     if (vVal[ 0 ] == 0)
     {
-        unsigned char base = 2, cVal = 1;
+        unsigned char base = PC_GEN_x11d, cVal = 1;
         for (i = 0; i < 16; i++)
         {
             vVal = (unsigned char *) &Vandermonde[ i ];
-            for (j = 0; j < 255; j++)
+            for (j = 0; j < PC_FIELD_SIZE; j++)
             {
                 vVal[ j ] = cVal;
                 cVal = gf_mul (cVal, base);
             }
-            base = gf_mul (base, 2);
+            base = gf_mul (base, PC_GEN_x11d);
         }
     }
     // Initialize our sum to the constant term, no need for multiply
@@ -242,7 +242,7 @@ find_roots_AVX512_GFNI (unsigned char *keyEq, unsigned char *roots, int mSize)
 
     int rootCount = 0, idx = 0;
     // Create the list of roots
-    for (i = 0; i < 4; i++)
+    for (i = 0; i < PC_L1PAR; i++)
     {
         // Compare each byte to zero, generating a 64-bit mask
         __mmask64 mask = _mm512_cmpeq_epi8_mask (sum[ i ], _mm512_setzero_si512 ());
@@ -255,7 +255,7 @@ find_roots_AVX512_GFNI (unsigned char *keyEq, unsigned char *roots, int mSize)
         {
             // Find the next set bit (index of zero byte)
             uint64_t pos = _tzcnt_u64 (mask);
-            roots[ idx++ ] = (uint8_t) pos + (i * 64);
+            roots[ idx++ ] = (uint8_t) pos + (i * PC_STRIDE);
             // Clear the lowest set bit
             mask = _blsr_u64 (mask); // mask &= (mask - 1)
         }
@@ -277,14 +277,14 @@ pc_compute_error_values_AVX512_GFNI (int mSize, unsigned char *S, unsigned char 
     {
         Mat[ i ] = 1;
     }
-    unsigned char base = 2;
+    unsigned char base = PC_GEN_x11d;
     for (i = 1; i < mSize; i++)
     {
         for (j = 0; j < mSize; j++)
         {
             Mat[ i * mSize + j ] = pc_pow_AVX512_GFNI (base, roots[ j ]);
         }
-        base = gf_mul (base, 2);
+        base = gf_mul (base, PC_GEN_x11d);
     }
     // Invert matrix and verify inversion
     if (gf_invert_matrix_AVX512_GFNI (Mat, Mat_inv, mSize) != 0)
@@ -330,7 +330,7 @@ pc_verify_syndromes_AVX512_GFNI (unsigned char *S, int p, int mSize, unsigned ch
             return 0;
         }
         // Move to next syndrome
-        base = gf_mul (base, 2);
+        base = gf_mul (base, PC_GEN_x11d);
     }
     return 1;
 }
