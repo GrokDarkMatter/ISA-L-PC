@@ -680,6 +680,7 @@ main (int argc, char *argv[])
     if (file == NULL)
     {
         printf ("Failed to open %s\n", fname);
+        exit (0);
     }
     // Print CPU info and check CPU flags
     PC_CPU_ID (file);
@@ -989,8 +990,8 @@ main (int argc, char *argv[])
     fflush (stdout);
 
     ret = 0;
-exit:
     fclose (file);
+exit:
     aligned_free (z0);
     free (a);
     for (i = 0; i < TEST_SOURCES; i++)

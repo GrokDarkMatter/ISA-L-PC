@@ -619,8 +619,8 @@ main (int argc, char *argv[])
 
     ret = 0;
 
-exit:
     fclose (file);
+exit:
     free (a);
 
     return ret;

@@ -1,9 +1,3 @@
-#ifdef _WIN64
-#include <stdio.h>
-#include <string.h>
-#include <windows.h>
-#include <intrin.h>
-
 // Utility print routine
 void
 dump_u8xu8 (unsigned char *s, int k, int m)
@@ -38,6 +32,12 @@ perf_printf (FILE * file, struct perf p, double unit_count)
     printf ("\n");
     fprintf (file, "\n");
 }
+
+#ifdef _WIN64
+#include <stdio.h>
+#include <string.h>
+#include <windows.h>
+#include <intrin.h>
 
 void
 get_cpu_brand (char *brand)
@@ -150,7 +150,7 @@ PC_CPU_ID (FILE * file)
 #include <cpuid.h>
 
 int
-check_gfni_support (void)
+check_gfni_support (FILE * file)
 {
     unsigned int eax, ebx, ecx, edx;
     __cpuid (0x7, eax, ebx, ecx, edx); // Leaf 0x7, subleaf 0
@@ -252,8 +252,8 @@ PC_CPU_ID (FILE * file)
     printf ("cpu cores       : %d\n", Cores);
     fprintf (file, "cpu cores       : %d\n", Cores);
 #ifndef __aarch64__
-    printf ("GFNI Support    : %s\n", check_gfni_support () ? "Yes" : "No");
-    fprintf (file, "GFNI Support    : %s\n", check_gfni_support () ? "Yes" : "No");
+    printf ("GFNI Support    : %s\n", check_gfni_support (file) ? "Yes" : "No");
+    fprintf (file, "GFNI Support    : %s\n", check_gfni_support (file) ? "Yes" : "No");
 #endif
     fclose (fp);
     return Cores;
