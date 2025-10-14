@@ -36,8 +36,6 @@ If you'd like to build ISA-L-PC on Linux, here are some tips: https://github.com
 
 If you'd like to build ISA-L-PC for ARM64, here are some tips: https://github.com/GrokDarkMatter/ISA-L-PC/issues/4
 
-In addition to performance, ISA-L offers both 1D and 2D Reed Solomon error encoding and decoding.
-
 ### Background papers
 
 [Information Dispersal Matrices for RAID Error Correcting Codes](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/MathPapers/IDM.pdf)
