@@ -56,21 +56,6 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 typedef unsigned char u8;
 #include "PC_CPU_ID.c"
 
-// Utility print routine
-void
-dump_u8xu8 (unsigned char *s, int k, int m)
-{
-    int i, j;
-    for (i = 0; i < k; i++)
-    {
-        for (j = 0; j < m; j++)
-        {
-            printf (" %3x", 0xff & s[ j + (i * m) ]);
-        }
-        printf ("\n");
-    }
-    printf ("\n");
-}
 extern int
 ec_encode_data_avx512_gfni (int len, int m, int p, unsigned char *g_tbls, unsigned char **data,
                             unsigned char **coding);
@@ -586,66 +571,6 @@ usage (const char *app_name)
              app_name);
 }
 
-int
-ec_decode_perf (int m, int k, u8 *a, u8 *g_tbls, u8 **buffs, u8 *src_in_err, u8 *src_err_list,
-                int nerrs, u8 **temp_buffs, struct perf *start)
-{
-    int i, j, r;
-    u8 *b, *c, *d;
-    u8 *recov[ TEST_SOURCES ];
-    b = c = d = 0;
-
-    // Allocate work buffers
-    b = malloc (MMAX * KMAX);
-    if (b == NULL)
-    {
-        printf ("Error allocating b\n");
-        goto exit;
-    }
-    c = malloc (MMAX * KMAX);
-    if (c == NULL)
-    {
-        printf ("Error allocating c\n");
-        goto exit;
-    }
-    d = malloc (MMAX * KMAX);
-    if (d == NULL)
-    {
-        printf ("Error allocating d\n");
-        goto exit;
-    }
-
-    // Construct b by removing error rows
-    for (i = 0, r = 0; i < k; i++, r++)
-    {
-        while (src_in_err[ r ])
-            r++;
-        recov[ i ] = buffs[ r ];
-        for (j = 0; j < k; j++)
-            b[ k * i + j ] = a[ k * r + j ];
-    }
-
-    if (gf_invert_matrix (b, d, k) < 0)
-        return BAD_MATRIX;
-
-    for (i = 0; i < nerrs; i++)
-        for (j = 0; j < k; j++)
-            c[ k * i + j ] = d[ k * src_err_list[ i ] + j ];
-
-    // Recover data
-    ec_init_tables (k, nerrs, c, g_tbls);
-    BENCHMARK (start, BENCHMARK_TIME,
-               ec_encode_data (TEST_LEN (m), k, nerrs, g_tbls, recov, temp_buffs));
-exit:
-    free (d);
-    free (c);
-    free (b);
-
-    return 0;
-}
-
-#define FIELD_SIZE 256
-
 void
 inject_errors_in_place_2d (unsigned char **data, unsigned char *offsets, int d1Len, int num_errors,
                            unsigned char *error_positions, unsigned char *original_values)
@@ -662,7 +587,7 @@ inject_errors_in_place_2d (unsigned char **data, unsigned char *offsets, int d1L
             int opos = i + (curLen * num_errors);
             original_values[ opos ] = data[ pos ][ index ];
             // printf ( "Original opos = %d val = %x\n", opos, data [ pos ] [ index ] ) ;
-            unsigned char error = (rand () % (FIELD_SIZE - 1)) + 1;
+            unsigned char error = (rand () % (PC_FIELD_SIZE)) + 1;
             // unsigned char error = curLen + 1 ;
             data[ pos ][ index ] = data[ pos ][ index ] ^ error;
             // printf ( "Injecting data [%d][%d] with %x i = %d\n", pos, index, error, i ) ;
@@ -706,7 +631,7 @@ void
 make_norepeat_rand (int listSize, int fieldSize, unsigned char *list)
 {
 
-    int available[ FIELD_SIZE ];
+    int available[ PC_FIELD_SIZE ];
 
     // First initialize available list
     for (int i = 0; i < fieldSize; i++)
@@ -865,8 +790,16 @@ main (int argc, char *argv[])
 
     struct perf start;
 
+    // Open the records file for append
+    const char *fname = "results.poly_code_perf.txt";
+    FILE *file = fopen (fname, "a");
+    if (file == NULL)
+    {
+        printf ("Failed to open %s\n", fname);
+    }
     // Print CPU info and check CPU flags
-    PC_CPU_ID ();
+    PC_CPU_ID (file);
+
     /* Set default parameters */
     k = PC_FIELD_SIZE - PC_MAX_PAR;
     p = PC_MAX_PAR;
@@ -1189,6 +1122,7 @@ main (int argc, char *argv[])
 
     ret = 0;
 exit:
+    fclose (file);
     aligned_free (z0);
     free (a);
     for (i = 0; i < TEST_SOURCES; i++)

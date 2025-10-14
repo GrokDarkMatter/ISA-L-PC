@@ -4,6 +4,41 @@
 #include <windows.h>
 #include <intrin.h>
 
+// Utility print routine
+void
+dump_u8xu8 (unsigned char *s, int k, int m)
+{
+    int i, j;
+    for (i = 0; i < k; i++)
+    {
+        for (j = 0; j < m; j++)
+        {
+            printf (" %3x", 0xff & s[ j + (i * m) ]);
+        }
+        printf ("\n");
+    }
+    printf ("\n");
+}
+
+static inline void
+perf_printf (FILE * file, struct perf p, double unit_count)
+{
+    long long total_units = p.iterations * unit_count;
+    long long usecs = (long long) (get_time_elapsed (&p) * 1000000);
+
+    printf ("runtime = %10lld usecs", usecs);
+    fprintf (file, "runtime = %10lld usecs", usecs);
+    if (total_units != 0)
+    {
+        printf (", bandwidth %lld MB in %.4f sec = %.2f MB/s", total_units / (1000000),
+                get_time_elapsed (&p), ((double) total_units) / (1000000 * get_time_elapsed (&p)));
+        fprintf (file, ", bandwidth %lld MB in %.4f sec = %.2f MB/s", total_units / (1000000),
+                get_time_elapsed (&p), ((double) total_units) / (1000000 * get_time_elapsed (&p)));
+    }
+    printf ("\n");
+    fprintf (file, "\n");
+}
+
 void
 get_cpu_brand (char *brand)
 {
@@ -53,7 +88,7 @@ check_gfni_support ()
 }
 
 int
-PC_CPU_ID ()
+PC_CPU_ID (FILE * file)
 {
     char brand[ 64 ] = { 0 }; // Initialize to avoid garbage
     get_cpu_brand (brand);
@@ -64,16 +99,22 @@ PC_CPU_ID ()
     printf ("Processor Brand: %s\n", brand);
     printf ("Number of Logical Processors: %u\n", si.dwNumberOfProcessors);
     printf ("Processor Architecture: ");
+    fprintf (file, "Processor Brand: %s\n", brand);
+    fprintf (file, "Number of Logical Processors: %u\n", si.dwNumberOfProcessors);
+    fprintf (file, "Processor Architecture: ");
     switch (si.wProcessorArchitecture)
     {
     case PROCESSOR_ARCHITECTURE_AMD64:
         printf ("x64\n");
+        fprintf (file, "x64\n");
         break;
     case PROCESSOR_ARCHITECTURE_INTEL:
         printf ("x86\n");
+        fprintf (file, "x86\n");
         break;
     case PROCESSOR_ARCHITECTURE_ARM:
         printf ("ARM\n");
+        fprintf (file, "ARM\n");
         break;
     default:
         printf ("Unknown\n");
@@ -81,6 +122,7 @@ PC_CPU_ID ()
     }
 
     printf ("GFNI Support: %s\n", check_gfni_support () ? "Yes" : "No");
+    fprintf (file, "GFNI Support: %s\n", check_gfni_support () ? "Yes" : "No");
 
     HKEY hKey;
     DWORD mhz = 0;
@@ -91,10 +133,12 @@ PC_CPU_ID ()
         RegQueryValueEx (hKey, "~MHz", NULL, NULL, (LPBYTE) &mhz, &size);
         RegCloseKey (hKey);
         printf ("Approximate Clock Speed: %u MHz\n", mhz);
+        fprintf (file, "Approximate Clock Speed: %u MHz\n", mhz);
     }
     else
     {
         printf ("Failed to retrieve clock speed from registry\n");
+        fprintf (file, "Failed to retrieve clock speed from registry\n");
     }
 
     return si.dwNumberOfProcessors;
@@ -116,13 +160,15 @@ check_gfni_support (void)
     {
         printf ("Error this processor does not support AVX512 and GFNI\n");
         printf ("%x %x %x %x\n", eax, ebx, ecx, edx);
+        fprintf (file, "Error this processor does not support AVX512 and GFNI\n");
+        fprintf (file, "%x %x %x %x\n", eax, ebx, ecx, edx);
         exit (0);
     }
     return (ecx & (1 << 8)) != 0; // Check ECX bit 8 for GFNI
 }
 #endif
 int
-PC_CPU_ID (void)
+PC_CPU_ID (FILE * file)
 {
     FILE *fp = fopen ("/proc/cpuinfo", "r");
     if (fp == NULL)
@@ -134,6 +180,7 @@ PC_CPU_ID (void)
     int s = 0, Cores = 0, m;
     char line[ 1024 ];
     printf ("Processor Details:\n");
+    fprintf (file, "Processor Details:\n");
     while (fgets (line, sizeof (line), fp))
     {
         // Print specific fields for name and details
@@ -203,8 +250,10 @@ PC_CPU_ID (void)
         }
     }
     printf ("cpu cores       : %d\n", Cores);
+    fprintf (file, "cpu cores       : %d\n", Cores);
 #ifndef __aarch64__
     printf ("GFNI Support    : %s\n", check_gfni_support () ? "Yes" : "No");
+    fprintf (file, "GFNI Support    : %s\n", check_gfni_support () ? "Yes" : "No");
 #endif
     fclose (fp);
     return Cores;

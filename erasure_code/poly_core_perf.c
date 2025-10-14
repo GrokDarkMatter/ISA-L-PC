@@ -84,22 +84,6 @@ typedef unsigned char u8;
 
 #endif
 
-// Utility print routine
-void
-dump_u8xu8 (unsigned char *s, int k, int m)
-{
-    int i, j;
-    for (i = 0; i < k; i++)
-    {
-        for (j = 0; j < m; j++)
-        {
-            printf (" %3x", 0xff & s[ j + (i * m) ]);
-        }
-        printf ("\n");
-    }
-    printf ("\n");
-}
-
 #define NOPAPI 1
 
 #ifdef _WIN64
@@ -401,7 +385,15 @@ main (int argc, char *argv[])
     k = 223;
     p = 32;
 
-    cores = PC_CPU_ID ();
+    // Open the records file for append
+    const char *fname = "results.poly_core_perf.txt";
+    FILE *file = fopen (fname, "a");
+    if (file == NULL)
+    {
+        printf ("Failed to open %s\n", fname);
+    }
+    // Print CPU info and check CPU flags
+    cores = PC_CPU_ID (file);
 
     /* Parse arguments */
     for (i = 1; i < argc; i++)
@@ -459,6 +451,8 @@ main (int argc, char *argv[])
     // Print output header
     printf ("Testing with %u data buffers and %u parity buffers\n", k, p);
     printf ("erasure_code_perf: %dx%d %d\n", m, TEST_LEN (m), p);
+    fprintf (file, "Testing with %u data buffers and %u parity buffers\n", k, p);
+    fprintf (file, "erasure_code_perf: %dx%d %d\n", m, TEST_LEN (m), p);
 #ifndef __aarch64__
     // Build the power, log and inverse tables
     pc_bpow_2d (3);
@@ -489,8 +483,10 @@ main (int argc, char *argv[])
 #ifndef __aarch64__
     // Print test type
     printf ("Testing AVX512-GFNI\n");
+    fprintf (file, "Testing AVX512-GFNI\n");
 #else
     printf ("Testing ARM64 NEON\n");
+    fprintf (file, "Testing ARM64 NEON\n");
 #endif
     struct PCBenchStruct Bench[ PC_MAX_CORES ] = { 0 };
 
@@ -514,6 +510,7 @@ main (int argc, char *argv[])
     for (int curCore = 1; curCore <= cores; curCore++)
     {
         printf ("Testing with %d of %d cores\n", curCore, cores);
+        fprintf (file, "Testing with %d of %d cores\n", curCore, cores);
         for (int curTest = 1; curTest <= PC_MAXTEST; curTest++)
         {
             for (int curBench = 0; curBench < cores; curBench++)
@@ -556,9 +553,15 @@ main (int argc, char *argv[])
                 printf ("erasure_code_encode_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
                         "sec = %.2f MB/s\n",
                         curCore, k, p, totBytes, elapsedTime / 1000, mbPerSecond);
+                fprintf (file, "erasure_code_encode_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
+                        "sec = %.2f MB/s\n",
+                        curCore, k, p, totBytes, elapsedTime / 1000, mbPerSecond);
                 break;
             case 2:
                 printf ("erasure_code_decode_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
+                        "sec = %.2f MB/s\n",
+                        curCore, k + p, p, totBytes, elapsedTime / 1000, mbPerSecond);
+                fprintf (file, "erasure_code_decode_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
                         "sec = %.2f MB/s\n",
                         curCore, k + p, p, totBytes, elapsedTime / 1000, mbPerSecond);
                 break;
@@ -566,9 +569,15 @@ main (int argc, char *argv[])
                 printf ("polynomial_code_pls_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
                         "sec = %.2f MB/s\n",
                         curCore, k, p, totBytes, elapsedTime / 1000, mbPerSecond);
+                fprintf (file, "polynomial_code_pls_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
+                        "sec = %.2f MB/s\n",
+                        curCore, k, p, totBytes, elapsedTime / 1000, mbPerSecond);
                 break;
             case 4:
                 printf ("polynomial_code_pss_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
+                        "sec = %.2f MB/s\n",
+                        curCore, k + p, p, totBytes, elapsedTime / 1000, mbPerSecond);
+                fprintf (file, "polynomial_code_pss_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
                         "sec = %.2f MB/s\n",
                         curCore, k + p, p, totBytes, elapsedTime / 1000, mbPerSecond);
                 break;
@@ -576,9 +585,15 @@ main (int argc, char *argv[])
                 printf ("polynomial_code_pls_2d  : cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
                         "sec = %.2f MB/s\n",
                         curCore, k, p, totBytes, elapsedTime / 1000, mbPerSecond);
+                fprintf (file, "polynomial_code_pls_2d  : cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
+                        "sec = %.2f MB/s\n",
+                        curCore, k, p, totBytes, elapsedTime / 1000, mbPerSecond);
                 break;
             case 6:
                 printf ("polynomial_code_pss_2d  : cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
+                        "sec = %.2f MB/s\n",
+                        curCore, k + p, p, totBytes, elapsedTime / 1000, mbPerSecond);
+                fprintf (file, "polynomial_code_pss_2d  : cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
                         "sec = %.2f MB/s\n",
                         curCore, k + p, p, totBytes, elapsedTime / 1000, mbPerSecond);
                 break;
@@ -599,11 +614,13 @@ main (int argc, char *argv[])
         FreeClone (&Bench[ i ], k, p);
     }
     printf (" done all: Pass\n");
+    fprintf (file, " done all: Pass\n");
     fflush (stdout);
 
     ret = 0;
 
 exit:
+    fclose (file);
     free (a);
 
     return ret;

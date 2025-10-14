@@ -52,22 +52,8 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 #include <stdlib.h>
 #include <string.h> // for memset, memcmp
 #include "PC_CPU_ID.c"
+
 typedef unsigned char u8;
-// Utility print routine
-void
-dump_u8xu8 (unsigned char *s, int k, int m)
-{
-    int i, j;
-    for (i = 0; i < k; i++)
-    {
-        for (j = 0; j < m; j++)
-        {
-            printf (" %3x", 0xff & s[ j + (i * m) ]);
-        }
-        printf ("\n");
-    }
-    printf ("\n");
-}
 
 #define NOPAPI 1
 
@@ -688,10 +674,21 @@ main (int argc, char *argv[])
         printf ("Error allocating a\n");
         goto exit;
     }
+    // Open the records file for append
+    const char *fname = "results.erasure_code_perf.txt";
+    FILE *file = fopen (fname, "a");
+    if (file == NULL)
+    {
+        printf ("Failed to open %s\n", fname);
+    }
+    // Print CPU info and check CPU flags
+    PC_CPU_ID (file);
+
     // Print output header
-    PC_CPU_ID ();
     printf ("Testing with %u data buffers and %u parity buffers\n", k, p);
     printf ("erasure_code_perf: %dx%d %d\n", m, TEST_LEN (m), p);
+    fprintf (file, "Testing with %u data buffers and %u parity buffers\n", k, p);
+    fprintf (file, "erasure_code_perf: %dx%d %d\n", m, TEST_LEN (m), p);
 
     // Allocate the arrays
     if (posix_memalign (&buf, 64, TEST_LEN (m)))
@@ -738,14 +735,17 @@ main (int argc, char *argv[])
             // Print test type
 #ifdef __aarch64__
     printf ("Testing ARM64-NEON\n");
+    fprintf (file, "Testing ARM64-NEON\n");
 #else
     if (avx2 == 0)
     {
         printf ("Testing AVX512-GFNI\n");
+        fprintf (file, "Testing AVX512-GFNI\n");
     }
     else
     {
         printf ("Testing AVX2-GFNI\n");
+        fprintf (file, "Testing AVX2-GFNI\n");
     }
 #endif
 
@@ -769,7 +769,8 @@ main (int argc, char *argv[])
     }
 #endif
     printf ("erasure_code_encode" TEST_TYPE_STR ": k=%d p=%d ", k, p);
-    perf_print (start, (long long) (TEST_LEN (m)) * (m));
+    fprintf (file, "erasure_code_encode" TEST_TYPE_STR ": k=%d p=%d ", k, p);
+    perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
 
     // Test intrinsics lfsr
     gf_gen_poly (a, p);
@@ -801,7 +802,8 @@ main (int argc, char *argv[])
         }
     }
     printf ("polynomial_code_pls" TEST_TYPE_STR ": k=%d p=%d ", k, p);
-    perf_print (start, (long long) (TEST_LEN (m)) * (m));
+    fprintf (file, "polynomial_code_pls" TEST_TYPE_STR ": k=%d p=%d ", k, p);
+    perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
 
     // Test decoding with dot product
     gf_gen_rsr_matrix (a, m + p, m);
@@ -822,7 +824,8 @@ main (int argc, char *argv[])
     }
 #endif
     printf ("dot_prod_decode" TEST_TYPE_STR ":     k=%d p=%d ", m, p);
-    perf_print (start, (long long) (TEST_LEN (m)) * (m));
+    fprintf (file, "dot_prod_decode" TEST_TYPE_STR ":     k=%d p=%d ", m, p);
+    perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
 
     // Test result of codeword encoding for zero
     for (i = 0; i < p; i++)
@@ -861,11 +864,13 @@ main (int argc, char *argv[])
     }
 #endif
     printf ("polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p);
-    perf_print (start, (long long) (TEST_LEN (m)) * (m));
+    fprintf(file, "polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p);
+    perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
 
     if (test_pgz_decoder (0, m, p, g_tbls, buffs, temp_buffs, avx2) == 0)
     {
         printf ("Decoder failed\n");
+        fprintf (file, "Decoder failed\n");
         goto exit;
     }
 #ifndef NOPAPI
@@ -980,10 +985,12 @@ main (int argc, char *argv[])
     PAPI_shutdown ();
 #endif
     printf ("done all: Pass\n");
+    fprintf (file, "done all: Pass\n");
     fflush (stdout);
 
     ret = 0;
 exit:
+    fclose (file);
     aligned_free (z0);
     free (a);
     for (i = 0; i < TEST_SOURCES; i++)
