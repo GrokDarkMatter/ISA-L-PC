@@ -38,12 +38,15 @@ In addition to performance, ISA-L offers both 1D and 2D Reed Solomon error encod
 
 ### Background papers
 
-[An Erasure coding Performance Metric for Windows 8](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/MathPapers/ECPWin8g.pdf)
+[Information Dispersal Matrices for RAID Error Correcting Codes](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/MathPapers/IDM.pdf)
 
 [On the reliability of RAID systems: An Argument for More Check Drives](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/MathPapers/ECRAIDReliability.pdf)
 
+[An Erasure coding Performance Metric for Windows 8](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/MathPapers/ECPWin8g.pdf)
 
 [Our work with Baylor University - Guide to Reed Solomon Codes](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/MathPapers/BaylorWork-b188a16.pdf)
+
+[Polynomial Encoding Table Values](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/MathPapers/PolyCodeValues.pdf)
 
 ### Battling Silent Data Corruption: Empowering Reliability with Modern Vector Processors
 
