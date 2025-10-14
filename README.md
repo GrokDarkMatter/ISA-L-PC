@@ -4,7 +4,7 @@ ISA-L-PC
 # Optimized and Vectorized Reed Solomon Encoding/Decoding with AVX512 and GFNI
 
 ### Overview 
-The `PCLib_AVX512_GFNI` library provides functions for single level error correction and encoding/decoding using finite field arithmetic, specifically designed to leverage Intel's AVX-512 and GFNI (Galois Field New Instructions) for performance optimization. The library is capable of handling operations required for various coding schemes, including Reed-Solomon codes and implementations of linear feedback shift registers (LFSR).
+The `PCLib_AVX512_GFNI` library provides functions for single level error correction and encoding/decoding using finite field arithmetic, specifically designed to leverage AVX-512 and GFNI (Galois Field New Instructions) for performance optimization. The library is capable of handling operations required for various coding schemes, including Reed-Solomon codes and implementations of linear feedback shift registers (LFSR).
 
 [API Details for PCLib_AVX512_GFNI](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/Documentation/PCLib_AVX512_GFNI_READ_ME.md)
 # Multi-Level Reed Solomon Encoding/Decoding with AVX512 and GFNI
@@ -57,7 +57,7 @@ This shift minimizes overhead via vector processing while empowering developers 
 
 In the era of exabyte-scale data centers, silent data corruption (SDC) lurks as an invisible saboteur, silently corrupting "cold" archives—those vast troves of infrequently accessed but mission-critical data like backups, logs, and historical datasets. A 2023 Google study revealed SDC rates climbing to 1 in 500 drives annually in hyperscale environments, while Meta's reports highlight how bit flips from cosmic rays, hardware wear, or firmware bugs can cascade into catastrophic losses during rare reads. For data centers drowning in petabytes of cold storage, where verification is sporadic, these undetected errors threaten compliance, AI training integrity, and recovery from disasters like ransomware.
 
-Enter a potent weapon: two-dimensional Reed-Solomon (2D-RS) encoding, an ECC powerhouse that improves upon legacy tape technologies for disk and cloud resilience. My new open-source library, ISA-L-PC, delivers exactly this—leveraging Intel's GFNI instructions for blazing-fast SIMD acceleration. It applies RS(64,60) encoding within blocks for intra-level correction, then layers a flexible RS code (up to 255 symbols) across blocks for inter-level fortification. With full source code, you can tweak both levels to any valid 8-bit configuration, tailoring protection to your workload.
+Enter a potent weapon: two-dimensional Reed-Solomon (2D-RS) encoding, an ECC powerhouse that improves upon legacy tape technologies for disk and cloud resilience. My new open-source library, ISA-L-PC, delivers exactly this—leveraging GFNI instructions for blazing-fast SIMD acceleration. It applies RS(64,60) encoding within blocks for intra-level correction, then layers a flexible RS code (up to 255 symbols) across blocks for inter-level fortification. With full source code, you can tweak both levels to any valid 8-bit configuration, tailoring protection to your workload.
 
 [LTO-9 Technical Paper](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/MathPapers/LTO-UBER-Technical-Paper-August-2022.pdf)
 
