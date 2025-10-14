@@ -88,8 +88,6 @@ ec_encode_data_avx512_gfni (int len, int m, int p, unsigned char *g_tbls, unsign
 #include <arm_neon.h>
 extern void
 ec_encode_data_neon (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
-extern void
-ec_encode_data_neon (int len, int k, int p, u8 *g_tbls, u8 **buffs, u8 **dest);
 #else
 #include <immintrin.h>
 #include "PCLib_2D_AVX512_GFNI.c"
