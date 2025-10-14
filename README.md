@@ -1,10 +1,10 @@
 ISA-L-PC
 --------
 
-# Optimized and Vectorized Reed Solomon Encoding/Decoding with AVX512 and GFNI
+# Optimized and Vectorized Reed Solomon Encoding and Error Decoding with AVX512 and GFNI
 
 ### Overview 
-The `PCLib_AVX512_GFNI` library provides functions for single level error correction and encoding/decoding using finite field arithmetic, specifically designed to leverage AVX-512 and GFNI (Galois Field New Instructions) for performance optimization. The library is capable of handling operations required for various coding schemes, including Reed-Solomon codes and implementations of linear feedback shift registers (LFSR).
+The `PCLib_AVX512_GFNI` library provides functions for single level error correction and encoding/decoding using finite field arithmetic, specifically designed to leverage AVX-512 and GFNI (Galois Field New Instructions) for performance optimization. The library is capable of handling operations required for Reed-Solomon codes and implementations of linear feedback shift registers (LFSR).
 
 [API Details for PCLib_AVX512_GFNI](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/Documentation/PCLib_AVX512_GFNI_READ_ME.md)
 # Multi-Level Reed Solomon Encoding/Decoding with AVX512 and GFNI
