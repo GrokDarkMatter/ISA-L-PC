@@ -889,6 +889,8 @@ main (int argc, char *argv[])
     // Print output header
     printf ("Testing with %u data buffers and %u parity buffers\n", k, p);
     printf ("erasure_code_perf: %dx%d %d\n", m, TEST_LEN (m), nerrs);
+    fprintf (file, "Testing with %u data buffers and %u parity buffers\n", k, p);
+    fprintf (file, "erasure_code_perf: %dx%d %d\n", m, TEST_LEN (m), nerrs);
 
     // Allocate the arrays
     if (posix_memalign (&buf, PC_STRIDE, TEST_LEN (m)))
@@ -939,6 +941,7 @@ main (int argc, char *argv[])
 
     // Print test type
     printf ("Testing AVX512-GFNI\n");
+    fprintf (file, "Testing AVX512-GFNI\n");
 
     // Perform the baseline benchmark
 
@@ -946,7 +949,8 @@ main (int argc, char *argv[])
                ec_encode_data_avx512_gfni (TEST_LEN (m), k, p, g_tbls, buffs, &buffs[ k ]));
 
     printf ("erasure_code_encode" TEST_TYPE_STR ": k=%d p=%d ", k, p);
-    perf_print (start, (long long) (TEST_LEN (m)) * (m));
+    fprintf (file, "erasure_code_encode" TEST_TYPE_STR ": k=%d p=%d ", k, p);
+    perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
 
     unsigned char LFSRTab[ 32 ];
     // Test intrinsics lfsr
@@ -957,7 +961,8 @@ main (int argc, char *argv[])
     // pc_encode_data_avx512_gfni_2d(64, k, p, LFSRTab, buffs, &buffs [ k ]);
 
     printf ("polynomial_code_pls" TEST_TYPE_STR ": k=%d p=%d ", k, p);
-    perf_print (start, (long long) (TEST_LEN (m)) * (m));
+    fprintf (file, "polynomial_code_pls" TEST_TYPE_STR ": k=%d p=%d ", k, p);
+    perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
 
     // for ( i = 0 ; i < m ; i ++ )
     //{
@@ -968,7 +973,8 @@ main (int argc, char *argv[])
                ec_encode_data_avx512_gfni (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs));
 
     printf ("dot_prod_decode" TEST_TYPE_STR ":     k=%d p=%d ", m, p);
-    perf_print (start, (long long) (TEST_LEN (m)) * (m));
+    fprintf (file, "dot_prod_decode" TEST_TYPE_STR ":     k=%d p=%d ", m, p);
+    perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
 
     // Now benchmark parallel syndrome sequencer - First create power vector
     unsigned char pwrTab[ 32 ];
@@ -988,7 +994,8 @@ main (int argc, char *argv[])
     // printf ( "After benchmark\n" ) ;
 
     printf ("polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p);
-    perf_print (start, (long long) (TEST_LEN (m)) * (m));
+    fprintf (file, "polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p);
+    perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
 
     printf ("Length decoded = %x TEST_LEN(m) = %x\n", done, TEST_LEN (m));
     for (i = 0; i < p; i++)
