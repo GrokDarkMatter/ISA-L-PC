@@ -482,74 +482,6 @@ usage (const char *app_name)
 }
 
 void
-ec_encode_perf (int m, int k, u8 *a, u8 *g_tbls, u8 **buffs, struct perf *start)
-{
-    ec_init_tables (k, m - k, &a[ k * k ], g_tbls);
-    BENCHMARK (start, BENCHMARK_TIME,
-               ec_encode_data (TEST_LEN (m), k, m - k, g_tbls, buffs, &buffs[ k ]));
-}
-
-int
-ec_decode_perf (int m, int k, u8 *a, u8 *g_tbls, u8 **buffs, u8 *src_in_err, u8 *src_err_list,
-                int nerrs, u8 **temp_buffs, struct perf *start)
-{
-    int i, j, r;
-    u8 *b, *c, *d;
-    u8 *recov[ TEST_SOURCES ];
-    b = c = d = 0;
-
-    // Allocate work buffers
-    b = malloc (MMAX * KMAX);
-    if (b == NULL)
-    {
-        printf ("Error allocating b\n");
-        goto exit;
-    }
-    c = malloc (MMAX * KMAX);
-    if (c == NULL)
-    {
-        printf ("Error allocating c\n");
-        goto exit;
-    }
-    d = malloc (MMAX * KMAX);
-    if (d == NULL)
-    {
-        printf ("Error allocating d\n");
-        goto exit;
-    }
-
-    // Construct b by removing error rows
-    for (i = 0, r = 0; i < k; i++, r++)
-    {
-        while (src_in_err[ r ])
-            r++;
-        recov[ i ] = buffs[ r ];
-        for (j = 0; j < k; j++)
-            b[ k * i + j ] = a[ k * r + j ];
-    }
-
-    if (gf_invert_matrix (b, d, k) < 0)
-        return BAD_MATRIX;
-
-    for (i = 0; i < nerrs; i++)
-        for (j = 0; j < k; j++)
-            c[ k * i + j ] = d[ k * src_err_list[ i ] + j ];
-
-    // Recover data
-    ec_init_tables (k, nerrs, c, g_tbls);
-    BENCHMARK (start, BENCHMARK_TIME,
-               ec_encode_data (TEST_LEN (m), k, nerrs, g_tbls, recov, temp_buffs));
-exit:
-    free (d);
-    free (c);
-    free (b);
-
-    return 0;
-}
-
-#define FIELD_SIZE 256
-
-void
 inject_errors_in_place (unsigned char **data, int index, int num_errors,
                         unsigned char *error_positions, uint8_t *original_values)
 {
@@ -557,7 +489,7 @@ inject_errors_in_place (unsigned char **data, int index, int num_errors,
     {
         int pos = error_positions[ i ];
         original_values[ i ] = data[ pos ][ index ];
-        uint8_t error = (rand () % (FIELD_SIZE - 1)) + 1;
+        uint8_t error = (rand () % (PC_FIELD_SIZE)) + 1;
         data[ pos ][ index ] = data[ pos ][ index ] ^ error;
     }
 }
@@ -628,7 +560,7 @@ test_pgz_decoder (int index, int m, int p, unsigned char *g_tbls, unsigned char 
         {
             uint8_t error_positions[ PC_MAX_PAR ];
             uint8_t original_values[ PC_MAX_PAR ];
-            int available[ FIELD_SIZE ];
+            int available[ PC_FIELD_SIZE ];
             for (int i = 0; i < m; i++)
             {
                 available[ i ] = i;

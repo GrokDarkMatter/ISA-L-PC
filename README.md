@@ -14,6 +14,14 @@ The `PCLib_2D_AVX512_GFNI` library implements a 2D error correction coding syste
 
 [API Details for PCLib_2D_AVX512_GFNI](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/Documentation/PCLib_2D_AVX512_GFNI_READ_ME.md)
 
+# Performance Tests
+
+[This Document](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/Documentation/erasure_code_perf_READ_ME.md) details the functionality and usage of the erasure_code_perf.c file. The software is developed for high-performance erasure coding, which is widely used for data recovery in distributed storage systems. Single threaded single level RS coding is measured and compared to ISA-L.
+
+[This Document](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/Documentation/poly_code_perf_READ_ME.md) details the functionality and usage of the poly_code_perf.c file. The software is developed for high-performance erasure coding, which is widely used for data recovery in distributed storage systems. Single threaded multi-level RS coding is measured and compared to ISA-L
+
+[This Document](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/Documentation/poly_core_perf_READ_ME.md) details the functionality and usage of the poly_core_perf.c file. The software is developed for high-performance erasure coding, which is widely used for data recovery in distributed storage systems. Multi-threaded multi-level RS encoding is measured and compared to ISA-L
+
 ### Performance Charts for x86 and ARM64
 
 Here's a summary of ISA-L vs ISA-L-PC performance: [View Performance Charts](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/ISA-LvISA-L-PC.pdf)
