@@ -31,9 +31,9 @@ The `PCLib_2D_AVX512_GFNI` library implements a 2D error correction coding syste
 
 ### Performance Charts for x86 and ARM64
 
-Here's a summary of ISA-L vs ISA-L-PC performance: [View Performance Charts](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/ISA-LvISA-L-PC.pdf)
+Here's a summary of single-core ISA-L vs ISA-L-PC performance: [View Performance Charts](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/ISA-LvISA-L-PC.pdf)
 
-Here's a summary of ISA-L vs. ISA-L-PC for ARM64: [View Performance Charts](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/ISA-LvISA-L-PC_AARCH64.pdf)
+Here's a summary of single-core ISA-L vs. ISA-L-PC for ARM64: [View Performance Charts](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/ISA-LvISA-L-PC_AARCH64.pdf)
 
 ### Building ISA-L-PC
 
