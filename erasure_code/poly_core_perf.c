@@ -553,49 +553,55 @@ main (int argc, char *argv[])
                 printf ("erasure_code_encode_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
                         "sec = %.2f MB/s\n",
                         curCore, k, p, totBytes, elapsedTime / 1000, mbPerSecond);
-                fprintf (file, "erasure_code_encode_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
-                        "sec = %.2f MB/s\n",
-                        curCore, k, p, totBytes, elapsedTime / 1000, mbPerSecond);
+                fprintf (file,
+                         "erasure_code_encode_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
+                         "sec = %.2f MB/s\n",
+                         curCore, k, p, totBytes, elapsedTime / 1000, mbPerSecond);
                 break;
             case 2:
                 printf ("erasure_code_decode_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
                         "sec = %.2f MB/s\n",
                         curCore, k + p, p, totBytes, elapsedTime / 1000, mbPerSecond);
-                fprintf (file, "erasure_code_decode_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
-                        "sec = %.2f MB/s\n",
-                        curCore, k + p, p, totBytes, elapsedTime / 1000, mbPerSecond);
+                fprintf (file,
+                         "erasure_code_decode_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
+                         "sec = %.2f MB/s\n",
+                         curCore, k + p, p, totBytes, elapsedTime / 1000, mbPerSecond);
                 break;
             case 3:
                 printf ("polynomial_code_pls_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
                         "sec = %.2f MB/s\n",
                         curCore, k, p, totBytes, elapsedTime / 1000, mbPerSecond);
-                fprintf (file, "polynomial_code_pls_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
-                        "sec = %.2f MB/s\n",
-                        curCore, k, p, totBytes, elapsedTime / 1000, mbPerSecond);
+                fprintf (file,
+                         "polynomial_code_pls_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
+                         "sec = %.2f MB/s\n",
+                         curCore, k, p, totBytes, elapsedTime / 1000, mbPerSecond);
                 break;
             case 4:
                 printf ("polynomial_code_pss_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
                         "sec = %.2f MB/s\n",
                         curCore, k + p, p, totBytes, elapsedTime / 1000, mbPerSecond);
-                fprintf (file, "polynomial_code_pss_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
-                        "sec = %.2f MB/s\n",
-                        curCore, k + p, p, totBytes, elapsedTime / 1000, mbPerSecond);
+                fprintf (file,
+                         "polynomial_code_pss_cold: cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
+                         "sec = %.2f MB/s\n",
+                         curCore, k + p, p, totBytes, elapsedTime / 1000, mbPerSecond);
                 break;
             case 5:
                 printf ("polynomial_code_pls_2d  : cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
                         "sec = %.2f MB/s\n",
                         curCore, k, p, totBytes, elapsedTime / 1000, mbPerSecond);
-                fprintf (file, "polynomial_code_pls_2d  : cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
-                        "sec = %.2f MB/s\n",
-                        curCore, k, p, totBytes, elapsedTime / 1000, mbPerSecond);
+                fprintf (file,
+                         "polynomial_code_pls_2d  : cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
+                         "sec = %.2f MB/s\n",
+                         curCore, k, p, totBytes, elapsedTime / 1000, mbPerSecond);
                 break;
             case 6:
                 printf ("polynomial_code_pss_2d  : cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
                         "sec = %.2f MB/s\n",
                         curCore, k + p, p, totBytes, elapsedTime / 1000, mbPerSecond);
-                fprintf (file, "polynomial_code_pss_2d  : cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
-                        "sec = %.2f MB/s\n",
-                        curCore, k + p, p, totBytes, elapsedTime / 1000, mbPerSecond);
+                fprintf (file,
+                         "polynomial_code_pss_2d  : cores = %d k=%d p=%d bandwidth %.0f MB in %.3f "
+                         "sec = %.2f MB/s\n",
+                         curCore, k + p, p, totBytes, elapsedTime / 1000, mbPerSecond);
                 break;
             }
         }

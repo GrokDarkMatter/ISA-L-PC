@@ -865,7 +865,7 @@ main (int argc, char *argv[])
     }
 #endif
     printf ("polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p);
-    fprintf(file, "polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p);
+    fprintf (file, "polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p);
     perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
 
     if (test_pgz_decoder (0, m, p, g_tbls, buffs, temp_buffs, avx2) == 0)

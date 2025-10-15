@@ -15,7 +15,7 @@ dump_u8xu8 (unsigned char *s, int k, int m)
 }
 
 static inline void
-perf_printf (FILE * file, struct perf p, double unit_count)
+perf_printf (FILE *file, struct perf p, double unit_count)
 {
     long long total_units = p.iterations * unit_count;
     long long usecs = (long long) (get_time_elapsed (&p) * 1000000);
@@ -27,7 +27,7 @@ perf_printf (FILE * file, struct perf p, double unit_count)
         printf (", bandwidth %lld MB in %.4f sec = %.2f MB/s", total_units / (1000000),
                 get_time_elapsed (&p), ((double) total_units) / (1000000 * get_time_elapsed (&p)));
         fprintf (file, ", bandwidth %lld MB in %.4f sec = %.2f MB/s", total_units / (1000000),
-                get_time_elapsed (&p), ((double) total_units) / (1000000 * get_time_elapsed (&p)));
+                 get_time_elapsed (&p), ((double) total_units) / (1000000 * get_time_elapsed (&p)));
     }
     printf ("\n");
     fprintf (file, "\n");
@@ -88,7 +88,7 @@ check_gfni_support ()
 }
 
 int
-PC_CPU_ID (FILE * file)
+PC_CPU_ID (FILE *file)
 {
     char brand[ 64 ] = { 0 }; // Initialize to avoid garbage
     get_cpu_brand (brand);
@@ -150,7 +150,7 @@ PC_CPU_ID (FILE * file)
 #include <cpuid.h>
 
 int
-check_gfni_support (FILE * file)
+check_gfni_support (FILE *file)
 {
     unsigned int eax, ebx, ecx, edx;
     __cpuid (0x7, eax, ebx, ecx, edx); // Leaf 0x7, subleaf 0
@@ -168,7 +168,7 @@ check_gfni_support (FILE * file)
 }
 #endif
 int
-PC_CPU_ID (FILE * file)
+PC_CPU_ID (FILE *file)
 {
     FILE *fp = fopen ("/proc/cpuinfo", "r");
     if (fp == NULL)
