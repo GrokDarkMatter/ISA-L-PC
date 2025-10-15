@@ -7,6 +7,9 @@ The following graph shows the bandwidth performance (in MB/s) of ISA-L (bottom 2
 
 ![Performance Graph](performance.png)
 
+# LFSR Structure and Functionality
+
+![Performance Graph](lfsr.png)
 
 # Optimized and Vectorized Reed Solomon Encoding and Error Decoding with AVX512 and GFNI
 
