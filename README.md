@@ -3,7 +3,7 @@ ISA-L-PC
 
 # Performance Analysis of Erasure and Polynomial Coding
 
-The following graph shows the bandwidth performance (in MB/s) of different coding methods as the number of CPU cores increases from 1 to 24. The data is sourced from `results.poly_core_perf.txt`.
+The following graph shows the bandwidth performance (in MB/s) of ISA-L (bottom 2) vs. ISA-L-PC (top 2) as the number of CPU cores increases from 1 to 24. The data is sourced from `results.poly_core_perf.txt`.
 
 ![Performance Graph](performance.png)
 
