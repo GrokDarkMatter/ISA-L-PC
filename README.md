@@ -5,11 +5,11 @@ ISA-L-PC
 
 The following graph shows the bandwidth performance (in MB/s) of ISA-L (bottom 2) vs. ISA-L-PC (top 2) as the number of CPU cores increases from 1 to 24. The data is sourced from `results.poly_core_perf.txt`.
 
-![Performance Graph](performance.png)
+![Performance Graph](https://raw.githubusercontent.com/GrokDarkMatter/ISA-L-PC/master/performance.png)
 
 # LFSR Structure and Functionality
 
-![Performance Graph](lfsr.png)
+![LFSR Diagram](https://raw.githubusercontent.com/GrokDarkMatter/ISA-L-PC/master/LFSR.png)
 
 # Optimized and Vectorized Reed Solomon Encoding and Error Decoding with AVX512 and GFNI
 
