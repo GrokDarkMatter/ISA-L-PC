@@ -183,16 +183,19 @@ TestPAPIRoots (void)
         printf ("PAPI failed to initialize\n");
         exit (1);
     }
-    unsigned char roots[ 16 ];
+    unsigned char roots[ PC_MAX_ERRS ];
 
     for (int lenPoly = 2; lenPoly <= 16; lenPoly++)
     {
         int rootCount = 0;
-        unsigned char S[ 16 ], keyEq[ 16 ];
+        unsigned char S[ PC_MAX_ERRS ], keyEq[ PC_MAX_ERRS ];
+
+        // Create a generator polynomial with roots at 1,2,3,... lenPoly
         gf_gen_poly (S, lenPoly);
         // printf ( "Generator poly\n" ) ;
         // dump_u8xu8 ( S, 1, lenPoly ) ;
 
+        // Reverse the polynomial to create the key equation
         for (int i = 0; i < lenPoly; i++)
         {
             keyEq[ i ] = S[ lenPoly - i - 1 ];
@@ -263,11 +266,13 @@ TestPAPIInv (void)
         exit (1);
     }
 
+    // Start with small matrix and go to larger
     for (int lenPoly = 4; lenPoly <= PC_MAX_PAR; lenPoly++)
     {
         unsigned char in_mat[ PC_MAX_PAR * PC_MAX_PAR ], out_mat[ PC_MAX_PAR * PC_MAX_PAR ],
                 base = 1, val = 1;
 
+        // Create some values to invert
         for (int i = 0; i < lenPoly; i++)
         {
             for (int j = 0; j < lenPoly; j++)
@@ -347,7 +352,7 @@ TestPAPIbm (void)
         unsigned char base = 1;
         for (int i = 0; i < lenPoly; i++)
         {
-            // int rvs = lenPoly - i - 1 ;
+            // Create some syndromes to test PGZ and Berlekamp
             int rvs = i;
             S[ rvs ] = 0;
             unsigned char val = 1;
@@ -467,6 +472,7 @@ usage (const char *app_name)
              app_name);
 }
 
+// Inject num_errors errors into data at data[ error_positions[0..num_errors-1] ][ index ]
 void
 inject_errors_in_place (unsigned char **data, int index, int num_errors,
                         unsigned char *error_positions, uint8_t *original_values)
@@ -480,6 +486,7 @@ inject_errors_in_place (unsigned char **data, int index, int num_errors,
     }
 }
 
+// Verify that the data at data[ error_positions[0..num_errors-1] ][ index ] matches original_values
 int
 verify_correction_in_place (unsigned char **data, int index, int num_errors,
                             unsigned char *error_positions, uint8_t *original_values)
@@ -496,12 +503,12 @@ verify_correction_in_place (unsigned char **data, int index, int num_errors,
     return 1;
 }
 
+// Test the decoder by injecting errors and verifying correction
 int
 test_pgz_decoder (int index, int m, int p, unsigned char *g_tbls, unsigned char **data,
                   unsigned char **coding, int avx2)
 {
-    int successes = 0, total_tests = 0;
-
+    // Start with sequential errors
     for (int num_errors = 1; num_errors <= (p / 2); num_errors++)
     {
         for (int start = 0; start < m - (p / 2); start++)
@@ -526,20 +533,16 @@ test_pgz_decoder (int index, int m, int p, unsigned char *g_tbls, unsigned char 
             }
 #endif
 
-            if (verify_correction_in_place (data, index, num_errors, error_positions,
+            if (!verify_correction_in_place (data, index, num_errors, error_positions,
                                             original_values))
-            {
-                successes++;
-            }
-            else
             {
                 printf ("Failed: Sequential, %d errors at %d\n", num_errors, start);
                 return 0;
             }
-            total_tests++;
         }
     }
 
+    // Now random errors
     for (int num_errors = 1; num_errors <= (p / 2); num_errors++)
     {
         for (int trial = 0; trial < 1000; trial++)
@@ -572,17 +575,12 @@ test_pgz_decoder (int index, int m, int p, unsigned char *g_tbls, unsigned char 
             }
 #endif
 
-            if (verify_correction_in_place (data, index, num_errors, error_positions,
+            if (!verify_correction_in_place (data, index, num_errors, error_positions,
                                             original_values))
-            {
-                successes++;
-            }
-            else
             {
                 printf ("Failed: Random, %d errors, trial %d\n", num_errors, trial);
                 return 0;
             }
-            total_tests++;
         }
     }
 
@@ -590,6 +588,7 @@ test_pgz_decoder (int index, int m, int p, unsigned char *g_tbls, unsigned char 
     return 1;
 }
 
+// Main program
 int
 main (int argc, char *argv[])
 {
@@ -691,7 +690,7 @@ main (int argc, char *argv[])
     fprintf (file, "Testing with %u data buffers and %u parity buffers\n", k, p);
     fprintf (file, "erasure_code_perf: %dx%d %d\n", m, TEST_LEN (m), p);
 
-    // Allocate the arrays
+    // Allocate buffers full of zeroes for zero compare
     if (posix_memalign (&buf, 64, TEST_LEN (m)))
     {
         printf ("Error allocating buffers\n");
@@ -700,6 +699,7 @@ main (int argc, char *argv[])
     z0 = buf;
     memset (z0, 0, TEST_LEN (m));
 
+    // Allocate data and coding buffers
     for (i = 0; i < m; i++)
     {
         if (posix_memalign (&buf, PC_STRIDE, TEST_LEN (m)))
@@ -710,6 +710,7 @@ main (int argc, char *argv[])
         buffs[ i ] = buf;
     }
 
+    // Allocate temp buffers
     for (i = 0; i < p; i++)
     {
         if (posix_memalign (&buf, PC_STRIDE, TEST_LEN (m)))
@@ -842,10 +843,10 @@ main (int argc, char *argv[])
 
     // Now benchmark parallel syndrome sequencer - First create power vector
     i = 2;
-    for (j = p - 2; j >= 0; j--)
+    for (j = p - PC_GEN_x11d; j >= 0; j--)
     {
         a[ j ] = i;
-        i = gf_mul (i, 2);
+        i = gf_mul (i, PC_GEN_x11d);
     }
 
     ec_init_tables (p - 1, 1, a, g_tbls);

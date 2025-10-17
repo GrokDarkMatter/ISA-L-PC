@@ -179,10 +179,13 @@ TestPAPIRoots (void)
     {
         int rootCount = 0;
         unsigned char S[ PC_MAX_ERRS ], keyEq[ PC_MAX_ERRS ];
+
+        // Create a generator polynomial with roots at 1,2,3,... lenPoly
         pc_gen_poly_2d (S, lenPoly);
         // printf ( "Generator poly\n" ) ;
         // dump_u8xu8 ( S, 1, lenPoly ) ;
 
+        // Reverse the polynomial to create the key equation
         for (int i = 0; i < lenPoly; i++)
         {
             keyEq[ i ] = S[ lenPoly - i - 1 ];
@@ -253,11 +256,13 @@ TestPAPIInv (void)
         exit (1);
     }
 
+    // Start with small matrix and go to larger
     for (int lenPoly = 4; lenPoly <= 32; lenPoly++)
     {
         unsigned char in_mat[ PC_MAX_PAR * PC_MAX_PAR ], out_mat[ PC_MAX_PAR * PC_MAX_PAR ],
                 base = 1, val = 1;
 
+        // Create some values to invert
         for (int i = 0; i < lenPoly; i++)
         {
             for (int j = 0; j < lenPoly; j++)
@@ -449,6 +454,7 @@ TestPAPIbm (void)
     {
         unsigned char S[ PC_MAX_PAR ], keyEq[ PC_MAX_ERRS ] = { 0 };
 
+        // Create some syndromes to test PGZ and Berlekamp
         unsigned char base = 1;
         for (int i = 0; i < lenPoly; i++)
         {
@@ -571,6 +577,7 @@ usage (const char *app_name)
              app_name);
 }
 
+// Inject num_errors into the data buffers at the specified error_positions
 void
 inject_errors_in_place_2d (unsigned char **data, unsigned char *offsets, int d1Len, int num_errors,
                            unsigned char *error_positions, unsigned char *original_values)
@@ -598,6 +605,7 @@ inject_errors_in_place_2d (unsigned char **data, unsigned char *offsets, int d1L
     // dump_u8xu8 ( original_values, 1, d1Len * num_errors ) ;
 }
 
+// Verify that the data at data[ error_positions[0..num_errors-1] ][ index ] matches original_values
 int
 verify_correction_in_place_2d (unsigned char **data, unsigned char *offSets, int d1Len,
                                int num_errors, unsigned char *error_positions,
@@ -648,6 +656,7 @@ make_norepeat_rand (int listSize, int fieldSize, unsigned char *list)
     }
 }
 
+// Compare two buffers and print out any differences
 int
 Compare2Buffers (unsigned char *buf1, unsigned char *buf2, int len)
 {
@@ -670,11 +679,12 @@ Compare2Buffers (unsigned char *buf1, unsigned char *buf2, int len)
     }
     return 1;
 }
+
+// Test the decoder with 2D data layout
 int
 test_decoder_2d (int index, int m, int p, unsigned char *powVals, unsigned char **data,
                  unsigned char **coding)
 {
-    int successes = 0, total_tests = 0;
     unsigned char offSets[ MAX_ELEN ];
     unsigned char *checkMatrix = malloc (64 * 256);
     if (checkMatrix == NULL)
@@ -682,6 +692,8 @@ test_decoder_2d (int index, int m, int p, unsigned char *powVals, unsigned char 
         printf ("Check matrix allocation failed\n");
         return 0;
     }
+
+    // Loop over different lengths of the 2nd dimension
     for (int d1Len = 1; d1Len < MAX_ELEN; d1Len++)
     {
         printf ("Testing Level1 Error Count %d\n", d1Len);
@@ -711,27 +723,26 @@ test_decoder_2d (int index, int m, int p, unsigned char *powVals, unsigned char 
                 // int done = pc_decode_data_avx512_gfni_2d ( 64, m, p, powVals, data, coding, d1Len
                 // ) ; printf ( "After decode done = %d expected 64\n", done ) ;
 
-                if (verify_correction_in_place_2d (data, offSets, d1Len, num_errors,
+                if (!verify_correction_in_place_2d (data, offSets, d1Len, num_errors,
                                                    error_positions, original_values))
-                {
-                    successes++;
-                }
-                else
                 {
                     printf ("Failed: Sequential, %d errors at %d\n", num_errors, start);
                     free (checkMatrix);
                     return 0;
                 }
+
+                // Double check that nothing else changed
                 if (Compare2Buffers (checkMatrix, data[ 0 ], 64 * m))
                 {
                     printf ("Buffer don't compare\n");
                     free (checkMatrix);
                     return 0;
                 }
-                total_tests++;
             }
         }
         printf ("\n");
+
+        // Test random error positions
         printf ("Testing L2Rand Error Count ");
         for (int num_errors = 1; num_errors <= p; num_errors++)
         {
@@ -750,12 +761,8 @@ test_decoder_2d (int index, int m, int p, unsigned char *powVals, unsigned char 
                 // pc_decode_data_avx512_gfni_2d ( TEST_LEN(m), m, p, g_tbls, data, coding, 1 ) ;
                 pc_decode_data_avx512_gfni_2d (64, m, p, powVals, data, coding, d1Len);
 
-                if (verify_correction_in_place_2d (data, offSets, d1Len, num_errors,
+                if (!verify_correction_in_place_2d (data, offSets, d1Len, num_errors,
                                                    error_positions, original_values))
-                {
-                    successes++;
-                }
-                else
                 {
                     printf ("Failed: Random, %d errors, trial %d\n", num_errors, trial);
                     free (checkMatrix);
@@ -768,7 +775,6 @@ test_decoder_2d (int index, int m, int p, unsigned char *powVals, unsigned char 
                     free (checkMatrix);
                     return 0;
                 }
-                total_tests++;
             }
         }
         printf ("\n");
@@ -778,6 +784,7 @@ test_decoder_2d (int index, int m, int p, unsigned char *powVals, unsigned char 
     return 1;
 }
 
+// Main program
 int
 main (int argc, char *argv[])
 {
@@ -869,7 +876,6 @@ main (int argc, char *argv[])
     }
 
     // Create memory for encoding matrices
-    // a = malloc ( MMAX * ( KMAX*2 ) ) ;
     a = malloc (sizeof (Vand1b));
     if (a == NULL)
     {
@@ -898,9 +904,12 @@ main (int argc, char *argv[])
         printf ("Error allocating buffers\n");
         goto exit;
     }
+
+    // Allocate and clear a buffer of zeros
     z0 = buf;
     memset (z0, 0, TEST_LEN (m));
 
+    // Allocate
     for (i = 0; i < m; i++)
     {
         if (posix_memalign (&buf, PC_STRIDE, TEST_LEN (m)))
@@ -911,6 +920,7 @@ main (int argc, char *argv[])
         buffs[ i ] = buf;
     }
 
+    //
     for (i = 0; i < p; i++)
     {
         if (posix_memalign (&buf, PC_STRIDE, TEST_LEN (m)))
@@ -1009,6 +1019,7 @@ main (int argc, char *argv[])
         }
     }
 
+    // Test single level encoder and decoder, then the unrolled versions
     BENCHMARK (&start, BENCHMARK_TIME, PC_SingleEncoding (buffs, TEST_LEN (m), m));
 
     printf ("polynomial_code_sen" TEST_TYPE_STR ": k=%d p=%d ", m, p);
