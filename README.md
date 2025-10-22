@@ -46,6 +46,8 @@ If you'd like to build ISA-L-PC on Linux, here are some tips: https://github.com
 
 If you'd like to build ISA-L-PC for ARM64, here are some tips: https://github.com/GrokDarkMatter/ISA-L-PC/issues/4
 
+If you'd like to build (and run) ISA-L-PC for your Android Cell Phone or Tablet, here are some tips: https://github.com/GrokDarkMatter/ISA-L-PC/issues/7
+
 ### Background papers
 
 [Information Dispersal Matrices for RAID Error Correcting Codes](https://github.com/GrokDarkMatter/ISA-L-PC/blob/master/MathPapers/IDM.pdf)
