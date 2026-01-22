@@ -31,7 +31,7 @@
 #define _EC_BASE_H_
 
 #include <stdint.h>
-
+#include "poly_code.h"
 #define MAX_NUM_OUTPUTS_CALL 6
 
 static const uint64_t gf_table_gfni[ 256 ] = {

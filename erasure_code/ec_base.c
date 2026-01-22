@@ -541,8 +541,6 @@ pc_verify_single_error (unsigned char *S, unsigned char **data, int k, int p, in
     return 1;
 }
 
-#define PC_MAX_ERRS 32
-
 // Identify roots from key equation
 int
 find_roots (unsigned char *keyEq, unsigned char *roots, int mSize)
@@ -596,8 +594,8 @@ int
 pc_compute_error_values (int mSize, unsigned char *S, unsigned char *roots, unsigned char *errVal)
 {
     int i, j;
-    unsigned char Mat[ PC_MAX_ERRS * PC_MAX_ERRS ];
-    unsigned char Mat_inv[ PC_MAX_ERRS * PC_MAX_ERRS ];
+    unsigned char Mat[ PC_MAX_PAR * PC_MAX_PAR ];
+    unsigned char Mat_inv[ PC_MAX_PAR * PC_MAX_PAR ];
 
     // Find error values by building and inverting Vandemonde
     for (i = 0; i < mSize; i++)
@@ -675,8 +673,8 @@ gf_div (unsigned char a, unsigned char b)
 int
 berlekamp_massey (unsigned char *syndromes, int length, unsigned char *lambda)
 {
-    unsigned char b[ PC_MAX_ERRS + 1 ];
-    unsigned char temp[ PC_MAX_ERRS + 1 ];
+    unsigned char b[ PC_MAX_PAR + 1 ];
+    unsigned char temp[ PC_MAX_PAR + 1 ];
     int L = 0;
     int m = 1;
     unsigned char old_d = 1; // Initial previous discrepancy
@@ -737,8 +735,8 @@ int
 pc_verify_multiple_errors (unsigned char *S, unsigned char **data, int mSize, int k, int p,
                            int newPos, int offSet, unsigned char *keyEq)
 {
-    unsigned char roots[ PC_MAX_ERRS ] = { 0 };
-    unsigned char errVal[ PC_MAX_ERRS ];
+    unsigned char roots[ PC_MAX_PAR ] = { 0 };
+    unsigned char errVal[ PC_MAX_PAR ];
 
     // Find roots, exit if mismatch with expected roots
     int nroots = find_roots (keyEq, roots, mSize);
@@ -773,7 +771,7 @@ pc_verify_multiple_errors (unsigned char *S, unsigned char **data, int mSize, in
 int
 PGZ (unsigned char *S, int p, unsigned char *keyEq)
 {
-    unsigned char SMat[ PC_MAX_ERRS * PC_MAX_ERRS ], SMat_inv[ PC_MAX_ERRS * PC_MAX_ERRS ];
+    unsigned char SMat[ PC_MAX_PAR * PC_MAX_PAR ], SMat_inv[ PC_MAX_PAR * PC_MAX_PAR ];
     int i, j;
     memset (keyEq, 0, p / 2);
 
@@ -810,7 +808,7 @@ pc_correct (int newPos, int k, int p, unsigned char **data, char **coding, int v
 {
     int offSet = 0, i, mSize;
     unsigned char synZero = 0;
-    unsigned char S[ PC_MAX_ERRS ], keyEq[ PC_MAX_ERRS + 1 ] = { 0 };
+    unsigned char S[ PC_MAX_PAR ], keyEq[ PC_MAX_PAR + 1 ] = { 0 };
 
     while (offSet < vLen)
     {

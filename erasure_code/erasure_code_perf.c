@@ -55,7 +55,7 @@ SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restriction
 
 typedef unsigned char u8;
 
-#define NOPAPI 1
+//#define NOPAPI 1
 
 #ifdef _WIN64
 #define __builtin_prefetch(a, b, c) _mm_prefetch ((const char *) (a), _MM_HINT_T0)
@@ -183,12 +183,12 @@ TestPAPIRoots (void)
         printf ("PAPI failed to initialize\n");
         exit (1);
     }
-    unsigned char roots[ PC_MAX_ERRS ];
+    unsigned char roots[ PC_MAX_PAR ];
 
     for (int lenPoly = 2; lenPoly <= 16; lenPoly++)
     {
         int rootCount = 0;
-        unsigned char S[ PC_MAX_ERRS ], keyEq[ PC_MAX_ERRS ];
+        unsigned char S[ PC_MAX_PAR ], keyEq[ PC_MAX_PAR ];
 
         // Create a generator polynomial with roots at 1,2,3,... lenPoly
         gf_gen_poly (S, lenPoly);
