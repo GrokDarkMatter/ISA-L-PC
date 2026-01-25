@@ -786,6 +786,41 @@ main (int argc, char *argv[])
     if (avx2 == 0)
     {
         BENCHMARK (&start, BENCHMARK_TIME,
+                   pc_encode_data_sr_avx512_gfni (TEST_LEN (m), k, p, g_tbls, buffs, temp_buffs));
+    }
+    else
+    {
+        BENCHMARK (&start, BENCHMARK_TIME,
+                   pc_encode_data_avx2_gfni (TEST_LEN (m), k, p, g_tbls, buffs, temp_buffs));
+    }
+#endif
+#ifdef NDEF
+    for (i = 0; i < p; i++)
+    {
+        if (0 != memcmp (buffs[ k + i ], temp_buffs[ i ], TEST_LEN (m)))
+        {
+            printf ("Fail parity compare (%d, %d, %d, %d) - ", m, k, p, i);
+            dump_u8xu8 (buffs[ k + i ], 1, 16);
+            dump_u8xu8 (temp_buffs[ i ], 1, 16);
+            goto exit;
+        }
+    }
+#endif
+    printf ("polynomial_code_srt" TEST_TYPE_STR ": k=%d p=%d ", k, p);
+    fprintf (file, "polynomial_code_pls" TEST_TYPE_STR ": k=%d p=%d ", k, p);
+    perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
+
+    // Test SR intrinsics lfsr
+    gf_gen_poly (a, p);
+    ec_init_tables (p, 1, a, g_tbls);
+
+#ifdef __aarch64__
+    BENCHMARK (&start, BENCHMARK_TIME,
+               pc_encode_data_neon (TEST_LEN (m), k, p, g_tbls, buffs, temp_buffs));
+#else
+    if (avx2 == 0)
+    {
+        BENCHMARK (&start, BENCHMARK_TIME,
                    pc_encode_data_avx512_gfni (TEST_LEN (m), k, p, g_tbls, buffs, temp_buffs));
     }
     else
