@@ -4445,6 +4445,13 @@ int gf_4vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 4 ], taps [ 2 ] ;          // Parity registers
         __m512i data_vec, temp [ 2 ] ;
+        unsigned char *dPnt [ 4 ], **sPnt ;
+
+        dPnt[ 0 ] = dest[ 0 ];
+        dPnt[ 1 ] = dest[ 1 ];
+        dPnt[ 2 ] = dest[ 2 ];
+        dPnt[ 3 ] = dest[ 3 ];
+
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -4453,9 +4460,10 @@ int gf_4vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
+                sPnt = data;
                 // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( (__m512i *) &data [ 0 ] [ curPos ] ) ;
-              __builtin_prefetch ( &data [ 0 ] [ curPos + 64 ], 0, 3 ) ;
+                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+              __builtin_prefetch ( (sPnt + curPos + 64), 0, 3 ) ;
                 // Initalize Parallel Multipliers with Generator Polynomial values
                 parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
                 parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
@@ -4466,23 +4474,30 @@ int gf_4vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
-                        // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
-                        data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
-                        temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
-                        temp [ 1 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 1 ], 0 ) ;
-                        parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ], temp [ 0 ] ) ;
-                        parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ], temp [ 1 ] ) ;
-                        parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ], temp [ 0 ] ) ;
-                        parity [ 3 ] = data_vec ;
+                    sPnt ++ ;
+                    data_vec = _mm512_load_si512 (*sPnt + curPos);
+                  __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                    // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
+                    data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
+                    temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
+                    temp [ 1 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 1 ], 0 ) ;
+                    parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ], temp [ 0 ] ) ;
+                    parity [ 1 ] = _mm512_xor_si512 ( parity [ 2 ], temp [ 1 ] ) ;
+                    parity [ 2 ] = _mm512_xor_si512 ( parity [ 3 ], temp [ 0 ] ) ;
+                    parity [ 3 ] = data_vec ;
                 }
 
                  // Store Level 2 parity back to memory
-                _mm512_store_si512( (__m512i *) &dest [ 0 ] [ curPos ], parity [ 0 ] ) ;
-                _mm512_store_si512( (__m512i *) &dest [ 1 ] [ curPos ], parity [ 1 ] ) ;
-                _mm512_store_si512( (__m512i *) &dest [ 2 ] [ curPos ], parity [ 2 ] ) ;
-                _mm512_store_si512( (__m512i *) &dest [ 3 ] [ curPos ], parity [ 3 ] ) ;
+#ifdef NDEF
+                _mm512_store_si512 ((__m512i *) d[ 0 ], parity[ 0 ]);
+                _mm512_store_si512 ((__m512i *) d[ 1 ], parity[ 1 ]);
+                _mm512_store_si512 ((__m512i *) d[ 2 ], parity[ 2 ]);
+                _mm512_store_si512 ((__m512i *) d[ 3 ], parity[ 3 ]);
+#endif
+                _mm512_store_si512 ((void *) (dPnt[ 0 ] + curPos), parity[ 0 ]);
+                _mm512_store_si512 ((void *) (dPnt[ 1 ] + curPos), parity[ 1 ]);
+                _mm512_store_si512 ((void *) (dPnt[ 2 ] + curPos), parity[ 2 ]);
+                _mm512_store_si512 ((void *) (dPnt[ 3 ] + curPos), parity[ 3 ]);
         }
         return ( curPos ) ;
 }
