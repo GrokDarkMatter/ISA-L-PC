@@ -4340,20 +4340,16 @@ int gf_2vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -4388,21 +4384,17 @@ int gf_3vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 2 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -4441,22 +4433,18 @@ int gf_4vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 3 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -4499,23 +4487,19 @@ int gf_5vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 4 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -4562,24 +4546,20 @@ int gf_6vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 5 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -4630,25 +4610,21 @@ int gf_7vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 6 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -4703,26 +4679,22 @@ int gf_8vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 7 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -4781,27 +4753,23 @@ int gf_9vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 8 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -4864,28 +4832,24 @@ int gf_10vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 9 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -4952,29 +4916,25 @@ int gf_11vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 9 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 10 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
+                parity [ 10 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -5045,30 +5005,26 @@ int gf_12vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 9 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 10 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 11 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
+                parity [ 10 ] = _mm512_setzero_si512 () ;
+                parity [ 11 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -5143,31 +5099,27 @@ int gf_13vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 9 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 10 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 11 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 12 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
+                parity [ 10 ] = _mm512_setzero_si512 () ;
+                parity [ 11 ] = _mm512_setzero_si512 () ;
+                parity [ 12 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -5246,32 +5198,28 @@ int gf_14vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 9 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 10 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 11 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 12 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 13 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
+                parity [ 10 ] = _mm512_setzero_si512 () ;
+                parity [ 11 ] = _mm512_setzero_si512 () ;
+                parity [ 12 ] = _mm512_setzero_si512 () ;
+                parity [ 13 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -5354,33 +5302,29 @@ int gf_15vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 9 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 10 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 11 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 12 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 13 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 14 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
+                parity [ 10 ] = _mm512_setzero_si512 () ;
+                parity [ 11 ] = _mm512_setzero_si512 () ;
+                parity [ 12 ] = _mm512_setzero_si512 () ;
+                parity [ 13 ] = _mm512_setzero_si512 () ;
+                parity [ 14 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -5467,34 +5411,30 @@ int gf_16vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 9 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 10 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 11 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 12 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 13 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 14 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 15 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
+                parity [ 10 ] = _mm512_setzero_si512 () ;
+                parity [ 11 ] = _mm512_setzero_si512 () ;
+                parity [ 12 ] = _mm512_setzero_si512 () ;
+                parity [ 13 ] = _mm512_setzero_si512 () ;
+                parity [ 14 ] = _mm512_setzero_si512 () ;
+                parity [ 15 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -5585,35 +5525,31 @@ int gf_17vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 9 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 10 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 11 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 12 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 13 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 14 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 15 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 16 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
+                parity [ 10 ] = _mm512_setzero_si512 () ;
+                parity [ 11 ] = _mm512_setzero_si512 () ;
+                parity [ 12 ] = _mm512_setzero_si512 () ;
+                parity [ 13 ] = _mm512_setzero_si512 () ;
+                parity [ 14 ] = _mm512_setzero_si512 () ;
+                parity [ 15 ] = _mm512_setzero_si512 () ;
+                parity [ 16 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -5708,36 +5644,32 @@ int gf_18vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 9 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 10 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 11 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 12 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 13 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 14 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 15 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 16 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 17 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
+                parity [ 10 ] = _mm512_setzero_si512 () ;
+                parity [ 11 ] = _mm512_setzero_si512 () ;
+                parity [ 12 ] = _mm512_setzero_si512 () ;
+                parity [ 13 ] = _mm512_setzero_si512 () ;
+                parity [ 14 ] = _mm512_setzero_si512 () ;
+                parity [ 15 ] = _mm512_setzero_si512 () ;
+                parity [ 16 ] = _mm512_setzero_si512 () ;
+                parity [ 17 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -5836,37 +5768,33 @@ int gf_19vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 9 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 10 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 11 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 12 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 13 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 14 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 15 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 16 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 17 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 18 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
+                parity [ 10 ] = _mm512_setzero_si512 () ;
+                parity [ 11 ] = _mm512_setzero_si512 () ;
+                parity [ 12 ] = _mm512_setzero_si512 () ;
+                parity [ 13 ] = _mm512_setzero_si512 () ;
+                parity [ 14 ] = _mm512_setzero_si512 () ;
+                parity [ 15 ] = _mm512_setzero_si512 () ;
+                parity [ 16 ] = _mm512_setzero_si512 () ;
+                parity [ 17 ] = _mm512_setzero_si512 () ;
+                parity [ 18 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -5969,38 +5897,34 @@ int gf_20vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 9 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 10 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 11 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 12 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 13 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 14 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 15 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 16 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 17 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 18 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 19 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
+                parity [ 10 ] = _mm512_setzero_si512 () ;
+                parity [ 11 ] = _mm512_setzero_si512 () ;
+                parity [ 12 ] = _mm512_setzero_si512 () ;
+                parity [ 13 ] = _mm512_setzero_si512 () ;
+                parity [ 14 ] = _mm512_setzero_si512 () ;
+                parity [ 15 ] = _mm512_setzero_si512 () ;
+                parity [ 16 ] = _mm512_setzero_si512 () ;
+                parity [ 17 ] = _mm512_setzero_si512 () ;
+                parity [ 18 ] = _mm512_setzero_si512 () ;
+                parity [ 19 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -6107,39 +6031,35 @@ int gf_21vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 9 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 10 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 11 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 12 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 13 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 14 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 15 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 16 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 17 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 18 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 19 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 20 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
+                parity [ 10 ] = _mm512_setzero_si512 () ;
+                parity [ 11 ] = _mm512_setzero_si512 () ;
+                parity [ 12 ] = _mm512_setzero_si512 () ;
+                parity [ 13 ] = _mm512_setzero_si512 () ;
+                parity [ 14 ] = _mm512_setzero_si512 () ;
+                parity [ 15 ] = _mm512_setzero_si512 () ;
+                parity [ 16 ] = _mm512_setzero_si512 () ;
+                parity [ 17 ] = _mm512_setzero_si512 () ;
+                parity [ 18 ] = _mm512_setzero_si512 () ;
+                parity [ 19 ] = _mm512_setzero_si512 () ;
+                parity [ 20 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -6250,40 +6170,36 @@ int gf_22vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 9 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 10 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
-                parity [ 11 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 12 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 13 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 14 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 15 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 16 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 17 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 18 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 19 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 20 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 21 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
+                parity [ 10 ] = _mm512_setzero_si512 () ;
+                parity [ 11 ] = _mm512_setzero_si512 () ;
+                parity [ 12 ] = _mm512_setzero_si512 () ;
+                parity [ 13 ] = _mm512_setzero_si512 () ;
+                parity [ 14 ] = _mm512_setzero_si512 () ;
+                parity [ 15 ] = _mm512_setzero_si512 () ;
+                parity [ 16 ] = _mm512_setzero_si512 () ;
+                parity [ 17 ] = _mm512_setzero_si512 () ;
+                parity [ 18 ] = _mm512_setzero_si512 () ;
+                parity [ 19 ] = _mm512_setzero_si512 () ;
+                parity [ 20 ] = _mm512_setzero_si512 () ;
+                parity [ 21 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -6398,41 +6314,37 @@ int gf_23vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 9 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 10 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
-                parity [ 11 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
-                parity [ 12 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 13 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 14 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 15 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 16 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 17 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 18 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 19 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 20 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 21 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 22 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
+                parity [ 10 ] = _mm512_setzero_si512 () ;
+                parity [ 11 ] = _mm512_setzero_si512 () ;
+                parity [ 12 ] = _mm512_setzero_si512 () ;
+                parity [ 13 ] = _mm512_setzero_si512 () ;
+                parity [ 14 ] = _mm512_setzero_si512 () ;
+                parity [ 15 ] = _mm512_setzero_si512 () ;
+                parity [ 16 ] = _mm512_setzero_si512 () ;
+                parity [ 17 ] = _mm512_setzero_si512 () ;
+                parity [ 18 ] = _mm512_setzero_si512 () ;
+                parity [ 19 ] = _mm512_setzero_si512 () ;
+                parity [ 20 ] = _mm512_setzero_si512 () ;
+                parity [ 21 ] = _mm512_setzero_si512 () ;
+                parity [ 22 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -6551,42 +6463,38 @@ int gf_24vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 9 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 10 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
-                parity [ 11 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0) ;
-                parity [ 12 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
-                parity [ 13 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 14 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 15 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 16 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 17 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 18 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 19 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 20 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 21 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 22 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 23 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
+                parity [ 10 ] = _mm512_setzero_si512 () ;
+                parity [ 11 ] = _mm512_setzero_si512 () ;
+                parity [ 12 ] = _mm512_setzero_si512 () ;
+                parity [ 13 ] = _mm512_setzero_si512 () ;
+                parity [ 14 ] = _mm512_setzero_si512 () ;
+                parity [ 15 ] = _mm512_setzero_si512 () ;
+                parity [ 16 ] = _mm512_setzero_si512 () ;
+                parity [ 17 ] = _mm512_setzero_si512 () ;
+                parity [ 18 ] = _mm512_setzero_si512 () ;
+                parity [ 19 ] = _mm512_setzero_si512 () ;
+                parity [ 20 ] = _mm512_setzero_si512 () ;
+                parity [ 21 ] = _mm512_setzero_si512 () ;
+                parity [ 22 ] = _mm512_setzero_si512 () ;
+                parity [ 23 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -6709,43 +6617,39 @@ int gf_25vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 9 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 10 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
-                parity [ 11 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0) ;
-                parity [ 12 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0) ;
-                parity [ 13 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
-                parity [ 14 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 15 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 16 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 17 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 18 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 19 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 20 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 21 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 22 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 23 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 24 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
+                parity [ 10 ] = _mm512_setzero_si512 () ;
+                parity [ 11 ] = _mm512_setzero_si512 () ;
+                parity [ 12 ] = _mm512_setzero_si512 () ;
+                parity [ 13 ] = _mm512_setzero_si512 () ;
+                parity [ 14 ] = _mm512_setzero_si512 () ;
+                parity [ 15 ] = _mm512_setzero_si512 () ;
+                parity [ 16 ] = _mm512_setzero_si512 () ;
+                parity [ 17 ] = _mm512_setzero_si512 () ;
+                parity [ 18 ] = _mm512_setzero_si512 () ;
+                parity [ 19 ] = _mm512_setzero_si512 () ;
+                parity [ 20 ] = _mm512_setzero_si512 () ;
+                parity [ 21 ] = _mm512_setzero_si512 () ;
+                parity [ 22 ] = _mm512_setzero_si512 () ;
+                parity [ 23 ] = _mm512_setzero_si512 () ;
+                parity [ 24 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -6872,44 +6776,40 @@ int gf_26vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 9 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 10 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
-                parity [ 11 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0) ;
-                parity [ 12 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 12 ], 0) ;
-                parity [ 13 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0) ;
-                parity [ 14 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
-                parity [ 15 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 16 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 17 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 18 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 19 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 20 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 21 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 22 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 23 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 24 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 25 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
+                parity [ 10 ] = _mm512_setzero_si512 () ;
+                parity [ 11 ] = _mm512_setzero_si512 () ;
+                parity [ 12 ] = _mm512_setzero_si512 () ;
+                parity [ 13 ] = _mm512_setzero_si512 () ;
+                parity [ 14 ] = _mm512_setzero_si512 () ;
+                parity [ 15 ] = _mm512_setzero_si512 () ;
+                parity [ 16 ] = _mm512_setzero_si512 () ;
+                parity [ 17 ] = _mm512_setzero_si512 () ;
+                parity [ 18 ] = _mm512_setzero_si512 () ;
+                parity [ 19 ] = _mm512_setzero_si512 () ;
+                parity [ 20 ] = _mm512_setzero_si512 () ;
+                parity [ 21 ] = _mm512_setzero_si512 () ;
+                parity [ 22 ] = _mm512_setzero_si512 () ;
+                parity [ 23 ] = _mm512_setzero_si512 () ;
+                parity [ 24 ] = _mm512_setzero_si512 () ;
+                parity [ 25 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -7040,45 +6940,41 @@ int gf_27vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 9 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 10 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
-                parity [ 11 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0) ;
-                parity [ 12 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 12 ], 0) ;
-                parity [ 13 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 12 ], 0) ;
-                parity [ 14 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0) ;
-                parity [ 15 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
-                parity [ 16 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 17 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 18 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 19 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 20 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 21 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 22 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 23 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 24 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 25 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 26 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
+                parity [ 10 ] = _mm512_setzero_si512 () ;
+                parity [ 11 ] = _mm512_setzero_si512 () ;
+                parity [ 12 ] = _mm512_setzero_si512 () ;
+                parity [ 13 ] = _mm512_setzero_si512 () ;
+                parity [ 14 ] = _mm512_setzero_si512 () ;
+                parity [ 15 ] = _mm512_setzero_si512 () ;
+                parity [ 16 ] = _mm512_setzero_si512 () ;
+                parity [ 17 ] = _mm512_setzero_si512 () ;
+                parity [ 18 ] = _mm512_setzero_si512 () ;
+                parity [ 19 ] = _mm512_setzero_si512 () ;
+                parity [ 20 ] = _mm512_setzero_si512 () ;
+                parity [ 21 ] = _mm512_setzero_si512 () ;
+                parity [ 22 ] = _mm512_setzero_si512 () ;
+                parity [ 23 ] = _mm512_setzero_si512 () ;
+                parity [ 24 ] = _mm512_setzero_si512 () ;
+                parity [ 25 ] = _mm512_setzero_si512 () ;
+                parity [ 26 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -7213,46 +7109,42 @@ int gf_28vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 9 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 10 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
-                parity [ 11 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0) ;
-                parity [ 12 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 12 ], 0) ;
-                parity [ 13 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 13 ], 0) ;
-                parity [ 14 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 12 ], 0) ;
-                parity [ 15 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0) ;
-                parity [ 16 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
-                parity [ 17 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 18 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 19 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 20 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 21 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 22 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 23 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 24 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 25 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 26 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 27 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
+                parity [ 10 ] = _mm512_setzero_si512 () ;
+                parity [ 11 ] = _mm512_setzero_si512 () ;
+                parity [ 12 ] = _mm512_setzero_si512 () ;
+                parity [ 13 ] = _mm512_setzero_si512 () ;
+                parity [ 14 ] = _mm512_setzero_si512 () ;
+                parity [ 15 ] = _mm512_setzero_si512 () ;
+                parity [ 16 ] = _mm512_setzero_si512 () ;
+                parity [ 17 ] = _mm512_setzero_si512 () ;
+                parity [ 18 ] = _mm512_setzero_si512 () ;
+                parity [ 19 ] = _mm512_setzero_si512 () ;
+                parity [ 20 ] = _mm512_setzero_si512 () ;
+                parity [ 21 ] = _mm512_setzero_si512 () ;
+                parity [ 22 ] = _mm512_setzero_si512 () ;
+                parity [ 23 ] = _mm512_setzero_si512 () ;
+                parity [ 24 ] = _mm512_setzero_si512 () ;
+                parity [ 25 ] = _mm512_setzero_si512 () ;
+                parity [ 26 ] = _mm512_setzero_si512 () ;
+                parity [ 27 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -7391,47 +7283,43 @@ int gf_29vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 9 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 10 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
-                parity [ 11 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0) ;
-                parity [ 12 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 12 ], 0) ;
-                parity [ 13 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 13 ], 0) ;
-                parity [ 14 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 13 ], 0) ;
-                parity [ 15 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 12 ], 0) ;
-                parity [ 16 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0) ;
-                parity [ 17 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
-                parity [ 18 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 19 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 20 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 21 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 22 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 23 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 24 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 25 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 26 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 27 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 28 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
+                parity [ 10 ] = _mm512_setzero_si512 () ;
+                parity [ 11 ] = _mm512_setzero_si512 () ;
+                parity [ 12 ] = _mm512_setzero_si512 () ;
+                parity [ 13 ] = _mm512_setzero_si512 () ;
+                parity [ 14 ] = _mm512_setzero_si512 () ;
+                parity [ 15 ] = _mm512_setzero_si512 () ;
+                parity [ 16 ] = _mm512_setzero_si512 () ;
+                parity [ 17 ] = _mm512_setzero_si512 () ;
+                parity [ 18 ] = _mm512_setzero_si512 () ;
+                parity [ 19 ] = _mm512_setzero_si512 () ;
+                parity [ 20 ] = _mm512_setzero_si512 () ;
+                parity [ 21 ] = _mm512_setzero_si512 () ;
+                parity [ 22 ] = _mm512_setzero_si512 () ;
+                parity [ 23 ] = _mm512_setzero_si512 () ;
+                parity [ 24 ] = _mm512_setzero_si512 () ;
+                parity [ 25 ] = _mm512_setzero_si512 () ;
+                parity [ 26 ] = _mm512_setzero_si512 () ;
+                parity [ 27 ] = _mm512_setzero_si512 () ;
+                parity [ 28 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -7574,48 +7462,44 @@ int gf_30vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 9 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 10 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
-                parity [ 11 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0) ;
-                parity [ 12 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 12 ], 0) ;
-                parity [ 13 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 13 ], 0) ;
-                parity [ 14 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 14 ], 0) ;
-                parity [ 15 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 13 ], 0) ;
-                parity [ 16 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 12 ], 0) ;
-                parity [ 17 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0) ;
-                parity [ 18 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
-                parity [ 19 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 20 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 21 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 22 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 23 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 24 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 25 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 26 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 27 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 28 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 29 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
+                parity [ 10 ] = _mm512_setzero_si512 () ;
+                parity [ 11 ] = _mm512_setzero_si512 () ;
+                parity [ 12 ] = _mm512_setzero_si512 () ;
+                parity [ 13 ] = _mm512_setzero_si512 () ;
+                parity [ 14 ] = _mm512_setzero_si512 () ;
+                parity [ 15 ] = _mm512_setzero_si512 () ;
+                parity [ 16 ] = _mm512_setzero_si512 () ;
+                parity [ 17 ] = _mm512_setzero_si512 () ;
+                parity [ 18 ] = _mm512_setzero_si512 () ;
+                parity [ 19 ] = _mm512_setzero_si512 () ;
+                parity [ 20 ] = _mm512_setzero_si512 () ;
+                parity [ 21 ] = _mm512_setzero_si512 () ;
+                parity [ 22 ] = _mm512_setzero_si512 () ;
+                parity [ 23 ] = _mm512_setzero_si512 () ;
+                parity [ 24 ] = _mm512_setzero_si512 () ;
+                parity [ 25 ] = _mm512_setzero_si512 () ;
+                parity [ 26 ] = _mm512_setzero_si512 () ;
+                parity [ 27 ] = _mm512_setzero_si512 () ;
+                parity [ 28 ] = _mm512_setzero_si512 () ;
+                parity [ 29 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -7762,49 +7646,45 @@ int gf_31vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 9 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 10 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
-                parity [ 11 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0) ;
-                parity [ 12 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 12 ], 0) ;
-                parity [ 13 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 13 ], 0) ;
-                parity [ 14 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 14 ], 0) ;
-                parity [ 15 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 14 ], 0) ;
-                parity [ 16 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 13 ], 0) ;
-                parity [ 17 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 12 ], 0) ;
-                parity [ 18 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0) ;
-                parity [ 19 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
-                parity [ 20 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 21 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 22 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 23 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 24 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 25 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 26 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 27 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 28 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 29 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 30 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
+                parity [ 10 ] = _mm512_setzero_si512 () ;
+                parity [ 11 ] = _mm512_setzero_si512 () ;
+                parity [ 12 ] = _mm512_setzero_si512 () ;
+                parity [ 13 ] = _mm512_setzero_si512 () ;
+                parity [ 14 ] = _mm512_setzero_si512 () ;
+                parity [ 15 ] = _mm512_setzero_si512 () ;
+                parity [ 16 ] = _mm512_setzero_si512 () ;
+                parity [ 17 ] = _mm512_setzero_si512 () ;
+                parity [ 18 ] = _mm512_setzero_si512 () ;
+                parity [ 19 ] = _mm512_setzero_si512 () ;
+                parity [ 20 ] = _mm512_setzero_si512 () ;
+                parity [ 21 ] = _mm512_setzero_si512 () ;
+                parity [ 22 ] = _mm512_setzero_si512 () ;
+                parity [ 23 ] = _mm512_setzero_si512 () ;
+                parity [ 24 ] = _mm512_setzero_si512 () ;
+                parity [ 25 ] = _mm512_setzero_si512 () ;
+                parity [ 26 ] = _mm512_setzero_si512 () ;
+                parity [ 27 ] = _mm512_setzero_si512 () ;
+                parity [ 28 ] = _mm512_setzero_si512 () ;
+                parity [ 29 ] = _mm512_setzero_si512 () ;
+                parity [ 30 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
@@ -7955,50 +7835,46 @@ int gf_32vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
         {
                 sPnt = data ;
-                // Load 64 bytes of Original Data
-                data_vec = _mm512_load_si512( *sPnt + curPos ) ;
-              __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
-                // Initalize Parallel Multipliers with Generator Polynomial values
-                parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 1 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 2 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 3 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 4 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 5 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 6 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 7 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 8 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 9 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 10 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
-                parity [ 11 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0) ;
-                parity [ 12 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 12 ], 0) ;
-                parity [ 13 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 13 ], 0) ;
-                parity [ 14 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 14 ], 0) ;
-                parity [ 15 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 15 ], 0) ;
-                parity [ 16 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 14 ], 0) ;
-                parity [ 17 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 13 ], 0) ;
-                parity [ 18 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 12 ], 0) ;
-                parity [ 19 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 11 ], 0) ;
-                parity [ 20 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 10 ], 0) ;
-                parity [ 21 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 9 ], 0) ;
-                parity [ 22 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 8 ], 0) ;
-                parity [ 23 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 7 ], 0) ;
-                parity [ 24 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 6 ], 0) ;
-                parity [ 25 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 5 ], 0) ;
-                parity [ 26 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 4 ], 0) ;
-                parity [ 27 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 3 ], 0) ;
-                parity [ 28 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 2 ], 0) ;
-                parity [ 29 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 1 ], 0) ;
-                parity [ 30 ] = _mm512_gf2p8affine_epi64_epi8(data_vec, taps [ 0 ], 0) ;
-                parity [ 31 ] = data_vec ;
+                parity [ 0 ] = _mm512_setzero_si512 () ;
+                parity [ 1 ] = _mm512_setzero_si512 () ;
+                parity [ 2 ] = _mm512_setzero_si512 () ;
+                parity [ 3 ] = _mm512_setzero_si512 () ;
+                parity [ 4 ] = _mm512_setzero_si512 () ;
+                parity [ 5 ] = _mm512_setzero_si512 () ;
+                parity [ 6 ] = _mm512_setzero_si512 () ;
+                parity [ 7 ] = _mm512_setzero_si512 () ;
+                parity [ 8 ] = _mm512_setzero_si512 () ;
+                parity [ 9 ] = _mm512_setzero_si512 () ;
+                parity [ 10 ] = _mm512_setzero_si512 () ;
+                parity [ 11 ] = _mm512_setzero_si512 () ;
+                parity [ 12 ] = _mm512_setzero_si512 () ;
+                parity [ 13 ] = _mm512_setzero_si512 () ;
+                parity [ 14 ] = _mm512_setzero_si512 () ;
+                parity [ 15 ] = _mm512_setzero_si512 () ;
+                parity [ 16 ] = _mm512_setzero_si512 () ;
+                parity [ 17 ] = _mm512_setzero_si512 () ;
+                parity [ 18 ] = _mm512_setzero_si512 () ;
+                parity [ 19 ] = _mm512_setzero_si512 () ;
+                parity [ 20 ] = _mm512_setzero_si512 () ;
+                parity [ 21 ] = _mm512_setzero_si512 () ;
+                parity [ 22 ] = _mm512_setzero_si512 () ;
+                parity [ 23 ] = _mm512_setzero_si512 () ;
+                parity [ 24 ] = _mm512_setzero_si512 () ;
+                parity [ 25 ] = _mm512_setzero_si512 () ;
+                parity [ 26 ] = _mm512_setzero_si512 () ;
+                parity [ 27 ] = _mm512_setzero_si512 () ;
+                parity [ 28 ] = _mm512_setzero_si512 () ;
+                parity [ 29 ] = _mm512_setzero_si512 () ;
+                parity [ 30 ] = _mm512_setzero_si512 () ;
+                parity [ 31 ] = _mm512_setzero_si512 () ;
 
                 // Loop through all the 1..k symbols
-                for ( curSym = 1 ; curSym < k ; curSym ++ )
+                for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        sPnt ++ ;
                         data_vec = _mm512_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
+                        sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         temp [ 0 ] = _mm512_gf2p8affine_epi64_epi8 ( data_vec, taps [ 0 ], 0 ) ;
