@@ -1,47 +1,3 @@
-/**********************************************************************
-Copyright (c) 2026 Michael H. Anderson. All rights reserved.
-This software includes contributions protected by
-U.S. Patents 11,848,686 and 12,341,532.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted for non-commercial evaluation purposes
-only, provided that the following conditions are met:
-
-Redistributions of source code must retain the above copyright notices,
-patent notices, this list of conditions, and the following disclaimer.
-
-Redistributions in binary form must reproduce the above copyright notices,
-patent notices, this list of conditions, and the following disclaimer in the
-documentation and/or other materials provided with the distribution.
-
-Neither the name of Michael H. Anderson, nor the names
-of his contributors may be used to endorse or promote products derived from
-this software without specific prior written permission.
-
-Commercial deployment or use of this software requires a separate license
-from the copyright holders and patent owners.
-
-In other words, this code is provided solely for the purposes of
-evaluation and is not licensed or intended to be licensed or used as part of
-or in connection with any commercial or non-commercial use other than evaluation
-of the potential for a license from Michael H. Anderson. Neither Michael H. Anderson
-nor any affiliated person grants any express or implied rights under any patents,
-copyrights, trademarks, or trade secret information. No content may be copied,
-stored, or utilized in any way without express written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restrictions
-**********************************************************************/
 // Parallel Syndrome Sequencer SR for P = 2 Codewords
 int gf_2vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)
@@ -4328,10 +4284,10 @@ int gf_2vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 2 ], taps [ 1 ] ;          // Parity registers
         __m512i data_vec, temp [ 1 ] ;
-        unsigned char * dPnt [ 2 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 2 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -4358,8 +4314,8 @@ int gf_2vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -4371,11 +4327,11 @@ int gf_3vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 3 ], taps [ 1 ] ;          // Parity registers
         __m512i data_vec, temp [ 1 ] ;
-        unsigned char * dPnt [ 3 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 3 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -4404,9 +4360,9 @@ int gf_3vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -4418,12 +4374,12 @@ int gf_4vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 4 ], taps [ 2 ] ;          // Parity registers
         __m512i data_vec, temp [ 2 ] ;
-        unsigned char * dPnt [ 4 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 4 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -4456,10 +4412,10 @@ int gf_4vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -4471,13 +4427,13 @@ int gf_5vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 5 ], taps [ 2 ] ;          // Parity registers
         __m512i data_vec, temp [ 2 ] ;
-        unsigned char * dPnt [ 5 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 5 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -4512,11 +4468,11 @@ int gf_5vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -4528,14 +4484,14 @@ int gf_6vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 6 ], taps [ 3 ] ;          // Parity registers
         __m512i data_vec, temp [ 3 ] ;
-        unsigned char * dPnt [ 6 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 6 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -4574,12 +4530,12 @@ int gf_6vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -4591,15 +4547,15 @@ int gf_7vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 7 ], taps [ 3 ] ;          // Parity registers
         __m512i data_vec, temp [ 3 ] ;
-        unsigned char * dPnt [ 7 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 7 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -4640,13 +4596,13 @@ int gf_7vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -4658,16 +4614,16 @@ int gf_8vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 8 ], taps [ 4 ] ;          // Parity registers
         __m512i data_vec, temp [ 4 ] ;
-        unsigned char * dPnt [ 8 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 8 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -4712,14 +4668,14 @@ int gf_8vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -4731,17 +4687,17 @@ int gf_9vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 9 ], taps [ 4 ] ;          // Parity registers
         __m512i data_vec, temp [ 4 ] ;
-        unsigned char * dPnt [ 9 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 9 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -4788,15 +4744,15 @@ int gf_9vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -4808,18 +4764,18 @@ int gf_10vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 10 ], taps [ 5 ] ;          // Parity registers
         __m512i data_vec, temp [ 5 ] ;
-        unsigned char * dPnt [ 10 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 10 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -4870,16 +4826,16 @@ int gf_10vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -4891,19 +4847,19 @@ int gf_11vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 11 ], taps [ 5 ] ;          // Parity registers
         __m512i data_vec, temp [ 5 ] ;
-        unsigned char * dPnt [ 11 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 11 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
-        dPnt [ 10 ] = dest [ 10 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 10 ] = dest [ 10 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -4956,17 +4912,17 @@ int gf_11vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( dPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -4978,20 +4934,20 @@ int gf_12vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 12 ], taps [ 6 ] ;          // Parity registers
         __m512i data_vec, temp [ 6 ] ;
-        unsigned char * dPnt [ 12 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 12 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
-        dPnt [ 10 ] = dest [ 10 ] ;
-        dPnt [ 11 ] = dest [ 11 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 10 ] = dest [ 10 ] ;
+        pPnt [ 11 ] = dest [ 11 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -5048,18 +5004,18 @@ int gf_12vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( dPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( dPnt [ 11 ] + curPos, parity [ 11 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -5071,21 +5027,21 @@ int gf_13vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 13 ], taps [ 6 ] ;          // Parity registers
         __m512i data_vec, temp [ 6 ] ;
-        unsigned char * dPnt [ 13 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 13 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
-        dPnt [ 10 ] = dest [ 10 ] ;
-        dPnt [ 11 ] = dest [ 11 ] ;
-        dPnt [ 12 ] = dest [ 12 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 10 ] = dest [ 10 ] ;
+        pPnt [ 11 ] = dest [ 11 ] ;
+        pPnt [ 12 ] = dest [ 12 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -5144,19 +5100,19 @@ int gf_13vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( dPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( dPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( dPnt [ 12 ] + curPos, parity [ 12 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
+                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -5168,22 +5124,22 @@ int gf_14vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 14 ], taps [ 7 ] ;          // Parity registers
         __m512i data_vec, temp [ 7 ] ;
-        unsigned char * dPnt [ 14 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 14 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
-        dPnt [ 10 ] = dest [ 10 ] ;
-        dPnt [ 11 ] = dest [ 11 ] ;
-        dPnt [ 12 ] = dest [ 12 ] ;
-        dPnt [ 13 ] = dest [ 13 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 10 ] = dest [ 10 ] ;
+        pPnt [ 11 ] = dest [ 11 ] ;
+        pPnt [ 12 ] = dest [ 12 ] ;
+        pPnt [ 13 ] = dest [ 13 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -5246,20 +5202,20 @@ int gf_14vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( dPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( dPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( dPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( dPnt [ 13 ] + curPos, parity [ 13 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
+                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
+                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -5271,23 +5227,23 @@ int gf_15vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 15 ], taps [ 7 ] ;          // Parity registers
         __m512i data_vec, temp [ 7 ] ;
-        unsigned char * dPnt [ 15 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 15 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
-        dPnt [ 10 ] = dest [ 10 ] ;
-        dPnt [ 11 ] = dest [ 11 ] ;
-        dPnt [ 12 ] = dest [ 12 ] ;
-        dPnt [ 13 ] = dest [ 13 ] ;
-        dPnt [ 14 ] = dest [ 14 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 10 ] = dest [ 10 ] ;
+        pPnt [ 11 ] = dest [ 11 ] ;
+        pPnt [ 12 ] = dest [ 12 ] ;
+        pPnt [ 13 ] = dest [ 13 ] ;
+        pPnt [ 14 ] = dest [ 14 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -5352,21 +5308,21 @@ int gf_15vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( dPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( dPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( dPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( dPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( dPnt [ 14 ] + curPos, parity [ 14 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
+                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
+                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
+                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -5378,24 +5334,24 @@ int gf_16vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 16 ], taps [ 8 ] ;          // Parity registers
         __m512i data_vec, temp [ 8 ] ;
-        unsigned char * dPnt [ 16 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 16 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
-        dPnt [ 10 ] = dest [ 10 ] ;
-        dPnt [ 11 ] = dest [ 11 ] ;
-        dPnt [ 12 ] = dest [ 12 ] ;
-        dPnt [ 13 ] = dest [ 13 ] ;
-        dPnt [ 14 ] = dest [ 14 ] ;
-        dPnt [ 15 ] = dest [ 15 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 10 ] = dest [ 10 ] ;
+        pPnt [ 11 ] = dest [ 11 ] ;
+        pPnt [ 12 ] = dest [ 12 ] ;
+        pPnt [ 13 ] = dest [ 13 ] ;
+        pPnt [ 14 ] = dest [ 14 ] ;
+        pPnt [ 15 ] = dest [ 15 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -5464,22 +5420,22 @@ int gf_16vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( dPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( dPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( dPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( dPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( dPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( dPnt [ 15 ] + curPos, parity [ 15 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
+                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
+                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
+                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
+                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -5491,25 +5447,25 @@ int gf_17vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 17 ], taps [ 8 ] ;          // Parity registers
         __m512i data_vec, temp [ 8 ] ;
-        unsigned char * dPnt [ 17 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 17 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
-        dPnt [ 10 ] = dest [ 10 ] ;
-        dPnt [ 11 ] = dest [ 11 ] ;
-        dPnt [ 12 ] = dest [ 12 ] ;
-        dPnt [ 13 ] = dest [ 13 ] ;
-        dPnt [ 14 ] = dest [ 14 ] ;
-        dPnt [ 15 ] = dest [ 15 ] ;
-        dPnt [ 16 ] = dest [ 16 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 10 ] = dest [ 10 ] ;
+        pPnt [ 11 ] = dest [ 11 ] ;
+        pPnt [ 12 ] = dest [ 12 ] ;
+        pPnt [ 13 ] = dest [ 13 ] ;
+        pPnt [ 14 ] = dest [ 14 ] ;
+        pPnt [ 15 ] = dest [ 15 ] ;
+        pPnt [ 16 ] = dest [ 16 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -5580,23 +5536,23 @@ int gf_17vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( dPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( dPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( dPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( dPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( dPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( dPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( dPnt [ 16 ] + curPos, parity [ 16 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
+                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
+                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
+                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
+                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
+                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -5608,26 +5564,26 @@ int gf_18vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 18 ], taps [ 9 ] ;          // Parity registers
         __m512i data_vec, temp [ 9 ] ;
-        unsigned char * dPnt [ 18 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 18 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
-        dPnt [ 10 ] = dest [ 10 ] ;
-        dPnt [ 11 ] = dest [ 11 ] ;
-        dPnt [ 12 ] = dest [ 12 ] ;
-        dPnt [ 13 ] = dest [ 13 ] ;
-        dPnt [ 14 ] = dest [ 14 ] ;
-        dPnt [ 15 ] = dest [ 15 ] ;
-        dPnt [ 16 ] = dest [ 16 ] ;
-        dPnt [ 17 ] = dest [ 17 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 10 ] = dest [ 10 ] ;
+        pPnt [ 11 ] = dest [ 11 ] ;
+        pPnt [ 12 ] = dest [ 12 ] ;
+        pPnt [ 13 ] = dest [ 13 ] ;
+        pPnt [ 14 ] = dest [ 14 ] ;
+        pPnt [ 15 ] = dest [ 15 ] ;
+        pPnt [ 16 ] = dest [ 16 ] ;
+        pPnt [ 17 ] = dest [ 17 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -5702,24 +5658,24 @@ int gf_18vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( dPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( dPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( dPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( dPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( dPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( dPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( dPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( dPnt [ 17 ] + curPos, parity [ 17 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
+                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
+                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
+                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
+                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
+                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
+                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -5731,27 +5687,27 @@ int gf_19vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 19 ], taps [ 9 ] ;          // Parity registers
         __m512i data_vec, temp [ 9 ] ;
-        unsigned char * dPnt [ 19 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 19 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
-        dPnt [ 10 ] = dest [ 10 ] ;
-        dPnt [ 11 ] = dest [ 11 ] ;
-        dPnt [ 12 ] = dest [ 12 ] ;
-        dPnt [ 13 ] = dest [ 13 ] ;
-        dPnt [ 14 ] = dest [ 14 ] ;
-        dPnt [ 15 ] = dest [ 15 ] ;
-        dPnt [ 16 ] = dest [ 16 ] ;
-        dPnt [ 17 ] = dest [ 17 ] ;
-        dPnt [ 18 ] = dest [ 18 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 10 ] = dest [ 10 ] ;
+        pPnt [ 11 ] = dest [ 11 ] ;
+        pPnt [ 12 ] = dest [ 12 ] ;
+        pPnt [ 13 ] = dest [ 13 ] ;
+        pPnt [ 14 ] = dest [ 14 ] ;
+        pPnt [ 15 ] = dest [ 15 ] ;
+        pPnt [ 16 ] = dest [ 16 ] ;
+        pPnt [ 17 ] = dest [ 17 ] ;
+        pPnt [ 18 ] = dest [ 18 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -5828,25 +5784,25 @@ int gf_19vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( dPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( dPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( dPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( dPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( dPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( dPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( dPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( dPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( dPnt [ 18 ] + curPos, parity [ 18 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
+                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
+                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
+                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
+                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
+                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
+                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
+                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -5858,28 +5814,28 @@ int gf_20vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 20 ], taps [ 10 ] ;          // Parity registers
         __m512i data_vec, temp [ 10 ] ;
-        unsigned char * dPnt [ 20 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 20 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
-        dPnt [ 10 ] = dest [ 10 ] ;
-        dPnt [ 11 ] = dest [ 11 ] ;
-        dPnt [ 12 ] = dest [ 12 ] ;
-        dPnt [ 13 ] = dest [ 13 ] ;
-        dPnt [ 14 ] = dest [ 14 ] ;
-        dPnt [ 15 ] = dest [ 15 ] ;
-        dPnt [ 16 ] = dest [ 16 ] ;
-        dPnt [ 17 ] = dest [ 17 ] ;
-        dPnt [ 18 ] = dest [ 18 ] ;
-        dPnt [ 19 ] = dest [ 19 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 10 ] = dest [ 10 ] ;
+        pPnt [ 11 ] = dest [ 11 ] ;
+        pPnt [ 12 ] = dest [ 12 ] ;
+        pPnt [ 13 ] = dest [ 13 ] ;
+        pPnt [ 14 ] = dest [ 14 ] ;
+        pPnt [ 15 ] = dest [ 15 ] ;
+        pPnt [ 16 ] = dest [ 16 ] ;
+        pPnt [ 17 ] = dest [ 17 ] ;
+        pPnt [ 18 ] = dest [ 18 ] ;
+        pPnt [ 19 ] = dest [ 19 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -5960,26 +5916,26 @@ int gf_20vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( dPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( dPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( dPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( dPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( dPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( dPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( dPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( dPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( dPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( dPnt [ 19 ] + curPos, parity [ 19 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
+                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
+                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
+                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
+                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
+                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
+                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
+                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
+                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -5991,29 +5947,29 @@ int gf_21vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 21 ], taps [ 10 ] ;          // Parity registers
         __m512i data_vec, temp [ 10 ] ;
-        unsigned char * dPnt [ 21 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 21 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
-        dPnt [ 10 ] = dest [ 10 ] ;
-        dPnt [ 11 ] = dest [ 11 ] ;
-        dPnt [ 12 ] = dest [ 12 ] ;
-        dPnt [ 13 ] = dest [ 13 ] ;
-        dPnt [ 14 ] = dest [ 14 ] ;
-        dPnt [ 15 ] = dest [ 15 ] ;
-        dPnt [ 16 ] = dest [ 16 ] ;
-        dPnt [ 17 ] = dest [ 17 ] ;
-        dPnt [ 18 ] = dest [ 18 ] ;
-        dPnt [ 19 ] = dest [ 19 ] ;
-        dPnt [ 20 ] = dest [ 20 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 10 ] = dest [ 10 ] ;
+        pPnt [ 11 ] = dest [ 11 ] ;
+        pPnt [ 12 ] = dest [ 12 ] ;
+        pPnt [ 13 ] = dest [ 13 ] ;
+        pPnt [ 14 ] = dest [ 14 ] ;
+        pPnt [ 15 ] = dest [ 15 ] ;
+        pPnt [ 16 ] = dest [ 16 ] ;
+        pPnt [ 17 ] = dest [ 17 ] ;
+        pPnt [ 18 ] = dest [ 18 ] ;
+        pPnt [ 19 ] = dest [ 19 ] ;
+        pPnt [ 20 ] = dest [ 20 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -6096,27 +6052,27 @@ int gf_21vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( dPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( dPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( dPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( dPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( dPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( dPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( dPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( dPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( dPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( dPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( dPnt [ 20 ] + curPos, parity [ 20 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
+                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
+                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
+                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
+                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
+                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
+                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
+                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
+                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
+                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -6128,30 +6084,30 @@ int gf_22vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 22 ], taps [ 11 ] ;          // Parity registers
         __m512i data_vec, temp [ 11 ] ;
-        unsigned char * dPnt [ 22 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 22 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
-        dPnt [ 10 ] = dest [ 10 ] ;
-        dPnt [ 11 ] = dest [ 11 ] ;
-        dPnt [ 12 ] = dest [ 12 ] ;
-        dPnt [ 13 ] = dest [ 13 ] ;
-        dPnt [ 14 ] = dest [ 14 ] ;
-        dPnt [ 15 ] = dest [ 15 ] ;
-        dPnt [ 16 ] = dest [ 16 ] ;
-        dPnt [ 17 ] = dest [ 17 ] ;
-        dPnt [ 18 ] = dest [ 18 ] ;
-        dPnt [ 19 ] = dest [ 19 ] ;
-        dPnt [ 20 ] = dest [ 20 ] ;
-        dPnt [ 21 ] = dest [ 21 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 10 ] = dest [ 10 ] ;
+        pPnt [ 11 ] = dest [ 11 ] ;
+        pPnt [ 12 ] = dest [ 12 ] ;
+        pPnt [ 13 ] = dest [ 13 ] ;
+        pPnt [ 14 ] = dest [ 14 ] ;
+        pPnt [ 15 ] = dest [ 15 ] ;
+        pPnt [ 16 ] = dest [ 16 ] ;
+        pPnt [ 17 ] = dest [ 17 ] ;
+        pPnt [ 18 ] = dest [ 18 ] ;
+        pPnt [ 19 ] = dest [ 19 ] ;
+        pPnt [ 20 ] = dest [ 20 ] ;
+        pPnt [ 21 ] = dest [ 21 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -6238,28 +6194,28 @@ int gf_22vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( dPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( dPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( dPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( dPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( dPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( dPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( dPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( dPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( dPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( dPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( dPnt [ 20 ] + curPos, parity [ 20 ] ) ;
-                _mm512_store_si512( dPnt [ 21 ] + curPos, parity [ 21 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
+                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
+                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
+                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
+                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
+                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
+                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
+                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
+                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
+                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
+                _mm512_store_si512( pPnt [ 21 ] + curPos, parity [ 21 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -6271,31 +6227,31 @@ int gf_23vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 23 ], taps [ 11 ] ;          // Parity registers
         __m512i data_vec, temp [ 11 ] ;
-        unsigned char * dPnt [ 23 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 23 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
-        dPnt [ 10 ] = dest [ 10 ] ;
-        dPnt [ 11 ] = dest [ 11 ] ;
-        dPnt [ 12 ] = dest [ 12 ] ;
-        dPnt [ 13 ] = dest [ 13 ] ;
-        dPnt [ 14 ] = dest [ 14 ] ;
-        dPnt [ 15 ] = dest [ 15 ] ;
-        dPnt [ 16 ] = dest [ 16 ] ;
-        dPnt [ 17 ] = dest [ 17 ] ;
-        dPnt [ 18 ] = dest [ 18 ] ;
-        dPnt [ 19 ] = dest [ 19 ] ;
-        dPnt [ 20 ] = dest [ 20 ] ;
-        dPnt [ 21 ] = dest [ 21 ] ;
-        dPnt [ 22 ] = dest [ 22 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 10 ] = dest [ 10 ] ;
+        pPnt [ 11 ] = dest [ 11 ] ;
+        pPnt [ 12 ] = dest [ 12 ] ;
+        pPnt [ 13 ] = dest [ 13 ] ;
+        pPnt [ 14 ] = dest [ 14 ] ;
+        pPnt [ 15 ] = dest [ 15 ] ;
+        pPnt [ 16 ] = dest [ 16 ] ;
+        pPnt [ 17 ] = dest [ 17 ] ;
+        pPnt [ 18 ] = dest [ 18 ] ;
+        pPnt [ 19 ] = dest [ 19 ] ;
+        pPnt [ 20 ] = dest [ 20 ] ;
+        pPnt [ 21 ] = dest [ 21 ] ;
+        pPnt [ 22 ] = dest [ 22 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -6384,29 +6340,29 @@ int gf_23vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( dPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( dPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( dPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( dPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( dPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( dPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( dPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( dPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( dPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( dPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( dPnt [ 20 ] + curPos, parity [ 20 ] ) ;
-                _mm512_store_si512( dPnt [ 21 ] + curPos, parity [ 21 ] ) ;
-                _mm512_store_si512( dPnt [ 22 ] + curPos, parity [ 22 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
+                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
+                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
+                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
+                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
+                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
+                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
+                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
+                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
+                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
+                _mm512_store_si512( pPnt [ 21 ] + curPos, parity [ 21 ] ) ;
+                _mm512_store_si512( pPnt [ 22 ] + curPos, parity [ 22 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -6418,32 +6374,32 @@ int gf_24vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 24 ], taps [ 12 ] ;          // Parity registers
         __m512i data_vec, temp [ 12 ] ;
-        unsigned char * dPnt [ 24 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 24 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
-        dPnt [ 10 ] = dest [ 10 ] ;
-        dPnt [ 11 ] = dest [ 11 ] ;
-        dPnt [ 12 ] = dest [ 12 ] ;
-        dPnt [ 13 ] = dest [ 13 ] ;
-        dPnt [ 14 ] = dest [ 14 ] ;
-        dPnt [ 15 ] = dest [ 15 ] ;
-        dPnt [ 16 ] = dest [ 16 ] ;
-        dPnt [ 17 ] = dest [ 17 ] ;
-        dPnt [ 18 ] = dest [ 18 ] ;
-        dPnt [ 19 ] = dest [ 19 ] ;
-        dPnt [ 20 ] = dest [ 20 ] ;
-        dPnt [ 21 ] = dest [ 21 ] ;
-        dPnt [ 22 ] = dest [ 22 ] ;
-        dPnt [ 23 ] = dest [ 23 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 10 ] = dest [ 10 ] ;
+        pPnt [ 11 ] = dest [ 11 ] ;
+        pPnt [ 12 ] = dest [ 12 ] ;
+        pPnt [ 13 ] = dest [ 13 ] ;
+        pPnt [ 14 ] = dest [ 14 ] ;
+        pPnt [ 15 ] = dest [ 15 ] ;
+        pPnt [ 16 ] = dest [ 16 ] ;
+        pPnt [ 17 ] = dest [ 17 ] ;
+        pPnt [ 18 ] = dest [ 18 ] ;
+        pPnt [ 19 ] = dest [ 19 ] ;
+        pPnt [ 20 ] = dest [ 20 ] ;
+        pPnt [ 21 ] = dest [ 21 ] ;
+        pPnt [ 22 ] = dest [ 22 ] ;
+        pPnt [ 23 ] = dest [ 23 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -6536,30 +6492,30 @@ int gf_24vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( dPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( dPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( dPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( dPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( dPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( dPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( dPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( dPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( dPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( dPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( dPnt [ 20 ] + curPos, parity [ 20 ] ) ;
-                _mm512_store_si512( dPnt [ 21 ] + curPos, parity [ 21 ] ) ;
-                _mm512_store_si512( dPnt [ 22 ] + curPos, parity [ 22 ] ) ;
-                _mm512_store_si512( dPnt [ 23 ] + curPos, parity [ 23 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
+                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
+                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
+                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
+                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
+                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
+                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
+                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
+                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
+                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
+                _mm512_store_si512( pPnt [ 21 ] + curPos, parity [ 21 ] ) ;
+                _mm512_store_si512( pPnt [ 22 ] + curPos, parity [ 22 ] ) ;
+                _mm512_store_si512( pPnt [ 23 ] + curPos, parity [ 23 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -6571,33 +6527,33 @@ int gf_25vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 25 ], taps [ 12 ] ;          // Parity registers
         __m512i data_vec, temp [ 12 ] ;
-        unsigned char * dPnt [ 25 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 25 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
-        dPnt [ 10 ] = dest [ 10 ] ;
-        dPnt [ 11 ] = dest [ 11 ] ;
-        dPnt [ 12 ] = dest [ 12 ] ;
-        dPnt [ 13 ] = dest [ 13 ] ;
-        dPnt [ 14 ] = dest [ 14 ] ;
-        dPnt [ 15 ] = dest [ 15 ] ;
-        dPnt [ 16 ] = dest [ 16 ] ;
-        dPnt [ 17 ] = dest [ 17 ] ;
-        dPnt [ 18 ] = dest [ 18 ] ;
-        dPnt [ 19 ] = dest [ 19 ] ;
-        dPnt [ 20 ] = dest [ 20 ] ;
-        dPnt [ 21 ] = dest [ 21 ] ;
-        dPnt [ 22 ] = dest [ 22 ] ;
-        dPnt [ 23 ] = dest [ 23 ] ;
-        dPnt [ 24 ] = dest [ 24 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 10 ] = dest [ 10 ] ;
+        pPnt [ 11 ] = dest [ 11 ] ;
+        pPnt [ 12 ] = dest [ 12 ] ;
+        pPnt [ 13 ] = dest [ 13 ] ;
+        pPnt [ 14 ] = dest [ 14 ] ;
+        pPnt [ 15 ] = dest [ 15 ] ;
+        pPnt [ 16 ] = dest [ 16 ] ;
+        pPnt [ 17 ] = dest [ 17 ] ;
+        pPnt [ 18 ] = dest [ 18 ] ;
+        pPnt [ 19 ] = dest [ 19 ] ;
+        pPnt [ 20 ] = dest [ 20 ] ;
+        pPnt [ 21 ] = dest [ 21 ] ;
+        pPnt [ 22 ] = dest [ 22 ] ;
+        pPnt [ 23 ] = dest [ 23 ] ;
+        pPnt [ 24 ] = dest [ 24 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -6692,31 +6648,31 @@ int gf_25vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( dPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( dPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( dPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( dPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( dPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( dPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( dPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( dPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( dPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( dPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( dPnt [ 20 ] + curPos, parity [ 20 ] ) ;
-                _mm512_store_si512( dPnt [ 21 ] + curPos, parity [ 21 ] ) ;
-                _mm512_store_si512( dPnt [ 22 ] + curPos, parity [ 22 ] ) ;
-                _mm512_store_si512( dPnt [ 23 ] + curPos, parity [ 23 ] ) ;
-                _mm512_store_si512( dPnt [ 24 ] + curPos, parity [ 24 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
+                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
+                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
+                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
+                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
+                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
+                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
+                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
+                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
+                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
+                _mm512_store_si512( pPnt [ 21 ] + curPos, parity [ 21 ] ) ;
+                _mm512_store_si512( pPnt [ 22 ] + curPos, parity [ 22 ] ) ;
+                _mm512_store_si512( pPnt [ 23 ] + curPos, parity [ 23 ] ) ;
+                _mm512_store_si512( pPnt [ 24 ] + curPos, parity [ 24 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -6728,34 +6684,34 @@ int gf_26vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 26 ], taps [ 13 ] ;          // Parity registers
         __m512i data_vec, temp [ 13 ] ;
-        unsigned char * dPnt [ 26 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 26 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
-        dPnt [ 10 ] = dest [ 10 ] ;
-        dPnt [ 11 ] = dest [ 11 ] ;
-        dPnt [ 12 ] = dest [ 12 ] ;
-        dPnt [ 13 ] = dest [ 13 ] ;
-        dPnt [ 14 ] = dest [ 14 ] ;
-        dPnt [ 15 ] = dest [ 15 ] ;
-        dPnt [ 16 ] = dest [ 16 ] ;
-        dPnt [ 17 ] = dest [ 17 ] ;
-        dPnt [ 18 ] = dest [ 18 ] ;
-        dPnt [ 19 ] = dest [ 19 ] ;
-        dPnt [ 20 ] = dest [ 20 ] ;
-        dPnt [ 21 ] = dest [ 21 ] ;
-        dPnt [ 22 ] = dest [ 22 ] ;
-        dPnt [ 23 ] = dest [ 23 ] ;
-        dPnt [ 24 ] = dest [ 24 ] ;
-        dPnt [ 25 ] = dest [ 25 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 10 ] = dest [ 10 ] ;
+        pPnt [ 11 ] = dest [ 11 ] ;
+        pPnt [ 12 ] = dest [ 12 ] ;
+        pPnt [ 13 ] = dest [ 13 ] ;
+        pPnt [ 14 ] = dest [ 14 ] ;
+        pPnt [ 15 ] = dest [ 15 ] ;
+        pPnt [ 16 ] = dest [ 16 ] ;
+        pPnt [ 17 ] = dest [ 17 ] ;
+        pPnt [ 18 ] = dest [ 18 ] ;
+        pPnt [ 19 ] = dest [ 19 ] ;
+        pPnt [ 20 ] = dest [ 20 ] ;
+        pPnt [ 21 ] = dest [ 21 ] ;
+        pPnt [ 22 ] = dest [ 22 ] ;
+        pPnt [ 23 ] = dest [ 23 ] ;
+        pPnt [ 24 ] = dest [ 24 ] ;
+        pPnt [ 25 ] = dest [ 25 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -6854,32 +6810,32 @@ int gf_26vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( dPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( dPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( dPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( dPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( dPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( dPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( dPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( dPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( dPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( dPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( dPnt [ 20 ] + curPos, parity [ 20 ] ) ;
-                _mm512_store_si512( dPnt [ 21 ] + curPos, parity [ 21 ] ) ;
-                _mm512_store_si512( dPnt [ 22 ] + curPos, parity [ 22 ] ) ;
-                _mm512_store_si512( dPnt [ 23 ] + curPos, parity [ 23 ] ) ;
-                _mm512_store_si512( dPnt [ 24 ] + curPos, parity [ 24 ] ) ;
-                _mm512_store_si512( dPnt [ 25 ] + curPos, parity [ 25 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
+                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
+                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
+                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
+                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
+                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
+                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
+                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
+                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
+                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
+                _mm512_store_si512( pPnt [ 21 ] + curPos, parity [ 21 ] ) ;
+                _mm512_store_si512( pPnt [ 22 ] + curPos, parity [ 22 ] ) ;
+                _mm512_store_si512( pPnt [ 23 ] + curPos, parity [ 23 ] ) ;
+                _mm512_store_si512( pPnt [ 24 ] + curPos, parity [ 24 ] ) ;
+                _mm512_store_si512( pPnt [ 25 ] + curPos, parity [ 25 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -6891,35 +6847,35 @@ int gf_27vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 27 ], taps [ 13 ] ;          // Parity registers
         __m512i data_vec, temp [ 13 ] ;
-        unsigned char * dPnt [ 27 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 27 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
-        dPnt [ 10 ] = dest [ 10 ] ;
-        dPnt [ 11 ] = dest [ 11 ] ;
-        dPnt [ 12 ] = dest [ 12 ] ;
-        dPnt [ 13 ] = dest [ 13 ] ;
-        dPnt [ 14 ] = dest [ 14 ] ;
-        dPnt [ 15 ] = dest [ 15 ] ;
-        dPnt [ 16 ] = dest [ 16 ] ;
-        dPnt [ 17 ] = dest [ 17 ] ;
-        dPnt [ 18 ] = dest [ 18 ] ;
-        dPnt [ 19 ] = dest [ 19 ] ;
-        dPnt [ 20 ] = dest [ 20 ] ;
-        dPnt [ 21 ] = dest [ 21 ] ;
-        dPnt [ 22 ] = dest [ 22 ] ;
-        dPnt [ 23 ] = dest [ 23 ] ;
-        dPnt [ 24 ] = dest [ 24 ] ;
-        dPnt [ 25 ] = dest [ 25 ] ;
-        dPnt [ 26 ] = dest [ 26 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 10 ] = dest [ 10 ] ;
+        pPnt [ 11 ] = dest [ 11 ] ;
+        pPnt [ 12 ] = dest [ 12 ] ;
+        pPnt [ 13 ] = dest [ 13 ] ;
+        pPnt [ 14 ] = dest [ 14 ] ;
+        pPnt [ 15 ] = dest [ 15 ] ;
+        pPnt [ 16 ] = dest [ 16 ] ;
+        pPnt [ 17 ] = dest [ 17 ] ;
+        pPnt [ 18 ] = dest [ 18 ] ;
+        pPnt [ 19 ] = dest [ 19 ] ;
+        pPnt [ 20 ] = dest [ 20 ] ;
+        pPnt [ 21 ] = dest [ 21 ] ;
+        pPnt [ 22 ] = dest [ 22 ] ;
+        pPnt [ 23 ] = dest [ 23 ] ;
+        pPnt [ 24 ] = dest [ 24 ] ;
+        pPnt [ 25 ] = dest [ 25 ] ;
+        pPnt [ 26 ] = dest [ 26 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -7020,33 +6976,33 @@ int gf_27vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( dPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( dPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( dPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( dPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( dPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( dPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( dPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( dPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( dPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( dPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( dPnt [ 20 ] + curPos, parity [ 20 ] ) ;
-                _mm512_store_si512( dPnt [ 21 ] + curPos, parity [ 21 ] ) ;
-                _mm512_store_si512( dPnt [ 22 ] + curPos, parity [ 22 ] ) ;
-                _mm512_store_si512( dPnt [ 23 ] + curPos, parity [ 23 ] ) ;
-                _mm512_store_si512( dPnt [ 24 ] + curPos, parity [ 24 ] ) ;
-                _mm512_store_si512( dPnt [ 25 ] + curPos, parity [ 25 ] ) ;
-                _mm512_store_si512( dPnt [ 26 ] + curPos, parity [ 26 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
+                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
+                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
+                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
+                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
+                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
+                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
+                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
+                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
+                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
+                _mm512_store_si512( pPnt [ 21 ] + curPos, parity [ 21 ] ) ;
+                _mm512_store_si512( pPnt [ 22 ] + curPos, parity [ 22 ] ) ;
+                _mm512_store_si512( pPnt [ 23 ] + curPos, parity [ 23 ] ) ;
+                _mm512_store_si512( pPnt [ 24 ] + curPos, parity [ 24 ] ) ;
+                _mm512_store_si512( pPnt [ 25 ] + curPos, parity [ 25 ] ) ;
+                _mm512_store_si512( pPnt [ 26 ] + curPos, parity [ 26 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -7058,36 +7014,36 @@ int gf_28vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 28 ], taps [ 14 ] ;          // Parity registers
         __m512i data_vec, temp [ 14 ] ;
-        unsigned char * dPnt [ 28 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 28 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
-        dPnt [ 10 ] = dest [ 10 ] ;
-        dPnt [ 11 ] = dest [ 11 ] ;
-        dPnt [ 12 ] = dest [ 12 ] ;
-        dPnt [ 13 ] = dest [ 13 ] ;
-        dPnt [ 14 ] = dest [ 14 ] ;
-        dPnt [ 15 ] = dest [ 15 ] ;
-        dPnt [ 16 ] = dest [ 16 ] ;
-        dPnt [ 17 ] = dest [ 17 ] ;
-        dPnt [ 18 ] = dest [ 18 ] ;
-        dPnt [ 19 ] = dest [ 19 ] ;
-        dPnt [ 20 ] = dest [ 20 ] ;
-        dPnt [ 21 ] = dest [ 21 ] ;
-        dPnt [ 22 ] = dest [ 22 ] ;
-        dPnt [ 23 ] = dest [ 23 ] ;
-        dPnt [ 24 ] = dest [ 24 ] ;
-        dPnt [ 25 ] = dest [ 25 ] ;
-        dPnt [ 26 ] = dest [ 26 ] ;
-        dPnt [ 27 ] = dest [ 27 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 10 ] = dest [ 10 ] ;
+        pPnt [ 11 ] = dest [ 11 ] ;
+        pPnt [ 12 ] = dest [ 12 ] ;
+        pPnt [ 13 ] = dest [ 13 ] ;
+        pPnt [ 14 ] = dest [ 14 ] ;
+        pPnt [ 15 ] = dest [ 15 ] ;
+        pPnt [ 16 ] = dest [ 16 ] ;
+        pPnt [ 17 ] = dest [ 17 ] ;
+        pPnt [ 18 ] = dest [ 18 ] ;
+        pPnt [ 19 ] = dest [ 19 ] ;
+        pPnt [ 20 ] = dest [ 20 ] ;
+        pPnt [ 21 ] = dest [ 21 ] ;
+        pPnt [ 22 ] = dest [ 22 ] ;
+        pPnt [ 23 ] = dest [ 23 ] ;
+        pPnt [ 24 ] = dest [ 24 ] ;
+        pPnt [ 25 ] = dest [ 25 ] ;
+        pPnt [ 26 ] = dest [ 26 ] ;
+        pPnt [ 27 ] = dest [ 27 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -7192,34 +7148,34 @@ int gf_28vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( dPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( dPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( dPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( dPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( dPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( dPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( dPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( dPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( dPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( dPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( dPnt [ 20 ] + curPos, parity [ 20 ] ) ;
-                _mm512_store_si512( dPnt [ 21 ] + curPos, parity [ 21 ] ) ;
-                _mm512_store_si512( dPnt [ 22 ] + curPos, parity [ 22 ] ) ;
-                _mm512_store_si512( dPnt [ 23 ] + curPos, parity [ 23 ] ) ;
-                _mm512_store_si512( dPnt [ 24 ] + curPos, parity [ 24 ] ) ;
-                _mm512_store_si512( dPnt [ 25 ] + curPos, parity [ 25 ] ) ;
-                _mm512_store_si512( dPnt [ 26 ] + curPos, parity [ 26 ] ) ;
-                _mm512_store_si512( dPnt [ 27 ] + curPos, parity [ 27 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
+                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
+                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
+                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
+                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
+                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
+                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
+                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
+                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
+                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
+                _mm512_store_si512( pPnt [ 21 ] + curPos, parity [ 21 ] ) ;
+                _mm512_store_si512( pPnt [ 22 ] + curPos, parity [ 22 ] ) ;
+                _mm512_store_si512( pPnt [ 23 ] + curPos, parity [ 23 ] ) ;
+                _mm512_store_si512( pPnt [ 24 ] + curPos, parity [ 24 ] ) ;
+                _mm512_store_si512( pPnt [ 25 ] + curPos, parity [ 25 ] ) ;
+                _mm512_store_si512( pPnt [ 26 ] + curPos, parity [ 26 ] ) ;
+                _mm512_store_si512( pPnt [ 27 ] + curPos, parity [ 27 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -7231,37 +7187,37 @@ int gf_29vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 29 ], taps [ 14 ] ;          // Parity registers
         __m512i data_vec, temp [ 14 ] ;
-        unsigned char * dPnt [ 29 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 29 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
-        dPnt [ 10 ] = dest [ 10 ] ;
-        dPnt [ 11 ] = dest [ 11 ] ;
-        dPnt [ 12 ] = dest [ 12 ] ;
-        dPnt [ 13 ] = dest [ 13 ] ;
-        dPnt [ 14 ] = dest [ 14 ] ;
-        dPnt [ 15 ] = dest [ 15 ] ;
-        dPnt [ 16 ] = dest [ 16 ] ;
-        dPnt [ 17 ] = dest [ 17 ] ;
-        dPnt [ 18 ] = dest [ 18 ] ;
-        dPnt [ 19 ] = dest [ 19 ] ;
-        dPnt [ 20 ] = dest [ 20 ] ;
-        dPnt [ 21 ] = dest [ 21 ] ;
-        dPnt [ 22 ] = dest [ 22 ] ;
-        dPnt [ 23 ] = dest [ 23 ] ;
-        dPnt [ 24 ] = dest [ 24 ] ;
-        dPnt [ 25 ] = dest [ 25 ] ;
-        dPnt [ 26 ] = dest [ 26 ] ;
-        dPnt [ 27 ] = dest [ 27 ] ;
-        dPnt [ 28 ] = dest [ 28 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 10 ] = dest [ 10 ] ;
+        pPnt [ 11 ] = dest [ 11 ] ;
+        pPnt [ 12 ] = dest [ 12 ] ;
+        pPnt [ 13 ] = dest [ 13 ] ;
+        pPnt [ 14 ] = dest [ 14 ] ;
+        pPnt [ 15 ] = dest [ 15 ] ;
+        pPnt [ 16 ] = dest [ 16 ] ;
+        pPnt [ 17 ] = dest [ 17 ] ;
+        pPnt [ 18 ] = dest [ 18 ] ;
+        pPnt [ 19 ] = dest [ 19 ] ;
+        pPnt [ 20 ] = dest [ 20 ] ;
+        pPnt [ 21 ] = dest [ 21 ] ;
+        pPnt [ 22 ] = dest [ 22 ] ;
+        pPnt [ 23 ] = dest [ 23 ] ;
+        pPnt [ 24 ] = dest [ 24 ] ;
+        pPnt [ 25 ] = dest [ 25 ] ;
+        pPnt [ 26 ] = dest [ 26 ] ;
+        pPnt [ 27 ] = dest [ 27 ] ;
+        pPnt [ 28 ] = dest [ 28 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -7368,35 +7324,35 @@ int gf_29vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( dPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( dPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( dPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( dPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( dPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( dPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( dPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( dPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( dPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( dPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( dPnt [ 20 ] + curPos, parity [ 20 ] ) ;
-                _mm512_store_si512( dPnt [ 21 ] + curPos, parity [ 21 ] ) ;
-                _mm512_store_si512( dPnt [ 22 ] + curPos, parity [ 22 ] ) ;
-                _mm512_store_si512( dPnt [ 23 ] + curPos, parity [ 23 ] ) ;
-                _mm512_store_si512( dPnt [ 24 ] + curPos, parity [ 24 ] ) ;
-                _mm512_store_si512( dPnt [ 25 ] + curPos, parity [ 25 ] ) ;
-                _mm512_store_si512( dPnt [ 26 ] + curPos, parity [ 26 ] ) ;
-                _mm512_store_si512( dPnt [ 27 ] + curPos, parity [ 27 ] ) ;
-                _mm512_store_si512( dPnt [ 28 ] + curPos, parity [ 28 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
+                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
+                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
+                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
+                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
+                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
+                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
+                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
+                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
+                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
+                _mm512_store_si512( pPnt [ 21 ] + curPos, parity [ 21 ] ) ;
+                _mm512_store_si512( pPnt [ 22 ] + curPos, parity [ 22 ] ) ;
+                _mm512_store_si512( pPnt [ 23 ] + curPos, parity [ 23 ] ) ;
+                _mm512_store_si512( pPnt [ 24 ] + curPos, parity [ 24 ] ) ;
+                _mm512_store_si512( pPnt [ 25 ] + curPos, parity [ 25 ] ) ;
+                _mm512_store_si512( pPnt [ 26 ] + curPos, parity [ 26 ] ) ;
+                _mm512_store_si512( pPnt [ 27 ] + curPos, parity [ 27 ] ) ;
+                _mm512_store_si512( pPnt [ 28 ] + curPos, parity [ 28 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -7408,38 +7364,38 @@ int gf_30vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 30 ], taps [ 15 ] ;          // Parity registers
         __m512i data_vec, temp [ 15 ] ;
-        unsigned char * dPnt [ 30 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 30 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
-        dPnt [ 10 ] = dest [ 10 ] ;
-        dPnt [ 11 ] = dest [ 11 ] ;
-        dPnt [ 12 ] = dest [ 12 ] ;
-        dPnt [ 13 ] = dest [ 13 ] ;
-        dPnt [ 14 ] = dest [ 14 ] ;
-        dPnt [ 15 ] = dest [ 15 ] ;
-        dPnt [ 16 ] = dest [ 16 ] ;
-        dPnt [ 17 ] = dest [ 17 ] ;
-        dPnt [ 18 ] = dest [ 18 ] ;
-        dPnt [ 19 ] = dest [ 19 ] ;
-        dPnt [ 20 ] = dest [ 20 ] ;
-        dPnt [ 21 ] = dest [ 21 ] ;
-        dPnt [ 22 ] = dest [ 22 ] ;
-        dPnt [ 23 ] = dest [ 23 ] ;
-        dPnt [ 24 ] = dest [ 24 ] ;
-        dPnt [ 25 ] = dest [ 25 ] ;
-        dPnt [ 26 ] = dest [ 26 ] ;
-        dPnt [ 27 ] = dest [ 27 ] ;
-        dPnt [ 28 ] = dest [ 28 ] ;
-        dPnt [ 29 ] = dest [ 29 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 10 ] = dest [ 10 ] ;
+        pPnt [ 11 ] = dest [ 11 ] ;
+        pPnt [ 12 ] = dest [ 12 ] ;
+        pPnt [ 13 ] = dest [ 13 ] ;
+        pPnt [ 14 ] = dest [ 14 ] ;
+        pPnt [ 15 ] = dest [ 15 ] ;
+        pPnt [ 16 ] = dest [ 16 ] ;
+        pPnt [ 17 ] = dest [ 17 ] ;
+        pPnt [ 18 ] = dest [ 18 ] ;
+        pPnt [ 19 ] = dest [ 19 ] ;
+        pPnt [ 20 ] = dest [ 20 ] ;
+        pPnt [ 21 ] = dest [ 21 ] ;
+        pPnt [ 22 ] = dest [ 22 ] ;
+        pPnt [ 23 ] = dest [ 23 ] ;
+        pPnt [ 24 ] = dest [ 24 ] ;
+        pPnt [ 25 ] = dest [ 25 ] ;
+        pPnt [ 26 ] = dest [ 26 ] ;
+        pPnt [ 27 ] = dest [ 27 ] ;
+        pPnt [ 28 ] = dest [ 28 ] ;
+        pPnt [ 29 ] = dest [ 29 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -7550,36 +7506,36 @@ int gf_30vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( dPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( dPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( dPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( dPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( dPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( dPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( dPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( dPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( dPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( dPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( dPnt [ 20 ] + curPos, parity [ 20 ] ) ;
-                _mm512_store_si512( dPnt [ 21 ] + curPos, parity [ 21 ] ) ;
-                _mm512_store_si512( dPnt [ 22 ] + curPos, parity [ 22 ] ) ;
-                _mm512_store_si512( dPnt [ 23 ] + curPos, parity [ 23 ] ) ;
-                _mm512_store_si512( dPnt [ 24 ] + curPos, parity [ 24 ] ) ;
-                _mm512_store_si512( dPnt [ 25 ] + curPos, parity [ 25 ] ) ;
-                _mm512_store_si512( dPnt [ 26 ] + curPos, parity [ 26 ] ) ;
-                _mm512_store_si512( dPnt [ 27 ] + curPos, parity [ 27 ] ) ;
-                _mm512_store_si512( dPnt [ 28 ] + curPos, parity [ 28 ] ) ;
-                _mm512_store_si512( dPnt [ 29 ] + curPos, parity [ 29 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
+                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
+                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
+                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
+                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
+                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
+                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
+                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
+                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
+                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
+                _mm512_store_si512( pPnt [ 21 ] + curPos, parity [ 21 ] ) ;
+                _mm512_store_si512( pPnt [ 22 ] + curPos, parity [ 22 ] ) ;
+                _mm512_store_si512( pPnt [ 23 ] + curPos, parity [ 23 ] ) ;
+                _mm512_store_si512( pPnt [ 24 ] + curPos, parity [ 24 ] ) ;
+                _mm512_store_si512( pPnt [ 25 ] + curPos, parity [ 25 ] ) ;
+                _mm512_store_si512( pPnt [ 26 ] + curPos, parity [ 26 ] ) ;
+                _mm512_store_si512( pPnt [ 27 ] + curPos, parity [ 27 ] ) ;
+                _mm512_store_si512( pPnt [ 28 ] + curPos, parity [ 28 ] ) ;
+                _mm512_store_si512( pPnt [ 29 ] + curPos, parity [ 29 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -7591,39 +7547,39 @@ int gf_31vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 31 ], taps [ 15 ] ;          // Parity registers
         __m512i data_vec, temp [ 15 ] ;
-        unsigned char * dPnt [ 31 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 31 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
-        dPnt [ 10 ] = dest [ 10 ] ;
-        dPnt [ 11 ] = dest [ 11 ] ;
-        dPnt [ 12 ] = dest [ 12 ] ;
-        dPnt [ 13 ] = dest [ 13 ] ;
-        dPnt [ 14 ] = dest [ 14 ] ;
-        dPnt [ 15 ] = dest [ 15 ] ;
-        dPnt [ 16 ] = dest [ 16 ] ;
-        dPnt [ 17 ] = dest [ 17 ] ;
-        dPnt [ 18 ] = dest [ 18 ] ;
-        dPnt [ 19 ] = dest [ 19 ] ;
-        dPnt [ 20 ] = dest [ 20 ] ;
-        dPnt [ 21 ] = dest [ 21 ] ;
-        dPnt [ 22 ] = dest [ 22 ] ;
-        dPnt [ 23 ] = dest [ 23 ] ;
-        dPnt [ 24 ] = dest [ 24 ] ;
-        dPnt [ 25 ] = dest [ 25 ] ;
-        dPnt [ 26 ] = dest [ 26 ] ;
-        dPnt [ 27 ] = dest [ 27 ] ;
-        dPnt [ 28 ] = dest [ 28 ] ;
-        dPnt [ 29 ] = dest [ 29 ] ;
-        dPnt [ 30 ] = dest [ 30 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 10 ] = dest [ 10 ] ;
+        pPnt [ 11 ] = dest [ 11 ] ;
+        pPnt [ 12 ] = dest [ 12 ] ;
+        pPnt [ 13 ] = dest [ 13 ] ;
+        pPnt [ 14 ] = dest [ 14 ] ;
+        pPnt [ 15 ] = dest [ 15 ] ;
+        pPnt [ 16 ] = dest [ 16 ] ;
+        pPnt [ 17 ] = dest [ 17 ] ;
+        pPnt [ 18 ] = dest [ 18 ] ;
+        pPnt [ 19 ] = dest [ 19 ] ;
+        pPnt [ 20 ] = dest [ 20 ] ;
+        pPnt [ 21 ] = dest [ 21 ] ;
+        pPnt [ 22 ] = dest [ 22 ] ;
+        pPnt [ 23 ] = dest [ 23 ] ;
+        pPnt [ 24 ] = dest [ 24 ] ;
+        pPnt [ 25 ] = dest [ 25 ] ;
+        pPnt [ 26 ] = dest [ 26 ] ;
+        pPnt [ 27 ] = dest [ 27 ] ;
+        pPnt [ 28 ] = dest [ 28 ] ;
+        pPnt [ 29 ] = dest [ 29 ] ;
+        pPnt [ 30 ] = dest [ 30 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -7736,37 +7692,37 @@ int gf_31vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( dPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( dPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( dPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( dPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( dPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( dPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( dPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( dPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( dPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( dPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( dPnt [ 20 ] + curPos, parity [ 20 ] ) ;
-                _mm512_store_si512( dPnt [ 21 ] + curPos, parity [ 21 ] ) ;
-                _mm512_store_si512( dPnt [ 22 ] + curPos, parity [ 22 ] ) ;
-                _mm512_store_si512( dPnt [ 23 ] + curPos, parity [ 23 ] ) ;
-                _mm512_store_si512( dPnt [ 24 ] + curPos, parity [ 24 ] ) ;
-                _mm512_store_si512( dPnt [ 25 ] + curPos, parity [ 25 ] ) ;
-                _mm512_store_si512( dPnt [ 26 ] + curPos, parity [ 26 ] ) ;
-                _mm512_store_si512( dPnt [ 27 ] + curPos, parity [ 27 ] ) ;
-                _mm512_store_si512( dPnt [ 28 ] + curPos, parity [ 28 ] ) ;
-                _mm512_store_si512( dPnt [ 29 ] + curPos, parity [ 29 ] ) ;
-                _mm512_store_si512( dPnt [ 30 ] + curPos, parity [ 30 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
+                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
+                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
+                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
+                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
+                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
+                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
+                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
+                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
+                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
+                _mm512_store_si512( pPnt [ 21 ] + curPos, parity [ 21 ] ) ;
+                _mm512_store_si512( pPnt [ 22 ] + curPos, parity [ 22 ] ) ;
+                _mm512_store_si512( pPnt [ 23 ] + curPos, parity [ 23 ] ) ;
+                _mm512_store_si512( pPnt [ 24 ] + curPos, parity [ 24 ] ) ;
+                _mm512_store_si512( pPnt [ 25 ] + curPos, parity [ 25 ] ) ;
+                _mm512_store_si512( pPnt [ 26 ] + curPos, parity [ 26 ] ) ;
+                _mm512_store_si512( pPnt [ 27 ] + curPos, parity [ 27 ] ) ;
+                _mm512_store_si512( pPnt [ 28 ] + curPos, parity [ 28 ] ) ;
+                _mm512_store_si512( pPnt [ 29 ] + curPos, parity [ 29 ] ) ;
+                _mm512_store_si512( pPnt [ 30 ] + curPos, parity [ 30 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -7778,40 +7734,40 @@ int gf_32vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         int curSym, curPos ;                        // Loop counters
         __m512i parity [ 32 ], taps [ 16 ] ;          // Parity registers
         __m512i data_vec, temp [ 16 ] ;
-        unsigned char * dPnt [ 32 ], **sPnt ;        // Data lookup pointers
+        unsigned char **sPnt, *pPnt [ 32 ];                       // Data lookup pointers
 
-        dPnt [ 0 ] = dest [ 0 ] ;
-        dPnt [ 1 ] = dest [ 1 ] ;
-        dPnt [ 2 ] = dest [ 2 ] ;
-        dPnt [ 3 ] = dest [ 3 ] ;
-        dPnt [ 4 ] = dest [ 4 ] ;
-        dPnt [ 5 ] = dest [ 5 ] ;
-        dPnt [ 6 ] = dest [ 6 ] ;
-        dPnt [ 7 ] = dest [ 7 ] ;
-        dPnt [ 8 ] = dest [ 8 ] ;
-        dPnt [ 9 ] = dest [ 9 ] ;
-        dPnt [ 10 ] = dest [ 10 ] ;
-        dPnt [ 11 ] = dest [ 11 ] ;
-        dPnt [ 12 ] = dest [ 12 ] ;
-        dPnt [ 13 ] = dest [ 13 ] ;
-        dPnt [ 14 ] = dest [ 14 ] ;
-        dPnt [ 15 ] = dest [ 15 ] ;
-        dPnt [ 16 ] = dest [ 16 ] ;
-        dPnt [ 17 ] = dest [ 17 ] ;
-        dPnt [ 18 ] = dest [ 18 ] ;
-        dPnt [ 19 ] = dest [ 19 ] ;
-        dPnt [ 20 ] = dest [ 20 ] ;
-        dPnt [ 21 ] = dest [ 21 ] ;
-        dPnt [ 22 ] = dest [ 22 ] ;
-        dPnt [ 23 ] = dest [ 23 ] ;
-        dPnt [ 24 ] = dest [ 24 ] ;
-        dPnt [ 25 ] = dest [ 25 ] ;
-        dPnt [ 26 ] = dest [ 26 ] ;
-        dPnt [ 27 ] = dest [ 27 ] ;
-        dPnt [ 28 ] = dest [ 28 ] ;
-        dPnt [ 29 ] = dest [ 29 ] ;
-        dPnt [ 30 ] = dest [ 30 ] ;
-        dPnt [ 31 ] = dest [ 31 ] ;
+        pPnt [ 0 ] = dest [ 0 ] ;
+        pPnt [ 1 ] = dest [ 1 ] ;
+        pPnt [ 2 ] = dest [ 2 ] ;
+        pPnt [ 3 ] = dest [ 3 ] ;
+        pPnt [ 4 ] = dest [ 4 ] ;
+        pPnt [ 5 ] = dest [ 5 ] ;
+        pPnt [ 6 ] = dest [ 6 ] ;
+        pPnt [ 7 ] = dest [ 7 ] ;
+        pPnt [ 8 ] = dest [ 8 ] ;
+        pPnt [ 9 ] = dest [ 9 ] ;
+        pPnt [ 10 ] = dest [ 10 ] ;
+        pPnt [ 11 ] = dest [ 11 ] ;
+        pPnt [ 12 ] = dest [ 12 ] ;
+        pPnt [ 13 ] = dest [ 13 ] ;
+        pPnt [ 14 ] = dest [ 14 ] ;
+        pPnt [ 15 ] = dest [ 15 ] ;
+        pPnt [ 16 ] = dest [ 16 ] ;
+        pPnt [ 17 ] = dest [ 17 ] ;
+        pPnt [ 18 ] = dest [ 18 ] ;
+        pPnt [ 19 ] = dest [ 19 ] ;
+        pPnt [ 20 ] = dest [ 20 ] ;
+        pPnt [ 21 ] = dest [ 21 ] ;
+        pPnt [ 22 ] = dest [ 22 ] ;
+        pPnt [ 23 ] = dest [ 23 ] ;
+        pPnt [ 24 ] = dest [ 24 ] ;
+        pPnt [ 25 ] = dest [ 25 ] ;
+        pPnt [ 26 ] = dest [ 26 ] ;
+        pPnt [ 27 ] = dest [ 27 ] ;
+        pPnt [ 28 ] = dest [ 28 ] ;
+        pPnt [ 29 ] = dest [ 29 ] ;
+        pPnt [ 30 ] = dest [ 30 ] ;
+        pPnt [ 31 ] = dest [ 31 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
         taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
@@ -7928,38 +7884,38 @@ int gf_32vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( dPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( dPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( dPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( dPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( dPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( dPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( dPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( dPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( dPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( dPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( dPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( dPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( dPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( dPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( dPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( dPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( dPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( dPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( dPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( dPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( dPnt [ 20 ] + curPos, parity [ 20 ] ) ;
-                _mm512_store_si512( dPnt [ 21 ] + curPos, parity [ 21 ] ) ;
-                _mm512_store_si512( dPnt [ 22 ] + curPos, parity [ 22 ] ) ;
-                _mm512_store_si512( dPnt [ 23 ] + curPos, parity [ 23 ] ) ;
-                _mm512_store_si512( dPnt [ 24 ] + curPos, parity [ 24 ] ) ;
-                _mm512_store_si512( dPnt [ 25 ] + curPos, parity [ 25 ] ) ;
-                _mm512_store_si512( dPnt [ 26 ] + curPos, parity [ 26 ] ) ;
-                _mm512_store_si512( dPnt [ 27 ] + curPos, parity [ 27 ] ) ;
-                _mm512_store_si512( dPnt [ 28 ] + curPos, parity [ 28 ] ) ;
-                _mm512_store_si512( dPnt [ 29 ] + curPos, parity [ 29 ] ) ;
-                _mm512_store_si512( dPnt [ 30 ] + curPos, parity [ 30 ] ) ;
-                _mm512_store_si512( dPnt [ 31 ] + curPos, parity [ 31 ] ) ;
+                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
+                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
+                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
+                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
+                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
+                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
+                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
+                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
+                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
+                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
+                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
+                _mm512_store_si512( pPnt [ 21 ] + curPos, parity [ 21 ] ) ;
+                _mm512_store_si512( pPnt [ 22 ] + curPos, parity [ 22 ] ) ;
+                _mm512_store_si512( pPnt [ 23 ] + curPos, parity [ 23 ] ) ;
+                _mm512_store_si512( pPnt [ 24 ] + curPos, parity [ 24 ] ) ;
+                _mm512_store_si512( pPnt [ 25 ] + curPos, parity [ 25 ] ) ;
+                _mm512_store_si512( pPnt [ 26 ] + curPos, parity [ 26 ] ) ;
+                _mm512_store_si512( pPnt [ 27 ] + curPos, parity [ 27 ] ) ;
+                _mm512_store_si512( pPnt [ 28 ] + curPos, parity [ 28 ] ) ;
+                _mm512_store_si512( pPnt [ 29 ] + curPos, parity [ 29 ] ) ;
+                _mm512_store_si512( pPnt [ 30 ] + curPos, parity [ 30 ] ) ;
+                _mm512_store_si512( pPnt [ 31 ] + curPos, parity [ 31 ] ) ;
         }
         return ( curPos ) ;
 }
