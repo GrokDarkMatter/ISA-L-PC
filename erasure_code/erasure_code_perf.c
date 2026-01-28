@@ -764,7 +764,7 @@ main (int argc, char *argv[])
     // Perform the baseline benchmark
     pcsr_gen_poly_matrix (a, m, k);
     printf ( "SRPoly matrix\n" ) ;
-    dump_u8xu8 ( a+k*k, m-k, k ) ;
+    dump_u8xu8 ( a+k*k, k, m-k ) ;
     ec_init_tables (k, m - k, &a[ k * k ], g_tbls);
 
 #ifdef __aarch64__
@@ -856,6 +856,8 @@ main (int argc, char *argv[])
 
     // Test decoding with dot product
     pcsr_gen_rsr_matrix (a, m + p, m, sPow);
+    printf ( "Vand table\n" ) ;
+    dump_u8xu8 ( a, m+p, m ) ;
     ec_init_tables (p, m, &a[ m * m ], g_tbls);
 #ifdef __aarch64__
     BENCHMARK (&start, BENCHMARK_TIME,
@@ -872,6 +874,7 @@ main (int argc, char *argv[])
                    ec_encode_data_avx2_gfni (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs));
     }
 #endif
+
     printf ("dot_prod_decode" TEST_TYPE_STR ":     k=%d p=%d ", m, p);
     fprintf (file, "dot_prod_decode" TEST_TYPE_STR ":     k=%d p=%d ", m, p);
     perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
@@ -888,16 +891,19 @@ main (int argc, char *argv[])
         }
     }
 
-    exit ( 0 ) ;
     // Now benchmark parallel syndrome sequencer - First create power vector
-    i = 2;
-    for (j = p - PC_GEN_x11d; j >= 0; j--)
+    i = sPow;
+    for (j = p - 1; j >= 0; j--)
     {
         a[ j ] = i;
-        i = gf_mul (i, PC_GEN_x11d);
+        i = gf_mul (i, 2);
     }
 
+    printf ( "Power values\n" ) ;
+    dump_u8xu8 ( a, 1, p ) ;
+
     ec_init_tables (p - 1, 1, a, g_tbls);
+    int eLen = 0 ;
 #ifdef __aarch64__
     BENCHMARK (&start, BENCHMARK_TIME,
                pc_decode_data_neon (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs, 1));
@@ -905,7 +911,7 @@ main (int argc, char *argv[])
     if (avx2 == 0)
     {
         BENCHMARK (&start, BENCHMARK_TIME,
-                   pc_decode_data_avx512_gfni (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs, 1));
+                   eLen=pc_decode_data_sr_avx512_gfni (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs, 1));
     }
     else
     {
@@ -913,6 +919,15 @@ main (int argc, char *argv[])
                    pc_decode_data_avx2_gfni (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs, 1));
     }
 #endif
+
+    if ( eLen != TEST_LEN ( m ) )
+    {
+        printf ( "Decodesr failed, expected %d got %d\n", TEST_LEN (m), eLen ) ;
+        dump_u8xu8 ( temp_buffs [ 0 ], 1, 16 ) ;
+        dump_u8xu8 ( temp_buffs [ 1 ], 1, 16 ) ;
+        dump_u8xu8 ( temp_buffs [ 2 ], 1, 16 ) ;
+        dump_u8xu8 ( temp_buffs [ 3 ], 1, 16 ) ;
+    }
     printf ("polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p);
     fprintf (file, "polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p);
     perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
