@@ -4477,11 +4477,11 @@ int gf_2vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 parity [ 0 ] = _mm512_setzero_si512 () ;
                 parity [ 1 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -4492,8 +4492,8 @@ int gf_2vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -4522,11 +4522,11 @@ int gf_3vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 parity [ 1 ] = _mm512_setzero_si512 () ;
                 parity [ 2 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -4538,9 +4538,9 @@ int gf_3vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -4572,11 +4572,11 @@ int gf_4vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 parity [ 2 ] = _mm512_setzero_si512 () ;
                 parity [ 3 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -4590,10 +4590,10 @@ int gf_4vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -4627,11 +4627,11 @@ int gf_5vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 parity [ 3 ] = _mm512_setzero_si512 () ;
                 parity [ 4 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -4646,11 +4646,11 @@ int gf_5vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -4687,11 +4687,11 @@ int gf_6vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 parity [ 4 ] = _mm512_setzero_si512 () ;
                 parity [ 5 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -4708,12 +4708,12 @@ int gf_6vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -4752,11 +4752,11 @@ int gf_7vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 parity [ 5 ] = _mm512_setzero_si512 () ;
                 parity [ 6 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -4774,13 +4774,13 @@ int gf_7vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -4822,11 +4822,11 @@ int gf_8vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 parity [ 6 ] = _mm512_setzero_si512 () ;
                 parity [ 7 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -4846,14 +4846,14 @@ int gf_8vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -4897,11 +4897,11 @@ int gf_9vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 parity [ 7 ] = _mm512_setzero_si512 () ;
                 parity [ 8 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -4922,15 +4922,15 @@ int gf_9vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -4977,11 +4977,11 @@ int gf_10vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 8 ] = _mm512_setzero_si512 () ;
                 parity [ 9 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -5004,16 +5004,16 @@ int gf_10vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -5062,11 +5062,11 @@ int gf_11vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 9 ] = _mm512_setzero_si512 () ;
                 parity [ 10 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -5090,17 +5090,17 @@ int gf_11vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 10 ] + curPos), parity [ 10 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -5152,11 +5152,11 @@ int gf_12vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 10 ] = _mm512_setzero_si512 () ;
                 parity [ 11 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -5182,18 +5182,18 @@ int gf_12vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 10 ] + curPos), parity [ 10 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 11 ] + curPos), parity [ 11 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -5247,11 +5247,11 @@ int gf_13vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 11 ] = _mm512_setzero_si512 () ;
                 parity [ 12 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -5278,19 +5278,19 @@ int gf_13vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 10 ] + curPos), parity [ 10 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 11 ] + curPos), parity [ 11 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 12 ] + curPos), parity [ 12 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -5347,11 +5347,11 @@ int gf_14vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 12 ] = _mm512_setzero_si512 () ;
                 parity [ 13 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -5380,20 +5380,20 @@ int gf_14vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 10 ] + curPos), parity [ 10 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 11 ] + curPos), parity [ 11 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 12 ] + curPos), parity [ 12 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 13 ] + curPos), parity [ 13 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -5452,11 +5452,11 @@ int gf_15vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 13 ] = _mm512_setzero_si512 () ;
                 parity [ 14 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -5486,21 +5486,21 @@ int gf_15vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 10 ] + curPos), parity [ 10 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 11 ] + curPos), parity [ 11 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 12 ] + curPos), parity [ 12 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 13 ] + curPos), parity [ 13 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 14 ] + curPos), parity [ 14 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -5562,11 +5562,11 @@ int gf_16vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 14 ] = _mm512_setzero_si512 () ;
                 parity [ 15 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -5598,22 +5598,22 @@ int gf_16vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 10 ] + curPos), parity [ 10 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 11 ] + curPos), parity [ 11 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 12 ] + curPos), parity [ 12 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 13 ] + curPos), parity [ 13 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 14 ] + curPos), parity [ 14 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 15 ] + curPos), parity [ 15 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -5677,11 +5677,11 @@ int gf_17vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 15 ] = _mm512_setzero_si512 () ;
                 parity [ 16 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -5714,23 +5714,23 @@ int gf_17vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 10 ] + curPos), parity [ 10 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 11 ] + curPos), parity [ 11 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 12 ] + curPos), parity [ 12 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 13 ] + curPos), parity [ 13 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 14 ] + curPos), parity [ 14 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 15 ] + curPos), parity [ 15 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 16 ] + curPos), parity [ 16 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -5797,11 +5797,11 @@ int gf_18vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 16 ] = _mm512_setzero_si512 () ;
                 parity [ 17 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -5836,24 +5836,24 @@ int gf_18vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 10 ] + curPos), parity [ 10 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 11 ] + curPos), parity [ 11 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 12 ] + curPos), parity [ 12 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 13 ] + curPos), parity [ 13 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 14 ] + curPos), parity [ 14 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 15 ] + curPos), parity [ 15 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 16 ] + curPos), parity [ 16 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 17 ] + curPos), parity [ 17 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -5922,11 +5922,11 @@ int gf_19vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 17 ] = _mm512_setzero_si512 () ;
                 parity [ 18 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -5962,25 +5962,25 @@ int gf_19vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 10 ] + curPos), parity [ 10 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 11 ] + curPos), parity [ 11 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 12 ] + curPos), parity [ 12 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 13 ] + curPos), parity [ 13 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 14 ] + curPos), parity [ 14 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 15 ] + curPos), parity [ 15 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 16 ] + curPos), parity [ 16 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 17 ] + curPos), parity [ 17 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 18 ] + curPos), parity [ 18 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -6052,11 +6052,11 @@ int gf_20vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 18 ] = _mm512_setzero_si512 () ;
                 parity [ 19 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -6094,26 +6094,26 @@ int gf_20vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 10 ] + curPos), parity [ 10 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 11 ] + curPos), parity [ 11 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 12 ] + curPos), parity [ 12 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 13 ] + curPos), parity [ 13 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 14 ] + curPos), parity [ 14 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 15 ] + curPos), parity [ 15 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 16 ] + curPos), parity [ 16 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 17 ] + curPos), parity [ 17 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 18 ] + curPos), parity [ 18 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 19 ] + curPos), parity [ 19 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -6187,11 +6187,11 @@ int gf_21vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 19 ] = _mm512_setzero_si512 () ;
                 parity [ 20 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -6230,27 +6230,27 @@ int gf_21vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 10 ] + curPos), parity [ 10 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 11 ] + curPos), parity [ 11 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 12 ] + curPos), parity [ 12 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 13 ] + curPos), parity [ 13 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 14 ] + curPos), parity [ 14 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 15 ] + curPos), parity [ 15 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 16 ] + curPos), parity [ 16 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 17 ] + curPos), parity [ 17 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 18 ] + curPos), parity [ 18 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 19 ] + curPos), parity [ 19 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 20 ] + curPos), parity [ 20 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -6327,11 +6327,11 @@ int gf_22vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 20 ] = _mm512_setzero_si512 () ;
                 parity [ 21 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -6372,28 +6372,28 @@ int gf_22vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
-                _mm512_store_si512( pPnt [ 21 ] + curPos, parity [ 21 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 10 ] + curPos), parity [ 10 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 11 ] + curPos), parity [ 11 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 12 ] + curPos), parity [ 12 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 13 ] + curPos), parity [ 13 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 14 ] + curPos), parity [ 14 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 15 ] + curPos), parity [ 15 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 16 ] + curPos), parity [ 16 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 17 ] + curPos), parity [ 17 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 18 ] + curPos), parity [ 18 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 19 ] + curPos), parity [ 19 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 20 ] + curPos), parity [ 20 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 21 ] + curPos), parity [ 21 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -6472,11 +6472,11 @@ int gf_23vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 21 ] = _mm512_setzero_si512 () ;
                 parity [ 22 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -6518,29 +6518,29 @@ int gf_23vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
-                _mm512_store_si512( pPnt [ 21 ] + curPos, parity [ 21 ] ) ;
-                _mm512_store_si512( pPnt [ 22 ] + curPos, parity [ 22 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 10 ] + curPos), parity [ 10 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 11 ] + curPos), parity [ 11 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 12 ] + curPos), parity [ 12 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 13 ] + curPos), parity [ 13 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 14 ] + curPos), parity [ 14 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 15 ] + curPos), parity [ 15 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 16 ] + curPos), parity [ 16 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 17 ] + curPos), parity [ 17 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 18 ] + curPos), parity [ 18 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 19 ] + curPos), parity [ 19 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 20 ] + curPos), parity [ 20 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 21 ] + curPos), parity [ 21 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 22 ] + curPos), parity [ 22 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -6622,11 +6622,11 @@ int gf_24vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 22 ] = _mm512_setzero_si512 () ;
                 parity [ 23 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -6670,30 +6670,30 @@ int gf_24vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
-                _mm512_store_si512( pPnt [ 21 ] + curPos, parity [ 21 ] ) ;
-                _mm512_store_si512( pPnt [ 22 ] + curPos, parity [ 22 ] ) ;
-                _mm512_store_si512( pPnt [ 23 ] + curPos, parity [ 23 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 10 ] + curPos), parity [ 10 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 11 ] + curPos), parity [ 11 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 12 ] + curPos), parity [ 12 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 13 ] + curPos), parity [ 13 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 14 ] + curPos), parity [ 14 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 15 ] + curPos), parity [ 15 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 16 ] + curPos), parity [ 16 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 17 ] + curPos), parity [ 17 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 18 ] + curPos), parity [ 18 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 19 ] + curPos), parity [ 19 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 20 ] + curPos), parity [ 20 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 21 ] + curPos), parity [ 21 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 22 ] + curPos), parity [ 22 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 23 ] + curPos), parity [ 23 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -6777,11 +6777,11 @@ int gf_25vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 23 ] = _mm512_setzero_si512 () ;
                 parity [ 24 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -6826,31 +6826,31 @@ int gf_25vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
-                _mm512_store_si512( pPnt [ 21 ] + curPos, parity [ 21 ] ) ;
-                _mm512_store_si512( pPnt [ 22 ] + curPos, parity [ 22 ] ) ;
-                _mm512_store_si512( pPnt [ 23 ] + curPos, parity [ 23 ] ) ;
-                _mm512_store_si512( pPnt [ 24 ] + curPos, parity [ 24 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 10 ] + curPos), parity [ 10 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 11 ] + curPos), parity [ 11 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 12 ] + curPos), parity [ 12 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 13 ] + curPos), parity [ 13 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 14 ] + curPos), parity [ 14 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 15 ] + curPos), parity [ 15 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 16 ] + curPos), parity [ 16 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 17 ] + curPos), parity [ 17 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 18 ] + curPos), parity [ 18 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 19 ] + curPos), parity [ 19 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 20 ] + curPos), parity [ 20 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 21 ] + curPos), parity [ 21 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 22 ] + curPos), parity [ 22 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 23 ] + curPos), parity [ 23 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 24 ] + curPos), parity [ 24 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -6937,11 +6937,11 @@ int gf_26vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 24 ] = _mm512_setzero_si512 () ;
                 parity [ 25 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -6988,32 +6988,32 @@ int gf_26vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
-                _mm512_store_si512( pPnt [ 21 ] + curPos, parity [ 21 ] ) ;
-                _mm512_store_si512( pPnt [ 22 ] + curPos, parity [ 22 ] ) ;
-                _mm512_store_si512( pPnt [ 23 ] + curPos, parity [ 23 ] ) ;
-                _mm512_store_si512( pPnt [ 24 ] + curPos, parity [ 24 ] ) ;
-                _mm512_store_si512( pPnt [ 25 ] + curPos, parity [ 25 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 10 ] + curPos), parity [ 10 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 11 ] + curPos), parity [ 11 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 12 ] + curPos), parity [ 12 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 13 ] + curPos), parity [ 13 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 14 ] + curPos), parity [ 14 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 15 ] + curPos), parity [ 15 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 16 ] + curPos), parity [ 16 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 17 ] + curPos), parity [ 17 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 18 ] + curPos), parity [ 18 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 19 ] + curPos), parity [ 19 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 20 ] + curPos), parity [ 20 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 21 ] + curPos), parity [ 21 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 22 ] + curPos), parity [ 22 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 23 ] + curPos), parity [ 23 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 24 ] + curPos), parity [ 24 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 25 ] + curPos), parity [ 25 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -7102,11 +7102,11 @@ int gf_27vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 25 ] = _mm512_setzero_si512 () ;
                 parity [ 26 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -7154,33 +7154,33 @@ int gf_27vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
-                _mm512_store_si512( pPnt [ 21 ] + curPos, parity [ 21 ] ) ;
-                _mm512_store_si512( pPnt [ 22 ] + curPos, parity [ 22 ] ) ;
-                _mm512_store_si512( pPnt [ 23 ] + curPos, parity [ 23 ] ) ;
-                _mm512_store_si512( pPnt [ 24 ] + curPos, parity [ 24 ] ) ;
-                _mm512_store_si512( pPnt [ 25 ] + curPos, parity [ 25 ] ) ;
-                _mm512_store_si512( pPnt [ 26 ] + curPos, parity [ 26 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 10 ] + curPos), parity [ 10 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 11 ] + curPos), parity [ 11 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 12 ] + curPos), parity [ 12 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 13 ] + curPos), parity [ 13 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 14 ] + curPos), parity [ 14 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 15 ] + curPos), parity [ 15 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 16 ] + curPos), parity [ 16 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 17 ] + curPos), parity [ 17 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 18 ] + curPos), parity [ 18 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 19 ] + curPos), parity [ 19 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 20 ] + curPos), parity [ 20 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 21 ] + curPos), parity [ 21 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 22 ] + curPos), parity [ 22 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 23 ] + curPos), parity [ 23 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 24 ] + curPos), parity [ 24 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 25 ] + curPos), parity [ 25 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 26 ] + curPos), parity [ 26 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -7272,11 +7272,11 @@ int gf_28vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 26 ] = _mm512_setzero_si512 () ;
                 parity [ 27 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -7326,34 +7326,34 @@ int gf_28vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
-                _mm512_store_si512( pPnt [ 21 ] + curPos, parity [ 21 ] ) ;
-                _mm512_store_si512( pPnt [ 22 ] + curPos, parity [ 22 ] ) ;
-                _mm512_store_si512( pPnt [ 23 ] + curPos, parity [ 23 ] ) ;
-                _mm512_store_si512( pPnt [ 24 ] + curPos, parity [ 24 ] ) ;
-                _mm512_store_si512( pPnt [ 25 ] + curPos, parity [ 25 ] ) ;
-                _mm512_store_si512( pPnt [ 26 ] + curPos, parity [ 26 ] ) ;
-                _mm512_store_si512( pPnt [ 27 ] + curPos, parity [ 27 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 10 ] + curPos), parity [ 10 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 11 ] + curPos), parity [ 11 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 12 ] + curPos), parity [ 12 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 13 ] + curPos), parity [ 13 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 14 ] + curPos), parity [ 14 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 15 ] + curPos), parity [ 15 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 16 ] + curPos), parity [ 16 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 17 ] + curPos), parity [ 17 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 18 ] + curPos), parity [ 18 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 19 ] + curPos), parity [ 19 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 20 ] + curPos), parity [ 20 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 21 ] + curPos), parity [ 21 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 22 ] + curPos), parity [ 22 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 23 ] + curPos), parity [ 23 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 24 ] + curPos), parity [ 24 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 25 ] + curPos), parity [ 25 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 26 ] + curPos), parity [ 26 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 27 ] + curPos), parity [ 27 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -7447,11 +7447,11 @@ int gf_29vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 27 ] = _mm512_setzero_si512 () ;
                 parity [ 28 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -7502,35 +7502,35 @@ int gf_29vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
-                _mm512_store_si512( pPnt [ 21 ] + curPos, parity [ 21 ] ) ;
-                _mm512_store_si512( pPnt [ 22 ] + curPos, parity [ 22 ] ) ;
-                _mm512_store_si512( pPnt [ 23 ] + curPos, parity [ 23 ] ) ;
-                _mm512_store_si512( pPnt [ 24 ] + curPos, parity [ 24 ] ) ;
-                _mm512_store_si512( pPnt [ 25 ] + curPos, parity [ 25 ] ) ;
-                _mm512_store_si512( pPnt [ 26 ] + curPos, parity [ 26 ] ) ;
-                _mm512_store_si512( pPnt [ 27 ] + curPos, parity [ 27 ] ) ;
-                _mm512_store_si512( pPnt [ 28 ] + curPos, parity [ 28 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 10 ] + curPos), parity [ 10 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 11 ] + curPos), parity [ 11 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 12 ] + curPos), parity [ 12 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 13 ] + curPos), parity [ 13 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 14 ] + curPos), parity [ 14 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 15 ] + curPos), parity [ 15 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 16 ] + curPos), parity [ 16 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 17 ] + curPos), parity [ 17 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 18 ] + curPos), parity [ 18 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 19 ] + curPos), parity [ 19 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 20 ] + curPos), parity [ 20 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 21 ] + curPos), parity [ 21 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 22 ] + curPos), parity [ 22 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 23 ] + curPos), parity [ 23 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 24 ] + curPos), parity [ 24 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 25 ] + curPos), parity [ 25 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 26 ] + curPos), parity [ 26 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 27 ] + curPos), parity [ 27 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 28 ] + curPos), parity [ 28 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -7627,11 +7627,11 @@ int gf_30vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 28 ] = _mm512_setzero_si512 () ;
                 parity [ 29 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -7684,36 +7684,36 @@ int gf_30vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
-                _mm512_store_si512( pPnt [ 21 ] + curPos, parity [ 21 ] ) ;
-                _mm512_store_si512( pPnt [ 22 ] + curPos, parity [ 22 ] ) ;
-                _mm512_store_si512( pPnt [ 23 ] + curPos, parity [ 23 ] ) ;
-                _mm512_store_si512( pPnt [ 24 ] + curPos, parity [ 24 ] ) ;
-                _mm512_store_si512( pPnt [ 25 ] + curPos, parity [ 25 ] ) ;
-                _mm512_store_si512( pPnt [ 26 ] + curPos, parity [ 26 ] ) ;
-                _mm512_store_si512( pPnt [ 27 ] + curPos, parity [ 27 ] ) ;
-                _mm512_store_si512( pPnt [ 28 ] + curPos, parity [ 28 ] ) ;
-                _mm512_store_si512( pPnt [ 29 ] + curPos, parity [ 29 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 10 ] + curPos), parity [ 10 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 11 ] + curPos), parity [ 11 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 12 ] + curPos), parity [ 12 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 13 ] + curPos), parity [ 13 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 14 ] + curPos), parity [ 14 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 15 ] + curPos), parity [ 15 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 16 ] + curPos), parity [ 16 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 17 ] + curPos), parity [ 17 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 18 ] + curPos), parity [ 18 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 19 ] + curPos), parity [ 19 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 20 ] + curPos), parity [ 20 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 21 ] + curPos), parity [ 21 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 22 ] + curPos), parity [ 22 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 23 ] + curPos), parity [ 23 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 24 ] + curPos), parity [ 24 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 25 ] + curPos), parity [ 25 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 26 ] + curPos), parity [ 26 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 27 ] + curPos), parity [ 27 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 28 ] + curPos), parity [ 28 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 29 ] + curPos), parity [ 29 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -7812,11 +7812,11 @@ int gf_31vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 29 ] = _mm512_setzero_si512 () ;
                 parity [ 30 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -7870,37 +7870,37 @@ int gf_31vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
-                _mm512_store_si512( pPnt [ 21 ] + curPos, parity [ 21 ] ) ;
-                _mm512_store_si512( pPnt [ 22 ] + curPos, parity [ 22 ] ) ;
-                _mm512_store_si512( pPnt [ 23 ] + curPos, parity [ 23 ] ) ;
-                _mm512_store_si512( pPnt [ 24 ] + curPos, parity [ 24 ] ) ;
-                _mm512_store_si512( pPnt [ 25 ] + curPos, parity [ 25 ] ) ;
-                _mm512_store_si512( pPnt [ 26 ] + curPos, parity [ 26 ] ) ;
-                _mm512_store_si512( pPnt [ 27 ] + curPos, parity [ 27 ] ) ;
-                _mm512_store_si512( pPnt [ 28 ] + curPos, parity [ 28 ] ) ;
-                _mm512_store_si512( pPnt [ 29 ] + curPos, parity [ 29 ] ) ;
-                _mm512_store_si512( pPnt [ 30 ] + curPos, parity [ 30 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 10 ] + curPos), parity [ 10 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 11 ] + curPos), parity [ 11 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 12 ] + curPos), parity [ 12 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 13 ] + curPos), parity [ 13 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 14 ] + curPos), parity [ 14 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 15 ] + curPos), parity [ 15 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 16 ] + curPos), parity [ 16 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 17 ] + curPos), parity [ 17 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 18 ] + curPos), parity [ 18 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 19 ] + curPos), parity [ 19 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 20 ] + curPos), parity [ 20 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 21 ] + curPos), parity [ 21 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 22 ] + curPos), parity [ 22 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 23 ] + curPos), parity [ 23 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 24 ] + curPos), parity [ 24 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 25 ] + curPos), parity [ 25 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 26 ] + curPos), parity [ 26 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 27 ] + curPos), parity [ 27 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 28 ] + curPos), parity [ 28 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 29 ] + curPos), parity [ 29 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 30 ] + curPos), parity [ 30 ] ) ;
         }
         return ( curPos ) ;
 }
@@ -8002,11 +8002,11 @@ int gf_32vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 parity [ 30 ] = _mm512_setzero_si512 () ;
                 parity [ 31 ] = _mm512_setzero_si512 () ;
 
-                // Loop through all the 1..k symbols
+                // Loop through all the 0..k symbols
                 for ( curSym = 0 ; curSym < k ; curSym ++ )
                 {
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( *sPnt + curPos ) ;
+                        data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
@@ -8062,38 +8062,38 @@ int gf_32vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 }
 
                  // Store parity back to memory
-                _mm512_store_si512( pPnt [ 0 ] + curPos, parity [ 0 ] ) ;
-                _mm512_store_si512( pPnt [ 1 ] + curPos, parity [ 1 ] ) ;
-                _mm512_store_si512( pPnt [ 2 ] + curPos, parity [ 2 ] ) ;
-                _mm512_store_si512( pPnt [ 3 ] + curPos, parity [ 3 ] ) ;
-                _mm512_store_si512( pPnt [ 4 ] + curPos, parity [ 4 ] ) ;
-                _mm512_store_si512( pPnt [ 5 ] + curPos, parity [ 5 ] ) ;
-                _mm512_store_si512( pPnt [ 6 ] + curPos, parity [ 6 ] ) ;
-                _mm512_store_si512( pPnt [ 7 ] + curPos, parity [ 7 ] ) ;
-                _mm512_store_si512( pPnt [ 8 ] + curPos, parity [ 8 ] ) ;
-                _mm512_store_si512( pPnt [ 9 ] + curPos, parity [ 9 ] ) ;
-                _mm512_store_si512( pPnt [ 10 ] + curPos, parity [ 10 ] ) ;
-                _mm512_store_si512( pPnt [ 11 ] + curPos, parity [ 11 ] ) ;
-                _mm512_store_si512( pPnt [ 12 ] + curPos, parity [ 12 ] ) ;
-                _mm512_store_si512( pPnt [ 13 ] + curPos, parity [ 13 ] ) ;
-                _mm512_store_si512( pPnt [ 14 ] + curPos, parity [ 14 ] ) ;
-                _mm512_store_si512( pPnt [ 15 ] + curPos, parity [ 15 ] ) ;
-                _mm512_store_si512( pPnt [ 16 ] + curPos, parity [ 16 ] ) ;
-                _mm512_store_si512( pPnt [ 17 ] + curPos, parity [ 17 ] ) ;
-                _mm512_store_si512( pPnt [ 18 ] + curPos, parity [ 18 ] ) ;
-                _mm512_store_si512( pPnt [ 19 ] + curPos, parity [ 19 ] ) ;
-                _mm512_store_si512( pPnt [ 20 ] + curPos, parity [ 20 ] ) ;
-                _mm512_store_si512( pPnt [ 21 ] + curPos, parity [ 21 ] ) ;
-                _mm512_store_si512( pPnt [ 22 ] + curPos, parity [ 22 ] ) ;
-                _mm512_store_si512( pPnt [ 23 ] + curPos, parity [ 23 ] ) ;
-                _mm512_store_si512( pPnt [ 24 ] + curPos, parity [ 24 ] ) ;
-                _mm512_store_si512( pPnt [ 25 ] + curPos, parity [ 25 ] ) ;
-                _mm512_store_si512( pPnt [ 26 ] + curPos, parity [ 26 ] ) ;
-                _mm512_store_si512( pPnt [ 27 ] + curPos, parity [ 27 ] ) ;
-                _mm512_store_si512( pPnt [ 28 ] + curPos, parity [ 28 ] ) ;
-                _mm512_store_si512( pPnt [ 29 ] + curPos, parity [ 29 ] ) ;
-                _mm512_store_si512( pPnt [ 30 ] + curPos, parity [ 30 ] ) ;
-                _mm512_store_si512( pPnt [ 31 ] + curPos, parity [ 31 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 0 ] + curPos), parity [ 0 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 1 ] + curPos), parity [ 1 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 2 ] + curPos), parity [ 2 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 3 ] + curPos), parity [ 3 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 4 ] + curPos), parity [ 4 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 5 ] + curPos), parity [ 5 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 6 ] + curPos), parity [ 6 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 7 ] + curPos), parity [ 7 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 8 ] + curPos), parity [ 8 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 9 ] + curPos), parity [ 9 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 10 ] + curPos), parity [ 10 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 11 ] + curPos), parity [ 11 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 12 ] + curPos), parity [ 12 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 13 ] + curPos), parity [ 13 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 14 ] + curPos), parity [ 14 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 15 ] + curPos), parity [ 15 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 16 ] + curPos), parity [ 16 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 17 ] + curPos), parity [ 17 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 18 ] + curPos), parity [ 18 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 19 ] + curPos), parity [ 19 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 20 ] + curPos), parity [ 20 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 21 ] + curPos), parity [ 21 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 22 ] + curPos), parity [ 22 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 23 ] + curPos), parity [ 23 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 24 ] + curPos), parity [ 24 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 25 ] + curPos), parity [ 25 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 26 ] + curPos), parity [ 26 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 27 ] + curPos), parity [ 27 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 28 ] + curPos), parity [ 28 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 29 ] + curPos), parity [ 29 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 30 ] + curPos), parity [ 30 ] ) ;
+                _mm512_stream_si512( (__m512i *) (pPnt [ 31 ] + curPos), parity [ 31 ] ) ;
         }
         return ( curPos ) ;
 }
