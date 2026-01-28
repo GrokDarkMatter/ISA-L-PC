@@ -42,6 +42,140 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restrictions
 **********************************************************************/
+
+// Code generation functions
+// Compute base ^ Power
+int
+pcsr_pow_AVX512_GFNI (unsigned char base, unsigned char Power)
+{
+    // The first power is always 1
+    if (Power == 0)
+    {
+        return 1;
+    }
+
+    // Otherwise compute the power of two for Power
+    unsigned char computedPow = base;
+    for (int i = 1; i < Power; i++)
+    {
+        computedPow = gf_mul (computedPow, base);
+    }
+    return computedPow;
+}
+
+int
+pcsr_gen_poly (unsigned char *p, int rank )
+{
+    int c, alpha, cr, first, retVal; // Loop variables
+
+    //p[ 0 ] = 1; // Start with (x+1)
+    int start = rank / 2 ; // = first;
+    if ( rank & 1 )
+    {
+        first = 255 - start ;
+    }
+    else
+    {
+        first = 128 - start ;
+    }
+    printf ( "Rank = %d, first = %d\n", rank, first ) ;
+    first = pcsr_pow_AVX512_GFNI (2, first);
+    retVal = first ;
+    printf ("Poly power First = %d  ", first);
+    p[ 0 ] = first; // Start with (x+1)
+    //alpha = 2;
+    alpha = gf_mul (first, 2);
+    for (cr = 1; cr < rank; cr++) // Loop rank-1 times
+    {
+        // Compute the last term of the polynomial by multiplying
+        p[ cr ] = gf_mul (p[ cr - 1 ], alpha);
+
+        // Pass the middle terms to produce multiply result
+        for (c = cr - 1; c > 0; c--)
+        {
+            p[ c ] ^= gf_mul (p[ c - 1 ], alpha);
+        }
+
+        // Compute the first term by adding in alphaI
+        p[ 0 ] ^= alpha;
+
+        // Compute next alpha (power of 2)
+        alpha = gf_mul (alpha, 2);
+    }
+
+    printf ("FinPoly: %d ", start);
+    dump_u8xu8 (p, 1, rank);
+    return retVal ;
+}
+
+int
+pcsr_gen_poly_matrix (unsigned char *a, int m, int k)
+{
+    int i, j, par, over, lpos, retVal;
+    unsigned char *p, taps[ 254 ], lfsr[ 254 ];
+
+    // First compute the generator polynomial and initialize the taps
+    par = m - k;
+
+    retVal = pcsr_gen_poly (taps, par);
+    memcpy (lfsr, taps, par); // Initial value of LFSR is the taps
+
+    // Now use an LFSR to build the values
+    p = &a[ k * k ];
+    for (i = k - 1; i >= 0; i--) // Outer loop for each col
+    {
+        for (j = 0; j < par; j++) // Each row
+        {
+            // Copy in the current LFSR values
+            p[ (j * k) + i ] = lfsr[ j ];
+        }
+        // Now update values with LFSR - first compute overflow
+        over = lfsr[ 0 ];
+
+        // Loop through the MSB LFSR terms (not the LSB)
+        for (lpos = 0; lpos < par - 1; lpos++)
+        {
+            lfsr[ lpos ] = gf_mul (over, taps[ lpos ]) ^ lfsr[ lpos + 1 ];
+        }
+        // Now do the LSB of the LFSR to finish
+        lfsr[ par - 1 ] = gf_mul (over, taps[ par - 1 ]);
+    }
+
+    // Identity matrix in high position
+    memset (a, 0, k * k);
+    for (i = 0; i < k; i++)
+    {
+        a[ k * i + i ] = 1;
+    }
+    return retVal ;
+}
+
+void
+pcsr_gen_rsr_matrix (unsigned char *a, int m, int k, int first)
+{
+    int i, j;
+    unsigned char p, gen = first;
+
+    // Create the identity matrix
+    memset (a, 0, k * m);
+    for (i = 0; i < k; i++)
+    {
+        a[ k * i + i ] = 1;
+    }
+
+    // Loop through rows and cols backward
+    for (i = m - 1; i >= k; i--)
+    {
+        p = 1;
+        for (j = 0; j < k; j++)
+        {
+            a[ k * i + (k - j - 1) ] = p;
+            p = gf_mul (p, gen);
+        }
+        gen = gf_mul (gen, 2);
+    }
+}
+
 // Parallel Syndrome Sequencer SR for P = 2 Codewords
 int gf_2vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
         unsigned char ** dest, int offSet)

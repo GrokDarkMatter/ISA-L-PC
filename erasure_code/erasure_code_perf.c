@@ -734,7 +734,7 @@ main (int argc, char *argv[])
     for (i = 0; i < k; i++)
         for (j = 0; j < TEST_LEN (m); j++)
             buffs[ i ][ j ] = rand ();
-
+    //buffs [ 0 ] [ k - 1 ] = 1 ;
             // Print test type
 #ifdef __aarch64__
     printf ("Testing ARM64-NEON\n");
@@ -752,8 +752,19 @@ main (int argc, char *argv[])
     }
 #endif
 
+#ifdef NDEF
+    for ( i = 2 ; i < 16 ; i ++ )
+    {
+        int retVal = pcsr_gen_poly_matrix ( g_tbls, i*2, i ) ;
+        printf ( "For rank %d first power of RP is %d\n", i, retVal ) ;
+        dump_u8xu8 ( g_tbls, i*2, i ) ;
+    }
+    exit (0) ;
+#endif
     // Perform the baseline benchmark
-    gf_gen_poly_matrix (a, m, k);
+    pcsr_gen_poly_matrix (a, m, k);
+    printf ( "SRPoly matrix\n" ) ;
+    dump_u8xu8 ( a+k*k, m-k, k ) ;
     ec_init_tables (k, m - k, &a[ k * k ], g_tbls);
 
 #ifdef __aarch64__
@@ -776,7 +787,7 @@ main (int argc, char *argv[])
     perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
 
     // Test intrinsics lfsr
-    gf_gen_poly (a, p);
+    pcsr_gen_poly (a, p);
     ec_init_tables (p, 1, a, g_tbls);
 
 #ifdef __aarch64__
@@ -794,7 +805,7 @@ main (int argc, char *argv[])
                    pc_encode_data_avx2_gfni (TEST_LEN (m), k, p, g_tbls, buffs, temp_buffs));
     }
 #endif
-#ifdef NDEF
+//#ifdef NDEF
     for (i = 0; i < p; i++)
     {
         if (0 != memcmp (buffs[ k + i ], temp_buffs[ i ], TEST_LEN (m)))
@@ -805,13 +816,13 @@ main (int argc, char *argv[])
             goto exit;
         }
     }
-#endif
+//#endif
     printf ("polynomial_code_srt" TEST_TYPE_STR ": k=%d p=%d ", k, p);
     fprintf (file, "polynomial_code_pls" TEST_TYPE_STR ": k=%d p=%d ", k, p);
     perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
 
     // Test SR intrinsics lfsr
-    gf_gen_poly (a, p);
+    int sPow = pcsr_gen_poly (a, p);
     ec_init_tables (p, 1, a, g_tbls);
 
 #ifdef __aarch64__
@@ -844,7 +855,7 @@ main (int argc, char *argv[])
     perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
 
     // Test decoding with dot product
-    gf_gen_rsr_matrix (a, m + p, m);
+    pcsr_gen_rsr_matrix (a, m + p, m, sPow);
     ec_init_tables (p, m, &a[ m * m ], g_tbls);
 #ifdef __aarch64__
     BENCHMARK (&start, BENCHMARK_TIME,
@@ -877,6 +888,7 @@ main (int argc, char *argv[])
         }
     }
 
+    exit ( 0 ) ;
     // Now benchmark parallel syndrome sequencer - First create power vector
     i = 2;
     for (j = p - PC_GEN_x11d; j >= 0; j--)
