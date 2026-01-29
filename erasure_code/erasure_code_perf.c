@@ -818,7 +818,7 @@ main (int argc, char *argv[])
     }
 
     printf ("polynomial_code_srt" TEST_TYPE_STR ": k=%d p=%d ", k, p);
-    fprintf (file, "polynomial_code_pls" TEST_TYPE_STR ": k=%d p=%d ", k, p);
+    fprintf (file, "polynomial_code_srt" TEST_TYPE_STR ": k=%d p=%d ", k, p);
     perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
 
     // Test SR intrinsics lfsr
