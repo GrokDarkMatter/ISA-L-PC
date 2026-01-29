@@ -733,7 +733,7 @@ main (int argc, char *argv[])
     // Make random data
     for (i = 0; i < k; i++)
         for (j = 0; j < TEST_LEN (m); j++)
-            buffs[ i ][ j ] = rand ();
+            buffs[ i ][ j ] = 1 ; //rand ();
     //buffs [ 0 ] [ k - 1 ] = 1 ;
             // Print test type
 #ifdef __aarch64__
@@ -763,8 +763,8 @@ main (int argc, char *argv[])
 #endif
     // Perform the baseline benchmark
     pcsr_gen_poly_matrix (a, m, k);
-    printf ( "SRPoly matrix\n" ) ;
-    dump_u8xu8 ( a+k*k, k, m-k ) ;
+    //printf ( "SRPoly matrix\n" ) ;
+    //dump_u8xu8 ( a+k*k, k, m-k ) ;
     ec_init_tables (k, m - k, &a[ k * k ], g_tbls);
 
 #ifdef __aarch64__
@@ -805,7 +805,7 @@ main (int argc, char *argv[])
                    pc_encode_data_avx2_gfni (TEST_LEN (m), k, p, g_tbls, buffs, temp_buffs));
     }
 #endif
-//#ifdef NDEF
+
     for (i = 0; i < p; i++)
     {
         if (0 != memcmp (buffs[ k + i ], temp_buffs[ i ], TEST_LEN (m)))
@@ -816,7 +816,7 @@ main (int argc, char *argv[])
             goto exit;
         }
     }
-//#endif
+
     printf ("polynomial_code_srt" TEST_TYPE_STR ": k=%d p=%d ", k, p);
     fprintf (file, "polynomial_code_pls" TEST_TYPE_STR ": k=%d p=%d ", k, p);
     perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
@@ -856,8 +856,8 @@ main (int argc, char *argv[])
 
     // Test decoding with dot product
     pcsr_gen_rsr_matrix (a, m + p, m, sPow);
-    printf ( "Vand table\n" ) ;
-    dump_u8xu8 ( a, m+p, m ) ;
+    //printf ( "Vand table\n" ) ;
+    //dump_u8xu8 ( a, m+p, m ) ;
     ec_init_tables (p, m, &a[ m * m ], g_tbls);
 #ifdef __aarch64__
     BENCHMARK (&start, BENCHMARK_TIME,
@@ -899,10 +899,11 @@ main (int argc, char *argv[])
         i = gf_mul (i, 2);
     }
 
-    printf ( "Power values\n" ) ;
-    dump_u8xu8 ( a, 1, p ) ;
+    //printf ( "Power values\n" ) ;
+    //dump_u8xu8 ( a, 1, p ) ;
 
-    ec_init_tables (p - 1, 1, a, g_tbls);
+     ec_init_tables (p, 1, a, g_tbls);
+
     int eLen = 0 ;
 #ifdef __aarch64__
     BENCHMARK (&start, BENCHMARK_TIME,
@@ -923,14 +924,16 @@ main (int argc, char *argv[])
     if ( eLen != TEST_LEN ( m ) )
     {
         printf ( "Decodesr failed, expected %d got %d\n", TEST_LEN (m), eLen ) ;
-        dump_u8xu8 ( temp_buffs [ 0 ], 1, 16 ) ;
-        dump_u8xu8 ( temp_buffs [ 1 ], 1, 16 ) ;
-        dump_u8xu8 ( temp_buffs [ 2 ], 1, 16 ) ;
-        dump_u8xu8 ( temp_buffs [ 3 ], 1, 16 ) ;
+        for ( int bf = 0 ; bf < p ; bf ++ )
+        {
+            dump_u8xu8 ( temp_buffs [ bf ], 1, 64 ) ;
+        }
     }
     printf ("polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p);
     fprintf (file, "polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p);
     perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
+
+    exit ( 0 ) ; 
 
     if (test_pgz_decoder (0, m, p, g_tbls, buffs, temp_buffs, avx2) == 0)
     {

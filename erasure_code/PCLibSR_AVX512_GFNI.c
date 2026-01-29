@@ -78,10 +78,10 @@ pcsr_gen_poly (unsigned char *p, int rank )
     {
         first = 128 - start ;
     }
-    printf ( "Rank = %d, first = %d\n", rank, first ) ;
+    //printf ( "Rank = %d, first = %d\n", rank, first ) ;
     first = pcsr_pow_AVX512_GFNI (2, first);
     retVal = first ;
-    printf ("Poly power First = %d  ", first);
+    //printf ("Poly power First = %d  ", first);
     p[ 0 ] = first; // Start with (x+1)
     //alpha = 2;
     alpha = gf_mul (first, 2);
@@ -103,8 +103,8 @@ pcsr_gen_poly (unsigned char *p, int rank )
         alpha = gf_mul (alpha, 2);
     }
 
-    printf ("FinPoly: %d ", start);
-    dump_u8xu8 (p, 1, rank);
+    //printf ("FinPoly: %d ", start);
+    //dump_u8xu8 (p, 1, rank);
     return retVal ;
 }
 
@@ -197,7 +197,6 @@ int gf_2vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -205,9 +204,10 @@ int gf_2vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -252,7 +252,6 @@ int gf_3vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -261,9 +260,10 @@ int gf_3vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -313,7 +313,6 @@ int gf_4vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -323,9 +322,10 @@ int gf_4vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -380,7 +380,6 @@ int gf_5vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -391,9 +390,10 @@ int gf_5vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -453,7 +453,6 @@ int gf_6vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -465,9 +464,10 @@ int gf_6vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -532,7 +532,6 @@ int gf_7vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -545,9 +544,10 @@ int gf_7vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -617,7 +617,6 @@ int gf_8vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -631,9 +630,10 @@ int gf_8vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -708,7 +708,6 @@ int gf_9vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -723,9 +722,10 @@ int gf_9vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -805,7 +805,6 @@ int gf_10vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -821,9 +820,10 @@ int gf_10vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -908,7 +908,6 @@ int gf_11vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -925,9 +924,10 @@ int gf_11vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -1017,7 +1017,6 @@ int gf_12vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -1035,9 +1034,10 @@ int gf_12vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -1132,7 +1132,6 @@ int gf_13vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -1151,9 +1150,10 @@ int gf_13vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -1253,7 +1253,6 @@ int gf_14vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -1273,9 +1272,10 @@ int gf_14vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -1380,7 +1380,6 @@ int gf_15vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -1401,9 +1400,10 @@ int gf_15vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -1513,7 +1513,6 @@ int gf_16vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -1535,9 +1534,10 @@ int gf_16vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -1652,7 +1652,6 @@ int gf_17vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -1675,9 +1674,10 @@ int gf_17vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -1797,7 +1797,6 @@ int gf_18vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -1821,9 +1820,10 @@ int gf_18vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -1948,7 +1948,6 @@ int gf_19vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -1973,9 +1972,10 @@ int gf_19vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -2105,7 +2105,6 @@ int gf_20vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -2131,9 +2130,10 @@ int gf_20vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -2268,7 +2268,6 @@ int gf_21vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -2295,9 +2294,10 @@ int gf_21vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -2437,7 +2437,6 @@ int gf_22vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -2465,9 +2464,10 @@ int gf_22vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -2612,7 +2612,6 @@ int gf_23vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -2641,9 +2640,10 @@ int gf_23vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -2793,7 +2793,6 @@ int gf_24vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -2823,9 +2822,10 @@ int gf_24vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -2980,7 +2980,6 @@ int gf_25vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -3011,9 +3010,10 @@ int gf_25vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -3173,7 +3173,6 @@ int gf_26vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -3205,9 +3204,10 @@ int gf_26vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -3372,7 +3372,6 @@ int gf_27vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -3405,9 +3404,10 @@ int gf_27vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -3577,7 +3577,6 @@ int gf_28vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -3611,9 +3610,10 @@ int gf_28vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -3788,7 +3788,6 @@ int gf_29vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -3823,9 +3822,10 @@ int gf_29vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -4005,7 +4005,6 @@ int gf_30vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -4041,9 +4040,10 @@ int gf_30vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -4228,7 +4228,6 @@ int gf_31vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -4265,9 +4264,10 @@ int gf_31vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
@@ -4457,7 +4457,6 @@ int gf_32vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 data_vec = _mm512_load_si512( *dp + curPos ) ;
               __builtin_prefetch ( *dp + curPos + 64 , 0, 3 ) ;
                 // Move data vector pointer to next symbol
-                dp ++ ;
                 // Initialize parity values to Symbol 0
                 parity [ 0 ] = data_vec ;
                 parity [ 1 ] = data_vec ;
@@ -4495,9 +4494,10 @@ int gf_32vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
                 // Loop through all the 1..k symbols
                 for ( curSym = 1 ; curSym < k ; curSym ++ )
                 {
+                        dp ++ ;
                         // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
+                        data_vec = _mm512_load_si512( *dp + curPos ) ;
+                      __builtin_prefetch ( *dp + curPos + 64, 0, 3 ) ;
 
                         // Update parity values using power values and Parallel Multiplier
                         parity [ 0 ] = _mm512_gf2p8affine_epi64_epi8(parity [ 0 ], taps [ 0 ], 0) ;
