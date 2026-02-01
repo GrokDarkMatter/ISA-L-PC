@@ -4968,9 +4968,6 @@ int gf_2vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -5018,9 +5015,6 @@ int gf_3vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -5074,9 +5068,6 @@ int gf_4vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -5136,9 +5127,6 @@ int gf_5vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -5204,9 +5192,6 @@ int gf_6vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -5278,9 +5263,6 @@ int gf_7vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -5358,9 +5340,6 @@ int gf_8vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -5444,9 +5423,6 @@ int gf_9vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned cha
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -5536,9 +5512,6 @@ int gf_10vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -5634,9 +5607,6 @@ int gf_11vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -5738,9 +5708,6 @@ int gf_12vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -5848,9 +5815,6 @@ int gf_13vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -5964,9 +5928,6 @@ int gf_14vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -6086,9 +6047,6 @@ int gf_15vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -6214,9 +6172,6 @@ int gf_16vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -6348,9 +6303,6 @@ int gf_17vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -6488,9 +6440,6 @@ int gf_18vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -6634,9 +6583,6 @@ int gf_19vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -6786,9 +6732,6 @@ int gf_20vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -6944,9 +6887,6 @@ int gf_21vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -7108,9 +7048,6 @@ int gf_22vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -7278,9 +7215,6 @@ int gf_23vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -7454,9 +7388,6 @@ int gf_24vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -7636,9 +7567,6 @@ int gf_25vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -7824,9 +7752,6 @@ int gf_26vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -8018,9 +7943,6 @@ int gf_27vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -8218,9 +8140,6 @@ int gf_28vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -8424,9 +8343,6 @@ int gf_29vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -8636,9 +8552,6 @@ int gf_30vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -8854,9 +8767,6 @@ int gf_31vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
@@ -9078,9 +8988,6 @@ int gf_32vect_pls_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned ch
                         data_vec = _mm512_stream_load_si512( *sPnt + curPos ) ;
                       __builtin_prefetch ( *sPnt + curPos + 64, 0, 3 ) ;
                         sPnt ++ ;
-                        // Load next 64 bytes of Original Data
-                        data_vec = _mm512_load_si512( (__m512i *) &data [ curSym ] [ curPos ] ) ;
-                      __builtin_prefetch ( &data [ curSym ] [ curPos + 64 ], 0, 3 ) ;
                         // Add incoming data to MSB of parity, then update parities using Parallel Multiplier
                         data_vec = _mm512_xor_si512( data_vec, parity [ 0 ] ) ;
                         parity [ 0 ] = _mm512_xor_si512 ( parity [ 1 ],
