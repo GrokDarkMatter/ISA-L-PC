@@ -43,6 +43,45 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restrictions
 **********************************************************************/
 
+void pcsr_recon_1p ( unsigned char ** source, unsigned char ** dest, int len, int k, int e )
+{
+    unsigned char **curS ;
+    __m512i sum ;
+
+    for ( int curPos = 0 ; curPos < len ; curPos += 64 )
+    {
+        curS = source ;
+        curS ++ ;
+        sum = _mm512_stream_load_si512( *curS + curPos ) ;
+        for ( int curK = 1 ; curK < k ; curK ++ )
+        {
+            sum = _mm512_xor_si512 ( sum, *( __m512i *)curS ) ;
+            curS ++ ;
+        }
+        _mm512_stream_si512 ( (__m512i * ) ( *dest + curPos), sum ) ;
+    }
+}
+void pcsr_recon_1m ( unsigned char ** source, unsigned char ** dest, int len, int k, int e )
+{
+    unsigned char **curS ;
+    __m512i sum, affineval ;
+
+    affineval = _mm512_stream_load_si512 ( *source) ;
+
+    for ( int curPos = 0 ; curPos < len ; curPos += 64 )
+    {
+        curS = source ;
+        curS ++ ;
+        sum = _mm512_stream_load_si512( *curS + curPos ) ;
+        for ( int curK = 1 ; curK < k ; curK ++ )
+        {
+            sum = _mm512_gf2p8affine_epi64_epi8 (sum, affineval, 0 ) ;
+            sum = _mm512_xor_si512 ( sum, *( __m512i *)curS ) ;
+            curS ++ ;
+        }
+        _mm512_stream_si512 ( (__m512i * ) ( *dest + curPos), sum ) ;
+    }
+}
 // Code generation functions
 // Compute base ^ Power
 int

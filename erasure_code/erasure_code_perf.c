@@ -933,6 +933,58 @@ main (int argc, char *argv[])
     fprintf (file, "polynomial_code_pss" TEST_TYPE_STR ": k=%d p=%d ", m, p);
     perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
 
+    // Now benchmark single reconstruct
+
+    // Use 2 for test - fill this in later with right value for reconstruction
+    *a = 2 ;
+    ec_init_tables (p, 1, a, g_tbls);
+
+#ifdef __aarch64__
+    BENCHMARK (&start, BENCHMARK_TIME,
+               pc_decode_data_neon (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs, 1));
+#else
+    if (avx2 == 0)
+    {
+        BENCHMARK (&start, BENCHMARK_TIME,
+                   pcsr_recon_1p ( buffs, temp_buffs, TEST_LEN(m), m, 1 ) ) ;
+    }
+    else
+    {
+        BENCHMARK (&start, BENCHMARK_TIME,
+                   pc_decode_data_avx2_gfni (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs, 1));
+    }
+#endif
+
+    printf ("polynomial_code_rp1" TEST_TYPE_STR ": k=%d p=%d ", m, p);
+    fprintf (file, "polynomial_code_rp1" TEST_TYPE_STR ": k=%d p=%d ", m, p);
+    perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
+
+    // Now benchmark single reconstruct
+#//ifdef NDEF
+    // Use 2 for test - fill this in later with right value for reconstruction
+    *a = 2 ;
+    ec_init_tables (p, 1, a, g_tbls);
+
+#ifdef __aarch64__
+    BENCHMARK (&start, BENCHMARK_TIME,
+               pc_decode_data_neon (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs, 1));
+#else
+    if (avx2 == 0)
+    {
+        BENCHMARK (&start, BENCHMARK_TIME,
+                   pcsr_recon_1m ( buffs, temp_buffs, TEST_LEN(m), m, 1 ) ) ;
+    }
+    else
+    {
+        BENCHMARK (&start, BENCHMARK_TIME,
+                   pc_decode_data_avx2_gfni (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs, 1));
+    }
+#endif
+
+    printf ("polynomial_code_rm1" TEST_TYPE_STR ": k=%d p=%d ", m, p);
+    fprintf (file, "polynomial_code_rm1" TEST_TYPE_STR ": k=%d p=%d ", m, p);
+    perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
+//#endif
     exit ( 0 ) ; 
 
     if (test_pgz_decoder (0, m, p, g_tbls, buffs, temp_buffs, avx2) == 0)
