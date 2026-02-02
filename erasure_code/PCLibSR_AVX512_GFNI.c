@@ -216,7 +216,7 @@ pcsr_gen_rsr_matrix (unsigned char *a, int m, int k, int first)
 }
 
 // Parallel Syndrome Sequencer SR for P = 2 Codewords
-int gf_2vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_2vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -225,8 +225,8 @@ int gf_2vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -270,7 +270,7 @@ int gf_2vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
 }
 
 // Parallel Syndrome Sequencer SR for P = 3 Codewords
-int gf_3vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_3vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -279,9 +279,9 @@ int gf_3vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -330,7 +330,7 @@ int gf_3vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
 }
 
 // Parallel Syndrome Sequencer SR for P = 4 Codewords
-int gf_4vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_4vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -339,10 +339,10 @@ int gf_4vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -396,7 +396,7 @@ int gf_4vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
 }
 
 // Parallel Syndrome Sequencer SR for P = 5 Codewords
-int gf_5vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_5vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -405,11 +405,11 @@ int gf_5vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -468,7 +468,7 @@ int gf_5vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
 }
 
 // Parallel Syndrome Sequencer SR for P = 6 Codewords
-int gf_6vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_6vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -477,12 +477,12 @@ int gf_6vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -546,7 +546,7 @@ int gf_6vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
 }
 
 // Parallel Syndrome Sequencer SR for P = 7 Codewords
-int gf_7vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_7vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -555,13 +555,13 @@ int gf_7vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -630,7 +630,7 @@ int gf_7vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
 }
 
 // Parallel Syndrome Sequencer SR for P = 8 Codewords
-int gf_8vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_8vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -639,14 +639,14 @@ int gf_8vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -720,7 +720,7 @@ int gf_8vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
 }
 
 // Parallel Syndrome Sequencer SR for P = 9 Codewords
-int gf_9vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_9vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -729,15 +729,15 @@ int gf_9vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -816,7 +816,7 @@ int gf_9vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
 }
 
 // Parallel Syndrome Sequencer SR for P = 10 Codewords
-int gf_10vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_10vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -825,16 +825,16 @@ int gf_10vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -918,7 +918,7 @@ int gf_10vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel Syndrome Sequencer SR for P = 11 Codewords
-int gf_11vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_11vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -927,17 +927,17 @@ int gf_11vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -1026,7 +1026,7 @@ int gf_11vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel Syndrome Sequencer SR for P = 12 Codewords
-int gf_12vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_12vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -1035,18 +1035,18 @@ int gf_12vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -1140,7 +1140,7 @@ int gf_12vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel Syndrome Sequencer SR for P = 13 Codewords
-int gf_13vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_13vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -1149,19 +1149,19 @@ int gf_13vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -1260,7 +1260,7 @@ int gf_13vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel Syndrome Sequencer SR for P = 14 Codewords
-int gf_14vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_14vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -1269,20 +1269,20 @@ int gf_14vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -1386,7 +1386,7 @@ int gf_14vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel Syndrome Sequencer SR for P = 15 Codewords
-int gf_15vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_15vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -1395,21 +1395,21 @@ int gf_15vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
+        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 14 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -1518,7 +1518,7 @@ int gf_15vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel Syndrome Sequencer SR for P = 16 Codewords
-int gf_16vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_16vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -1527,22 +1527,22 @@ int gf_16vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
+        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 14 * 8 ) ) );
+        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 15 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -1656,7 +1656,7 @@ int gf_16vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel Syndrome Sequencer SR for P = 17 Codewords
-int gf_17vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_17vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -1665,23 +1665,23 @@ int gf_17vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
+        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 14 * 8 ) ) );
+        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 15 * 8 ) ) );
+        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 16 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -1800,7 +1800,7 @@ int gf_17vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel Syndrome Sequencer SR for P = 18 Codewords
-int gf_18vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_18vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -1809,24 +1809,24 @@ int gf_18vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
+        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 14 * 8 ) ) );
+        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 15 * 8 ) ) );
+        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 16 * 8 ) ) );
+        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 17 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -1950,7 +1950,7 @@ int gf_18vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel Syndrome Sequencer SR for P = 19 Codewords
-int gf_19vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_19vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -1959,25 +1959,25 @@ int gf_19vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
+        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 14 * 8 ) ) );
+        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 15 * 8 ) ) );
+        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 16 * 8 ) ) );
+        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 17 * 8 ) ) );
+        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 18 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -2106,7 +2106,7 @@ int gf_19vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel Syndrome Sequencer SR for P = 20 Codewords
-int gf_20vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_20vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -2115,26 +2115,26 @@ int gf_20vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
+        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 14 * 8 ) ) );
+        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 15 * 8 ) ) );
+        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 16 * 8 ) ) );
+        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 17 * 8 ) ) );
+        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 18 * 8 ) ) );
+        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 19 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -2268,7 +2268,7 @@ int gf_20vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel Syndrome Sequencer SR for P = 21 Codewords
-int gf_21vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_21vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -2277,27 +2277,27 @@ int gf_21vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
+        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 14 * 8 ) ) );
+        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 15 * 8 ) ) );
+        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 16 * 8 ) ) );
+        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 17 * 8 ) ) );
+        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 18 * 8 ) ) );
+        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 19 * 8 ) ) );
+        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 20 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -2436,7 +2436,7 @@ int gf_21vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel Syndrome Sequencer SR for P = 22 Codewords
-int gf_22vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_22vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -2445,28 +2445,28 @@ int gf_22vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
+        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 14 * 8 ) ) );
+        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 15 * 8 ) ) );
+        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 16 * 8 ) ) );
+        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 17 * 8 ) ) );
+        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 18 * 8 ) ) );
+        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 19 * 8 ) ) );
+        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 20 * 8 ) ) );
+        taps [ 21 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 21 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -2610,7 +2610,7 @@ int gf_22vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel Syndrome Sequencer SR for P = 23 Codewords
-int gf_23vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_23vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -2619,29 +2619,29 @@ int gf_23vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
+        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 14 * 8 ) ) );
+        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 15 * 8 ) ) );
+        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 16 * 8 ) ) );
+        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 17 * 8 ) ) );
+        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 18 * 8 ) ) );
+        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 19 * 8 ) ) );
+        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 20 * 8 ) ) );
+        taps [ 21 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 21 * 8 ) ) );
+        taps [ 22 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 22 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -2790,7 +2790,7 @@ int gf_23vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel Syndrome Sequencer SR for P = 24 Codewords
-int gf_24vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_24vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -2799,30 +2799,30 @@ int gf_24vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
+        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 14 * 8 ) ) );
+        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 15 * 8 ) ) );
+        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 16 * 8 ) ) );
+        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 17 * 8 ) ) );
+        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 18 * 8 ) ) );
+        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 19 * 8 ) ) );
+        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 20 * 8 ) ) );
+        taps [ 21 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 21 * 8 ) ) );
+        taps [ 22 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 22 * 8 ) ) );
+        taps [ 23 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 23 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -2976,7 +2976,7 @@ int gf_24vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel Syndrome Sequencer SR for P = 25 Codewords
-int gf_25vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_25vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -2985,31 +2985,31 @@ int gf_25vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
+        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 14 * 8 ) ) );
+        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 15 * 8 ) ) );
+        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 16 * 8 ) ) );
+        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 17 * 8 ) ) );
+        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 18 * 8 ) ) );
+        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 19 * 8 ) ) );
+        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 20 * 8 ) ) );
+        taps [ 21 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 21 * 8 ) ) );
+        taps [ 22 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 22 * 8 ) ) );
+        taps [ 23 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 23 * 8 ) ) );
+        taps [ 24 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 24 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -3168,7 +3168,7 @@ int gf_25vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel Syndrome Sequencer SR for P = 26 Codewords
-int gf_26vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_26vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -3177,32 +3177,32 @@ int gf_26vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
-        taps [ 25 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 25 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
+        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 14 * 8 ) ) );
+        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 15 * 8 ) ) );
+        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 16 * 8 ) ) );
+        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 17 * 8 ) ) );
+        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 18 * 8 ) ) );
+        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 19 * 8 ) ) );
+        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 20 * 8 ) ) );
+        taps [ 21 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 21 * 8 ) ) );
+        taps [ 22 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 22 * 8 ) ) );
+        taps [ 23 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 23 * 8 ) ) );
+        taps [ 24 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 24 * 8 ) ) );
+        taps [ 25 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 25 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -3366,7 +3366,7 @@ int gf_26vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel Syndrome Sequencer SR for P = 27 Codewords
-int gf_27vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_27vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -3375,33 +3375,33 @@ int gf_27vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
-        taps [ 25 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 25 * 8 ) ) );
-        taps [ 26 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 26 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
+        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 14 * 8 ) ) );
+        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 15 * 8 ) ) );
+        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 16 * 8 ) ) );
+        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 17 * 8 ) ) );
+        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 18 * 8 ) ) );
+        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 19 * 8 ) ) );
+        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 20 * 8 ) ) );
+        taps [ 21 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 21 * 8 ) ) );
+        taps [ 22 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 22 * 8 ) ) );
+        taps [ 23 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 23 * 8 ) ) );
+        taps [ 24 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 24 * 8 ) ) );
+        taps [ 25 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 25 * 8 ) ) );
+        taps [ 26 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 26 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -3570,7 +3570,7 @@ int gf_27vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel Syndrome Sequencer SR for P = 28 Codewords
-int gf_28vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_28vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -3579,34 +3579,34 @@ int gf_28vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
-        taps [ 25 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 25 * 8 ) ) );
-        taps [ 26 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 26 * 8 ) ) );
-        taps [ 27 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 27 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
+        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 14 * 8 ) ) );
+        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 15 * 8 ) ) );
+        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 16 * 8 ) ) );
+        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 17 * 8 ) ) );
+        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 18 * 8 ) ) );
+        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 19 * 8 ) ) );
+        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 20 * 8 ) ) );
+        taps [ 21 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 21 * 8 ) ) );
+        taps [ 22 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 22 * 8 ) ) );
+        taps [ 23 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 23 * 8 ) ) );
+        taps [ 24 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 24 * 8 ) ) );
+        taps [ 25 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 25 * 8 ) ) );
+        taps [ 26 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 26 * 8 ) ) );
+        taps [ 27 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 27 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -3780,7 +3780,7 @@ int gf_28vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel Syndrome Sequencer SR for P = 29 Codewords
-int gf_29vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_29vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -3789,35 +3789,35 @@ int gf_29vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
-        taps [ 25 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 25 * 8 ) ) );
-        taps [ 26 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 26 * 8 ) ) );
-        taps [ 27 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 27 * 8 ) ) );
-        taps [ 28 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 28 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
+        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 14 * 8 ) ) );
+        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 15 * 8 ) ) );
+        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 16 * 8 ) ) );
+        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 17 * 8 ) ) );
+        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 18 * 8 ) ) );
+        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 19 * 8 ) ) );
+        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 20 * 8 ) ) );
+        taps [ 21 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 21 * 8 ) ) );
+        taps [ 22 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 22 * 8 ) ) );
+        taps [ 23 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 23 * 8 ) ) );
+        taps [ 24 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 24 * 8 ) ) );
+        taps [ 25 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 25 * 8 ) ) );
+        taps [ 26 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 26 * 8 ) ) );
+        taps [ 27 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 27 * 8 ) ) );
+        taps [ 28 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 28 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -3996,7 +3996,7 @@ int gf_29vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel Syndrome Sequencer SR for P = 30 Codewords
-int gf_30vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_30vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -4005,36 +4005,36 @@ int gf_30vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
-        taps [ 25 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 25 * 8 ) ) );
-        taps [ 26 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 26 * 8 ) ) );
-        taps [ 27 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 27 * 8 ) ) );
-        taps [ 28 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 28 * 8 ) ) );
-        taps [ 29 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 29 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
+        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 14 * 8 ) ) );
+        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 15 * 8 ) ) );
+        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 16 * 8 ) ) );
+        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 17 * 8 ) ) );
+        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 18 * 8 ) ) );
+        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 19 * 8 ) ) );
+        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 20 * 8 ) ) );
+        taps [ 21 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 21 * 8 ) ) );
+        taps [ 22 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 22 * 8 ) ) );
+        taps [ 23 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 23 * 8 ) ) );
+        taps [ 24 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 24 * 8 ) ) );
+        taps [ 25 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 25 * 8 ) ) );
+        taps [ 26 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 26 * 8 ) ) );
+        taps [ 27 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 27 * 8 ) ) );
+        taps [ 28 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 28 * 8 ) ) );
+        taps [ 29 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 29 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -4218,7 +4218,7 @@ int gf_30vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel Syndrome Sequencer SR for P = 31 Codewords
-int gf_31vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_31vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -4227,37 +4227,37 @@ int gf_31vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
-        taps [ 25 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 25 * 8 ) ) );
-        taps [ 26 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 26 * 8 ) ) );
-        taps [ 27 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 27 * 8 ) ) );
-        taps [ 28 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 28 * 8 ) ) );
-        taps [ 29 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 29 * 8 ) ) );
-        taps [ 30 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 30 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
+        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 14 * 8 ) ) );
+        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 15 * 8 ) ) );
+        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 16 * 8 ) ) );
+        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 17 * 8 ) ) );
+        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 18 * 8 ) ) );
+        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 19 * 8 ) ) );
+        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 20 * 8 ) ) );
+        taps [ 21 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 21 * 8 ) ) );
+        taps [ 22 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 22 * 8 ) ) );
+        taps [ 23 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 23 * 8 ) ) );
+        taps [ 24 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 24 * 8 ) ) );
+        taps [ 25 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 25 * 8 ) ) );
+        taps [ 26 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 26 * 8 ) ) );
+        taps [ 27 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 27 * 8 ) ) );
+        taps [ 28 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 28 * 8 ) ) );
+        taps [ 29 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 29 * 8 ) ) );
+        taps [ 30 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 30 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -4446,7 +4446,7 @@ int gf_31vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel Syndrome Sequencer SR for P = 32 Codewords
-int gf_32vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_32vect_pss_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest, int offSet)
 {
         int curSym, curPos ;                          // Loop counters
@@ -4455,38 +4455,38 @@ int gf_32vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         __m512i data_vec ;
         unsigned char ** dp ;
         // Initialize the taps to the passed in power values to create parallel multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
-        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 16 * 8 ) ) );
-        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 17 * 8 ) ) );
-        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 18 * 8 ) ) );
-        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 19 * 8 ) ) );
-        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 20 * 8 ) ) );
-        taps [ 21 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 21 * 8 ) ) );
-        taps [ 22 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 22 * 8 ) ) );
-        taps [ 23 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 23 * 8 ) ) );
-        taps [ 24 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 24 * 8 ) ) );
-        taps [ 25 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 25 * 8 ) ) );
-        taps [ 26 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 26 * 8 ) ) );
-        taps [ 27 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 27 * 8 ) ) );
-        taps [ 28 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 28 * 8 ) ) );
-        taps [ 29 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 29 * 8 ) ) );
-        taps [ 30 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 30 * 8 ) ) );
-        taps [ 31 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 31 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
+        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 14 * 8 ) ) );
+        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 15 * 8 ) ) );
+        taps [ 16 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 16 * 8 ) ) );
+        taps [ 17 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 17 * 8 ) ) );
+        taps [ 18 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 18 * 8 ) ) );
+        taps [ 19 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 19 * 8 ) ) );
+        taps [ 20 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 20 * 8 ) ) );
+        taps [ 21 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 21 * 8 ) ) );
+        taps [ 22 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 22 * 8 ) ) );
+        taps [ 23 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 23 * 8 ) ) );
+        taps [ 24 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 24 * 8 ) ) );
+        taps [ 25 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 25 * 8 ) ) );
+        taps [ 26 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 26 * 8 ) ) );
+        taps [ 27 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 27 * 8 ) ) );
+        taps [ 28 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 28 * 8 ) ) );
+        taps [ 29 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 29 * 8 ) ) );
+        taps [ 30 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 30 * 8 ) ) );
+        taps [ 31 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 31 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = offSet ; curPos < len ; curPos += 64 )
@@ -4681,7 +4681,7 @@ int gf_32vect_pss_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 
 
 // Parallel LFSR_SR Sequencer for P = 2 Codewords
-int gf_2vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_2vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -4693,7 +4693,7 @@ int gf_2vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         pPnt [ 1 ] = dest [ 1 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -4724,7 +4724,7 @@ int gf_2vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
 }
 
 // Parallel LFSR_SR Sequencer for P = 3 Codewords
-int gf_3vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_3vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -4737,7 +4737,7 @@ int gf_3vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         pPnt [ 2 ] = dest [ 2 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -4771,7 +4771,7 @@ int gf_3vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
 }
 
 // Parallel LFSR_SR Sequencer for P = 4 Codewords
-int gf_4vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_4vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -4785,8 +4785,8 @@ int gf_4vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         pPnt [ 3 ] = dest [ 3 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -4824,7 +4824,7 @@ int gf_4vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
 }
 
 // Parallel LFSR_SR Sequencer for P = 5 Codewords
-int gf_5vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_5vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -4839,8 +4839,8 @@ int gf_5vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         pPnt [ 4 ] = dest [ 4 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -4881,7 +4881,7 @@ int gf_5vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
 }
 
 // Parallel LFSR_SR Sequencer for P = 6 Codewords
-int gf_6vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_6vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -4897,9 +4897,9 @@ int gf_6vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         pPnt [ 5 ] = dest [ 5 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -4944,7 +4944,7 @@ int gf_6vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
 }
 
 // Parallel LFSR_SR Sequencer for P = 7 Codewords
-int gf_7vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_7vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -4961,9 +4961,9 @@ int gf_7vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         pPnt [ 6 ] = dest [ 6 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -5011,7 +5011,7 @@ int gf_7vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
 }
 
 // Parallel LFSR_SR Sequencer for P = 8 Codewords
-int gf_8vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_8vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -5029,10 +5029,10 @@ int gf_8vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         pPnt [ 7 ] = dest [ 7 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -5084,7 +5084,7 @@ int gf_8vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
 }
 
 // Parallel LFSR_SR Sequencer for P = 9 Codewords
-int gf_9vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_9vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -5103,10 +5103,10 @@ int gf_9vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
         pPnt [ 8 ] = dest [ 8 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -5161,7 +5161,7 @@ int gf_9vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned 
 }
 
 // Parallel LFSR_SR Sequencer for P = 10 Codewords
-int gf_10vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_10vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -5181,11 +5181,11 @@ int gf_10vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 9 ] = dest [ 9 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -5244,7 +5244,7 @@ int gf_10vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel LFSR_SR Sequencer for P = 11 Codewords
-int gf_11vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_11vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -5265,11 +5265,11 @@ int gf_11vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 10 ] = dest [ 10 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -5331,7 +5331,7 @@ int gf_11vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel LFSR_SR Sequencer for P = 12 Codewords
-int gf_12vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_12vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -5353,12 +5353,12 @@ int gf_12vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 11 ] = dest [ 11 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -5424,7 +5424,7 @@ int gf_12vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel LFSR_SR Sequencer for P = 13 Codewords
-int gf_13vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_13vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -5447,12 +5447,12 @@ int gf_13vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 12 ] = dest [ 12 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -5521,7 +5521,7 @@ int gf_13vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel LFSR_SR Sequencer for P = 14 Codewords
-int gf_14vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_14vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -5545,13 +5545,13 @@ int gf_14vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 13 ] = dest [ 13 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -5624,7 +5624,7 @@ int gf_14vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel LFSR_SR Sequencer for P = 15 Codewords
-int gf_15vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_15vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -5649,13 +5649,13 @@ int gf_15vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 14 ] = dest [ 14 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -5731,7 +5731,7 @@ int gf_15vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel LFSR_SR Sequencer for P = 16 Codewords
-int gf_16vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_16vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -5757,14 +5757,14 @@ int gf_16vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 15 ] = dest [ 15 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -5844,7 +5844,7 @@ int gf_16vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel LFSR_SR Sequencer for P = 17 Codewords
-int gf_17vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_17vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -5871,14 +5871,14 @@ int gf_17vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 16 ] = dest [ 16 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -5961,7 +5961,7 @@ int gf_17vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel LFSR_SR Sequencer for P = 18 Codewords
-int gf_18vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_18vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -5989,15 +5989,15 @@ int gf_18vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 17 ] = dest [ 17 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -6084,7 +6084,7 @@ int gf_18vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel LFSR_SR Sequencer for P = 19 Codewords
-int gf_19vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_19vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -6113,15 +6113,15 @@ int gf_19vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 18 ] = dest [ 18 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -6211,7 +6211,7 @@ int gf_19vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel LFSR_SR Sequencer for P = 20 Codewords
-int gf_20vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_20vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -6241,16 +6241,16 @@ int gf_20vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 19 ] = dest [ 19 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -6344,7 +6344,7 @@ int gf_20vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel LFSR_SR Sequencer for P = 21 Codewords
-int gf_21vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_21vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -6375,16 +6375,16 @@ int gf_21vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 20 ] = dest [ 20 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -6481,7 +6481,7 @@ int gf_21vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel LFSR_SR Sequencer for P = 22 Codewords
-int gf_22vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_22vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -6513,17 +6513,17 @@ int gf_22vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 21 ] = dest [ 21 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -6624,7 +6624,7 @@ int gf_22vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel LFSR_SR Sequencer for P = 23 Codewords
-int gf_23vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_23vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -6657,17 +6657,17 @@ int gf_23vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 22 ] = dest [ 22 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -6771,7 +6771,7 @@ int gf_23vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel LFSR_SR Sequencer for P = 24 Codewords
-int gf_24vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_24vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -6805,18 +6805,18 @@ int gf_24vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 23 ] = dest [ 23 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -6924,7 +6924,7 @@ int gf_24vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel LFSR_SR Sequencer for P = 25 Codewords
-int gf_25vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_25vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -6959,18 +6959,18 @@ int gf_25vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 24 ] = dest [ 24 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -7081,7 +7081,7 @@ int gf_25vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel LFSR_SR Sequencer for P = 26 Codewords
-int gf_26vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_26vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -7117,19 +7117,19 @@ int gf_26vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 25 ] = dest [ 25 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -7244,7 +7244,7 @@ int gf_26vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel LFSR_SR Sequencer for P = 27 Codewords
-int gf_27vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_27vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -7281,19 +7281,19 @@ int gf_27vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 26 ] = dest [ 26 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -7411,7 +7411,7 @@ int gf_27vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel LFSR_SR Sequencer for P = 28 Codewords
-int gf_28vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_28vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -7449,20 +7449,20 @@ int gf_28vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 27 ] = dest [ 27 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -7584,7 +7584,7 @@ int gf_28vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel LFSR_SR Sequencer for P = 29 Codewords
-int gf_29vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_29vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -7623,20 +7623,20 @@ int gf_29vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 28 ] = dest [ 28 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -7761,7 +7761,7 @@ int gf_29vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel LFSR_SR Sequencer for P = 30 Codewords
-int gf_30vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_30vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -7801,21 +7801,21 @@ int gf_30vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 29 ] = dest [ 29 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
+        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 14 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -7944,7 +7944,7 @@ int gf_30vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel LFSR_SR Sequencer for P = 31 Codewords
-int gf_31vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_31vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -7985,21 +7985,21 @@ int gf_31vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 30 ] = dest [ 30 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
+        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 14 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -8131,7 +8131,7 @@ int gf_31vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Parallel LFSR_SR Sequencer for P = 32 Codewords
-int gf_32vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned char **data,
+int pcsr_32vect_pls_avx512_gfni(int len, int k, unsigned char *afftab, unsigned char **data,
         unsigned char ** dest)
 {
         int curSym, curPos ;                        // Loop counters
@@ -8173,22 +8173,22 @@ int gf_32vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
         pPnt [ 31 ] = dest [ 31 ] ;
 
         // Initialize the taps to the passed in Generator Polynomial values to create Parallel Multiplier
-        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 0 * 8 ) ) );
-        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 1 * 8 ) ) );
-        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 2 * 8 ) ) );
-        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 3 * 8 ) ) );
-        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 4 * 8 ) ) );
-        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 5 * 8 ) ) );
-        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 6 * 8 ) ) );
-        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 7 * 8 ) ) );
-        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 8 * 8 ) ) );
-        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 9 * 8 ) ) );
-        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 10 * 8 ) ) );
-        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 11 * 8 ) ) );
-        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 12 * 8 ) ) );
-        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 13 * 8 ) ) );
-        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 14 * 8 ) ) );
-        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( g_tbls + ( 15 * 8 ) ) );
+        taps [ 0 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 0 * 8 ) ) );
+        taps [ 1 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 1 * 8 ) ) );
+        taps [ 2 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 2 * 8 ) ) );
+        taps [ 3 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 3 * 8 ) ) );
+        taps [ 4 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 4 * 8 ) ) );
+        taps [ 5 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 5 * 8 ) ) );
+        taps [ 6 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 6 * 8 ) ) );
+        taps [ 7 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 7 * 8 ) ) );
+        taps [ 8 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 8 * 8 ) ) );
+        taps [ 9 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 9 * 8 ) ) );
+        taps [ 10 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 10 * 8 ) ) );
+        taps [ 11 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 11 * 8 ) ) );
+        taps [ 12 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 12 * 8 ) ) );
+        taps [ 13 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 13 * 8 ) ) );
+        taps [ 14 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 14 * 8 ) ) );
+        taps [ 15 ] = _mm512_broadcast_i32x2(*( __m128i * ) ( afftab + ( 15 * 8 ) ) );
 
         // Loop through each 64 byte codeword
         for ( curPos = 0 ; curPos < len ; curPos += 64 )
@@ -8324,76 +8324,76 @@ int gf_32vect_pls_sr_avx512_gfni(int len, int k, unsigned char *g_tbls, unsigned
 }
 
 // Single function to access each unrolled Encode
-void pc_encode_data_sr_avx512_gfni(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
+void pcsr_encode_data_avx512_gfni(int len, int k, int rows, unsigned char *afftab, unsigned char **data,
         unsigned char **coding)
 {
         switch (rows) {
-        case 2: gf_2vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 2: pcsr_2vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 3: gf_3vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 3: pcsr_3vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 4: gf_4vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 4: pcsr_4vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 5: gf_5vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 5: pcsr_5vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 6: gf_6vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 6: pcsr_6vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 7: gf_7vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 7: pcsr_7vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 8: gf_8vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 8: pcsr_8vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 9: gf_9vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 9: pcsr_9vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 10: gf_10vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 10: pcsr_10vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 11: gf_11vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 11: pcsr_11vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 12: gf_12vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 12: pcsr_12vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 13: gf_13vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 13: pcsr_13vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 14: gf_14vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 14: pcsr_14vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 15: gf_15vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 15: pcsr_15vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 16: gf_16vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 16: pcsr_16vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 17: gf_17vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 17: pcsr_17vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 18: gf_18vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 18: pcsr_18vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 19: gf_19vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 19: pcsr_19vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 20: gf_20vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 20: pcsr_20vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 21: gf_21vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 21: pcsr_21vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 22: gf_22vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 22: pcsr_22vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 23: gf_23vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 23: pcsr_23vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 24: gf_24vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 24: pcsr_24vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 25: gf_25vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 25: pcsr_25vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 26: gf_26vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 26: pcsr_26vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 27: gf_27vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 27: pcsr_27vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 28: gf_28vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 28: pcsr_28vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 29: gf_29vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 29: pcsr_29vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 30: gf_30vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 30: pcsr_30vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 31: gf_31vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 31: pcsr_31vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
-        case 32: gf_32vect_pls_sr_avx512_gfni(len, k, g_tbls, data, coding);
+        case 32: pcsr_32vect_pls_avx512_gfni(len, k, afftab, data, coding);
                  break ;
         }
 }
 // Single function to access each unrolled Decode
-int pc_decode_data_sr_avx512_gfni(int len, int k, int rows, unsigned char *g_tbls, unsigned char **data,
+int pcsr_decode_data_avx512_gfni(int len, int k, int rows, unsigned char *afftab, unsigned char **data,
         unsigned char **coding, int retries)
 {
         int newPos = 0, retry = 0 ;
@@ -8401,67 +8401,67 @@ int pc_decode_data_sr_avx512_gfni(int len, int k, int rows, unsigned char *g_tbl
         {
 
                 switch (rows) {
-                case 2: newPos = gf_2vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 2: newPos = pcsr_2vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 3: newPos = gf_3vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 3: newPos = pcsr_3vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 4: newPos = gf_4vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 4: newPos = pcsr_4vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 5: newPos = gf_5vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 5: newPos = pcsr_5vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 6: newPos = gf_6vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 6: newPos = pcsr_6vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 7: newPos = gf_7vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 7: newPos = pcsr_7vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 8: newPos = gf_8vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 8: newPos = pcsr_8vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 9: newPos = gf_9vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 9: newPos = pcsr_9vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 10: newPos = gf_10vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 10: newPos = pcsr_10vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 11: newPos = gf_11vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 11: newPos = pcsr_11vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 12: newPos = gf_12vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 12: newPos = pcsr_12vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 13: newPos = gf_13vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 13: newPos = pcsr_13vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 14: newPos = gf_14vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 14: newPos = pcsr_14vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 15: newPos = gf_15vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 15: newPos = pcsr_15vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 16: newPos = gf_16vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 16: newPos = pcsr_16vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 17: newPos = gf_17vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 17: newPos = pcsr_17vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 18: newPos = gf_18vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 18: newPos = pcsr_18vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 19: newPos = gf_19vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 19: newPos = pcsr_19vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 20: newPos = gf_20vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 20: newPos = pcsr_20vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 21: newPos = gf_21vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 21: newPos = pcsr_21vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 22: newPos = gf_22vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 22: newPos = pcsr_22vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 23: newPos = gf_23vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 23: newPos = pcsr_23vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 24: newPos = gf_24vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 24: newPos = pcsr_24vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 25: newPos = gf_25vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 25: newPos = pcsr_25vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 26: newPos = gf_26vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 26: newPos = pcsr_26vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 27: newPos = gf_27vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 27: newPos = pcsr_27vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 28: newPos = gf_28vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 28: newPos = pcsr_28vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 29: newPos = gf_29vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 29: newPos = pcsr_29vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 30: newPos = gf_30vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 30: newPos = pcsr_30vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 31: newPos = gf_31vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 31: newPos = pcsr_31vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
-                case 32: newPos = gf_32vect_pss_sr_avx512_gfni(len, k, g_tbls, data, coding, newPos);
+                case 32: newPos = pcsr_32vect_pss_avx512_gfni(len, k, afftab, data, coding, newPos);
                          break ;
                 }
                 if ( newPos < len )

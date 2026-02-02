@@ -526,7 +526,7 @@ test_pgz_decoder (int index, int m, int p, unsigned char *g_tbls, unsigned char 
 #else
             if (avx2 == 0)
             {
-                pc_decode_data_avx512_gfni (TEST_LEN (m), m, p, g_tbls, data, coding, 1);
+                pcsr_decode_data_avx512_gfni (TEST_LEN (m), m, p, g_tbls, data, coding, 1);
             }
             else
             {
@@ -568,7 +568,7 @@ test_pgz_decoder (int index, int m, int p, unsigned char *g_tbls, unsigned char 
 #else
             if (avx2 == 0)
             {
-                pc_decode_data_avx512_gfni (TEST_LEN (m), m, p, g_tbls, data, coding, 1);
+                pcsr_decode_data_avx512_gfni (TEST_LEN (m), m, p, g_tbls, data, coding, 1);
             }
             else
             {
@@ -797,7 +797,7 @@ main (int argc, char *argv[])
     if (avx2 == 0)
     {
         BENCHMARK (&start, BENCHMARK_TIME,
-                   pc_encode_data_sr_avx512_gfni (TEST_LEN (m), k, p, g_tbls, buffs, temp_buffs));
+                   pcsr_encode_data_avx512_gfni (TEST_LEN (m), k, p, g_tbls, buffs, temp_buffs));
     }
     else
     {
@@ -912,7 +912,7 @@ main (int argc, char *argv[])
     if (avx2 == 0)
     {
         BENCHMARK (&start, BENCHMARK_TIME,
-                   eLen=pc_decode_data_sr_avx512_gfni (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs, 1));
+                   eLen=pcsr_decode_data_avx512_gfni (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs, 1));
     }
     else
     {
@@ -984,8 +984,7 @@ main (int argc, char *argv[])
     printf ("polynomial_code_rm1" TEST_TYPE_STR ": k=%d p=%d ", m, p);
     fprintf (file, "polynomial_code_rm1" TEST_TYPE_STR ": k=%d p=%d ", m, p);
     perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
-//#endif
-    exit ( 0 ) ; 
+#ifdef NDEF
 
     if (test_pgz_decoder (0, m, p, g_tbls, buffs, temp_buffs, avx2) == 0)
     {
@@ -993,6 +992,7 @@ main (int argc, char *argv[])
         fprintf (file, "Decoder failed\n");
         goto exit;
     }
+#endif
 #ifndef NOPAPI
     int event_set = InitPAPI (); // PAPI_NULL, event_code ;
     if ((ret = PAPI_start (event_set)) != PAPI_OK)
@@ -1030,7 +1030,7 @@ main (int argc, char *argv[])
     // Workload
     if (avx2 == 0)
     {
-        pc_encode_data_sr_avx512_gfni (TEST_LEN (m), k, p, g_tbls, buffs, temp_buffs);
+        pcsr_encode_data_avx512_gfni (TEST_LEN (m), k, p, g_tbls, buffs, temp_buffs);
     }
     else
     {
@@ -1055,7 +1055,7 @@ main (int argc, char *argv[])
     // Workload
     if (avx2 == 0)
     {
-        pc_encode_data_avx512_gfni (TEST_LEN (m), k, p, g_tbls, buffs, temp_buffs);
+        pcsr_encode_data_avx512_gfni (TEST_LEN (m), k, p, g_tbls, buffs, temp_buffs);
     }
     else
     {
@@ -1077,7 +1077,7 @@ main (int argc, char *argv[])
     {
         handle_error (ret);
     }
-
+#ifdef NDEF
     // Workload
     if (avx2 == 0)
     {
@@ -1107,7 +1107,7 @@ main (int argc, char *argv[])
     // Workload
     if (avx2 == 0)
     {
-        pc_decode_data_avx512_gfni (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs, 1);
+        pcsr_decode_data_avx512_gfni (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs, 1);
     }
     else
     {
@@ -1125,6 +1125,7 @@ main (int argc, char *argv[])
     printf ("PC_Decode_data %11lld cycles %11lld instructions CPI %.3lf BPC %.3lf\n", values[ 0 ],
             values[ 1 ], CPI, BPC);
 
+#endif
     PAPI_cleanup_eventset (event_set);
     PAPI_destroy_eventset (&event_set);
     PAPI_shutdown ();
