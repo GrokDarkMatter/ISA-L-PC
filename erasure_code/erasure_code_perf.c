@@ -768,8 +768,8 @@ main (int argc, char *argv[])
     gf_gen_poly_matrix ( a, m, k ) ;
     //printf ( "SRPoly matrix\n" ) ;
     //dump_u8xu8 ( a+k*k, k, m-k ) ;
-    ec_init_tables (k, m - k, &a[ k * k ], g_tbls);
 #endif
+    ec_init_tables (k, m - k, &a[ k * k ], g_tbls);
 #ifdef __aarch64__
     BENCHMARK (&start, BENCHMARK_TIME,
                ec_encode_data_neon (TEST_LEN (m), k, p, g_tbls, buffs, &buffs[ k ]));
