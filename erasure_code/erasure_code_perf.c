@@ -761,12 +761,15 @@ main (int argc, char *argv[])
     }
     exit (0) ;
 #endif
+#ifndef __aarch64__
     // Perform the baseline benchmark
     pcsr_gen_poly_matrix (a, m, k);
+#else
+    gf_gen_poly_matrix ( a, m, k ) ;
     //printf ( "SRPoly matrix\n" ) ;
     //dump_u8xu8 ( a+k*k, k, m-k ) ;
     ec_init_tables (k, m - k, &a[ k * k ], g_tbls);
-
+#endif
 #ifdef __aarch64__
     BENCHMARK (&start, BENCHMARK_TIME,
                ec_encode_data_neon (TEST_LEN (m), k, p, g_tbls, buffs, &buffs[ k ]));
@@ -787,7 +790,11 @@ main (int argc, char *argv[])
     perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
 
     // Test intrinsics lfsr
+#ifndef __aarch64__
     pcsr_gen_poly (a, p);
+#else
+    gf_gen_poly ( a, p ) ;
+#endif
     ec_init_tables (p, 1, a, g_tbls);
 
 #ifdef __aarch64__
@@ -822,7 +829,12 @@ main (int argc, char *argv[])
     perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
 
     // Test SR intrinsics lfsr
+#ifndef __aarch64__
     int sPow = pcsr_gen_poly (a, p);
+#else
+    int sPow = 0 ;
+    gf_gen_poly (a, p) ;
+#endif
     ec_init_tables (p, 1, a, g_tbls);
 
 #ifdef __aarch64__
@@ -855,7 +867,11 @@ main (int argc, char *argv[])
     perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
 
     // Test decoding with dot product
+#ifndef __aarch64__
     pcsr_gen_rsr_matrix (a, m + p, m, sPow);
+#else
+    gf_gen_rsr_matrix (a, m + p, m);
+#endif
     //printf ( "Vand table\n" ) ;
     //dump_u8xu8 ( a, m+p, m ) ;
     ec_init_tables (p, m, &a[ m * m ], g_tbls);
