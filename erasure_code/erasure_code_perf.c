@@ -922,7 +922,7 @@ main (int argc, char *argv[])
     //dump_u8xu8 ( a, 1, p ) ;
 
      ec_init_tables (p, 1, a, g_tbls);
-     int eLen ;
+     int eLen = 0 ;
 #ifdef __aarch64__
     BENCHMARK (&start, BENCHMARK_TIME,
                eLen=pc_decode_data_neon (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs, 1));
