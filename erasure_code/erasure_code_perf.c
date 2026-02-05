@@ -601,9 +601,9 @@ main (int argc, char *argv[])
     u8 *buffs[ TEST_SOURCES ] = { NULL };
 
     struct perf start;
-
+#ifndef __aarch64__
     u8 avx2 = 0;
-
+#endif
     /* Set default parameters */
     k = 12;
     p = 8;
@@ -906,9 +906,12 @@ main (int argc, char *argv[])
             goto exit;
         }
     }
-
+#ifdef __aarch64__
+    i = 1 ;
+#else
     // Now benchmark parallel syndrome sequencer - First create power vector
-    i = sPow;
+    i = sPow ;
+#endif
     for (j = p - 1; j >= 0; j--)
     {
         a[ j ] = i;
@@ -919,11 +922,10 @@ main (int argc, char *argv[])
     //dump_u8xu8 ( a, 1, p ) ;
 
      ec_init_tables (p, 1, a, g_tbls);
-
-    int eLen = 0 ;
+     int eLen ;
 #ifdef __aarch64__
     BENCHMARK (&start, BENCHMARK_TIME,
-               pc_decode_data_neon (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs, 1));
+               eLen=pc_decode_data_neon (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs, 1));
 #else
     if (avx2 == 0)
     {
