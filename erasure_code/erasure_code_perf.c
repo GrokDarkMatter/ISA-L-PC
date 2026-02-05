@@ -832,7 +832,6 @@ main (int argc, char *argv[])
 #ifndef __aarch64__
     int sPow = pcsr_gen_poly (a, p);
 #else
-    int sPow = 0 ;
     gf_gen_poly (a, p) ;
 #endif
     ec_init_tables (p, 1, a, g_tbls);
