@@ -733,7 +733,7 @@ main (int argc, char *argv[])
     // Make random data
     for (i = 0; i < k; i++)
         for (j = 0; j < TEST_LEN (m); j++)
-            buffs[ i ][ j ] = 1 ; //rand ();
+            buffs[ i ][ j ] = rand ();
     //buffs [ 0 ] [ k - 1 ] = 1 ;
             // Print test type
 #ifdef __aarch64__
