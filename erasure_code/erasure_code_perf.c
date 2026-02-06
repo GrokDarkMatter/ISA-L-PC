@@ -482,8 +482,8 @@ inject_errors_in_place (unsigned char **data, int index, int num_errors,
     {
         int pos = error_positions[ i ];
         original_values[ i ] = data[ pos ][ index ];
-        //uint8_t error = (rand () % (PC_FIELD_SIZE)) + 1;
-        uint8_t error = 1 ;
+        uint8_t error = (rand () % (PC_FIELD_SIZE)) + 1;
+        //uint8_t error = 1 ;
         data[ pos ][ index ] = data[ pos ][ index ] ^ error;
     }
 }
@@ -734,7 +734,7 @@ main (int argc, char *argv[])
     // Make random data
     for (i = 0; i < k; i++)
         for (j = 0; j < TEST_LEN (m); j++)
-            buffs[ i ][ j ] = 0 ; //rand ();
+            buffs[ i ][ j ] = rand ();
     //buffs [ 0 ] [ k - 1 ] = 1 ;
             // Print test type
 #ifdef __aarch64__

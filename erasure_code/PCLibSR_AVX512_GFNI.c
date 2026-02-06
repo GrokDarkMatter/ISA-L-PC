@@ -334,13 +334,13 @@ pcsr_compute_error_values_AVX512_GFNI (int mSize, unsigned char *S, unsigned cha
 // Verify proposed data values and locations can generate syndromes
 int
 pcsr_verify_syndromes_AVX512_GFNI (unsigned char *S, int p, int mSize, unsigned char *roots,
-                                 unsigned char *errVal)
+                                 unsigned char *errVal, int baseVal )
 {
     int i, j;
     unsigned char sum = 0;
 
     // Verify syndromes across each power row
-    unsigned char base = 1;
+    unsigned char base = baseVal;
     for (i = 0; i < p; i++)
     {
         sum = 0;
@@ -481,10 +481,10 @@ pcsr_verify_multiple_errors_AVX512_GFNI (unsigned char *S, unsigned char **data,
     }
 
     // Verify all syndromes are correct
-    if (pc_verify_syndromes_AVX512_GFNI (S, p, mSize, roots, errVal) == 0)
+    if (pcsr_verify_syndromes_AVX512_GFNI (S, p, mSize, roots, errVal, base) == 0)
     {
         printf ( "Verify failed\n" ) ;
-        //return 0;
+        return 0;
     }
 
     // Syndromes are OK, correct the user data
