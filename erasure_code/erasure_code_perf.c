@@ -482,7 +482,8 @@ inject_errors_in_place (unsigned char **data, int index, int num_errors,
     {
         int pos = error_positions[ i ];
         original_values[ i ] = data[ pos ][ index ];
-        uint8_t error = (rand () % (PC_FIELD_SIZE)) + 1;
+        //uint8_t error = (rand () % (PC_FIELD_SIZE)) + 1;
+        uint8_t error = 1 ;
         data[ pos ][ index ] = data[ pos ][ index ] ^ error;
     }
 }
@@ -733,7 +734,7 @@ main (int argc, char *argv[])
     // Make random data
     for (i = 0; i < k; i++)
         for (j = 0; j < TEST_LEN (m); j++)
-            buffs[ i ][ j ] = rand ();
+            buffs[ i ][ j ] = 0 ; //rand ();
     //buffs [ 0 ] [ k - 1 ] = 1 ;
             // Print test type
 #ifdef __aarch64__
@@ -1001,15 +1002,26 @@ main (int argc, char *argv[])
     printf ("polynomial_code_rm1" TEST_TYPE_STR ": k=%d p=%d ", m, p);
     fprintf (file, "polynomial_code_rm1" TEST_TYPE_STR ": k=%d p=%d ", m, p);
     perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
-#ifdef NDEF
 
+    i = sPow ;
+    // Set up g_tbls ;
+    for (j = p - 1; j >= 0; j--)
+    {
+        a[ j ] = i;
+        i = gf_mul (i, 2);
+    }
+
+    printf ( "Power values\n" ) ;
+    dump_u8xu8 ( a, 1, p ) ;
+
+     ec_init_tables (p, 1, a, g_tbls);
     if (test_pgz_decoder (0, m, p, g_tbls, buffs, temp_buffs, avx2) == 0)
     {
         printf ("Decoder failed\n");
         fprintf (file, "Decoder failed\n");
         goto exit;
     }
-#endif
+
 #ifndef NOPAPI
     int event_set = InitPAPI (); // PAPI_NULL, event_code ;
     if ((ret = PAPI_start (event_set)) != PAPI_OK)

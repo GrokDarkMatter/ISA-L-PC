@@ -43,6 +43,547 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 SPDX-License-Identifier: LicenseRef-Intel-Anderson-BSD-3-Clause-With-Restrictions
 **********************************************************************/
 
+unsigned char
+pcsr_div_AVX512_GFNI (unsigned char a, unsigned char b)
+{
+    return gf_mul (a, gf_inv (b));
+}
+
+// Code generation functions
+// Compute base ^ Power
+int
+pcsr_pow_AVX512_GFNI (unsigned char base, unsigned char Power)
+{
+    // The first power is always 1
+    if (Power == 0)
+    {
+        return 1;
+    }
+
+    // Otherwise compute the power of two for Power
+    unsigned char computedPow = base;
+    for (int i = 1; i < Power; i++)
+    {
+        computedPow = gf_mul (computedPow, base);
+    }
+    return computedPow;
+}
+
+// Assume there is a single error and try to correct, see if syndromes match
+int
+pcsr_verify_single_error_AVX512_GFNI (unsigned char *S, unsigned char **data, int k, int p,
+                                    int newPos, int offSet)
+{
+    // LSB has parity, for single error this equals error value
+    unsigned char eVal = S[ 0 ];
+
+    // Compute error location is log2(syndrome[1]/syndrome[0])
+    unsigned char eLoc = S[ 1 ];
+    unsigned char pVal = gf_mul (eLoc, gf_inv (eVal));
+    int first ;
+    printf ( "Syndrome is:\n" ) ;
+    dump_u8xu8 ( S, 1, p ) ;
+    eLoc = (gflog_base[ pVal ]) % PC_FIELD_SIZE;
+    printf ( "eLoc = %d pVal = %d\n", eLoc, pVal ) ;
+
+    int start = p / 2 ; 
+    if ( p & 1 )
+    {
+        first = 255 - start ;
+    }
+    else
+    {
+        first = 128 - start ;
+    }
+    int base = gff_base [ first ] ;
+    printf ( "First = %d Base = %d\n",first, base ) ;
+
+    // Verify error location is reasonable
+    if (eLoc >= k)
+    {
+        printf ( "Ret1\n" ) ;
+        return 0;
+    }
+
+    // If more than 2 syndromes, verify we can produce them all
+    if (p > 2)
+    {
+        // Now verify that the error can be used to produce the remaining syndromes
+        for (int i = 2; i < p; i++)
+        {
+            if (gf_mul (S[ i - 1 ], pVal) != S[ i ])
+            {
+                printf ( "Ret2\n" ) ;
+                return 0;
+            }
+        }
+    }
+    // Good correction - compute actual location
+    int actLoc = k - eLoc - 1 ;
+    printf ( "eVal = %d Base = %d\n", eVal, base ) ;
+    unsigned char div = pcsr_pow_AVX512_GFNI (base, eLoc ) ;
+    printf ( "div = %d\n", div ) ;
+    eVal = gf_mul ( eVal, gf_inv ( div ) ) ;
+    printf ( "Actual location is %d powerPosition is %d\n", actLoc, eLoc ) ;
+    printf ( "Applying to data [%d] value %d\n", actLoc, eVal ) ;
+    data[ k - eLoc - 1 ][ newPos + offSet ] ^= eVal;
+    return 1;
+}
+
+// Invert matrix with vector assist
+int
+pcsr_invert_matrix_AVX512_GFNI (unsigned char *in_mat, unsigned char *out_mat, const int n)
+{
+    __m512i affineVal512;
+    __m128i affineVal128;
+
+    if (n > PC_MAX_PAR)
+        return -1; // Assumption: n <= 32
+
+    int i, j;
+    __m512i aug_rows[ PC_MAX_PAR ];                         // Ensure 64-byte alignment
+    unsigned char *matrix_mem = (unsigned char *) aug_rows; // Point to aug_rows memory
+
+    // Initialize augmented matrix: [in_mat row | out_mat row | padding zeros]
+    for (i = 0; i < n; i++)
+    {
+        memcpy (&matrix_mem[ i * 64 ], &in_mat[ i * n ], n);
+        memset (&matrix_mem[ i * 64 + n ], 0, n);
+        matrix_mem[ i * 64 + n + i ] = 1;
+        // dump_u8xu8 ( &matrix_mem [ i * 64 + n ], 1, n ) ;
+    }
+
+    // Inverse using Gaussian elimination
+    for (i = 0; i < n; i++)
+    {
+        // Check for 0 in pivot element using matrix_mem
+        unsigned char pivot = matrix_mem[ i * PC_STRIDE + i ];
+        // printf ( "Pivot = %d\n", pivot ) ;
+        if (pivot == 0)
+        {
+            // Find a row with non-zero in current column and swap
+            for (j = i + 1; j < n; j++)
+            {
+                if (matrix_mem[ j * PC_STRIDE + i ] != 0)
+                {
+                    break;
+                }
+            }
+            if (j == n)
+            {
+                // Couldn't find means it's singular
+                return -1;
+            }
+            // Swap rows i and j in ZMM registers
+            __m512i temp_vec = aug_rows[ i ];
+            aug_rows[ i ] = aug_rows[ j ];
+            aug_rows[ j ] = temp_vec;
+        }
+
+        // Get pivot and compute 1/pivot
+        pivot = matrix_mem[ i * 64 + i ];
+        // printf ( "Pivot2 = %d\n", pivot ) ;
+        unsigned char temp_scalar = gf_inv (pivot);
+        // printf ( "Scalar = %d\n", temp_scalar ) ;
+
+        // Scale row i by 1/pivot using GFNI affine
+        affineVal128 = _mm_set1_epi64x (gf_table_gfni[ temp_scalar ]);
+        affineVal512 = _mm512_broadcast_i32x2 (affineVal128);
+        aug_rows[ i ] = _mm512_gf2p8affine_epi64_epi8 (aug_rows[ i ], affineVal512, 0);
+
+        // Eliminate in other rows
+        for (j = 0; j < n; j++)
+        {
+            if (j == i)
+                continue;
+            unsigned char factor = matrix_mem[ j * 64 + i ];
+            // Compute scaled pivot row: pivot_row * factor
+            affineVal128 = _mm_set1_epi64x (gf_table_gfni[ factor ]);
+            affineVal512 = _mm512_broadcast_i32x2 (affineVal128);
+            __m512i scaled = _mm512_gf2p8affine_epi64_epi8 (aug_rows[ i ], affineVal512, 0);
+            // row_j ^= scaled
+            aug_rows[ j ] = _mm512_xor_si512 (aug_rows[ j ], scaled);
+        }
+    }
+    // Copy back to out_mat
+    for (i = 0; i < n; i++)
+    {
+        // dump_u8xu8 ( &matrix_mem [ i * 64 + n ], 1, n ) ;
+        memcpy (&out_mat[ i * n ], &matrix_mem[ i * 64 + n ], n);
+    }
+    return 0;
+}
+
+// Find rots with vector assist
+int
+pcsr_find_roots_AVX512_GFNI (unsigned char *keyEq, unsigned char *roots, int mSize)
+{
+    static __m512i Vandermonde[ PC_MAX_PAR ][ 4 ]; // 4 64 byte registers cover the
+    __m512i sum[ 4 ], temp, affineVal512;          // whole field to search
+    __m128i affineVal128;
+    int i, j;
+
+    unsigned char *vVal = (unsigned char *) Vandermonde;
+    // Check to see if Vandermonde has been initialized yet
+    if (vVal[ 0 ] == 0)
+    {
+        unsigned char base = PC_GEN_x11d, cVal = 1;
+        for (i = 0; i < 16; i++)
+        {
+            vVal = (unsigned char *) &Vandermonde[ i ];
+            for (j = 0; j < PC_FIELD_SIZE; j++)
+            {
+                vVal[ j ] = cVal;
+                cVal = gf_mul (cVal, base);
+            }
+            base = gf_mul (base, PC_GEN_x11d);
+        }
+    }
+    // Initialize our sum to the constant term, no need for multiply
+    sum[ 0 ] = _mm512_set1_epi8 (keyEq[ 0 ]);
+    sum[ 1 ] = _mm512_set1_epi8 (keyEq[ 0 ]);
+    sum[ 2 ] = _mm512_set1_epi8 (keyEq[ 0 ]);
+    sum[ 3 ] = _mm512_set1_epi8 (keyEq[ 0 ]);
+
+    // Loop through each keyEq value, multiply it by Vandermonde and add it to sum
+    for (i = 1; i < mSize; i++)
+    {
+        affineVal128 = _mm_set1_epi64x (gf_table_gfni[ keyEq[ i ] ]);
+        affineVal512 = _mm512_broadcast_i32x2 (affineVal128);
+        // Remember that we did not build the first row of Vandermonde, so use i-1
+        temp = _mm512_gf2p8affine_epi64_epi8 (Vandermonde[ i - 1 ][ 0 ], affineVal512, 0);
+        sum[ 0 ] = _mm512_xor_si512 (sum[ 0 ], temp);
+        temp = _mm512_gf2p8affine_epi64_epi8 (Vandermonde[ i - 1 ][ 1 ], affineVal512, 0);
+        sum[ 1 ] = _mm512_xor_si512 (sum[ 1 ], temp);
+        temp = _mm512_gf2p8affine_epi64_epi8 (Vandermonde[ i - 1 ][ 2 ], affineVal512, 0);
+        sum[ 2 ] = _mm512_xor_si512 (sum[ 2 ], temp);
+        temp = _mm512_gf2p8affine_epi64_epi8 (Vandermonde[ i - 1 ][ 3 ], affineVal512, 0);
+        sum[ 3 ] = _mm512_xor_si512 (sum[ 3 ], temp);
+    }
+    // Add in the leading Vandermonde row, just assume it's a one so no multiply
+    sum[ 0 ] = _mm512_xor_si512 (sum[ 0 ], Vandermonde[ mSize - 1 ][ 0 ]);
+    sum[ 1 ] = _mm512_xor_si512 (sum[ 1 ], Vandermonde[ mSize - 1 ][ 1 ]);
+    sum[ 2 ] = _mm512_xor_si512 (sum[ 2 ], Vandermonde[ mSize - 1 ][ 2 ]);
+    sum[ 3 ] = _mm512_xor_si512 (sum[ 3 ], Vandermonde[ mSize - 1 ][ 3 ]);
+
+    int rootCount = 0, idx = 0;
+    // Create the list of roots
+    for (i = 0; i < PC_L1PAR; i++)
+    {
+        // Compare each byte to zero, generating a 64-bit mask
+        __mmask64 mask = _mm512_cmpeq_epi8_mask (sum[ i ], _mm512_setzero_si512 ());
+
+        // Count number of zeros (popcount of mask)
+        rootCount += _mm_popcnt_u64 (mask);
+
+        // Extract indices of set bits (zero bytes)
+        while (mask)
+        {
+            // Find the next set bit (index of zero byte)
+            uint64_t pos = _tzcnt_u64 (mask);
+            roots[ idx++ ] = (uint8_t) pos + (i * PC_STRIDE);
+            // Clear the lowest set bit
+            mask = _blsr_u64 (mask); // mask &= (mask - 1)
+        }
+    }
+    return rootCount;
+}
+
+// Compute error values using Vandermonde
+int
+pcsr_compute_error_values_AVX512_GFNI (int mSize, unsigned char *S, unsigned char *roots,
+                                     unsigned char *errVal, int bVal )
+{
+    int i, j;
+    unsigned char Mat[ PC_MAX_PAR * PC_MAX_PAR ];
+    unsigned char Mat_inv[ PC_MAX_PAR * PC_MAX_PAR ];
+
+    // Find error values by building and inverting Vandemonde
+
+    //unsigned char base = PC_GEN_x11d; // *****************************************this needs to be updated with offset for SR polynomial instead of 2
+    int base = bVal ;
+    for (i = 0; i < mSize; i++)
+    {
+        for (j = 0; j < mSize; j++)
+        {
+            Mat[ i * mSize + j ] = pc_pow_AVX512_GFNI (base, roots[ j ]);
+        }
+        base = gf_mul (base, PC_GEN_x11d);
+    }
+    printf ( "Before invert\n" ) ;
+    dump_u8xu8 ( Mat, mSize, mSize ) ;
+    // Invert matrix and verify inversion
+    if (gf_invert_matrix_AVX512_GFNI (Mat, Mat_inv, mSize) != 0)
+    {
+        return 0;
+    }
+
+    // Compute error values by summing Syndrome terms across inverted Vandermonde
+    for (i = 0; i < mSize; i++)
+    {
+        errVal[ i ] = 0;
+        for (j = 0; j < mSize; j++)
+        {
+            errVal[ i ] ^= gf_mul (S[ j ], Mat_inv[ i * mSize + j ]);
+        }
+        printf ( "ErrVal [ %d ] = %d\n", i, errVal [ i ] ) ;
+    }
+    return 1;
+}
+
+// Verify proposed data values and locations can generate syndromes
+int
+pcsr_verify_syndromes_AVX512_GFNI (unsigned char *S, int p, int mSize, unsigned char *roots,
+                                 unsigned char *errVal)
+{
+    int i, j;
+    unsigned char sum = 0;
+
+    // Verify syndromes across each power row
+    unsigned char base = 1;
+    for (i = 0; i < p; i++)
+    {
+        sum = 0;
+        for (j = 0; j < mSize; j++)
+        {
+            // Scale up the data value based on location
+            unsigned char termVal = gf_mul (errVal[ j ], pc_pow_AVX512_GFNI (base, roots[ j ]));
+            sum ^= termVal;
+        }
+
+        // Verify we reproduced the syndrome
+        if (sum != S[ i ])
+        {
+            return 0;
+        }
+        // Move to next syndrome
+        base = gf_mul (base, PC_GEN_x11d);
+    }
+    return 1;
+}
+
+// Affine table from ec_base.h: 256 * 8-byte matrices for GF(256) multiplication
+static const uint64_t gf_table_gfni[ 256 ]; // Assume defined in ec_base.h
+
+// syndromes: array of length 'length' (typically 2t), syndromes[0] = S1, [1] = S2, etc.
+// lambda: caller-allocated array of size at least (length + 1 + 31), filled with locator poly
+// coeffs. Padded for SIMD. Returns: degree L of the error locator polynomial. Note: Assumes length
+// <= 32 for AVX-512 (32-byte vectors); extend loops for larger lengths.
+int
+pcsr_berlekamp_massey_AVX512_GFNI (unsigned char *syndromes, int length, unsigned char *lambda)
+{
+    unsigned char b[ PC_MAX_PAR * 2 + 1 ]; // Padded for AVX-512 (32-byte alignment)
+    unsigned char temp[ PC_MAX_PAR * 2 + 1 ];
+    int L = 0;
+    int m = 1;
+    unsigned char old_d = 1; // Initial previous discrepancy
+
+    memset (lambda, 0, length + 1 + 31);
+    lambda[ 0 ] = 1;
+    memset (b, 0, length + 1 + 31);
+    b[ 0 ] = 1;
+
+    for (int r = 0; r < length; r++)
+    {
+        unsigned char d = syndromes[ r ];
+        for (int j = 1; j <= L; j++)
+        {
+            if (r - j >= 0)
+            {
+                d ^= gf_mul (lambda[ j ], syndromes[ r - j ]);
+            }
+        }
+
+        if (d == 0)
+        {
+            m++;
+        }
+        else
+        {
+            unsigned char q = gf_div_AVX512_GFNI (d, old_d);
+            memcpy (temp, lambda, length + 1 + 31);
+
+            // SIMD update: lambda[j + m] ^= gf_mul(q, b[j]) using AVX-512 GF2P8AFFINE
+            // Load and broadcast 8-byte affine matrix for q
+            __m128i matrix_128 =
+                    _mm_set1_epi64x (gf_table_gfni[ q ]); // Load uint64_t from gf_table_gfni[q]
+            __m256i matrix = _mm256_broadcast_i32x2 (matrix_128); // Broadcast to all 4 lanes
+            __m256i b_vec = _mm256_loadu_si256 ((const __m256i *) b);
+            // Perform GF(256) multiplication: result = affine(b_vec, matrix) + 0
+            __m256i mul_res = _mm256_gf2p8affine_epi64_epi8 (b_vec, matrix, 0);
+            __m256i vec_lam = _mm256_loadu_si256 ((const __m256i *) &lambda[ m ]);
+            vec_lam = _mm256_xor_si256 (vec_lam, mul_res);
+            _mm256_storeu_si256 ((__m256i *) &lambda[ m ], vec_lam);
+
+            // Handle remainder scalarly (unlikely needed for length <= 32)
+            for (int j = 32; j <= length - m; j++)
+            {
+                if (b[ j ] != 0)
+                {
+                    lambda[ j + m ] ^= gf_mul (q, b[ j ]);
+                }
+            }
+
+            if (2 * L <= r)
+            {
+                L = r + 1 - L;
+                memcpy (b, temp, length + 1 + 31);
+                old_d = d;
+                m = 1;
+            }
+            else
+            {
+                m++;
+            }
+        }
+    }
+
+    return L;
+}
+
+// Attempt to detect multiple error locations and values
+int
+pcsr_verify_multiple_errors_AVX512_GFNI (unsigned char *S, unsigned char **data, int mSize, int k,
+                                       int p, int newPos, int offSet, unsigned char *keyEq)
+{
+    unsigned char roots[ PC_MAX_PAR ] = { 0 };
+    unsigned char errVal[ PC_MAX_PAR ];
+
+    // Find roots, exit if mismatch with expected roots
+    int nroots = pcsr_find_roots_AVX512_GFNI (keyEq, roots, mSize);
+    if (nroots != mSize)
+    {
+        printf ("Bad roots expected %d got %d\n", mSize, nroots);
+        return 0;
+    }
+
+    printf ("Roots found = %d\n", nroots ) ;
+    dump_u8xu8 ( roots, 1, mSize ) ;
+
+    int first ;
+    int start = p / 2 ; 
+    if ( p & 1 )
+    {
+        first = 255 - start ;
+    }
+    else
+    {
+        first = 128 - start ;
+    }
+
+    int base = gff_base [ first ] ;
+    printf ( "First = %d Base = %d\n",first, base ) ;
+
+    // Compute the error values
+    if (pcsr_compute_error_values_AVX512_GFNI (mSize, S, roots, errVal, base) == 0)
+    {
+        return 0;
+    }
+
+    // Verify all syndromes are correct
+    if (pc_verify_syndromes_AVX512_GFNI (S, p, mSize, roots, errVal) == 0)
+    {
+        printf ( "Verify failed\n" ) ;
+        //return 0;
+    }
+
+    // Syndromes are OK, correct the user data
+    for (int i = 0; i < mSize; i++)
+    {
+        int sym = k - roots[ i ] - 1;
+        printf ( "Correcting data [%d] [%d] with errVal %d\n", sym, newPos + offSet, errVal [ i ] ) ;
+        data[ sym ][ newPos + offSet ] ^= errVal[ i ];
+    }
+    // Good correction
+    return 1;
+}
+
+// PGZ decoding step 1, see if we can invert the matrix, if so, compute key equation
+int
+pcsr_PGZ_AVX512_GFNI (unsigned char *S, int p, unsigned char *keyEq)
+{
+    unsigned char SMat[ PC_MAX_PAR * PC_MAX_PAR ], SMat_inv[ PC_MAX_PAR * PC_MAX_PAR ];
+    int i, j;
+
+    // For each potential size, create and find Hankel matrix that will invert
+    for (int mSize = (p / 2); mSize >= 2; mSize--)
+    {
+        for (i = 0; i < mSize; i++)
+        {
+            for (j = 0; j < mSize; j++)
+            {
+                SMat[ i * mSize + j ] = S[ i + j ];
+            }
+        }
+        // If good inversion then we know error count and can compute key equation
+        if (gf_invert_matrix_AVX512_GFNI (SMat, SMat_inv, mSize) == 0)
+        {
+            printf ( "PGZ Good Inversion size %d\n", mSize ) ;
+            // Compute the key equation terms
+            for (i = 0; i < mSize; i++)
+            {
+                for (j = 0; j < mSize; j++)
+                {
+                    keyEq[ i ] ^= gf_mul (S[ mSize + j ], SMat_inv[ i * mSize + j ]);
+                }
+            }
+            printf ( "Error locator\n" ) ;
+            dump_u8xu8 ( keyEq, 1, mSize ) ;
+            return mSize;
+        }
+    }
+    return 0;
+}
+
+// Syndromes are non-zero, try to calculate error location and data values
+int
+pcsr_correct_AVX512_GFNI (int newPos, int k, int p, unsigned char **data, unsigned char **coding,
+                        int vLen)
+{
+    int i, mSize;
+    unsigned char S[ PC_MAX_PAR ], keyEq[ PC_MAX_PAR + 1 ] = { 0 };
+
+    __m512i vec, vec2;
+
+    // Get a "or" of all the syndrome vectors
+    vec = _mm512_load_si512 ((__m512i *) coding[ 0 ]);
+    for (i = 0; i < p; i++)
+    {
+        vec2 = _mm512_load_si512 ((__m512i *) coding[ i ]);
+        vec = _mm512_or_si512 (vec, vec2);
+    }
+
+    // Now find the first non-zero byte
+    __mmask64 mask = _mm512_test_epi8_mask (vec, vec);
+    uint64_t offSet = _tzcnt_u64 (mask);
+
+    // Verify we found a non-zero syndrome
+    if (offSet >= vLen)
+    {
+        return 0;
+    }
+
+    // Gather up the syndromes
+    for (i = 0; i < p; i++)
+    {
+        S[ i ] = coding[ p - i - 1 ][ offSet ];
+    }
+
+    // Check to see if a single error can be verified
+    if (pcsr_verify_single_error_AVX512_GFNI (S, data, k, p, newPos, offSet))
+    {
+        return 1;
+    }
+
+    mSize = pcsr_PGZ_AVX512_GFNI (S, p, keyEq);
+
+    if (mSize > 1)
+    {
+        return pcsr_verify_multiple_errors_AVX512_GFNI (S, data, mSize, k, p, newPos, offSet, keyEq);
+    }
+    return 0;
+}
+
 void pcsr_recon_1p ( unsigned char ** source, unsigned char ** dest, int len, int k, int e )
 {
     unsigned char **curS ;
@@ -82,26 +623,6 @@ void pcsr_recon_1m ( unsigned char ** source, unsigned char ** dest, int len, in
         _mm512_stream_si512 ( (__m512i * ) ( *dest + curPos), sum ) ;
     }
 }
-// Code generation functions
-// Compute base ^ Power
-int
-pcsr_pow_AVX512_GFNI (unsigned char base, unsigned char Power)
-{
-    // The first power is always 1
-    if (Power == 0)
-    {
-        return 1;
-    }
-
-    // Otherwise compute the power of two for Power
-    unsigned char computedPow = base;
-    for (int i = 1; i < Power; i++)
-    {
-        computedPow = gf_mul (computedPow, base);
-    }
-    return computedPow;
-}
-
 int
 pcsr_gen_poly (unsigned char *p, int rank )
 {
@@ -8466,7 +8987,7 @@ int pcsr_decode_data_avx512_gfni(int len, int k, int rows, unsigned char *afftab
                 }
                 if ( newPos < len )
                 {
-                        if ( pc_correct_AVX512_GFNI ( newPos, k, rows, data, coding, 64 ) )
+                        if ( pcsr_correct_AVX512_GFNI ( newPos, k, rows, data, coding, 64 ) )
                         {
                                 return ( newPos ) ;
                         }
