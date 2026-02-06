@@ -1011,8 +1011,8 @@ main (int argc, char *argv[])
         i = gf_mul (i, 2);
     }
 
-    printf ( "Power values\n" ) ;
-    dump_u8xu8 ( a, 1, p ) ;
+    //printf ( "Power values\n" ) ;
+    //dump_u8xu8 ( a, 1, p ) ;
 
      ec_init_tables (p, 1, a, g_tbls);
     if (test_pgz_decoder (0, m, p, g_tbls, buffs, temp_buffs, avx2) == 0)

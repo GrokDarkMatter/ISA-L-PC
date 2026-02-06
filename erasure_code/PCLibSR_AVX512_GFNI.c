@@ -81,10 +81,10 @@ pcsr_verify_single_error_AVX512_GFNI (unsigned char *S, unsigned char **data, in
     unsigned char eLoc = S[ 1 ];
     unsigned char pVal = gf_mul (eLoc, gf_inv (eVal));
     int first ;
-    printf ( "Syndrome is:\n" ) ;
-    dump_u8xu8 ( S, 1, p ) ;
+    //printf ( "Syndrome is:\n" ) ;
+    //dump_u8xu8 ( S, 1, p ) ;
     eLoc = (gflog_base[ pVal ]) % PC_FIELD_SIZE;
-    printf ( "eLoc = %d pVal = %d\n", eLoc, pVal ) ;
+    //printf ( "eLoc = %d pVal = %d\n", eLoc, pVal ) ;
 
     int start = p / 2 ; 
     if ( p & 1 )
@@ -96,12 +96,12 @@ pcsr_verify_single_error_AVX512_GFNI (unsigned char *S, unsigned char **data, in
         first = 128 - start ;
     }
     int base = gff_base [ first ] ;
-    printf ( "First = %d Base = %d\n",first, base ) ;
+    //printf ( "First = %d Base = %d\n",first, base ) ;
 
     // Verify error location is reasonable
     if (eLoc >= k)
     {
-        printf ( "Ret1\n" ) ;
+        //printf ( "Ret1\n" ) ;
         return 0;
     }
 
@@ -113,19 +113,19 @@ pcsr_verify_single_error_AVX512_GFNI (unsigned char *S, unsigned char **data, in
         {
             if (gf_mul (S[ i - 1 ], pVal) != S[ i ])
             {
-                printf ( "Ret2\n" ) ;
+                //printf ( "Ret2\n" ) ;
                 return 0;
             }
         }
     }
     // Good correction - compute actual location
-    int actLoc = k - eLoc - 1 ;
-    printf ( "eVal = %d Base = %d\n", eVal, base ) ;
+    //int actLoc = k - eLoc - 1 ;
+    //printf ( "eVal = %d Base = %d\n", eVal, base ) ;
     unsigned char div = pcsr_pow_AVX512_GFNI (base, eLoc ) ;
-    printf ( "div = %d\n", div ) ;
+    //printf ( "div = %d\n", div ) ;
     eVal = gf_mul ( eVal, gf_inv ( div ) ) ;
-    printf ( "Actual location is %d powerPosition is %d\n", actLoc, eLoc ) ;
-    printf ( "Applying to data [%d] value %d\n", actLoc, eVal ) ;
+    //printf ( "Actual location is %d powerPosition is %d\n", actLoc, eLoc ) ;
+    //printf ( "Applying to data [%d] value %d\n", actLoc, eVal ) ;
     data[ k - eLoc - 1 ][ newPos + offSet ] ^= eVal;
     return 1;
 }
@@ -310,8 +310,8 @@ pcsr_compute_error_values_AVX512_GFNI (int mSize, unsigned char *S, unsigned cha
         }
         base = gf_mul (base, PC_GEN_x11d);
     }
-    printf ( "Before invert\n" ) ;
-    dump_u8xu8 ( Mat, mSize, mSize ) ;
+    //printf ( "Before invert\n" ) ;
+    //dump_u8xu8 ( Mat, mSize, mSize ) ;
     // Invert matrix and verify inversion
     if (gf_invert_matrix_AVX512_GFNI (Mat, Mat_inv, mSize) != 0)
     {
@@ -326,7 +326,7 @@ pcsr_compute_error_values_AVX512_GFNI (int mSize, unsigned char *S, unsigned cha
         {
             errVal[ i ] ^= gf_mul (S[ j ], Mat_inv[ i * mSize + j ]);
         }
-        printf ( "ErrVal [ %d ] = %d\n", i, errVal [ i ] ) ;
+        //printf ( "ErrVal [ %d ] = %d\n", i, errVal [ i ] ) ;
     }
     return 1;
 }
@@ -457,8 +457,8 @@ pcsr_verify_multiple_errors_AVX512_GFNI (unsigned char *S, unsigned char **data,
         return 0;
     }
 
-    printf ("Roots found = %d\n", nroots ) ;
-    dump_u8xu8 ( roots, 1, mSize ) ;
+    //printf ("Roots found = %d\n", nroots ) ;
+    //dump_u8xu8 ( roots, 1, mSize ) ;
 
     int first ;
     int start = p / 2 ; 
@@ -472,7 +472,6 @@ pcsr_verify_multiple_errors_AVX512_GFNI (unsigned char *S, unsigned char **data,
     }
 
     int base = gff_base [ first ] ;
-    printf ( "First = %d Base = %d\n",first, base ) ;
 
     // Compute the error values
     if (pcsr_compute_error_values_AVX512_GFNI (mSize, S, roots, errVal, base) == 0)
@@ -491,7 +490,7 @@ pcsr_verify_multiple_errors_AVX512_GFNI (unsigned char *S, unsigned char **data,
     for (int i = 0; i < mSize; i++)
     {
         int sym = k - roots[ i ] - 1;
-        printf ( "Correcting data [%d] [%d] with errVal %d\n", sym, newPos + offSet, errVal [ i ] ) ;
+        //printf ( "Correcting data [%d] [%d] with errVal %d\n", sym, newPos + offSet, errVal [ i ] ) ;
         data[ sym ][ newPos + offSet ] ^= errVal[ i ];
     }
     // Good correction
@@ -518,7 +517,7 @@ pcsr_PGZ_AVX512_GFNI (unsigned char *S, int p, unsigned char *keyEq)
         // If good inversion then we know error count and can compute key equation
         if (gf_invert_matrix_AVX512_GFNI (SMat, SMat_inv, mSize) == 0)
         {
-            printf ( "PGZ Good Inversion size %d\n", mSize ) ;
+            //printf ( "PGZ Good Inversion size %d\n", mSize ) ;
             // Compute the key equation terms
             for (i = 0; i < mSize; i++)
             {
@@ -527,8 +526,8 @@ pcsr_PGZ_AVX512_GFNI (unsigned char *S, int p, unsigned char *keyEq)
                     keyEq[ i ] ^= gf_mul (S[ mSize + j ], SMat_inv[ i * mSize + j ]);
                 }
             }
-            printf ( "Error locator\n" ) ;
-            dump_u8xu8 ( keyEq, 1, mSize ) ;
+            //printf ( "Error locator\n" ) ;
+            //dump_u8xu8 ( keyEq, 1, mSize ) ;
             return mSize;
         }
     }
