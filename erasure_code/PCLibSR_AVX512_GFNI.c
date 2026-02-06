@@ -299,8 +299,6 @@ pcsr_compute_error_values_AVX512_GFNI (int mSize, unsigned char *S, unsigned cha
     unsigned char Mat_inv[ PC_MAX_PAR * PC_MAX_PAR ];
 
     // Find error values by building and inverting Vandemonde
-
-    //unsigned char base = PC_GEN_x11d; // *****************************************this needs to be updated with offset for SR polynomial instead of 2
     int base = bVal ;
     for (i = 0; i < mSize; i++)
     {
@@ -595,7 +593,8 @@ void pcsr_recon_1p ( unsigned char ** source, unsigned char ** dest, int len, in
         sum = _mm512_stream_load_si512( *curS + curPos ) ;
         for ( int curK = 1 ; curK < k ; curK ++ )
         {
-            sum = _mm512_xor_si512 ( sum, *( __m512i *)curS ) ;
+            sum = _mm512_xor_si512 ( sum, *( __m512i *) ( *curS + curPos ) ) ;
+          __builtin_prefetch ( *curS + curPos + 64, 0, 3 ) ;
             curS ++ ;
         }
         _mm512_stream_si512 ( (__m512i * ) ( *dest + curPos), sum ) ;
@@ -616,12 +615,37 @@ void pcsr_recon_1m ( unsigned char ** source, unsigned char ** dest, int len, in
         for ( int curK = 1 ; curK < k ; curK ++ )
         {
             sum = _mm512_gf2p8affine_epi64_epi8 (sum, affineval, 0 ) ;
+          __builtin_prefetch ( *curS + curPos + 64, 0, 3 ) ;
+            sum = _mm512_xor_si512 ( sum, *( __m512i *)( *curS + curPos ) ) ;
+            curS ++ ;
+        }
+        _mm512_stream_si512 ( (__m512i * ) ( *dest + curPos), sum ) ;
+    }
+}
+#ifdef NDEF
+void pcsr_recon_2h ( unsigned char ** source, unsigned char ** dest, int len, int k, int e )
+{
+    unsigned char **curS ;
+    __m512i sum, affineval, dataVal ;
+
+    affineval = _mm512_stream_load_si512 ( *source) ;
+
+    for ( int curPos = 0 ; curPos < len ; curPos += 64 )
+    {
+        curS = source ;
+        curS ++ ;
+        sum = _mm512_stream_load_si512( *curS + curPos ) ;
+        for ( int curK = 1 ; curK < k ; curK ++ )
+        {
+            dataVal = _mm512_stream_load_si512 ( *(curS))
+            sum = _mm512_gf2p8affine_epi64_epi8 (sum, affineval, 0 ) ;
             sum = _mm512_xor_si512 ( sum, *( __m512i *)curS ) ;
             curS ++ ;
         }
         _mm512_stream_si512 ( (__m512i * ) ( *dest + curPos), sum ) ;
     }
 }
+#endif
 int
 pcsr_gen_poly (unsigned char *p, int rank )
 {
