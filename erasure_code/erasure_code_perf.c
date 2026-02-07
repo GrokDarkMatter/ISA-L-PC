@@ -1025,10 +1025,6 @@ main (int argc, char *argv[])
 
     // Now benchmark single reconstruct
 
-    // Use 2 for test - fill this in later with right value for reconstruction
-    *a = 2 ;
-    ec_init_tables (p, 1, a, g_tbls);
-
 #ifdef __aarch64__
     BENCHMARK (&start, BENCHMARK_TIME,
                pc_decode_data_neon (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs, 1));
@@ -1047,6 +1043,28 @@ main (int argc, char *argv[])
 
     printf ("polynomial_code_rm1" TEST_TYPE_STR ": k=%d p=%d ", k, 1);
     fprintf (file, "polynomial_code_r10" TEST_TYPE_STR ": k=%d p=%d ", k, 1);
+    perf_printf (file, start, (long long) (TEST_LEN (m)) * (k+1));
+
+    // Now benchmark single reconstruct double stride
+
+#ifdef __aarch64__
+    BENCHMARK (&start, BENCHMARK_TIME,
+               pc_decode_data_neon (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs, 1));
+#else
+    if (avx2 == 0)
+    {
+        BENCHMARK (&start, BENCHMARK_TIME,
+                   pcsr_recon_2m ( buffs, temp_buffs, TEST_LEN(m), k+1, 1, g_tbls ) ) ;
+    }
+    else
+    {
+        BENCHMARK (&start, BENCHMARK_TIME,
+                   pc_decode_data_avx2_gfni (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs, 1));
+    }
+#endif
+
+    printf ("polynomial_code_rm2" TEST_TYPE_STR ": k=%d p=%d ", k, 1);
+    fprintf (file, "polynomial_code_rm2" TEST_TYPE_STR ": k=%d p=%d ", k, 1);
     perf_printf (file, start, (long long) (TEST_LEN (m)) * (k+1));
 
     i = sPow ;

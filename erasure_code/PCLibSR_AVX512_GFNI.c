@@ -660,7 +660,7 @@ void pcsr_recon_1m ( unsigned char ** source, unsigned char ** dest, int len, in
         sum = _mm512_load_si512 ( *curS + curPos ) ;
         affineVal = _mm512_broadcast_i32x2(*( __m128i * ) ( curA ) );
         curA += 8 ;
-        sum  = _mm512_gf2p8affine_epi64_epi8 (origD, affineVal, 0 ) ;
+        sum  = _mm512_gf2p8affine_epi64_epi8 (sum, affineVal, 0 ) ;
         for ( int curK = 1 ; curK < k ; curK ++, ++curS, curA += 8 )
         {
             //origD = _mm512_stream_load_si512 ( *curS + curPos ) ;
@@ -673,6 +673,42 @@ void pcsr_recon_1m ( unsigned char ** source, unsigned char ** dest, int len, in
         _mm512_stream_si512 ( (__m512i * ) ( destP + curPos ), sum ) ;
     }
 }
+
+void pcsr_recon_2m ( unsigned char ** source, unsigned char ** dest, int len, int k, int e, unsigned char * affTab )
+{
+    unsigned char **curS, *curA, *destP ;
+    __m512i sum1, sum2, origD1, origD2, mulRes1, mulRes2, affineVal ;
+
+    destP = dest [ 0 ] ;
+
+    for ( int curPos = 0 ; curPos < len ; curPos += 128 )
+    {
+        curS = source ;
+        curA = affTab ;
+        //sum = _mm512_stream_load_si512 ( *curS + curPos ) ;
+        sum1 = _mm512_load_si512 ( *curS + curPos ) ;
+        sum2 = _mm512_load_si512 ( *curS + curPos + 64 ) ;
+        affineVal = _mm512_broadcast_i32x2(*( __m128i * ) ( curA ) );
+        curA += 8 ;
+        sum1  = _mm512_gf2p8affine_epi64_epi8 (sum1, affineVal, 0 ) ;
+        sum1  = _mm512_gf2p8affine_epi64_epi8 (sum2, affineVal, 0 ) ;
+        for ( int curK = 1 ; curK < k ; curK ++, ++curS, curA += 8 )
+        {
+            //origD = _mm512_stream_load_si512 ( *curS + curPos ) ;
+            origD1 = _mm512_load_si512 ( *curS + curPos ) ;
+            origD2 = _mm512_load_si512 ( *curS + curPos + 64 ) ;
+            affineVal = _mm512_broadcast_i32x2(*( __m128i * ) ( curA ) );
+            mulRes1 = _mm512_gf2p8affine_epi64_epi8 (origD1, affineVal, 0 ) ;
+            mulRes2 = _mm512_gf2p8affine_epi64_epi8 (origD2, affineVal, 0 ) ;
+          //__builtin_prefetch ( *curS + curPos + 64, 0, 3 ) ;
+            sum1 = _mm512_xor_si512 ( sum1, mulRes1 ) ;
+            sum2 = _mm512_xor_si512 ( sum2, mulRes2 ) ;
+        }
+        _mm512_stream_si512 ( (__m512i * ) ( destP + curPos ), sum1 ) ;
+        _mm512_stream_si512 ( (__m512i * ) ( destP + curPos + 64 ), sum2 ) ;
+    }
+}
+
 #ifdef NDEF
 void pcsr_recon_2h ( unsigned char ** source, unsigned char ** dest, int len, int k, int e )
 {
