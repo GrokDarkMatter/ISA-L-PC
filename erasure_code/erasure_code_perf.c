@@ -590,12 +590,48 @@ test_pgz_decoder (int index, int m, int p, unsigned char *g_tbls, unsigned char 
     return 1;
 }
 
+int
+ec_decode_perf(int m, int k, u8 *a, u8 *g_tbls, u8 **buffs, u8 *src_in_err, u8 *src_err_list,
+               int nerrs, u8 **temp_buffs, struct perf *start)
+{
+        int i, j, r;
+        u8 b[MMAX * KMAX], c[MMAX * KMAX], d[MMAX * KMAX];
+        u8 *recov[TEST_SOURCES];
+
+        // Construct b by removing error rows
+        for (i = 0, r = 0; i < k; i++, r++) {
+                while (src_in_err[r])
+                        r++;
+                recov[i] = buffs[r];
+                for (j = 0; j < k; j++)
+                        b[k * i + j] = a[k * r + j];
+        }
+
+        if (gf_invert_matrix(b, d, k) < 0)
+                return BAD_MATRIX;
+
+        memset(c, 0, sizeof(c));
+        for (i = 0; i < nerrs; i++) {
+                int s = src_err_list[i];
+                for (j = 0; j < k; j++)
+                        for (r = 0; r < k; r++)
+                                c[k * i + j] ^= gf_mul(d[k * r + j], a[k * s + r]);
+        }
+
+        // Recover data
+        ec_init_tables(k, nerrs, c, g_tbls);
+        BENCHMARK(start, BENCHMARK_TIME,
+                  ec_encode_data(TEST_LEN(m), k, nerrs, g_tbls, recov, temp_buffs));
+
+        return 0;
+}
+
 // Main program
 int
 main (int argc, char *argv[])
 {
     // Work variables
-    int i, j, m, k, p, ret = -1;
+    int i, j, m, k, p, errCnt, ret = -1;
     void *buf;
     u8 *a, *g_tbls = 0, *z0 = 0;
     u8 *temp_buffs[ TEST_SOURCES ] = { NULL };
@@ -608,6 +644,7 @@ main (int argc, char *argv[])
     /* Set default parameters */
     k = 12;
     p = 8;
+    errCnt = 1 ;
 
     /* Parse arguments */
     for (i = 1; i < argc; i++)
@@ -626,10 +663,18 @@ main (int argc, char *argv[])
             avx2 = atoi (argv[ ++i ]);
 #endif
         }
+        else if (strcmp (argv[ i ], "-e") == 0)
+        {
+            errCnt = atoi ( argv [ ++i ] ) ;
+        }
         else if (strcmp (argv[ i ], "-h") == 0)
         {
             usage (argv[ 0 ]);
             return 0;
+        }
+        else if (strcmp (argv[ i ], "-e") == 0)
+        {
+            errCnt = atoi ( argv [ ++i ] ) ;
         }
         else
         {
@@ -789,6 +834,33 @@ main (int argc, char *argv[])
     printf ("erasure_code_encode" TEST_TYPE_STR ": k=%d p=%d ", k, p);
     fprintf (file, "erasure_code_encode" TEST_TYPE_STR ": k=%d p=%d ", k, p);
     perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
+
+    // Test erasure code decode
+   ec_init_tables (p, m, &a[ m * m ], g_tbls);
+
+#ifdef __aarch64__
+    BENCHMARK (&start, BENCHMARK_TIME,
+               pc_decode_data_neon (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs, 1));
+#else
+    unsigned char src_in_error [ 32 ] = { 0 } ;
+    unsigned char src_error_list [ 32 ] = { 0 } ;
+    src_error_list [ 0 ] = 1 ;
+    if (avx2 == 0)
+    {
+        //BENCHMARK (&start, BENCHMARK_TIME,
+        ec_decode_perf(m, k, a, g_tbls, buffs, src_in_error, src_error_list,
+               errCnt, temp_buffs, &start) ;
+    }
+    else
+    {
+        BENCHMARK (&start, BENCHMARK_TIME,
+                   pc_decode_data_avx2_gfni (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs, 1));
+    }
+#endif
+
+    printf ("erasure_code_decode" TEST_TYPE_STR ": k=%d e=%d ", k, 1);
+    fprintf (file, "erasure_code_decode" TEST_TYPE_STR ": e=%d p=%d ", m, p);
+    perf_printf (file, start, (long long) (TEST_LEN (m)) * (k+1));
 
     // Test intrinsics lfsr
 #ifndef __aarch64__
@@ -964,33 +1036,7 @@ main (int argc, char *argv[])
     if (avx2 == 0)
     {
         BENCHMARK (&start, BENCHMARK_TIME,
-                   pcsr_recon_10 ( buffs, temp_buffs, TEST_LEN(m), k+1, 1 ) ) ;
-    }
-    else
-    {
-        BENCHMARK (&start, BENCHMARK_TIME,
-                   pc_decode_data_avx2_gfni (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs, 1));
-    }
-#endif
-
-    printf ("polynomial_code_rp1" TEST_TYPE_STR ": k=%d p=%d ", k, 1);
-    fprintf (file, "polynomial_code_r10" TEST_TYPE_STR ": k=%d p=%d ", k, 1);
-    perf_printf (file, start, (long long) (TEST_LEN (m)) * (k+1));
-
-    // Now benchmark single reconstruct
-#//ifdef NDEF
-    // Use 2 for test - fill this in later with right value for reconstruction
-    *a = 2 ;
-    ec_init_tables (p, 1, a, g_tbls);
-
-#ifdef __aarch64__
-    BENCHMARK (&start, BENCHMARK_TIME,
-               pc_decode_data_neon (TEST_LEN (m), m, p, g_tbls, buffs, temp_buffs, 1));
-#else
-    if (avx2 == 0)
-    {
-        BENCHMARK (&start, BENCHMARK_TIME,
-                   pcsr_recon_1m ( buffs, temp_buffs, TEST_LEN(m), k+1, 1 ) ) ;
+                   pcsr_recon_1m ( buffs, temp_buffs, TEST_LEN(m), k+1, 1, g_tbls ) ) ;
     }
     else
     {
@@ -1000,7 +1046,7 @@ main (int argc, char *argv[])
 #endif
 
     printf ("polynomial_code_rm1" TEST_TYPE_STR ": k=%d p=%d ", k, 1);
-    fprintf (file, "polynomial_code_rm1" TEST_TYPE_STR ": k=%d p=%d ", m, p);
+    fprintf (file, "polynomial_code_r10" TEST_TYPE_STR ": k=%d p=%d ", k, 1);
     perf_printf (file, start, (long long) (TEST_LEN (m)) * (k+1));
 
     i = sPow ;
