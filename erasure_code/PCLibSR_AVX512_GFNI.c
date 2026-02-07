@@ -584,22 +584,67 @@ pcsr_correct_AVX512_GFNI (int newPos, int k, int p, unsigned char **data, unsign
 void pcsr_recon_1p ( unsigned char ** source, unsigned char ** dest, int len, int k, int e )
 {
     unsigned char **curS ;
-    __m512i sum ;
+    __m512i sum, sum2 ;
 
-    for ( int curPos = 0 ; curPos < len ; curPos += 64 )
+    for ( int curPos = 0 ; curPos < len ; curPos += 128 )
     {
         curS = source ;
         curS ++ ;
         sum = _mm512_stream_load_si512( *curS + curPos ) ;
+        sum2 = _mm512_stream_load_si512( *curS + curPos + 64 ) ;
         for ( int curK = 1 ; curK < k ; curK ++ )
         {
             sum = _mm512_xor_si512 ( sum, *( __m512i *) ( *curS + curPos ) ) ;
-          __builtin_prefetch ( *curS + curPos + 64, 0, 3 ) ;
+            sum2 = _mm512_xor_si512 ( sum2, *( __m512i *) ( *curS + curPos + 64 ) ) ;
             curS ++ ;
         }
         _mm512_stream_si512 ( (__m512i * ) ( *dest + curPos), sum ) ;
+        _mm512_stream_si512 ( (__m512i * ) ( *dest + curPos+64), sum2 ) ;
     }
 }
+void pcsr_recon_10 ( unsigned char ** source, unsigned char ** dest, int len, int k, int e )
+{
+    __m512i dVals [ 10 ], sum ;
+        
+    unsigned char *pPnt [ 10 ];                       // Data lookup pointers
+
+    pPnt [ 0 ] = source [ 0 ] ;
+    pPnt [ 1 ] = source [ 1 ] ;
+    pPnt [ 2 ] = source [ 2 ] ;
+    pPnt [ 3 ] = source [ 3 ] ;
+    pPnt [ 4 ] = source [ 4 ] ;
+    pPnt [ 5 ] = source [ 5 ] ;
+    pPnt [ 6 ] = source [ 6 ] ;
+    pPnt [ 7 ] = source [ 7 ] ;
+    pPnt [ 8 ] = source [ 8 ] ;
+    pPnt [ 9 ] = source [ 9 ] ;
+
+    for ( int curPos = 0 ; curPos < len ; curPos += 64 )
+    {
+        dVals [ 0 ] = _mm512_stream_load_si512( pPnt [ 0 ] + curPos ) ;
+        dVals [ 1 ] = _mm512_stream_load_si512( pPnt [ 1 ] + curPos ) ;
+        dVals [ 2 ] = _mm512_stream_load_si512( pPnt [ 2 ] + curPos ) ;
+        dVals [ 3 ] = _mm512_stream_load_si512( pPnt [ 3 ] + curPos ) ;
+        dVals [ 4 ] = _mm512_stream_load_si512( pPnt [ 4 ] + curPos ) ;
+        dVals [ 5 ] = _mm512_stream_load_si512( pPnt [ 5 ] + curPos ) ;
+        dVals [ 6 ] = _mm512_stream_load_si512( pPnt [ 6 ] + curPos ) ;
+        dVals [ 7 ] = _mm512_stream_load_si512( pPnt [ 7 ] + curPos ) ;
+        dVals [ 8 ] = _mm512_stream_load_si512( pPnt [ 8 ] + curPos ) ;
+        dVals [ 9 ] = _mm512_stream_load_si512( pPnt [ 9 ] + curPos ) ;
+
+        sum = _mm512_xor_si512 ( dVals [ 0 ], dVals [ 1 ] ) ;
+        sum = _mm512_xor_si512 ( sum, dVals [ 2 ] ) ;
+        sum = _mm512_xor_si512 ( sum, dVals [ 3 ] ) ;
+        sum = _mm512_xor_si512 ( sum, dVals [ 4 ] ) ;
+        sum = _mm512_xor_si512 ( sum, dVals [ 5 ] ) ;
+        sum = _mm512_xor_si512 ( sum, dVals [ 6 ] ) ;
+        sum = _mm512_xor_si512 ( sum, dVals [ 7 ] ) ;
+        sum = _mm512_xor_si512 ( sum, dVals [ 8 ] ) ;
+        sum = _mm512_xor_si512 ( sum, dVals [ 9 ] ) ;
+        _mm512_stream_si512 ( (__m512i * ) ( *dest + curPos), sum ) ;
+    }
+}
+
 void pcsr_recon_1m ( unsigned char ** source, unsigned char ** dest, int len, int k, int e )
 {
     unsigned char **curS ;

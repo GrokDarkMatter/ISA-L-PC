@@ -964,7 +964,7 @@ main (int argc, char *argv[])
     if (avx2 == 0)
     {
         BENCHMARK (&start, BENCHMARK_TIME,
-                   pcsr_recon_1p ( buffs, temp_buffs, TEST_LEN(m), m, 1 ) ) ;
+                   pcsr_recon_10 ( buffs, temp_buffs, TEST_LEN(m), k+1, 1 ) ) ;
     }
     else
     {
@@ -973,9 +973,9 @@ main (int argc, char *argv[])
     }
 #endif
 
-    printf ("polynomial_code_rp1" TEST_TYPE_STR ": k=%d p=%d ", m, p);
-    fprintf (file, "polynomial_code_rp1" TEST_TYPE_STR ": k=%d p=%d ", m, p);
-    perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
+    printf ("polynomial_code_rp1" TEST_TYPE_STR ": k=%d p=%d ", k, 1);
+    fprintf (file, "polynomial_code_r10" TEST_TYPE_STR ": k=%d p=%d ", k, 1);
+    perf_printf (file, start, (long long) (TEST_LEN (m)) * (k+1));
 
     // Now benchmark single reconstruct
 #//ifdef NDEF
@@ -990,7 +990,7 @@ main (int argc, char *argv[])
     if (avx2 == 0)
     {
         BENCHMARK (&start, BENCHMARK_TIME,
-                   pcsr_recon_1m ( buffs, temp_buffs, TEST_LEN(m), m, 1 ) ) ;
+                   pcsr_recon_1m ( buffs, temp_buffs, TEST_LEN(m), k+1, 1 ) ) ;
     }
     else
     {
@@ -999,9 +999,9 @@ main (int argc, char *argv[])
     }
 #endif
 
-    printf ("polynomial_code_rm1" TEST_TYPE_STR ": k=%d p=%d ", m, p);
+    printf ("polynomial_code_rm1" TEST_TYPE_STR ": k=%d p=%d ", k, 1);
     fprintf (file, "polynomial_code_rm1" TEST_TYPE_STR ": k=%d p=%d ", m, p);
-    perf_printf (file, start, (long long) (TEST_LEN (m)) * (m));
+    perf_printf (file, start, (long long) (TEST_LEN (m)) * (k+1));
 
     i = sPow ;
     // Set up g_tbls ;
